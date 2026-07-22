@@ -21,8 +21,8 @@ def test_policy_engine_daily_limit():
         trust_level=TrustLevel.AUTONOMOUS,
     )
 
-    # Exceeding daily cap (limit is 10)
-    violations = policy.evaluate_application_policy(job, profile, app, daily_submitted_count=11)
+    # Exceeding daily cap (limit for linkedin is 100)
+    violations = policy.evaluate_application_policy(job, profile, app, daily_submitted_count=101)
     assert len(violations) > 0
     assert violations[0].policy_name == "POLICY_MAX_DAILY_APPLICATIONS"
 
