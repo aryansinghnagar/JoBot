@@ -27,6 +27,11 @@ class ApplicationStatus(str, Enum):
     VERIFIED = "verified"
     FAILED = "failed"
     PAUSED = "paused"
+    REJECTED = "rejected"
+    BLOCKED = "blocked"
+    CIRCUIT_OPEN = "circuit_open"
+    DUPLICATE_SKIPPED = "duplicate_skipped"
+    CANCELLED = "cancelled"
 
 
 # -------------------------------------------------------------------
