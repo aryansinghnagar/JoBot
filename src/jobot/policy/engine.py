@@ -19,13 +19,17 @@ class PolicyEvaluationResult(BaseModel):
     blocking_reason: Optional[str] = None
 
 
+from jobot.obs.alerts import AlertDispatcher, AlertLevel
+
+
 class PolicyEngine:
     """
     Policy & Security Governance Engine (Layer H).
     Enforces 9 default safety, rate-limiting, privacy, and truthfulness policy rules.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, alert_dispatcher: Optional[AlertDispatcher] = None) -> None:
+        self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
         self.daily_application_limits: Dict[str, int] = {
             "naukri": 150,
             "linkedin": 100,
@@ -52,11 +56,17 @@ class PolicyEngine:
         # Policy 1: Max Daily Applications Cap
         max_allowed = self.daily_application_limits.get(job.site, 20)
         if daily_submitted_count >= max_allowed:
+            msg = f"Daily limit of {max_allowed} applications reached for site '{job.site}'."
             violations.append(
                 PolicyViolation(
                     policy_name="POLICY_MAX_DAILY_APPLICATIONS",
-                    reason=f"Daily limit of {max_allowed} applications reached for site '{job.site}'.",
+                    reason=msg,
                 )
+            )
+            self.alert_dispatcher.dispatch_alert(
+                title=f"Daily Limit Reached ({job.site})",
+                message=msg,
+                level=AlertLevel.WARNING,
             )
 
         # Policy 2: Grounding Check
