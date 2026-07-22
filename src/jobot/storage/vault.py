@@ -23,7 +23,7 @@ class CredentialVault:
     def __init__(self, key_dir: Optional[Path] = None):
         if key_dir is None:
             key_dir = Path.home() / ".jobot" / "vault"
-            key_dir.mkdir(parents=True, exist_ok=True)
+        key_dir.mkdir(parents=True, exist_ok=True)
         self.key_dir = key_dir
         self.fernet = Fernet(self._get_or_create_master_key())
 
