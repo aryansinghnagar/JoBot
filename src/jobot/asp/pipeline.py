@@ -128,14 +128,15 @@ class ApplicationSubmissionPipeline:
             dod_result: DoDResult = await handler(app, profile, job_url, auto_approve)
 
             if not dod_result.passed:
-                app.status = ApplicationStatus.FAILED
-                app.error_message = dod_result.reason
+                if app.status != ApplicationStatus.PENDING_APPROVAL:
+                    app.status = ApplicationStatus.FAILED
+                    app.error_message = dod_result.reason
                 self.alert_dispatcher.dispatch_alert(
-                    title=f"ASP DoD Failure ({phase.value})",
-                    message=f"Application {app.application_id[:8]} failed DoD: {dod_result.reason}",
-                    level=AlertLevel.HIGH,
+                    title=f"ASP Phase Status ({phase.value})",
+                    message=f"Application {app.application_id[:8]}: {dod_result.reason}",
+                    level=AlertLevel.HIGH if app.status == ApplicationStatus.FAILED else AlertLevel.INFO,
                 )
-                self.trace_logger.end_span(span, status=f"failed: {dod_result.reason}")
+                self.trace_logger.end_span(span, status=f"{app.status.value}: {dod_result.reason}")
                 if app.job_id and self.db.get_job_posting(app.job_id):
                     self.db.save_application(app)
                 return False
@@ -242,7 +243,7 @@ class ApplicationSubmissionPipeline:
         auto_approve = args[1] if len(args) > 1 else False
         if app.trust_level == TrustLevel.SUPERVISED and not auto_approve:
             app.status = ApplicationStatus.PENDING_APPROVAL
-            return DoDResult(passed=True)
+            return DoDResult(passed=False, reason="Application paused for human approval")
         return DoDResult(passed=True)
 
     async def _handle_phase_11_submit(self, app: Application, profile: UserProfile, *args) -> DoDResult:
@@ -257,8 +258,10 @@ class ApplicationSubmissionPipeline:
                 app.site, self.adapter.submit_application, app
             )
             if not submitted_ok:
+                self.circuit_breaker.record_failure(app.site)
                 return DoDResult(passed=False, reason="Adapter submit_application returned False")
         except Exception as exc:
+            self.circuit_breaker.record_failure(app.site)
             return DoDResult(passed=False, reason=f"Submission error: {exc}")
 
         # Log submission evidence
