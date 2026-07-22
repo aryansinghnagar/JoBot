@@ -16,6 +16,7 @@ from jobot.adapters import (
 )
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.gui.sidecar import StdioSidecarServer
 from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
 from jobot.obs.manual_test_logger import ManualTestLogger
 from jobot.runner import ContinuousCampaignRunner
@@ -51,6 +52,13 @@ def setup() -> None:
     console.print(f"[green][OK] Database initialized at:[blue] {db.db_path}[/blue][/green]")
     console.print(f"[green][OK] Master vault initialized at:[blue] {vault.key_dir}[/blue][/green]")
     console.print("[bold blue][OK] Setup complete! Add your profile with 'jobot profile init'[/bold blue]")
+
+
+@app.command("sidecar")
+def sidecar_cmd() -> None:
+    """Run stdio JSON-RPC sidecar protocol server for desktop GUI (Tauri 2.x)."""
+    server = StdioSidecarServer()
+    server.run_loop()
 
 
 @app.command("profile")
