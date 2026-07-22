@@ -59,9 +59,11 @@ class MockATSAdapter(SiteAdapter):
             "email": profile.personal_info.email or "applicant@example.com",
             "phone": profile.personal_info.phone or "+919876543210",
         }
-        application.form_values = filled_fields
+        if application.form_values is None:
+            application.form_values = {}
+        application.form_values.update(filled_fields)
         application.status = ApplicationStatus.FILLED
-        return filled_fields
+        return application.form_values
 
     async def submit_application(self, application: Application) -> bool:
         req_url = f"{self.base_url}/apply"
