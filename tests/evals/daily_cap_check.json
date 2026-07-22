@@ -1,0 +1,14 @@
+{
+  "scenario_id": "eval_003",
+  "category": "capability",
+  "title": "Daily Application Cap Enforcement",
+  "input_data": {
+    "site": "linkedin",
+    "daily_submitted_count": 105,
+    "max_allowed": 100
+  },
+  "expected_output": {
+    "allowed": false,
+    "violation_policy": "POLICY_MAX_DAILY_APPLICATIONS"
+  }
+}

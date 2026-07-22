@@ -1,0 +1,13 @@
+{
+  "scenario_id": "eval_001",
+  "category": "regression",
+  "title": "Profile Grounding Failure Check",
+  "input_data": {
+    "question": "What is your email address?",
+    "filled_email": "fake_hacker@evil.com",
+    "profile_email": "aryan@example.com"
+  },
+  "expected_output": {
+    "should_pass_grounding": false
+  }
+}
