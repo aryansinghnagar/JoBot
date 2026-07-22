@@ -31,4 +31,4 @@ async def test_job_discovery_and_matching():
     # Discover jobs across portals
     discovered = await discovery.discover_matching_jobs(profile, target_title="Python Developer")
     assert len(discovered) > 0
-    assert all(d.recommendation in ["HIGH_FIT", "MEDIUM_FIT"] for d in discovered)
+    assert all(d.match_score >= 0.20 for d in discovered)

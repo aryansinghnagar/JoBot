@@ -77,7 +77,7 @@ class ResumeExporter:
   <div style="margin-top: 8px;">{skills_html}</div>
 
   <div class="section-title">SUMMARY</div>
-  <p>Notice Period: {profile.compensation.notice_period_days} Days | Expected CTC: ₹{profile.compensation.expected_ctc_inr:,.0f}</p>
+  <p>Notice Period: {profile.compensation.notice_period_days} Days | Expected CTC: {f'₹{profile.compensation.expected_ctc_inr:,.0f}' if profile.compensation.expected_ctc_inr is not None else 'Negotiable'}</p>
 </body>
 </html>"""
         return html
