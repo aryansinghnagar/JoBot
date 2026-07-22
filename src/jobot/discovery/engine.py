@@ -2,15 +2,7 @@ import asyncio
 import logging
 from typing import List, Optional
 from pydantic import BaseModel
-from jobot.adapters import (
-    GreenhouseAdapter,
-    IndeedAdapter,
-    LeverAdapter,
-    LinkedInAdapter,
-    MockATSAdapter,
-    NaukriAdapter,
-    SiteAdapter,
-)
+from jobot.adapters import AdapterRegistry, SiteAdapter
 from jobot.models.domain import JobPosting, UserProfile
 
 logger = logging.getLogger(__name__)
@@ -40,18 +32,7 @@ class JobDiscoveryEngine:
         self.active_portals = active_portals
 
     def _get_adapter(self, site: str) -> SiteAdapter:
-        s = site.lower()
-        if s == "linkedin":
-            return LinkedInAdapter()
-        elif s == "indeed":
-            return IndeedAdapter()
-        elif s == "greenhouse":
-            return GreenhouseAdapter()
-        elif s == "lever":
-            return LeverAdapter()
-        elif s == "mock_ats":
-            return MockATSAdapter()
-        return NaukriAdapter()
+        return AdapterRegistry.get_adapter(site)
 
     def evaluate_match(self, posting: JobPosting, profile: UserProfile) -> JobMatchResult:
         """Compute matching score between candidate profile skills and job requisition skills."""

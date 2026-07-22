@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.prompt import Confirm
 from rich.table import Table
 from jobot.adapters import (
+    AdapterRegistry,
     GreenhouseAdapter,
     IndeedAdapter,
     LeverAdapter,
@@ -29,18 +30,7 @@ test_logger = ManualTestLogger()
 
 
 def get_adapter(site: str) -> SiteAdapter:
-    s = site.lower()
-    if s == "linkedin":
-        return LinkedInAdapter()
-    elif s == "indeed":
-        return IndeedAdapter()
-    elif s == "greenhouse":
-        return GreenhouseAdapter()
-    elif s == "lever":
-        return LeverAdapter()
-    elif s == "mock_ats":
-        return MockATSAdapter()
-    return NaukriAdapter()
+    return AdapterRegistry.get_adapter(site)
 
 
 @app.command("setup")
