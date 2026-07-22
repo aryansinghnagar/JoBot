@@ -28,6 +28,5 @@ async def test_trace_logger_persists_spans():
         spans = tl.get_trace_spans("test_run_123")
         assert len(spans) >= 3
         span_names = [s["name"] for s in spans]
-        assert "Phase 2&3: Job Parsing" in span_names
-        assert "Phase 4&5: Q&A Extraction & Grounding" in span_names
-        assert "Phase 6&7: Form Filling" in span_names
+        assert "phase_2_parse" in span_names
+        assert "phase_6_fill_form" in span_names
