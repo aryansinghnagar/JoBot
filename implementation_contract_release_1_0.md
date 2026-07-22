@@ -8,13 +8,13 @@
 ---
 
 ## 1. Executive Summary
-This document records the completed implementation and qualification of **`release-1.0`** of the Autonomous Job Application Operating System (`jobaut`).
+This document records the completed implementation and qualification of **`release-1.0`** of the Autonomous Job Application Operating System (`jobot`).
 
 ## 2. Complete Milestone Trajectory
 1. **`dev-0.1` Basic Architecture**:
    - Closed-loop application pipeline on Mock ATS & Naukri end-to-end.
    - Pydantic v2 domain schemas (`UserProfile`, `JobPosting`, `Application`, `Task`, `Goal`, `EvidenceItem`).
-   - SQLite WAL control plane database (`~/.jobaut/jobaut.db`, mode 0600).
+   - SQLite WAL control plane database (`~/.jobot/jobot.db`, mode 0600).
    - `CredentialVault` with `age`/Fernet encryption & OS Keyring integration.
 2. **`dev-0.5` Essential Features**:
    - Provider-neutral `ModelRouter` (Gemini `google-genai`, OpenAI, Anthropic, Ollama fallbacks, daily USD budget tracking).

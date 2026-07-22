@@ -1,6 +1,6 @@
 import pytest
-from jobaut.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel, UserProfile
-from jobaut.policy.engine import PolicyEngine
+from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel, UserProfile
+from jobot.policy.engine import PolicyEngine
 
 
 def test_policy_engine_daily_limit():

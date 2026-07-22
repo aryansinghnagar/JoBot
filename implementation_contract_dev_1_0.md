@@ -11,7 +11,7 @@
 Establish comprehensive testing infrastructure, continuous evaluation harness (`EvalHarness`), CI matrix workflow on GitHub Actions, security analysis configuration, and automated test suite.
 
 ## 2. Completed Scope
-1. **Eval Harness** (`src/jobaut/evals/`):
+1. **Eval Harness** (`src/jobot/evals/`):
    - `EvalHarness` engine supporting 6 categories: `CAPABILITY`, `REGRESSION`, `BEHAVIORAL`, `ADVERSARIAL`, `LONG_HORIZON`, `PRODUCTION_DERIVED`.
    - `EvalScenario` & `EvalResult` schemas.
 2. **GitHub Actions CI Matrix** (`.github/workflows/ci.yml`):

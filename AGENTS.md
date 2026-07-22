@@ -1,7 +1,7 @@
-# AGENTS.md — Autonomous Job Application Operating System (`jobaut`)
+# AGENTS.md — Autonomous Job Application Operating System (`jobot`)
 
 ## System Identity & Doctrine
-`jobaut` is a local-first, privacy-preserving, human-governed autonomous job application operating system built according to the doctrine in `agent.md` and the authoritative specification in `unified_master_plan.md`.
+`jobot` is a local-first, privacy-preserving, human-governed autonomous job application operating system built according to the doctrine in `agent.md` and the authoritative specification in `unified_master_plan.md`.
 
 ## Non-Negotiable Core Mandates
 1. **Source of Truth**: The candidate's `profile.yaml` is canonical. Generated content must be strictly grounded in profile facts. Meaning may be formatted/tailored, but zero facts may be hallucinated or invented.

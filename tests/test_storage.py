@@ -1,9 +1,9 @@
 import tempfile
 from pathlib import Path
 import pytest
-from jobaut.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
-from jobaut.storage.db import DatabaseManager
-from jobaut.storage.vault import CredentialVault
+from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
+from jobot.storage.db import DatabaseManager
+from jobot.storage.vault import CredentialVault
 
 
 def test_sqlite_db_operations():

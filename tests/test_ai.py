@@ -1,7 +1,7 @@
 import pytest
-from jobaut.ai.qa_engine import QAEngine, QuestionType
-from jobaut.ai.router import ModelProvider, ModelRouter
-from jobaut.models.domain import PersonalInfo, UserProfile
+from jobot.ai.qa_engine import QAEngine, QuestionType
+from jobot.ai.router import ModelProvider, ModelRouter
+from jobot.models.domain import PersonalInfo, UserProfile
 
 
 def test_qa_engine_question_classification():

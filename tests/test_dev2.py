@@ -1,7 +1,7 @@
 import pytest
-from jobaut.failure.catalog import CircuitBreaker, CircuitBreakerState, FailureMode
-from jobaut.memory.system import EightTierMemorySystem
-from jobaut.obs.tracing import IncidentSeverity, TraceLogger
+from jobot.failure.catalog import CircuitBreaker, CircuitBreakerState, FailureMode
+from jobot.memory.system import EightTierMemorySystem
+from jobot.obs.tracing import IncidentSeverity, TraceLogger
 
 
 def test_circuit_breaker_transitions():
