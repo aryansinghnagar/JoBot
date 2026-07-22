@@ -12,6 +12,13 @@ class PolicyViolation(BaseModel):
     is_blocking: bool = True
 
 
+class PolicyEvaluationResult(BaseModel):
+    allowed: bool
+    requires_approval: bool
+    violations: List[PolicyViolation]
+    blocking_reason: Optional[str] = None
+
+
 class PolicyEngine:
     """
     Policy & Security Governance Engine (Layer H).
@@ -81,3 +88,25 @@ class PolicyEngine:
             )
 
         return violations
+
+    def check_application_policy(
+        self,
+        job: JobPosting,
+        profile: UserProfile,
+        application: Application,
+        daily_submitted_count: int,
+    ) -> PolicyEvaluationResult:
+        violations = self.evaluate_application_policy(job, profile, application, daily_submitted_count)
+        blocking_violations = [v for v in violations if v.is_blocking]
+        non_blocking_violations = [v for v in violations if not v.is_blocking]
+
+        allowed = len(blocking_violations) == 0
+        requires_approval = any(v.policy_name == "POLICY_SUPERVISED_START" for v in non_blocking_violations)
+        blocking_reason = blocking_violations[0].reason if blocking_violations else None
+
+        return PolicyEvaluationResult(
+            allowed=allowed,
+            requires_approval=requires_approval,
+            violations=violations,
+            blocking_reason=blocking_reason,
+        )

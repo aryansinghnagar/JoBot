@@ -8,6 +8,8 @@ from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.obs.application_md_logger import ApplicationMarkdownLogger
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
+from jobot.policy.engine import PolicyEngine
+from jobot.models.domain import ApplicationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,7 @@ class ContinuousCampaignRunner:
         self.md_logger = ApplicationMarkdownLogger(root_dir=root_dir)
         self.db = DatabaseManager()
         self.vault = CredentialVault()
+        self.policy_engine = PolicyEngine()
 
     async def run_continuous_campaign(
         self,
@@ -82,8 +85,20 @@ class ContinuousCampaignRunner:
                 adapter = get_adapter(job.site)
                 pipeline = ApplicationSubmissionPipeline(adapter, self.db)
 
-                app_res = await pipeline.execute(job.url, p, auto_approve=True)
-                total_submitted += 1
+                # Policy Enforcement Check
+                daily_count = 0  # In-memory tracking per portal session
+                policy_res = self.policy_engine.check_application_policy(
+                    job, p, match.posting, daily_submitted_count=daily_count
+                ) if hasattr(self.policy_engine, "check_application_policy") else None
+
+                if policy_res and not policy_res.allowed:
+                    logger.warning(f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}")
+                    continue
+
+                auto_approve = not (policy_res and policy_res.requires_approval)
+                app_res = await pipeline.execute(job.url, p, auto_approve=auto_approve)
+                if app_res.status == ApplicationStatus.VERIFIED or app_res.status == ApplicationStatus.SUBMITTED:
+                    total_submitted += 1
 
                 # Maintain log.md at project root
                 self.md_logger.log_submission(app_res, job, match_score=match.match_score)
