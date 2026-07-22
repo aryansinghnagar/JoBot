@@ -54,3 +54,12 @@ def test_grounding_verification_pass_and_fail():
     assert engine.verify_grounding("Your email?", "My email is rahul@example.com", profile) is True
     # Fake email in answer fails grounding check
     assert engine.verify_grounding("Your email?", "My email is fake@otherdomain.com", profile) is False
+
+
+@pytest.mark.asyncio
+async def test_model_router_fallback_chain():
+    router = ModelRouter()
+    res = await router.generate_text("Hello world test")
+    assert res is not None
+    assert isinstance(res, str)
+    assert len(res) > 0

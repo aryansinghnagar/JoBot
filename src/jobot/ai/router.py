@@ -26,6 +26,10 @@ class ModelCallMetrics(BaseModel):
     latency_ms: float = 0.0
 
 
+import json
+import urllib.request
+
+
 class ModelRouter:
     """
     Provider-Neutral LLM Model Router (Layer G).
@@ -81,12 +85,13 @@ class ModelRouter:
                 logger.warning(f"Model provider {provider} failed: {e}. Trying next fallback...")
 
         # Graceful degradation fallback if all LLM API calls fail
-        return "Information from profile facts: Please refer to candidate profile."
+        return "[LLM_UNAVAILABLE] Information from profile facts: Please refer to candidate profile."
 
     async def _call_provider(self, provider: ModelProvider, prompt: str, system_prompt: Optional[str]) -> Optional[str]:
         # Check budget limit
         if self.current_spent_usd >= self.daily_budget_usd and provider != ModelProvider.OLLAMA:
             logger.warning("Daily LLM budget reached. Falling back to local Ollama or profile lookup.")
+            return None
 
         api_key = os.getenv(f"{provider.value.upper()}_API_KEY")
         if provider != ModelProvider.OLLAMA and not api_key:
@@ -108,8 +113,83 @@ class ModelRouter:
                 logger.debug(f"Gemini API call failed: {ex}")
                 return None
 
+        elif provider == ModelProvider.OPENAI:
+            try:
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+
+                req = urllib.request.Request(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    data=json.dumps({
+                        "model": "gpt-4o-mini",
+                        "messages": messages,
+                    }).encode("utf-8"),
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    res_data = json.loads(resp.read().decode("utf-8"))
+                    text = res_data["choices"][0]["message"]["content"]
+                    cost = self._estimate_cost(provider, len(prompt.split()), len(text.split()))
+                    self.current_spent_usd += cost
+                    return text
+            except Exception as ex:
+                logger.debug(f"OpenAI API call failed: {ex}")
+                return None
+
+        elif provider == ModelProvider.ANTHROPIC:
+            try:
+                payload: Dict[str, Any] = {
+                    "model": "claude-3-5-haiku-20241022",
+                    "max_tokens": 1024,
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+                if system_prompt:
+                    payload["system"] = system_prompt
+
+                req = urllib.request.Request(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "x-api-key": api_key,
+                        "anthropic-version": "2023-06-01",
+                        "Content-Type": "application/json",
+                    },
+                    data=json.dumps(payload).encode("utf-8"),
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    res_data = json.loads(resp.read().decode("utf-8"))
+                    text = res_data["content"][0]["text"]
+                    cost = self._estimate_cost(provider, len(prompt.split()), len(text.split()))
+                    self.current_spent_usd += cost
+                    return text
+            except Exception as ex:
+                logger.debug(f"Anthropic API call failed: {ex}")
+                return None
+
         elif provider == ModelProvider.OLLAMA:
-            # Local Ollama fallback HTTP request stub
-            return None
+            try:
+                full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+                req = urllib.request.Request(
+                    "http://localhost:11434/api/generate",
+                    headers={"Content-Type": "application/json"},
+                    data=json.dumps({
+                        "model": "llama3",
+                        "prompt": full_prompt,
+                        "stream": False,
+                    }).encode("utf-8"),
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    res_data = json.loads(resp.read().decode("utf-8"))
+                    return res_data.get("response", "")
+            except Exception as ex:
+                logger.debug(f"Ollama local API call failed: {ex}")
+                return None
 
         return None
