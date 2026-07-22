@@ -33,7 +33,7 @@ async def test_mock_ats_integration_full_flow(mock_ats_server):
         profile = UserProfile(
             profile_id="p1",
             personal_info=PersonalInfo(
-                first_name="Aryan", last_name="Nagar", email="aryan@example.com"
+                first_name="Aryan", last_name="Nagar", email="integration_test@example.com"
             ),
         )
 

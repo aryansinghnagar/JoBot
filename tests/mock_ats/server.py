@@ -23,6 +23,12 @@ def _seed_jobs():
 _seed_jobs()
 
 
+@app.route("/reset", methods=["POST"])
+def reset_state():
+    _seed_jobs()
+    return jsonify({"status": "reset_ok"}), 200
+
+
 @app.route("/jobs", methods=["GET"])
 def list_jobs():
     return jsonify({"jobs": list(jobs.values())})
