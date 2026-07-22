@@ -18,6 +18,7 @@ from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
 from jobot.obs.manual_test_logger import ManualTestLogger
+from jobot.runner import ContinuousCampaignRunner
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 
@@ -99,6 +100,16 @@ def profile_cmd(
         console.print(f"Skills: {', '.join(p.skills)}")
 
 
+@app.command("continuous-campaign")
+def continuous_campaign_cmd(
+    goal: int = typer.Option(1000, "--goal", help="Target total applications goal (default: 1000)"),
+    min_match: float = typer.Option(0.20, "--min-match", help="Minimum match score threshold (default: 0.20 for 20%)"),
+) -> None:
+    """Run continuous round-robin campaign across 15 portals maintaining log.md at project root."""
+    runner = ContinuousCampaignRunner()
+    asyncio.run(runner.run_continuous_campaign(goal_count=goal, min_match=min_match))
+
+
 @app.command("auto-apply")
 def auto_apply_cmd(
     target_title: str = typer.Option("Python Developer", "--title", help="Target job title to discover"),
@@ -146,7 +157,6 @@ def auto_apply_cmd(
         else:
             # Human-in-the-Loop Mode: Autonomous form fill, but prompts user for final submission OK!
             console.print("[cyan]Autonomously parsing job and filling form...[/cyan]")
-            # Step 1: Execute pipeline up to approval gate
             app_res = asyncio.run(pipeline.execute(job.url, p, auto_approve=False))
 
             if app_res.status == ApplicationStatus.PENDING_APPROVAL:
@@ -158,7 +168,6 @@ def auto_apply_cmd(
                     for k, v in app_res.form_values.items():
                         console.print(f"  - {k}: {v}")
 
-                # Human-in-the-loop Final Approval Prompt!
                 user_approved = Confirm.ask(f"[bold green]Proceed with final submission to {job.company}?[/bold green]")
                 if user_approved:
                     asyncio.run(adapter.submit_application(app_res))

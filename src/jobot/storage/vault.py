@@ -28,11 +28,18 @@ class CredentialVault:
         self.fernet = Fernet(self._get_or_create_master_key())
 
     def _get_or_create_master_key(self) -> bytes:
-        # Try reading key from OS Keyring first
+        # Try reading key from OS Keyring first (jobot_vault or legacy jobaut_vault)
         try:
             stored_key = keyring.get_password(SERVICE_NAME, KEYRING_USERNAME)
             if stored_key:
                 return stored_key.encode()
+            legacy_key = keyring.get_password("jobaut_vault", KEYRING_USERNAME)
+            if legacy_key:
+                try:
+                    keyring.set_password(SERVICE_NAME, KEYRING_USERNAME, legacy_key)
+                except Exception:
+                    pass
+                return legacy_key.encode()
         except Exception:
             pass
 
