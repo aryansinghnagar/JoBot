@@ -52,3 +52,7 @@ class AdapterRegistry:
         if adapter_cls is None:
             return NaukriAdapter()
         return adapter_cls()
+
+    @classmethod
+    def list_supported_sites(cls) -> list[str]:
+        return list(cls._registry.keys())

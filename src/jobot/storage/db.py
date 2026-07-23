@@ -155,11 +155,14 @@ class DatabaseManager:
                 status=ApplicationStatus(row["status"]),
                 idempotency_key=row["idempotency_key"],
                 trust_level=TrustLevel(row["trust_level"]),
-                form_values=json.loads(row["form_values"] or "{}"),
+                form_values=json.loads(row["form_values"]) if row["form_values"] else {},
                 error_message=row["error_message"],
                 created_at=datetime.fromisoformat(row["created_at"]),
                 updated_at=datetime.fromisoformat(row["updated_at"]),
             )
+
+    def application_exists(self, idempotency_key: str) -> bool:
+        return self.get_application_by_idempotency_key(idempotency_key) is not None
 
     def save_application(self, app: Application) -> None:
         existing = self.get_application(app.application_id)

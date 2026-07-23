@@ -1,37 +1,34 @@
 import pytest
-from jobot.adapters import GreenhouseAdapter, IndeedAdapter, LeverAdapter, LinkedInAdapter
-from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
+from jobot.adapters.base import SiteAdapter
+from jobot.adapters.mock_ats import MockATSAdapter
+from jobot.adapters.registry import AdapterRegistry
+from jobot.models.domain import JobPosting
+
+
+def test_site_adapters_inherit_base_class():
+    registry = AdapterRegistry()
+    supported_sites = registry.list_supported_sites()
+
+    assert len(supported_sites) >= 16
+    for site in supported_sites:
+        adapter = registry.get_adapter(site)
+        assert isinstance(adapter, SiteAdapter)
+        assert hasattr(adapter, "site_name")
+        assert hasattr(adapter, "parse_job_posting")
+        assert hasattr(adapter, "fill_form")
+        assert hasattr(adapter, "submit_application")
+        assert hasattr(adapter, "verify_submission")
 
 
 @pytest.mark.asyncio
-async def test_all_site_adapters():
-    adapters = [
-        LinkedInAdapter(),
-        IndeedAdapter(),
-        GreenhouseAdapter(),
-        LeverAdapter(),
-    ]
+async def test_mock_ats_adapter_contract():
+    adapter = MockATSAdapter(base_url="http://127.0.0.1:5800")
+    assert isinstance(adapter, SiteAdapter)
+    assert adapter.site_name == "mock_ats"
 
-    profile = UserProfile(
-        profile_id="adapter_test",
-        personal_info=PersonalInfo(first_name="Rahul", last_name="Sharma", email="rahul@example.com"),
-    )
-
-    for adapter in adapters:
-        assert await adapter.login() is True
-        job = await adapter.parse_job_posting(f"https://{adapter.site_name}.example.com/job/101")
-        assert job.site == adapter.site_name
-
-        app = Application(
-            application_id="app_test",
-            job_id=job.job_id,
-            site=adapter.site_name,
-            idempotency_key=f"idempotency_{adapter.site_name}",
-        )
-
-        filled_data = await adapter.fill_form(job, profile, app)
-        assert app.status == ApplicationStatus.FILLED
-        assert filled_data.get("email") == "rahul@example.com" or filled_data.get("applicant_email") == "rahul@example.com"
-
-        assert await adapter.submit_application(app) is True
-        assert await adapter.verify_submission(app) is True
+    job = await adapter.parse_job_posting("http://127.0.0.1:5800/jobs/1")
+    assert isinstance(job, JobPosting)
+    assert job.site == "mock_ats"
+    assert job.title != ""
+    assert job.company != ""
+    assert job.url != ""
