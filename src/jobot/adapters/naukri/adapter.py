@@ -3,30 +3,40 @@ import random
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.naukri.discovery import NaukriDiscoveryEngine
+from jobot.adapters.naukri.form_fill import NaukriFormFiller
+from jobot.adapters.naukri.login import NaukriLoginFlow
+from jobot.adapters.naukri.submit import NaukriSubmitter
+from jobot.adapters.naukri.verify import NaukriVerifier
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
 
 
 class NaukriAdapter(SiteAdapter):
     """
     Naukri.com Portal Adapter (Primary India Market Focus).
-    Implements browser-assisted form filling, jittered anti-detection delay, and verification.
+    Integrates Patchright browser automation, login persistence, real form filling, and submission verification.
     """
 
     def __init__(self) -> None:
         super().__init__("naukri")
+        self.login_flow = NaukriLoginFlow()
+        self.discovery_engine = NaukriDiscoveryEngine()
+        self.form_filler = NaukriFormFiller()
+        self.submitter = NaukriSubmitter()
+        self.verifier = NaukriVerifier()
 
-    async def _jitter_delay(self, min_sec: float = 1.0, max_sec: float = 3.0) -> None:
+    async def _jitter_delay(self, min_sec: float = 0.5, max_sec: float = 1.5) -> None:
         delay = random.uniform(min_sec, max_sec)
         await asyncio.sleep(delay)
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
-        await self._jitter_delay(0.5, 1.5)
-        # Login verification logic stub
-        return True
+        await self._jitter_delay(0.2, 0.8)
+        return await self.login_flow.execute_login(username, password)
 
     async def parse_job_posting(self, url: str) -> JobPosting:
-        await self._jitter_delay(0.8, 2.0)
+        await self._jitter_delay(0.3, 1.0)
         job_id = url.split("/")[-1] if "/" in url else str(uuid.uuid4())
         return JobPosting(
             job_id=job_id,
@@ -44,27 +54,13 @@ class NaukriAdapter(SiteAdapter):
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        await self._jitter_delay(1.5, 3.5)
-        filled_data = {
-            "full_name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}".strip(),
-            "email": profile.personal_info.email,
-            "mobile": profile.personal_info.phone,
-            "current_location": profile.personal_info.location_city,
-            "total_experience_years": 5,
-            "current_ctc": profile.compensation.current_ctc_inr,
-            "expected_ctc": profile.compensation.expected_ctc_inr,
-            "notice_period": f"{profile.compensation.notice_period_days} Days",
-        }
-        application.form_values = filled_data
-        application.status = ApplicationStatus.FILLED
-        return filled_data
+        await self._jitter_delay(0.5, 1.5)
+        return await self.form_filler.fill_application_form(job, profile, application)
 
     async def submit_application(self, application: Application) -> bool:
-        await self._jitter_delay(2.0, 4.0)
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        await self._jitter_delay(0.5, 1.5)
+        return await self.submitter.submit(application)
 
     async def verify_submission(self, application: Application) -> bool:
-        await self._jitter_delay(1.0, 2.0)
-        application.status = ApplicationStatus.VERIFIED
-        return True
+        await self._jitter_delay(0.2, 0.8)
+        return await self.verifier.verify(application)
