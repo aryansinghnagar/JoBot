@@ -294,14 +294,92 @@ def status_cmd() -> None:
 
 @app.command("pause")
 def pause_cmd() -> None:
-    """Pause active background operations."""
-    console.print("[bold yellow][OK] All active automation loops paused.[/bold yellow]")
+    """Pause active background operations and save execution state."""
+    state_path = Path.home() / ".jobot" / "runner_state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({"status": "PAUSED", "paused_at": datetime.now().isoformat()}), encoding="utf-8")
+    console.print("[bold yellow][OK] All active automation loops paused. State saved to ~/.jobot/runner_state.json[/bold yellow]")
+
+
+@app.command("resume")
+def resume_cmd() -> None:
+    """Resume paused background operations."""
+    state_path = Path.home() / ".jobot" / "runner_state.json"
+    if state_path.exists():
+        state_path.write_text(json.dumps({"status": "RUNNING", "resumed_at": datetime.now().isoformat()}), encoding="utf-8")
+    console.print("[bold green][OK] Automation loops resumed.[/bold green]")
+
+
+import csv
 
 
 @app.command("export")
-def export_cmd() -> None:
-    """Export encrypted backup and diagnostic audit logs."""
-    console.print("[bold green][OK] Diagnostic package exported to ~/.jobot/backups/[/bold green]")
+def export_cmd(
+    format_type: str = typer.Option("csv", "--format", help="Export format: csv or json"),
+    output: Optional[str] = typer.Option(None, "--output", help="Output file path"),
+) -> None:
+    """Export application history to CSV or JSON."""
+    db = DatabaseManager()
+    apps = db.list_applications(limit=1000)
+
+    if not output:
+        output = f"applications_export.{format_type.lower()}"
+
+    out_path = Path(output)
+
+    if format_type.lower() == "json":
+        data = [a.model_dump() for a in apps]
+        out_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
+    else:
+        with open(out_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["application_id", "site", "job_id", "status", "trust_level", "created_at"])
+            for a in apps:
+                writer.writerow([a.application_id, a.site, a.job_id, a.status.value, a.trust_level.value, a.created_at])
+
+    console.print(f"[bold green][OK] Exported {len(apps)} applications to {out_path.resolve()}[/bold green]")
+
+
+from jobot.scheduler import SchedulerManager
+
+
+@app.command("schedule")
+def schedule_cmd(
+    action: str = typer.Argument("list", help="Action: 'list', 'add', 'remove'"),
+    cron: Optional[str] = typer.Option(None, "--cron", help="Cron expression (e.g. '0 9 * * 1-5')"),
+    command: Optional[str] = typer.Option(None, "--command", help="Command to execute"),
+    schedule_id: Optional[str] = typer.Option(None, "--id", help="Schedule ID to remove"),
+) -> None:
+    """Manage cron-like automated application schedules."""
+    sm = SchedulerManager()
+
+    if action == "add":
+        if not cron or not command:
+            console.print("[bold red]Please specify --cron and --command for add action.[/bold red]")
+            return
+        entry = sm.add_schedule(cron, command)
+        console.print(f"[bold green][OK] Schedule added: {entry['schedule_id']} ({cron}) -> {command}[/bold green]")
+    elif action == "remove":
+        if not schedule_id:
+            console.print("[bold red]Please specify --id to remove.[/bold red]")
+            return
+        success = sm.remove_schedule(schedule_id)
+        if success:
+            console.print(f"[bold green][OK] Schedule '{schedule_id}' removed.[/bold green]")
+        else:
+            console.print(f"[yellow]Schedule '{schedule_id}' not found.[/yellow]")
+    else:
+        schedules = sm.list_schedules()
+        if not schedules:
+            console.print("[yellow]No background schedules configured.[/yellow]")
+            return
+        table = Table(title="Configured Jobot Schedules")
+        table.add_column("Schedule ID", style="cyan")
+        table.add_column("Cron", style="bold yellow")
+        table.add_column("Command", style="green")
+        for s in schedules:
+            table.add_row(s.get("schedule_id"), s.get("cron"), s.get("command"))
+        console.print(table)
 
 
 from jobot.obs.tracing import TraceLogger

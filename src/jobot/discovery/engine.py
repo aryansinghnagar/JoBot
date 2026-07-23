@@ -16,13 +16,16 @@ class JobMatchResult(BaseModel):
     recommendation: str  # "HIGH_FIT", "MEDIUM_FIT", "LOW_FIT"
 
 
+from jobot.ai.skill_extractor import SkillExtractor
+
+
 class JobDiscoveryEngine:
     """
     Automated Job Search & Skill Matching Engine (Layer D).
     Discovers relevant job postings on configured portals and computes candidate fit scores.
     """
 
-    def __init__(self, active_portals: Optional[List[str]] = None) -> None:
+    def __init__(self, active_portals: Optional[List[str]] = None, skill_extractor: Optional[SkillExtractor] = None) -> None:
         if active_portals is None:
             active_portals = [
                 "naukri", "linkedin", "indeed", "greenhouse", "lever", 
@@ -30,13 +33,18 @@ class JobDiscoveryEngine:
                 "shine", "foundit", "hirist", "ziprecruiter", "smartrecruiters"
             ]
         self.active_portals = active_portals
+        self.skill_extractor = skill_extractor or SkillExtractor()
 
     def _get_adapter(self, site: str) -> SiteAdapter:
         return AdapterRegistry.get_adapter(site)
 
     def evaluate_match(self, posting: JobPosting, profile: UserProfile) -> JobMatchResult:
         """Compute matching score between candidate profile skills and job requisition skills."""
-        if not posting.parsed_skills:
+        skills_to_check = posting.parsed_skills
+        if not skills_to_check and posting.description:
+            skills_to_check = self.skill_extractor._rule_based_extraction(posting.description)
+
+        if not skills_to_check:
             return JobMatchResult(
                 posting=posting,
                 match_score=0.75,
@@ -46,10 +54,10 @@ class JobDiscoveryEngine:
             )
 
         candidate_skills_set = {s.lower() for s in profile.skills}
-        matching = [s for s in posting.parsed_skills if s.lower() in candidate_skills_set]
-        missing = [s for s in posting.parsed_skills if s.lower() not in candidate_skills_set]
+        matching = [s for s in skills_to_check if s.lower() in candidate_skills_set]
+        missing = [s for s in skills_to_check if s.lower() not in candidate_skills_set]
 
-        score = len(matching) / len(posting.parsed_skills) if posting.parsed_skills else 1.0
+        score = len(matching) / len(skills_to_check) if skills_to_check else 1.0
 
         rec = "HIGH_FIT" if score >= 0.6 else ("MEDIUM_FIT" if score >= 0.4 else "LOW_FIT")
         return JobMatchResult(
