@@ -105,10 +105,11 @@ def profile_cmd(
 def continuous_campaign_cmd(
     goal: int = typer.Option(1000, "--goal", help="Target total applications goal (default: 1000)"),
     min_match: float = typer.Option(0.20, "--min-match", help="Minimum match score threshold (default: 0.20 for 20%)"),
+    auto_submit: bool = typer.Option(True, "--auto-submit/--supervised", help="Run in autonomous submit mode or supervised approval mode"),
 ) -> None:
     """Run continuous round-robin campaign across 15 portals maintaining log.md at project root."""
     runner = ContinuousCampaignRunner()
-    asyncio.run(runner.run_continuous_campaign(goal_count=goal, min_match=min_match))
+    asyncio.run(runner.run_continuous_campaign(goal_count=goal, min_match=min_match, auto_submit=auto_submit))
 
 
 @app.command("auto-apply")
@@ -549,6 +550,22 @@ def login_cmd(
         session = BrowserSession(portal=portal_clean, headless=False)
         asyncio.run(session.start())
         console.print(f"[bold green][OK] Browser launched. Complete login in browser window.[/bold green]")
+
+
+@app.command("reset-db")
+def reset_db_cmd(
+    confirm: bool = typer.Option(False, "--confirm", help="Confirm database reset"),
+) -> None:
+    """Clear synthetic and test application history from SQLite database."""
+    if not confirm:
+        user_ok = Confirm.ask("[bold red]Are you sure you want to clear all stored application history in SQLite?[/bold red]")
+        if not user_ok:
+            console.print("[yellow]Database reset cancelled.[/yellow]")
+            return
+
+    db = DatabaseManager()
+    deleted_count = db.clear_all_applications()
+    console.print(f"[bold green][OK] Cleared {deleted_count} application records from database.[/bold green]")
 
 
 if __name__ == "__main__":

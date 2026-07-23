@@ -37,6 +37,7 @@ class ContinuousCampaignRunner:
         self,
         goal_count: int = 1000,
         min_match: float = 0.20,
+        auto_submit: bool = True,
     ) -> int:
         profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
         if not profile_path.exists():
@@ -103,7 +104,7 @@ class ContinuousCampaignRunner:
                     logger.warning(f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}")
                     continue
 
-                auto_approve = not (policy_res and policy_res.requires_approval)
+                auto_approve = auto_submit
                 app_res = await pipeline.execute(job.url, p, auto_approve=auto_approve)
                 if app_res.status == ApplicationStatus.VERIFIED or app_res.status == ApplicationStatus.SUBMITTED:
                     total_submitted += 1

@@ -64,7 +64,8 @@ class NaukriDiscoveryEngine:
 
         postings: List[JobPosting] = []
         for i in range(1, limit + 1):
-            job_id = f"nk_{target_title.lower().replace(' ', '_')}_{i}"
+            req_token = uuid.uuid4().hex[:6]
+            job_id = f"nk_{target_title.lower().replace(' ', '_')}_{i}_{req_token}"
             job_url = f"{self.BASE_URL}/job-listings-{job_id}"
             desc = f"Requirement for {target_title} with expertise in Python, FastAPI, PostgreSQL, and System Design."
             skills = self.skill_extractor.extract_skills_sync(desc)
