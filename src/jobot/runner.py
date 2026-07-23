@@ -87,8 +87,15 @@ class ContinuousCampaignRunner:
 
                 # Policy Enforcement Check
                 daily_count = self.db.get_daily_application_count(job.site)
+                intent_app = Application(
+                    application_id="intent_check",
+                    job_id=job.job_id,
+                    site=job.site,
+                    profile_id=p.profile_id,
+                    status=ApplicationStatus.INTENT,
+                )
                 policy_res = self.policy_engine.check_application_policy(
-                    job, p, match.posting, daily_submitted_count=daily_count
+                    job, p, intent_app, daily_submitted_count=daily_count
                 ) if hasattr(self.policy_engine, "check_application_policy") else None
 
                 if policy_res and not policy_res.allowed:
