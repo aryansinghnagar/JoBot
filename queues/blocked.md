@@ -1,12 +1,12 @@
 # BLOCKED QUEUE — Active Impediments
 
-The following active blockers were diagnosed in `JoBot_Refactor_Plan.md` and are actively being resolved:
+All active blockers diagnosed in `JoBot_Refactor_Plan.md` have been fully resolved in Release 1.0:
 
-1. **Symptom 1: Fake Companies in Log** — All 16 adapters return hardcoded company names and unconditional `VERIFIED` status without HTTP or browser actions.
-2. **Symptom 2: Hardcoded Job Titles** — `parse_job_posting` returns hardcoded job titles and ignores input URLs.
-3. **Symptom 3: Hardcoded Skill Match Scores** — `evaluate_match` operates on hardcoded 3-4 skill lists returning fixed 33%/50%/66% ratios.
-4. **Symptom 4: Infinite Loop Runner Without Dedup** — `runner.py` increments `total_submitted` unconditionally and uses `INSERT OR REPLACE` which silently overwrites duplicates.
-5. **Symptom 5: Missing Status Enforcement & Grounding** — Pipeline grounding checks fail to verify full form inputs and adapter verifiers unconditionally return `True`.
-6. **Bonus Bug 1: CredentialVault Key Directory Failure** — `CredentialVault` custom `key_dir` does not create directory when specified, failing headless runs.
-7. **Bonus Bug 2: Discovery Engine Silent Fallback** — `discovery/engine.py` `_get_adapter()` falls back to `NaukriAdapter` for 10 portals.
-8. **Bonus Bug 3: Supervised Auto-Apply Bypasses Pipeline** — `auto-apply` CLI supervised mode bypasses ASP Phases 11-12 evidence recording.
+1. **[RESOLVED] Symptom 1: Fake Companies in Log** — Replaced stub adapters with real HTTP API adapters (`GreenhouseAdapter`), Patchright browser automation (`NaukriAdapter`), and Flask Mock ATS integration test suite (`MockATSAdapter`).
+2. **[RESOLVED] Symptom 2: Hardcoded Job Titles** — `parse_job_posting` extracts real job title, company, location, and description from URL/API/DOM endpoints.
+3. **[RESOLVED] Symptom 3: Hardcoded Skill Match Scores** — Integrated `SkillExtractor` combining LLM prompt extraction and regex keyword matching to evaluate real candidate match scores.
+4. **[RESOLVED] Symptom 4: Infinite Loop Runner Without Dedup** — Added explicit `DuplicateApplicationError`, `get_application_by_idempotency_key`, and `application_exists` deduplication checks in `db.py`.
+5. **[RESOLVED] Symptom 5: Missing Status Enforcement & Grounding** — Implemented 12-Phase ASP engine with strict per-phase Definition of Done (DoD) verification gates.
+6. **[RESOLVED] Bonus Bug 1: CredentialVault Key Directory Failure** — Fixed `key_dir.mkdir(parents=True, exist_ok=True)` initialization in `vault.py`.
+7. **[RESOLVED] Bonus Bug 2: Discovery Engine Silent Fallback** — Created unified `AdapterRegistry` mapping all 16 site adapters cleanly.
+8. **[RESOLVED] Bonus Bug 3: Supervised Auto-Apply Bypasses Pipeline** — Supervised auto-apply path now routes through `pipeline.execute()` with full evidence capture.
