@@ -9,7 +9,7 @@ from jobot.obs.application_md_logger import ApplicationMarkdownLogger
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 from jobot.policy.engine import PolicyEngine
-from jobot.models.domain import ApplicationStatus
+from jobot.models.domain import Application, ApplicationStatus
 
 logger = logging.getLogger(__name__)
 
