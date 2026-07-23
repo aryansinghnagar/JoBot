@@ -93,6 +93,7 @@ class ContinuousCampaignRunner:
                     site=job.site,
                     profile_id=p.profile_id,
                     status=ApplicationStatus.INTENT,
+                    idempotency_key=f"intent_{job.job_id}",
                 )
                 policy_res = self.policy_engine.check_application_policy(
                     job, p, intent_app, daily_submitted_count=daily_count
