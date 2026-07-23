@@ -40,9 +40,9 @@ class JobDiscoveryEngine:
 
     def evaluate_match(self, posting: JobPosting, profile: UserProfile) -> JobMatchResult:
         """Compute matching score between candidate profile skills and job requisition skills."""
-        skills_to_check = posting.parsed_skills
-        if not skills_to_check and posting.description:
-            skills_to_check = self.skill_extractor._rule_based_extraction(posting.description)
+        extracted_skills = self.skill_extractor.extract_skills_sync(posting.description) if posting.description else []
+        combined_skills = list(dict.fromkeys(posting.parsed_skills + extracted_skills))
+        skills_to_check = combined_skills if combined_skills else posting.parsed_skills
 
         if not skills_to_check:
             return JobMatchResult(

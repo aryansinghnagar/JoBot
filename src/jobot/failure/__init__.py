@@ -1,3 +1,3 @@
-from jobot.failure.catalog import CircuitBreaker, CircuitBreakerState, FailureMode
+from jobot.failure.catalog import FailureMode
 
-__all__ = ["FailureMode", "CircuitBreakerState", "CircuitBreaker"]
+__all__ = ["FailureMode"]

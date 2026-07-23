@@ -50,7 +50,7 @@ class AdapterRegistry:
         s = site.lower().strip()
         adapter_cls = cls._registry.get(s)
         if adapter_cls is None:
-            return NaukriAdapter()
+            raise ValueError(f"No adapter registered for portal: {site}")
         return adapter_cls()
 
     @classmethod

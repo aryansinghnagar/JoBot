@@ -1,12 +1,14 @@
-# BLOCKED QUEUE — Active Impediments
+# BLOCKED QUEUE — Active Impediments & Review 2 Findings
 
-All active blockers diagnosed in `JoBot_Refactor_Plan.md` have been fully resolved in Release 1.0:
+Status of findings from `JoBot_Refactor_Review_2.md`:
 
-1. **[RESOLVED] Symptom 1: Fake Companies in Log** — Replaced stub adapters with real HTTP API adapters (`GreenhouseAdapter`), Patchright browser automation (`NaukriAdapter`), and Flask Mock ATS integration test suite (`MockATSAdapter`).
-2. **[RESOLVED] Symptom 2: Hardcoded Job Titles** — `parse_job_posting` extracts real job title, company, location, and description from URL/API/DOM endpoints.
-3. **[RESOLVED] Symptom 3: Hardcoded Skill Match Scores** — Integrated `SkillExtractor` combining LLM prompt extraction and regex keyword matching to evaluate real candidate match scores.
-4. **[RESOLVED] Symptom 4: Infinite Loop Runner Without Dedup** — Added explicit `DuplicateApplicationError`, `get_application_by_idempotency_key`, and `application_exists` deduplication checks in `db.py`.
-5. **[RESOLVED] Symptom 5: Missing Status Enforcement & Grounding** — Implemented 12-Phase ASP engine with strict per-phase Definition of Done (DoD) verification gates.
-6. **[RESOLVED] Bonus Bug 1: CredentialVault Key Directory Failure** — Fixed `key_dir.mkdir(parents=True, exist_ok=True)` initialization in `vault.py`.
-7. **[RESOLVED] Bonus Bug 2: Discovery Engine Silent Fallback** — Created unified `AdapterRegistry` mapping all 16 site adapters cleanly.
-8. **[RESOLVED] Bonus Bug 3: Supervised Auto-Apply Bypasses Pipeline** — Supervised auto-apply path now routes through `pipeline.execute()` with full evidence capture.
+1. **[RESOLVED - P0.1] Missing `Dict` Import in `obs/alerts.py`** — Added `Dict` to typing imports.
+2. **[RESOLVED - P0.2] Missing `json`/`datetime` Imports in `cli/main.py`** — Added imports; `jobot pause`, `resume`, `export` verified.
+3. **[RESOLVED - P0.3] Greenhouse URL Parser Bug & Error Handling** — Passed `application.job_url` and set `ApplicationStatus.FAILED` on HTTP submission errors.
+4. **[RESOLVED - P0.4] Premature `release-1.0` Tag & State Docs** — Tag retracted (`git tag -d release-1.0`). State documentation synchronized.
+5. **[RESOLVED - P0.5] EvalHarness mkdir Permission Exception** — Wrapped in try/except block.
+6. **[RESOLVED - P1.7] AdapterRegistry Silent Fallback** — Replaced silent Naukri fallback with explicit `ValueError`.
+7. **[RESOLVED - P1.8] Duplicate Schedule Decorators** — Removed duplicate simple `schedule_cmd`.
+8. **[RESOLVED - P1.9] Duplicate Flask Fixtures** — De-duplicated `mock_ats_server` fixtures in `test_asp.py` and `test_qa_engine_wired.py`.
+9. **[RESOLVED - P1.10] Duplicate CircuitBreaker** — Removed dead `CircuitBreaker` in `failure/catalog.py` in favor of canonical `stealth/circuit_breaker.py`.
+10. **[RESOLVED - P2.6] CLI Command Test Coverage** — Built `tests/test_cli_commands.py`.

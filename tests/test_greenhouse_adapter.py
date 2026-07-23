@@ -24,7 +24,7 @@ async def test_greenhouse_adapter_parse_posting():
 
 
 @pytest.mark.asyncio
-async def test_greenhouse_adapter_form_fill_and_submit():
+async def test_greenhouse_adapter_form_fill_and_submit(monkeypatch):
     adapter = GreenhouseAdapter()
     url = "https://boards.greenhouse.io/techcorp/jobs/999"
     job = await adapter.parse_job_posting(url)
@@ -39,11 +39,21 @@ async def test_greenhouse_adapter_form_fill_and_submit():
         job_id=job.job_id,
         site="greenhouse",
         idempotency_key="key_gh",
+        job_url=job.url,
     )
 
     filled = await adapter.fill_form(job, profile, app)
     assert filled["email"] == "gh@example.com"
     assert app.status == ApplicationStatus.FILLED
+
+    # Mock HTTP 201 response for API POST submit
+    class MockHTTPResponse:
+        status = 201
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+
+    import urllib.request
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=5: MockHTTPResponse())
 
     submitted = await adapter.submit_application(app)
     assert submitted is True

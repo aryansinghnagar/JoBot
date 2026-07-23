@@ -7,27 +7,14 @@ from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.models.domain import ApplicationStatus, PersonalInfo, UserProfile
 from jobot.storage.db import DatabaseManager
-from tests.mock_ats.server import app as flask_app
-
-
-@pytest.fixture(scope="module")
-def mock_ats_server():
-    server_thread = threading.Thread(
-        target=lambda: flask_app.run(
-            host="127.0.0.1", port=5800, debug=False, use_reloader=False
-        ),
-        daemon=True,
-    )
-    server_thread.start()
-    time.sleep(1.0)
-    yield "http://127.0.0.1:5800"
+# Uses live_live_mock_ats_server session fixture from conftest.py
 
 
 @pytest.mark.asyncio
-async def test_asp_closed_loop_autonomous(mock_ats_server):
+async def test_asp_closed_loop_autonomous(live_mock_ats_server):
     with tempfile.TemporaryDirectory() as tmpdir:
         db = DatabaseManager(Path(tmpdir) / "test.db")
-        adapter = MockATSAdapter(base_url=mock_ats_server)
+        adapter = MockATSAdapter(base_url=live_mock_ats_server)
         pipeline = ApplicationSubmissionPipeline(adapter, db, Path(tmpdir) / "artifacts")
 
         profile = UserProfile(
@@ -40,7 +27,7 @@ async def test_asp_closed_loop_autonomous(mock_ats_server):
             ),
         )
 
-        app_result = await pipeline.execute(f"{mock_ats_server}/jobs/1", profile, auto_approve=True)
+        app_result = await pipeline.execute(f"{live_mock_ats_server}/jobs/1", profile, auto_approve=True)
 
         assert app_result.status == ApplicationStatus.VERIFIED
         assert app_result.form_values["email"] == "asp_test@example.com"
@@ -48,10 +35,10 @@ async def test_asp_closed_loop_autonomous(mock_ats_server):
 
 
 @pytest.mark.asyncio
-async def test_asp_supervised_approval_gate(mock_ats_server):
+async def test_asp_supervised_approval_gate(live_mock_ats_server):
     with tempfile.TemporaryDirectory() as tmpdir:
         db = DatabaseManager(Path(tmpdir) / "test.db")
-        adapter = MockATSAdapter(base_url=mock_ats_server)
+        adapter = MockATSAdapter(base_url=live_mock_ats_server)
         pipeline = ApplicationSubmissionPipeline(adapter, db, Path(tmpdir) / "artifacts")
 
         profile = UserProfile(
@@ -60,6 +47,6 @@ async def test_asp_supervised_approval_gate(mock_ats_server):
         )
 
         # Supervised mode (auto_approve = False) pauses at PENDING_APPROVAL
-        app_result = await pipeline.execute(f"{mock_ats_server}/jobs/1", profile, auto_approve=False)
+        app_result = await pipeline.execute(f"{live_mock_ats_server}/jobs/1", profile, auto_approve=False)
 
         assert app_result.status == ApplicationStatus.PENDING_APPROVAL
