@@ -1,0 +1,16 @@
+{
+  "name": "jobot",
+  "version": "0.1.0",
+  "description": "Autonomous Job Application Operating System - Dual Stack Package",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\"",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\"",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "vitest": "^1.3.1"
+  }
+}

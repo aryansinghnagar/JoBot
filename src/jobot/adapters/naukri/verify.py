@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Optional
 from jobot.models.domain import Application, ApplicationStatus
 
 logger = logging.getLogger(__name__)
