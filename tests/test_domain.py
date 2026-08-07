@@ -1,5 +1,4 @@
-import pytest
-from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile, WorkExperience
+from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
 
 
 def test_user_profile_creation():

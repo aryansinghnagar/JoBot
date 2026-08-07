@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 from jobot.adapters import AdapterRegistry
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.discovery.engine import JobDiscoveryEngine

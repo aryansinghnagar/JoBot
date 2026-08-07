@@ -3,27 +3,26 @@ import csv
 from datetime import datetime
 import json
 from pathlib import Path
-from typing import List, Optional
+import shutil
+from typing import Optional
 import typer
 from rich.console import Console
 from rich.prompt import Confirm
 from rich.table import Table
-from jobot.adapters import (
-    AdapterRegistry,
-    GreenhouseAdapter,
-    IndeedAdapter,
-    LeverAdapter,
-    LinkedInAdapter,
-    MockATSAdapter,
-    NaukriAdapter,
-    SiteAdapter,
-)
+
+from jobot.adapters import AdapterRegistry, SiteAdapter
+from jobot.adapters.naukri.login import NaukriLoginFlow
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.evals.harness import EvalHarness
 from jobot.gui.sidecar import StdioSidecarServer
 from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
+from jobot.obs.alerts import AlertDispatcher
 from jobot.obs.manual_test_logger import ManualTestLogger
+from jobot.obs.tracing import TraceLogger
 from jobot.runner import ContinuousCampaignRunner
+from jobot.scheduler import SchedulerManager
+from jobot.stealth.browser import BrowserSession
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 
@@ -305,7 +304,6 @@ def resume_cmd() -> None:
     console.print("[bold green][OK] Automation loops resumed.[/bold green]")
 
 
-import csv
 
 
 @app.command("export")
@@ -333,9 +331,6 @@ def export_cmd(
                 writer.writerow([a.application_id, a.site, a.job_id, a.status.value, a.trust_level.value, a.created_at])
 
     console.print(f"[bold green][OK] Exported {len(apps)} applications to {out_path.resolve()}[/bold green]")
-
-
-from jobot.scheduler import SchedulerManager
 
 
 @app.command("schedule")
@@ -377,9 +372,6 @@ def schedule_cmd(
         console.print(table)
 
 
-from jobot.obs.tracing import TraceLogger
-
-
 @app.command("traces")
 def traces_cmd(
     action: str = typer.Argument("list", help="Action: 'list', 'show'"),
@@ -419,9 +411,6 @@ def traces_cmd(
                 s.get("start_time", "")[:19],
             )
         console.print(table)
-
-
-from jobot.obs.alerts import AlertDispatcher
 
 
 @app.command("alerts")
@@ -467,9 +456,6 @@ def alerts_cmd(
     console.print(table)
 
 
-from jobot.evals.harness import EvalHarness
-
-
 @app.command("evals")
 def evals_cmd(
     action: str = typer.Argument("run", help="Action: 'run'"),
@@ -478,7 +464,7 @@ def evals_cmd(
     harness = EvalHarness()
     res = harness.run_eval_suite()
 
-    console.print(f"\n[bold cyan]=== JoBot Continuous Evaluation Results ===[/bold cyan]")
+    console.print("\n[bold cyan]=== JoBot Continuous Evaluation Results ===[/bold cyan]")
     console.print(f"Scenarios Evaluated: [bold]{res['total']}[/bold]")
     console.print(f"Scenarios Passed:    [bold green]{res['passed']}[/bold green]")
     console.print(f"Overall Pass Rate:   [bold yellow]{int(res['pass_rate']*100)}%[/bold yellow]\n")
@@ -491,11 +477,6 @@ def evals_cmd(
         table.add_row(cat, f"{scores['passed']} / {scores['total']}")
 
     console.print(table)
-
-
-import shutil
-from jobot.adapters.naukri.login import NaukriLoginFlow
-from jobot.stealth.browser import BrowserSession
 
 
 @app.command("login")
@@ -549,7 +530,7 @@ def login_cmd(
     else:
         session = BrowserSession(portal=portal_clean, headless=False)
         asyncio.run(session.start())
-        console.print(f"[bold green][OK] Browser launched. Complete login in browser window.[/bold green]")
+        console.print("[bold green][OK] Browser launched. Complete login in browser window.[/bold green]")
 
 
 @app.command("reset-db")

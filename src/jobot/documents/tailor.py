@@ -27,7 +27,7 @@ class DocumentTailor:
 
     def verify_fact_truthfulness(self, tailored_text: str, profile: UserProfile) -> bool:
         """Verify that tailored text contains no ungrounded experience or skill claims."""
-        profile_skills_lower = [s.lower() for s in profile.skills]
+        [s.lower() for s in profile.skills]
         # Ensure candidate skills mentioned in text exist in profile skills
         return True
 

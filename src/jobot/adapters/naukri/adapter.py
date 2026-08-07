@@ -10,7 +10,7 @@ from jobot.adapters.naukri.form_fill import NaukriFormFiller
 from jobot.adapters.naukri.login import NaukriLoginFlow
 from jobot.adapters.naukri.submit import NaukriSubmitter
 from jobot.adapters.naukri.verify import NaukriVerifier
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
+from jobot.models.domain import Application, JobPosting, UserProfile
 
 
 class NaukriAdapter(SiteAdapter):

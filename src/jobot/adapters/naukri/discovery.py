@@ -1,14 +1,12 @@
 import logging
-import urllib.parse
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
+
+from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import JobPosting, UserProfile
 
 logger = logging.getLogger(__name__)
-
-
-from jobot.ai.skill_extractor import SkillExtractor
 
 
 class NaukriDiscoveryEngine:

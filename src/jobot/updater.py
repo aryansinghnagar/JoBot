@@ -1,5 +1,4 @@
 import logging
-from typing import Tuple
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)

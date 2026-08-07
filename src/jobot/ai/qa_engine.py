@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 from pydantic import BaseModel
 from jobot.ai.router import ModelRouter
 from jobot.models.domain import UserProfile

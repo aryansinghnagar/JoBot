@@ -1,12 +1,10 @@
 import hashlib
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
 from jobot.ai.qa_engine import QAEngine
-from jobot.asp.exceptions import PipelinePhaseFailure
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -267,7 +265,7 @@ class ApplicationSubmissionPipeline:
             return DoDResult(passed=False, reason=f"Submission error: {exc}")
 
         # Log submission evidence
-        screenshot_bytes = await self.adapter.capture_screenshot()
+        await self.adapter.capture_screenshot()
         evidence_item = EvidenceItem(
             evidence_id=str(uuid.uuid4()),
             step_name="phase_11_submit",

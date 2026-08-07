@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from pydantic import BaseModel
 from jobot.storage.db import DatabaseManager
 

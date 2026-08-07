@@ -1,4 +1,3 @@
-import pytest
 from jobot.obs.manual_test_logger import ManualTestLogger
 
 

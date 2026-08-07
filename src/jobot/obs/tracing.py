@@ -1,6 +1,8 @@
+import json
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from jobot.failure.catalog import FailureMode
@@ -31,10 +33,6 @@ class TraceSpan(BaseModel):
     start_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
     attributes: Dict[str, Any] = Field(default_factory=dict)
-
-
-import json
-from pathlib import Path
 
 
 class TraceLogger:

@@ -1,5 +1,4 @@
 import json
-import pytest
 from typer.testing import CliRunner
 from jobot.cli.main import app
 

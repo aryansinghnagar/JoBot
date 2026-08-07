@@ -1,8 +1,10 @@
+import json
 import logging
 import os
+import urllib.request
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -24,10 +26,6 @@ class ModelCallMetrics(BaseModel):
     completion_tokens: int = 0
     estimated_cost_usd: float = 0.0
     latency_ms: float = 0.0
-
-
-import json
-import urllib.request
 
 
 class ModelRouter:

@@ -1,5 +1,4 @@
-import pytest
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel, UserProfile
+from jobot.models.domain import Application, JobPosting, TrustLevel, UserProfile
 from jobot.policy.engine import PolicyEngine
 
 

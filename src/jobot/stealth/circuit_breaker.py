@@ -3,6 +3,8 @@ import logging
 import time
 from typing import Any, Callable, Dict, Optional, TypeVar
 
+from jobot.obs.alerts import AlertDispatcher, AlertLevel
+
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
@@ -11,9 +13,6 @@ class CircuitOpenError(Exception):
     """Raised when an operation is attempted while circuit is OPEN."""
 
     pass
-
-
-from jobot.obs.alerts import AlertDispatcher, AlertLevel
 
 
 class CircuitBreaker:

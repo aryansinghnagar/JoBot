@@ -27,7 +27,7 @@ class StdioSidecarServer:
     def process_request(self, request_dict: Dict[str, Any]) -> Dict[str, Any]:
         req_id = request_dict.get("id")
         method = request_dict.get("method")
-        params = request_dict.get("params", {})
+        request_dict.get("params", {})
 
         if method == "ping":
             return JsonRpcResponse(id=req_id, result={"status": "pong", "version": "1.0.0"}).model_dump()

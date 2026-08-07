@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import os
 import logging
 from patchright.async_api import async_playwright, BrowserContext, Page, Playwright
 

@@ -1,6 +1,6 @@
 import pytest
 from jobot.ai.qa_engine import QAEngine, QuestionType
-from jobot.ai.router import ModelProvider, ModelRouter
+from jobot.ai.router import ModelRouter
 from jobot.models.domain import PersonalInfo, UserProfile
 
 

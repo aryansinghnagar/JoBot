@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import List
 from pydantic import BaseModel
 from jobot.models.domain import UserProfile
 
