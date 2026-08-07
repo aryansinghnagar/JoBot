@@ -14944,10610 +14944,11081 @@ The AI subsystem is acceptable for initial integration when:
 
 &#x20;15. no model can activate submission.
 
---------------------------------------------
+---
+
 63. Security program
-63.1 Security objective
-The system processes unusually sensitive information:
- * identity;
- * contact details;
- * residential address;
- * education;
- * employment history;
- * compensation;
- * immigration and work authorization;
- * demographic data;
- * disability and veteran status;
- * browser sessions;
- * email;
- * model-provider credentials;
- * job-application documents.
-Security is therefore a primary architecture constraint, not a release-hardening task.
-The security program must protect:
- 1. confidentiality of candidate and third-party data;
- 2. integrity of profile facts and applications;
- 3. authorization of consequential actions;
- 4. availability and recoverability of local state;
- 5. authenticity of releases and adapter updates;
- 6. auditability without secret leakage;
- 7. safe failure under compromised or malicious external content.
-63.2 Security posture
-Default posture:
- * local-first;
- * deny by default;
- * least privilege;
- * explicit capabilities;
- * encrypted at rest;
- * loopback-only services;
- * no telemetry unless opted in;
- * no plaintext cloud custody by default;
- * no raw government identifiers;
- * no unrestricted plugin execution;
- * no invisible external actions;
- * no security-control bypass;
- * signed release artifacts;
- * conservative update behavior;
- * human review at high-risk boundaries.
-63.3 Security standards baseline
-The implementation and review program should map controls against current versions of:
- * OWASP Application Security Verification Standard;
- * OWASP Top 10;
- * OWASP guidance for LLM applications;
- * NIST Secure Software Development Framework;
- * NIST AI Risk Management Framework;
- * OAuth 2.0 security best-current-practice guidance;
- * OpenID Connect security guidance;
- * SLSA supply-chain levels and provenance;
- * Common Weakness Enumeration;
- * Common Vulnerability Scoring System;
- * platform-specific secure credential-storage guidance.
-Standards inform the control catalog. They do not substitute for a product-specific threat model.
-63.4 Security ownership
-Before public release, assign:
- * security lead;
- * privacy lead;
- * release-signing custodians;
- * vulnerability intake owner;
- * incident commander rotation;
- * adapter-security reviewer;
- * dependency-update owner;
- * backup and recovery owner.
-One person may hold multiple roles initially, but responsibilities must remain explicit.
-63.5 Security gates by version
-Version Required security maturity dev-0.1 Threat model, secret store, encrypted state, secure defaults, basic SAST and secret scanning dev-0.5 Portal isolation, browser controls, extension security, privacy controls, dependency review dev-1.0 Adversarial tests, deletion tests, restore tests, mutation tests for policy gates dev-2.0 Incident drills, adapter kill switches, diagnostic redaction, fault injection dev-3.0 Hosted-relay security, remote-worker identity, local-model endpoint hardening dev-4.0 Independent assessment, penetration test, cryptographic review, remediation release-1.0 No unresolved critical/high findings, signed artifacts, SBOM, provenance, response process
-----------------------------------------
+    63.1 Security objective
+    The system processes unusually sensitive information:
+
+- identity;
+- contact details;
+- residential address;
+- education;
+- employment history;
+- compensation;
+- immigration and work authorization;
+- demographic data;
+- disability and veteran status;
+- browser sessions;
+- email;
+- model-provider credentials;
+- job-application documents.
+  Security is therefore a primary architecture constraint, not a release-hardening task.
+  The security program must protect:
+
+1.  confidentiality of candidate and third-party data;
+2.  integrity of profile facts and applications;
+3.  authorization of consequential actions;
+4.  availability and recoverability of local state;
+5.  authenticity of releases and adapter updates;
+6.  auditability without secret leakage;
+7.  safe failure under compromised or malicious external content.
+    63.2 Security posture
+    Default posture:
+
+- local-first;
+- deny by default;
+- least privilege;
+- explicit capabilities;
+- encrypted at rest;
+- loopback-only services;
+- no telemetry unless opted in;
+- no plaintext cloud custody by default;
+- no raw government identifiers;
+- no unrestricted plugin execution;
+- no invisible external actions;
+- no security-control bypass;
+- signed release artifacts;
+- conservative update behavior;
+- human review at high-risk boundaries.
+  63.3 Security standards baseline
+  The implementation and review program should map controls against current versions of:
+- OWASP Application Security Verification Standard;
+- OWASP Top 10;
+- OWASP guidance for LLM applications;
+- NIST Secure Software Development Framework;
+- NIST AI Risk Management Framework;
+- OAuth 2.0 security best-current-practice guidance;
+- OpenID Connect security guidance;
+- SLSA supply-chain levels and provenance;
+- Common Weakness Enumeration;
+- Common Vulnerability Scoring System;
+- platform-specific secure credential-storage guidance.
+  Standards inform the control catalog. They do not substitute for a product-specific threat model.
+  63.4 Security ownership
+  Before public release, assign:
+- security lead;
+- privacy lead;
+- release-signing custodians;
+- vulnerability intake owner;
+- incident commander rotation;
+- adapter-security reviewer;
+- dependency-update owner;
+- backup and recovery owner.
+  One person may hold multiple roles initially, but responsibilities must remain explicit.
+  63.5 Security gates by version
+  Version Required security maturity dev-0.1 Threat model, secret store, encrypted state, secure defaults, basic SAST and secret scanning dev-0.5 Portal isolation, browser controls, extension security, privacy controls, dependency review dev-1.0 Adversarial tests, deletion tests, restore tests, mutation tests for policy gates dev-2.0 Incident drills, adapter kill switches, diagnostic redaction, fault injection dev-3.0 Hosted-relay security, remote-worker identity, local-model endpoint hardening dev-4.0 Independent assessment, penetration test, cryptographic review, remediation release-1.0 No unresolved critical/high findings, signed artifacts, SBOM, provenance, response process
+
+---
+
 64. Security assets
-64.1 Critical assets
-Authentication assets
- * portal passwords;
- * OAuth access and refresh tokens;
- * browser cookies;
- * session storage;
- * MFA trust state;
- * email tokens;
- * model-provider API keys;
- * password-manager references.
-Candidate assets
- * canonical profile;
- * restricted profile fields;
- * application answers;
- * salary information;
- * authorization details;
- * address and contact details;
- * documents;
- * application history.
-Integrity assets
- * profile provenance;
- * user approvals;
- * policy rules;
- * adapter packages;
- * application snapshots;
- * submission reconciliation records;
- * audit events;
- * release signatures.
-Operational assets
- * local database;
- * encryption keys;
- * browser profiles;
- * task queue;
- * run checkpoints;
- * backups;
- * recovery keys;
- * hosted-relay device credentials.
-64.2 Asset classification
-Classification Examples Default handling Public Open-source code, public documentation May be committed and shared Internal Local configuration without secrets, synthetic fixtures Local or repository according to policy Confidential Résumé, job history, ordinary application answers Encrypted; minimized model use Restricted Compensation, address, DOB, authorization, demographics Separate protection; explicit access Secret Passwords, tokens, cookies, encryption keys Vault only; never ordinary logs or exports Prohibited Raw government identifiers in canonical storage Reject or immediately redact/delete
-64.3 Data-flow inventory
-Every component must document:
- * input data classes;
- * output data classes;
- * storage;
- * recipients;
- * retention;
- * encryption;
- * purpose;
- * user controls;
- * failure behavior.
-No new integration is complete without a data-flow update.
-----------------------------------------
+    64.1 Critical assets
+    Authentication assets
+
+- portal passwords;
+- OAuth access and refresh tokens;
+- browser cookies;
+- session storage;
+- MFA trust state;
+- email tokens;
+- model-provider API keys;
+- password-manager references.
+  Candidate assets
+- canonical profile;
+- restricted profile fields;
+- application answers;
+- salary information;
+- authorization details;
+- address and contact details;
+- documents;
+- application history.
+  Integrity assets
+- profile provenance;
+- user approvals;
+- policy rules;
+- adapter packages;
+- application snapshots;
+- submission reconciliation records;
+- audit events;
+- release signatures.
+  Operational assets
+- local database;
+- encryption keys;
+- browser profiles;
+- task queue;
+- run checkpoints;
+- backups;
+- recovery keys;
+- hosted-relay device credentials.
+  64.2 Asset classification
+  Classification Examples Default handling Public Open-source code, public documentation May be committed and shared Internal Local configuration without secrets, synthetic fixtures Local or repository according to policy Confidential Résumé, job history, ordinary application answers Encrypted; minimized model use Restricted Compensation, address, DOB, authorization, demographics Separate protection; explicit access Secret Passwords, tokens, cookies, encryption keys Vault only; never ordinary logs or exports Prohibited Raw government identifiers in canonical storage Reject or immediately redact/delete
+  64.3 Data-flow inventory
+  Every component must document:
+- input data classes;
+- output data classes;
+- storage;
+- recipients;
+- retention;
+- encryption;
+- purpose;
+- user controls;
+- failure behavior.
+  No new integration is complete without a data-flow update.
+
+---
+
 65. Threat model
-65.1 Threat actors
-Potential actors include:
- * malicious website operator;
- * compromised legitimate portal;
- * malicious job poster;
- * phishing recruiter;
- * compromised dependency maintainer;
- * malicious browser extension;
- * local malware;
- * unprivileged local user;
- * malicious plugin or adapter;
- * compromised hosted relay;
- * compromised model provider;
- * network attacker;
- * attacker controlling an update channel;
- * accidental user error;
- * faulty model or automation;
- * developer exposing test data;
- * contributor attempting supply-chain compromise.
-65.2 Trust boundaries
-Primary boundaries:
- 1. user ↔ GUI or CLI;
- 2. GUI ↔ local API;
- 3. local API ↔ database;
- 4. application ↔ operating-system vault;
- 5. orchestrator ↔ browser worker;
- 6. browser worker ↔ external websites;
- 7. model router ↔ cloud provider;
- 8. local worker ↔ hosted relay;
- 9. core ↔ adapter;
- 10. application ↔ browser extension;
- 11. application ↔ email provider;
- 12. build system ↔ package registries;
- 13. update client ↔ release channel;
- 14. diagnostics ↔ maintainers.
-65.3 Threat categories
-Spoofing
- * fake employer domains;
- * forged portal pages;
- * malicious local clients calling the API;
- * fake adapter packages;
- * forged update manifests;
- * device impersonation;
- * OAuth redirect manipulation.
-Tampering
- * altered profile facts;
- * modified application answers;
- * changed attachments;
- * database corruption;
- * malicious adapter updates;
- * browser-page manipulation;
- * approval-snapshot substitution;
- * audit-log deletion.
-Repudiation
- * inability to prove what the user approved;
- * inability to establish which document was used;
- * ambiguous submission state;
- * missing model or adapter version;
- * no record of portal warning.
-Information disclosure
- * profile leakage;
- * credential leakage;
- * screenshot leakage;
- * raw prompt leakage;
- * cross-application context leakage;
- * hosted-relay plaintext;
- * diagnostic-bundle leakage;
- * third-party analytics leakage.
-Denial of service
- * portal rate limiting;
- * malicious job page causing loops;
- * disk exhaustion;
- * oversized documents;
- * model request storms;
- * database lock contention;
- * corrupted index;
- * worker crash loop;
- * hostile hosted commands.
-Elevation of privilege
- * model obtaining browser-submit capability;
- * adapter reading unrestricted profile fields;
- * extension reaching local secrets;
- * portal page invoking privileged local API;
- * plugin escaping sandbox;
- * remote worker gaining unauthorized machine access.
-65.4 High-priority abuse cases
- 1. A malicious job description tells the model to upload private files.
- 2. A portal page attempts requests to the loopback API.
- 3. A compromised adapter modifies the final destination or field mapping.
- 4. A fake employer site harvests credentials and résumé data.
- 5. A model introduces a false qualification into a cover letter.
- 6. A stale approval is reused after an attachment changes.
- 7. A browser crash causes duplicate submission or duplicate upload.
- 8. A diagnostic export includes session cookies.
- 9. A hosted relay sends an unauthorized command to the local worker.
- 10. A supply-chain dependency steals profile data.
- 11. A browser extension observes unrelated browsing activity.
- 12. A local backup exposes decrypted restricted data.
- 13. A corrupted profile migration changes salary or employment dates.
- 14. An email parser follows a malicious link.
- 15. A plugin broadens its permissions during update.
-65.5 Threat-model lifecycle
-Update the threat model:
- * before implementing each major integration;
- * when trust boundaries change;
- * before hosted mode;
- * before remote workers;
- * after a security incident;
- * after independent assessment;
- * before release candidates;
- * annually after release.
-Each update must link threats to:
- * controls;
- * tests;
- * owners;
- * residual risk;
- * accepted exceptions.
-----------------------------------------
+    65.1 Threat actors
+    Potential actors include:
+
+- malicious website operator;
+- compromised legitimate portal;
+- malicious job poster;
+- phishing recruiter;
+- compromised dependency maintainer;
+- malicious browser extension;
+- local malware;
+- unprivileged local user;
+- malicious plugin or adapter;
+- compromised hosted relay;
+- compromised model provider;
+- network attacker;
+- attacker controlling an update channel;
+- accidental user error;
+- faulty model or automation;
+- developer exposing test data;
+- contributor attempting supply-chain compromise.
+  65.2 Trust boundaries
+  Primary boundaries:
+
+1.  user ↔ GUI or CLI;
+2.  GUI ↔ local API;
+3.  local API ↔ database;
+4.  application ↔ operating-system vault;
+5.  orchestrator ↔ browser worker;
+6.  browser worker ↔ external websites;
+7.  model router ↔ cloud provider;
+8.  local worker ↔ hosted relay;
+9.  core ↔ adapter;
+10. application ↔ browser extension;
+11. application ↔ email provider;
+12. build system ↔ package registries;
+13. update client ↔ release channel;
+14. diagnostics ↔ maintainers.
+    65.3 Threat categories
+    Spoofing
+
+- fake employer domains;
+- forged portal pages;
+- malicious local clients calling the API;
+- fake adapter packages;
+- forged update manifests;
+- device impersonation;
+- OAuth redirect manipulation.
+  Tampering
+- altered profile facts;
+- modified application answers;
+- changed attachments;
+- database corruption;
+- malicious adapter updates;
+- browser-page manipulation;
+- approval-snapshot substitution;
+- audit-log deletion.
+  Repudiation
+- inability to prove what the user approved;
+- inability to establish which document was used;
+- ambiguous submission state;
+- missing model or adapter version;
+- no record of portal warning.
+  Information disclosure
+- profile leakage;
+- credential leakage;
+- screenshot leakage;
+- raw prompt leakage;
+- cross-application context leakage;
+- hosted-relay plaintext;
+- diagnostic-bundle leakage;
+- third-party analytics leakage.
+  Denial of service
+- portal rate limiting;
+- malicious job page causing loops;
+- disk exhaustion;
+- oversized documents;
+- model request storms;
+- database lock contention;
+- corrupted index;
+- worker crash loop;
+- hostile hosted commands.
+  Elevation of privilege
+- model obtaining browser-submit capability;
+- adapter reading unrestricted profile fields;
+- extension reaching local secrets;
+- portal page invoking privileged local API;
+- plugin escaping sandbox;
+- remote worker gaining unauthorized machine access.
+  65.4 High-priority abuse cases
+
+1.  A malicious job description tells the model to upload private files.
+2.  A portal page attempts requests to the loopback API.
+3.  A compromised adapter modifies the final destination or field mapping.
+4.  A fake employer site harvests credentials and résumé data.
+5.  A model introduces a false qualification into a cover letter.
+6.  A stale approval is reused after an attachment changes.
+7.  A browser crash causes duplicate submission or duplicate upload.
+8.  A diagnostic export includes session cookies.
+9.  A hosted relay sends an unauthorized command to the local worker.
+10. A supply-chain dependency steals profile data.
+11. A browser extension observes unrelated browsing activity.
+12. A local backup exposes decrypted restricted data.
+13. A corrupted profile migration changes salary or employment dates.
+14. An email parser follows a malicious link.
+15. A plugin broadens its permissions during update.
+    65.5 Threat-model lifecycle
+    Update the threat model:
+
+- before implementing each major integration;
+- when trust boundaries change;
+- before hosted mode;
+- before remote workers;
+- after a security incident;
+- after independent assessment;
+- before release candidates;
+- annually after release.
+  Each update must link threats to:
+- controls;
+- tests;
+- owners;
+- residual risk;
+- accepted exceptions.
+
+---
+
 66. Security control architecture
-66.1 Defense in depth
-No single mechanism is sufficient.
-Example for preventing incorrect disclosure:
-profile sensitivity classification
-→ answer policy
-→ task-scoped retrieval
-→ adapter permission
-→ model-context minimization
-→ browser action policy
-→ field verification
-→ final user review
-→ audit record
-66.2 Capability-based access
-Components receive explicit capabilities.
-Examples:
- * browser worker may request approved field values by reference;
- * document worker may read selected facts but not portal credentials;
- * model worker may receive minimized content but not vault access;
- * adapter may request named browser actions but not arbitrary shell execution;
- * hosted relay may enqueue signed commands but not query plaintext profile state.
-66.3 Deny-by-default matrix
-Component Filesystem Secrets Browser Network Profile Core orchestrator Scoped application data References only Through worker Approved endpoints Policy-filtered Browser worker Upload/download sandbox Session reference Yes Approved destinations Per-field retrieval Document worker Artifact workspace None No Normally none Selected facts Model worker No arbitrary files Provider key reference No Provider endpoints Minimized context Adapter No direct filesystem None Named actions Through browser Declared categories Hosted relay client Encrypted queue only Device key No Relay endpoint No plaintext Browser extension Minimal message interface None Active approved tab Local bridge only No direct access
-66.4 Secure failure
-On security uncertainty:
- * stop external action;
- * preserve safe state;
- * revoke or suspend capability;
- * avoid repeated login;
- * avoid expanding data access;
- * surface the issue;
- * create an incident where warranted;
- * allow manual continuation only outside compromised automation.
-----------------------------------------
+    66.1 Defense in depth
+    No single mechanism is sufficient.
+    Example for preventing incorrect disclosure:
+    profile sensitivity classification
+    → answer policy
+    → task-scoped retrieval
+    → adapter permission
+    → model-context minimization
+    → browser action policy
+    → field verification
+    → final user review
+    → audit record
+    66.2 Capability-based access
+    Components receive explicit capabilities.
+    Examples:
+
+- browser worker may request approved field values by reference;
+- document worker may read selected facts but not portal credentials;
+- model worker may receive minimized content but not vault access;
+- adapter may request named browser actions but not arbitrary shell execution;
+- hosted relay may enqueue signed commands but not query plaintext profile state.
+  66.3 Deny-by-default matrix
+  Component Filesystem Secrets Browser Network Profile Core orchestrator Scoped application data References only Through worker Approved endpoints Policy-filtered Browser worker Upload/download sandbox Session reference Yes Approved destinations Per-field retrieval Document worker Artifact workspace None No Normally none Selected facts Model worker No arbitrary files Provider key reference No Provider endpoints Minimized context Adapter No direct filesystem None Named actions Through browser Declared categories Hosted relay client Encrypted queue only Device key No Relay endpoint No plaintext Browser extension Minimal message interface None Active approved tab Local bridge only No direct access
+  66.4 Secure failure
+  On security uncertainty:
+- stop external action;
+- preserve safe state;
+- revoke or suspend capability;
+- avoid repeated login;
+- avoid expanding data access;
+- surface the issue;
+- create an incident where warranted;
+- allow manual continuation only outside compromised automation.
+
+---
+
 67. Cryptographic architecture
-67.1 Objectives
-Cryptography must protect:
- * local database;
- * canonical profile;
- * restricted fields;
- * artifacts;
- * raw model traces;
- * backups;
- * hosted synchronization payloads;
- * device identity;
- * update authenticity.
-67.2 Prohibition on custom cryptography
-The project must not invent:
- * encryption algorithms;
- * key-derivation functions;
- * signature schemes;
- * nonce formats without library guidance;
- * homegrown password hashing;
- * proprietary key exchange.
-Use maintained, reviewed cryptographic libraries.
-67.3 Key hierarchy
-Recommended hierarchy:
-installation root key
-├── database wrapping key
-├── profile encryption key
-├── restricted-field key
-├── artifact encryption key
-├── trace encryption key
-├── backup encryption key
-└── device identity key
-The root key should be randomly generated and protected by the operating-system credential system or user-controlled passphrase wrapping.
-67.4 Envelope encryption
-Encrypted record envelope:
-version: 1
-algorithm: approved_aead
-key_id: restricted_fields_v1
-nonce: encoded_value
-ciphertext: encoded_value
-associated_data:
- record_type: profile_fact
- record_id: fact_...
- schema_version: 1
-Associated data prevents ciphertext substitution between records.
-67.5 Authenticated encryption
-Use an established authenticated-encryption mode through a high-level library.
-Requirements:
- * unique nonces according to library contract;
- * authentication failure causes hard error;
- * no unauthenticated encryption;
- * key version recorded;
- * associated data;
- * secure random generation;
- * test vectors;
- * corruption tests.
-67.6 Password-based key protection
-If a user chooses a recovery passphrase:
- * use a memory-hard KDF;
- * calibrate parameters to device capability;
- * use a unique random salt;
- * enforce reasonable minimum strength;
- * do not impose arbitrary composition rules;
- * support password-manager-generated passphrases;
- * never store the passphrase;
- * rate-limit local attempts where practical;
- * explain that forgotten passphrases may make backups unrecoverable.
-67.7 Key storage
-Windows
-Research and use supported Windows credential and data-protection facilities. Evaluate hardware-backed protection where available.
-Linux
-Use a supported desktop secret service where available. Provide an encrypted passphrase-backed fallback for headless environments.
-Containers
-Do not bake keys into images. Support:
- * mounted secret files with strict permissions;
- * external secret managers;
- * environment references as a last resort;
- * explicit ephemeral mode.
-67.8 Key rotation
-Key rotation procedure:
- 1. create new key version;
- 2. mark it active for writes;
- 3. re-encrypt records incrementally;
- 4. checkpoint progress;
- 5. verify old and new records;
- 6. retire old key only after complete verification;
- 7. preserve rollback until safe;
- 8. securely remove retired key according to policy.
-67.9 Cryptographic erasure
-For data groups with dedicated keys:
- * delete wrapped key;
- * remove active indexes;
- * remove plaintext caches;
- * mark encrypted blobs unrecoverable;
- * expire encrypted backups;
- * record deletion proof metadata.
-Cryptographic erasure does not replace deletion of unencrypted metadata.
-67.10 Integrity checks
-Protect:
- * database pages through encrypted database facilities;
- * artifacts through authenticated encryption and hashes;
- * audit batches through hash chaining or equivalent tamper evidence;
- * release manifests through signatures;
- * configuration through validation and optional signing for remote policy.
-67.11 Cryptographic review
-Before release:
- * review algorithms and library use;
- * review nonce handling;
- * review key lifecycle;
- * review backup recovery;
- * review operating-system vault integration;
- * test corrupted ciphertext;
- * test wrong-key behavior;
- * test interrupted rotation;
- * test device migration;
- * test deletion.
-----------------------------------------
+    67.1 Objectives
+    Cryptography must protect:
+
+- local database;
+- canonical profile;
+- restricted fields;
+- artifacts;
+- raw model traces;
+- backups;
+- hosted synchronization payloads;
+- device identity;
+- update authenticity.
+  67.2 Prohibition on custom cryptography
+  The project must not invent:
+- encryption algorithms;
+- key-derivation functions;
+- signature schemes;
+- nonce formats without library guidance;
+- homegrown password hashing;
+- proprietary key exchange.
+  Use maintained, reviewed cryptographic libraries.
+  67.3 Key hierarchy
+  Recommended hierarchy:
+  installation root key
+  ├── database wrapping key
+  ├── profile encryption key
+  ├── restricted-field key
+  ├── artifact encryption key
+  ├── trace encryption key
+  ├── backup encryption key
+  └── device identity key
+  The root key should be randomly generated and protected by the operating-system credential system or user-controlled passphrase wrapping.
+  67.4 Envelope encryption
+  Encrypted record envelope:
+  version: 1
+  algorithm: approved_aead
+  key_id: restricted_fields_v1
+  nonce: encoded_value
+  ciphertext: encoded_value
+  associated_data:
+  record_type: profile_fact
+  record_id: fact_...
+  schema_version: 1
+  Associated data prevents ciphertext substitution between records.
+  67.5 Authenticated encryption
+  Use an established authenticated-encryption mode through a high-level library.
+  Requirements:
+- unique nonces according to library contract;
+- authentication failure causes hard error;
+- no unauthenticated encryption;
+- key version recorded;
+- associated data;
+- secure random generation;
+- test vectors;
+- corruption tests.
+  67.6 Password-based key protection
+  If a user chooses a recovery passphrase:
+- use a memory-hard KDF;
+- calibrate parameters to device capability;
+- use a unique random salt;
+- enforce reasonable minimum strength;
+- do not impose arbitrary composition rules;
+- support password-manager-generated passphrases;
+- never store the passphrase;
+- rate-limit local attempts where practical;
+- explain that forgotten passphrases may make backups unrecoverable.
+  67.7 Key storage
+  Windows
+  Research and use supported Windows credential and data-protection facilities. Evaluate hardware-backed protection where available.
+  Linux
+  Use a supported desktop secret service where available. Provide an encrypted passphrase-backed fallback for headless environments.
+  Containers
+  Do not bake keys into images. Support:
+- mounted secret files with strict permissions;
+- external secret managers;
+- environment references as a last resort;
+- explicit ephemeral mode.
+  67.8 Key rotation
+  Key rotation procedure:
+
+1.  create new key version;
+2.  mark it active for writes;
+3.  re-encrypt records incrementally;
+4.  checkpoint progress;
+5.  verify old and new records;
+6.  retire old key only after complete verification;
+7.  preserve rollback until safe;
+8.  securely remove retired key according to policy.
+    67.9 Cryptographic erasure
+    For data groups with dedicated keys:
+
+- delete wrapped key;
+- remove active indexes;
+- remove plaintext caches;
+- mark encrypted blobs unrecoverable;
+- expire encrypted backups;
+- record deletion proof metadata.
+  Cryptographic erasure does not replace deletion of unencrypted metadata.
+  67.10 Integrity checks
+  Protect:
+- database pages through encrypted database facilities;
+- artifacts through authenticated encryption and hashes;
+- audit batches through hash chaining or equivalent tamper evidence;
+- release manifests through signatures;
+- configuration through validation and optional signing for remote policy.
+  67.11 Cryptographic review
+  Before release:
+- review algorithms and library use;
+- review nonce handling;
+- review key lifecycle;
+- review backup recovery;
+- review operating-system vault integration;
+- test corrupted ciphertext;
+- test wrong-key behavior;
+- test interrupted rotation;
+- test device migration;
+- test deletion.
+
+---
+
 68. Database security
-68.1 Database content
-The operational database may include:
- * jobs;
- * employers;
- * applications;
- * tasks;
- * events;
- * approvals;
- * policy decisions;
- * model metadata;
- * artifact references;
- * memory indexes;
- * metrics.
-Sensitive values should be referenced or field-encrypted when stronger isolation is required.
-68.2 Encrypted SQLite
-Requirements:
- * validate the chosen encrypted SQLite implementation and license;
- * verify packaging on Windows and Linux;
- * prevent accidental fallback to plaintext;
- * test migration from development plaintext fixtures only;
- * verify temporary files and journals are encrypted;
- * use WAL securely;
- * secure file permissions;
- * avoid secrets in database connection strings;
- * perform startup encryption checks.
-68.3 Restricted-field separation
-Restricted values should use application-level envelope encryption even if the database is encrypted.
-Reasons:
- * field-level access control;
- * independent key rotation;
- * selective deletion;
- * reduced exposure after database unlock;
- * reauthentication before reveal.
-68.4 Query safety
- * parameterized queries;
- * typed repositories;
- * no dynamic SQL from model output;
- * migration review;
- * bounds on expensive searches;
- * transaction use;
- * corruption handling;
- * backup consistency.
-68.5 Database migrations
-Migration requirements:
- * versioned;
- * reversible where practical;
- * backup before destructive migration;
- * integrity check;
- * dry-run support;
- * migration lock;
- * no silent profile-semantic changes;
- * provenance preservation;
- * fault-injection tests.
-A migration that changes calculated values must invalidate affected derived records and approvals.
-68.6 Database access
-Only the local service should ordinarily access the database.
-The GUI and extension use authenticated APIs rather than opening the database directly.
-68.7 Database corruption
-On corruption:
- 1. stop mutating workflows;
- 2. preserve the damaged file;
- 3. attempt read-only integrity assessment;
- 4. restore from verified backup if available;
- 5. reconstruct indexes from canonical encrypted artifacts where possible;
- 6. never discard uncertain application-effect state;
- 7. create an incident;
- 8. generate a redacted diagnostic report.
-----------------------------------------
+    68.1 Database content
+    The operational database may include:
+
+- jobs;
+- employers;
+- applications;
+- tasks;
+- events;
+- approvals;
+- policy decisions;
+- model metadata;
+- artifact references;
+- memory indexes;
+- metrics.
+  Sensitive values should be referenced or field-encrypted when stronger isolation is required.
+  68.2 Encrypted SQLite
+  Requirements:
+- validate the chosen encrypted SQLite implementation and license;
+- verify packaging on Windows and Linux;
+- prevent accidental fallback to plaintext;
+- test migration from development plaintext fixtures only;
+- verify temporary files and journals are encrypted;
+- use WAL securely;
+- secure file permissions;
+- avoid secrets in database connection strings;
+- perform startup encryption checks.
+  68.3 Restricted-field separation
+  Restricted values should use application-level envelope encryption even if the database is encrypted.
+  Reasons:
+- field-level access control;
+- independent key rotation;
+- selective deletion;
+- reduced exposure after database unlock;
+- reauthentication before reveal.
+  68.4 Query safety
+- parameterized queries;
+- typed repositories;
+- no dynamic SQL from model output;
+- migration review;
+- bounds on expensive searches;
+- transaction use;
+- corruption handling;
+- backup consistency.
+  68.5 Database migrations
+  Migration requirements:
+- versioned;
+- reversible where practical;
+- backup before destructive migration;
+- integrity check;
+- dry-run support;
+- migration lock;
+- no silent profile-semantic changes;
+- provenance preservation;
+- fault-injection tests.
+  A migration that changes calculated values must invalidate affected derived records and approvals.
+  68.6 Database access
+  Only the local service should ordinarily access the database.
+  The GUI and extension use authenticated APIs rather than opening the database directly.
+  68.7 Database corruption
+  On corruption:
+
+1.  stop mutating workflows;
+2.  preserve the damaged file;
+3.  attempt read-only integrity assessment;
+4.  restore from verified backup if available;
+5.  reconstruct indexes from canonical encrypted artifacts where possible;
+6.  never discard uncertain application-effect state;
+7.  create an incident;
+8.  generate a redacted diagnostic report.
+
+---
+
 69. Local API security
-69.1 Binding
-Default:
-127.0.0.1 / ::1 only
-Do not bind to all interfaces without explicit advanced configuration.
-69.2 Authentication
-Use a high-entropy installation-specific local token or mutually authenticated local transport.
-Requirements:
- * token generated during setup;
- * protected by local user permissions;
- * rotated;
- * not embedded in URLs;
- * not printed;
- * scoped sessions for GUI and extension;
- * invalidated on sign-out or reset.
-69.3 Authorization
-Authentication alone is insufficient.
-Authorize by:
- * client type;
- * requested operation;
- * user session;
- * current approval;
- * capability;
- * origin;
- * rate limit.
-The browser extension must not receive the same privileges as the desktop application.
-69.4 Origin and CSRF protection
-Protect against malicious sites calling the local API:
- * strict allowed origins;
- * reject arbitrary browser origins;
- * CSRF tokens for browser clients;
- * non-simple requests;
- * validate Origin and Host;
- * no wildcard CORS;
- * SameSite cookies where cookies are used;
- * extension-specific authenticated messaging;
- * disable JSONP;
- * avoid state changes via GET.
-69.5 DNS rebinding and host validation
- * validate Host;
- * avoid trusting hostname resolution alone;
- * use loopback addresses;
- * reject external host headers;
- * consider a random local endpoint identifier;
- * test DNS-rebinding scenarios.
-69.6 API request validation
- * strict schemas;
- * maximum body size;
- * bounded arrays and strings;
- * content-type validation;
- * no arbitrary file paths;
- * no arbitrary URLs for privileged operations;
- * path canonicalization;
- * request timeout;
- * per-client rate limits.
-69.7 File access
-The API exposes artifact IDs, not raw filesystem paths.
-Uploads:
- * stream to controlled temporary storage;
- * enforce size;
- * detect file type;
- * scan;
- * assign a generated name;
- * never trust user-supplied path components.
-Downloads:
- * require authorization;
- * set safe content disposition;
- * prevent path traversal;
- * avoid active content rendering in privileged origins.
-69.8 API documentation
-Interactive API documentation should:
- * be disabled in production by default or require local authentication;
- * not expose secrets;
- * distinguish internal endpoints;
- * avoid suggesting unsupported submission paths.
-69.9 Remote API
-Remote access is deferred and must not be enabled by opening the local API to the internet.
-Remote control goes through the authenticated encrypted relay architecture.
-----------------------------------------
+    69.1 Binding
+    Default:
+    127.0.0.1 / ::1 only
+    Do not bind to all interfaces without explicit advanced configuration.
+    69.2 Authentication
+    Use a high-entropy installation-specific local token or mutually authenticated local transport.
+    Requirements:
+
+- token generated during setup;
+- protected by local user permissions;
+- rotated;
+- not embedded in URLs;
+- not printed;
+- scoped sessions for GUI and extension;
+- invalidated on sign-out or reset.
+  69.3 Authorization
+  Authentication alone is insufficient.
+  Authorize by:
+- client type;
+- requested operation;
+- user session;
+- current approval;
+- capability;
+- origin;
+- rate limit.
+  The browser extension must not receive the same privileges as the desktop application.
+  69.4 Origin and CSRF protection
+  Protect against malicious sites calling the local API:
+- strict allowed origins;
+- reject arbitrary browser origins;
+- CSRF tokens for browser clients;
+- non-simple requests;
+- validate Origin and Host;
+- no wildcard CORS;
+- SameSite cookies where cookies are used;
+- extension-specific authenticated messaging;
+- disable JSONP;
+- avoid state changes via GET.
+  69.5 DNS rebinding and host validation
+- validate Host;
+- avoid trusting hostname resolution alone;
+- use loopback addresses;
+- reject external host headers;
+- consider a random local endpoint identifier;
+- test DNS-rebinding scenarios.
+  69.6 API request validation
+- strict schemas;
+- maximum body size;
+- bounded arrays and strings;
+- content-type validation;
+- no arbitrary file paths;
+- no arbitrary URLs for privileged operations;
+- path canonicalization;
+- request timeout;
+- per-client rate limits.
+  69.7 File access
+  The API exposes artifact IDs, not raw filesystem paths.
+  Uploads:
+- stream to controlled temporary storage;
+- enforce size;
+- detect file type;
+- scan;
+- assign a generated name;
+- never trust user-supplied path components.
+  Downloads:
+- require authorization;
+- set safe content disposition;
+- prevent path traversal;
+- avoid active content rendering in privileged origins.
+  69.8 API documentation
+  Interactive API documentation should:
+- be disabled in production by default or require local authentication;
+- not expose secrets;
+- distinguish internal endpoints;
+- avoid suggesting unsupported submission paths.
+  69.9 Remote API
+  Remote access is deferred and must not be enabled by opening the local API to the internet.
+  Remote control goes through the authenticated encrypted relay architecture.
+
+---
+
 70. Desktop and local web security
-70.1 Tauri shell security
-If Tauri is selected:
- * strict capability manifest;
- * no broad shell plugin;
- * no arbitrary command invocation;
- * no unrestricted filesystem plugin;
- * Content Security Policy;
- * disable remote content in privileged webviews;
- * validate deep links;
- * signed updates;
- * narrow sidecar commands;
- * protect local API token;
- * audit IPC commands.
-70.2 Webview content
-Privileged UI must load from packaged or trusted local resources.
-External pages open in:
- * the controlled browser worker; or
- * the system browser.
-Do not render arbitrary employer sites in the privileged application webview.
-70.3 Content Security Policy
-Use a restrictive CSP:
- * default-src 'self';
- * explicit script sources;
- * no unsafe eval;
- * restricted style policy;
- * restricted connect destinations;
- * no arbitrary frame sources;
- * no mixed content;
- * no remote scripts in privileged UI.
-Exact policy depends on selected framework and must be tested.
-70.4 Deep links
-Deep links may support:
- * OAuth return;
- * opening a job;
- * resuming an application.
-Controls:
- * strict scheme and host;
- * signed or nonce-bound state;
- * input length limits;
- * no direct action execution;
- * user confirmation for consequential commands;
- * replay protection.
-70.5 Clipboard
-The application should not place secrets on the clipboard automatically.
-If the user copies sensitive data:
- * warn where appropriate;
- * optionally clear after a short interval;
- * do not log;
- * do not expose to models;
- * recognize that clipboard clearing is best effort.
-70.6 Screen privacy
-Optional controls:
- * blur restricted values by default;
- * reveal after reauthentication;
- * hide secrets in screen-sharing mode;
- * warn before exporting screenshots;
- * suppress desktop notification details for sensitive events.
-70.7 Local web mode
-Local web mode must have the same protections as the desktop GUI:
- * loopback binding;
- * authentication;
- * CSRF defense;
- * origin validation;
- * secure session;
- * no remote exposure by default;
- * clear shutdown;
- * idle timeout;
- * browser tab revocation.
-----------------------------------------
+    70.1 Tauri shell security
+    If Tauri is selected:
+
+- strict capability manifest;
+- no broad shell plugin;
+- no arbitrary command invocation;
+- no unrestricted filesystem plugin;
+- Content Security Policy;
+- disable remote content in privileged webviews;
+- validate deep links;
+- signed updates;
+- narrow sidecar commands;
+- protect local API token;
+- audit IPC commands.
+  70.2 Webview content
+  Privileged UI must load from packaged or trusted local resources.
+  External pages open in:
+- the controlled browser worker; or
+- the system browser.
+  Do not render arbitrary employer sites in the privileged application webview.
+  70.3 Content Security Policy
+  Use a restrictive CSP:
+- default-src 'self';
+- explicit script sources;
+- no unsafe eval;
+- restricted style policy;
+- restricted connect destinations;
+- no arbitrary frame sources;
+- no mixed content;
+- no remote scripts in privileged UI.
+  Exact policy depends on selected framework and must be tested.
+  70.4 Deep links
+  Deep links may support:
+- OAuth return;
+- opening a job;
+- resuming an application.
+  Controls:
+- strict scheme and host;
+- signed or nonce-bound state;
+- input length limits;
+- no direct action execution;
+- user confirmation for consequential commands;
+- replay protection.
+  70.5 Clipboard
+  The application should not place secrets on the clipboard automatically.
+  If the user copies sensitive data:
+- warn where appropriate;
+- optionally clear after a short interval;
+- do not log;
+- do not expose to models;
+- recognize that clipboard clearing is best effort.
+  70.6 Screen privacy
+  Optional controls:
+- blur restricted values by default;
+- reveal after reauthentication;
+- hide secrets in screen-sharing mode;
+- warn before exporting screenshots;
+- suppress desktop notification details for sensitive events.
+  70.7 Local web mode
+  Local web mode must have the same protections as the desktop GUI:
+- loopback binding;
+- authentication;
+- CSRF defense;
+- origin validation;
+- secure session;
+- no remote exposure by default;
+- clear shutdown;
+- idle timeout;
+- browser tab revocation.
+
+---
+
 71. Browser-extension security
-71.1 Extension purpose
-The extension may provide:
- * “add this job” action;
- * active-tab handoff;
- * supported portal recognition;
- * user-triggered session bridge;
- * highlighting or review assistance.
-It must not become an unrestricted surveillance agent.
-71.2 Minimum permissions
-Prefer:
- * activeTab;
- * narrowly scoped host permissions;
- * explicit user activation;
- * storage only for non-secret settings;
- * local native or HTTP bridge with mutual authentication.
-Avoid:
- * access to all browsing history;
- * access to every site;
- * clipboard permissions;
- * arbitrary downloads;
- * persistent background scraping.
-71.3 Extension-to-local authentication
-Provision a distinct extension credential:
- * generated by local application;
- * one-time pairing code;
- * user confirmation;
- * device-bound token;
- * narrow API scope;
- * rotation and revocation;
- * no profile decryption capability.
-71.4 Page data minimization
-The extension sends only:
- * active URL;
- * page title;
- * selected job content;
- * portal markers;
- * user-requested form schema.
-It must not automatically transmit:
- * unrelated tabs;
- * browser history;
- * saved passwords;
- * cookies;
- * full page content unrelated to the task.
-71.5 Extension updates
- * official signed store distribution where possible;
- * source code under project license;
- * reproducible build goal;
- * reviewed permission changes;
- * no remote code;
- * manifest version tracked;
- * emergency revocation.
-71.6 Extension compromise response
- * revoke pairing token;
- * disable extension API scope;
- * stop portal automation;
- * inspect exposure;
- * rotate affected sessions if necessary;
- * publish advisory;
- * require update or reinstall.
-----------------------------------------
+    71.1 Extension purpose
+    The extension may provide:
+
+- “add this job” action;
+- active-tab handoff;
+- supported portal recognition;
+- user-triggered session bridge;
+- highlighting or review assistance.
+  It must not become an unrestricted surveillance agent.
+  71.2 Minimum permissions
+  Prefer:
+- activeTab;
+- narrowly scoped host permissions;
+- explicit user activation;
+- storage only for non-secret settings;
+- local native or HTTP bridge with mutual authentication.
+  Avoid:
+- access to all browsing history;
+- access to every site;
+- clipboard permissions;
+- arbitrary downloads;
+- persistent background scraping.
+  71.3 Extension-to-local authentication
+  Provision a distinct extension credential:
+- generated by local application;
+- one-time pairing code;
+- user confirmation;
+- device-bound token;
+- narrow API scope;
+- rotation and revocation;
+- no profile decryption capability.
+  71.4 Page data minimization
+  The extension sends only:
+- active URL;
+- page title;
+- selected job content;
+- portal markers;
+- user-requested form schema.
+  It must not automatically transmit:
+- unrelated tabs;
+- browser history;
+- saved passwords;
+- cookies;
+- full page content unrelated to the task.
+  71.5 Extension updates
+- official signed store distribution where possible;
+- source code under project license;
+- reproducible build goal;
+- reviewed permission changes;
+- no remote code;
+- manifest version tracked;
+- emergency revocation.
+  71.6 Extension compromise response
+- revoke pairing token;
+- disable extension API scope;
+- stop portal automation;
+- inspect exposure;
+- rotate affected sessions if necessary;
+- publish advisory;
+- require update or reinstall.
+
+---
+
 72. Browser and portal security
-72.1 External pages are hostile by default
-Even trusted portals may be compromised or contain third-party content. Browser pages receive no direct authority over:
- * filesystem;
- * profile database;
- * local API;
- * secret vault;
- * model tools;
- * shell;
- * submission policy.
-72.2 Domain controls
-Maintain:
- * exact portal domains;
- * approved identity-provider domains;
- * employer career domains;
- * ATS domains;
- * redirect rules;
- * blocked lookalikes.
-A redirect to an unknown domain pauses and asks the user.
-72.3 TLS and certificate errors
-Do not bypass certificate errors automatically.
-On TLS error:
- * stop;
- * show destination;
- * do not enter credentials;
- * do not upload documents;
- * require user investigation;
- * create security event if expected trusted domain.
-72.4 Downloaded scripts and browser extensions
-The product must not instruct users to install arbitrary portal-provided software without explicit security review.
-Assessments requiring software are handed to the user with warnings and provenance.
-72.5 Sensitive browser fields
-For:
- * password;
- * OTP;
- * government ID;
- * payment;
- * bank details,
-automation should normally pause or refuse.
-Government-ID fields are not filled from canonical storage because raw identifiers are excluded.
-72.6 Browser logs
-Disable or redact:
- * authorization headers;
- * cookies;
- * form payloads;
- * full network bodies;
- * password fields;
- * sensitive console output.
-Network capture is an expert diagnostic feature, off by default.
-72.7 Portal account safety
-On repeated challenges or warnings:
- * stop all active tasks for the account;
- * avoid retrying from another machine;
- * surface the issue;
- * preserve evidence;
- * suspend the adapter until resolved.
-The system must not rotate proxies or fingerprints to evade portal controls.
-----------------------------------------
+    72.1 External pages are hostile by default
+    Even trusted portals may be compromised or contain third-party content. Browser pages receive no direct authority over:
+
+- filesystem;
+- profile database;
+- local API;
+- secret vault;
+- model tools;
+- shell;
+- submission policy.
+  72.2 Domain controls
+  Maintain:
+- exact portal domains;
+- approved identity-provider domains;
+- employer career domains;
+- ATS domains;
+- redirect rules;
+- blocked lookalikes.
+  A redirect to an unknown domain pauses and asks the user.
+  72.3 TLS and certificate errors
+  Do not bypass certificate errors automatically.
+  On TLS error:
+- stop;
+- show destination;
+- do not enter credentials;
+- do not upload documents;
+- require user investigation;
+- create security event if expected trusted domain.
+  72.4 Downloaded scripts and browser extensions
+  The product must not instruct users to install arbitrary portal-provided software without explicit security review.
+  Assessments requiring software are handed to the user with warnings and provenance.
+  72.5 Sensitive browser fields
+  For:
+- password;
+- OTP;
+- government ID;
+- payment;
+- bank details,
+  automation should normally pause or refuse.
+  Government-ID fields are not filled from canonical storage because raw identifiers are excluded.
+  72.6 Browser logs
+  Disable or redact:
+- authorization headers;
+- cookies;
+- form payloads;
+- full network bodies;
+- password fields;
+- sensitive console output.
+  Network capture is an expert diagnostic feature, off by default.
+  72.7 Portal account safety
+  On repeated challenges or warnings:
+- stop all active tasks for the account;
+- avoid retrying from another machine;
+- surface the issue;
+- preserve evidence;
+- suspend the adapter until resolved.
+  The system must not rotate proxies or fingerprints to evade portal controls.
+
+---
+
 73. Email integration security
-73.1 Initial provider
-Initial email integration:
- * Gmail through supported OAuth.
-No email password storage.
-73.2 Scope minimization
-Request the narrowest practical OAuth scopes.
-Prefer:
- * read-only access;
- * label or metadata access where sufficient;
- * no send permission unless the user enables approved message sending later;
- * no broad account-management scope.
-73.3 Email ingestion
-Pipeline:
-authorized message access
-→ metadata filtering
-→ candidate application-message detection
-→ local parsing
-→ malicious-content scan
-→ status proposal
-→ user-visible evidence
-→ optional status update
-73.4 Local-first classification
-Perform locally when feasible:
- * sender and domain checks;
- * subject classification;
- * known application-ID extraction;
- * date;
- * attachment metadata;
- * basic status patterns.
-Only send minimized excerpts to a cloud model under user policy.
-73.5 Email threats
- * phishing links;
- * malicious attachments;
- * prompt injection;
- * spoofed recruiter domains;
- * tracking pixels;
- * fake assessment requests;
- * calendar spam;
- * OAuth consent phishing.
-Controls:
- * no automatic link opening;
- * disable remote images in internal preview;
- * verify sender and link domains;
- * quarantine unexpected attachments;
- * no automatic execution;
- * treat body as untrusted;
- * require confirmation before status-changing conclusions when uncertain.
-73.6 Sending messages
-When enabled in a later phase:
- * draft locally;
- * show recipients;
- * show subject and body;
- * validate employer/application;
- * require approval;
- * record exact message hash;
- * reconcile sent state;
- * prevent duplicate sends;
- * respect follow-up policy.
-----------------------------------------
+    73.1 Initial provider
+    Initial email integration:
+
+- Gmail through supported OAuth.
+  No email password storage.
+  73.2 Scope minimization
+  Request the narrowest practical OAuth scopes.
+  Prefer:
+- read-only access;
+- label or metadata access where sufficient;
+- no send permission unless the user enables approved message sending later;
+- no broad account-management scope.
+  73.3 Email ingestion
+  Pipeline:
+  authorized message access
+  → metadata filtering
+  → candidate application-message detection
+  → local parsing
+  → malicious-content scan
+  → status proposal
+  → user-visible evidence
+  → optional status update
+  73.4 Local-first classification
+  Perform locally when feasible:
+- sender and domain checks;
+- subject classification;
+- known application-ID extraction;
+- date;
+- attachment metadata;
+- basic status patterns.
+  Only send minimized excerpts to a cloud model under user policy.
+  73.5 Email threats
+- phishing links;
+- malicious attachments;
+- prompt injection;
+- spoofed recruiter domains;
+- tracking pixels;
+- fake assessment requests;
+- calendar spam;
+- OAuth consent phishing.
+  Controls:
+- no automatic link opening;
+- disable remote images in internal preview;
+- verify sender and link domains;
+- quarantine unexpected attachments;
+- no automatic execution;
+- treat body as untrusted;
+- require confirmation before status-changing conclusions when uncertain.
+  73.6 Sending messages
+  When enabled in a later phase:
+- draft locally;
+- show recipients;
+- show subject and body;
+- validate employer/application;
+- require approval;
+- record exact message hash;
+- reconcile sent state;
+- prevent duplicate sends;
+- respect follow-up policy.
+
+---
+
 74. Model-provider security
-74.1 API key handling
- * store in OS vault;
- * retrieve only in provider worker;
- * do not expose to GUI;
- * do not include in traces;
- * redact headers;
- * support rotation;
- * test revoked-key behavior.
-74.2 Endpoint validation
- * use HTTPS for cloud endpoints;
- * validate configured hosts;
- * prevent model configuration from targeting local privileged services;
- * block credentials from being sent to unapproved hosts;
- * separate generic OpenAI-compatible endpoints by explicit trust configuration;
- * show custom endpoint risk.
-74.3 Model response trust
-Model responses are untrusted.
-They cannot:
- * choose arbitrary tools;
- * provide executable code that runs automatically;
- * alter policy;
- * broaden context;
- * define new endpoints;
- * write canonical facts directly;
- * invoke submission.
-74.4 Provider compromise
-If a provider is suspected:
- * disable provider;
- * rotate key;
- * inspect transmitted data classes;
- * identify affected requests;
- * use local or alternate approved provider;
- * notify user;
- * update threat and incident records.
-74.5 Local model supply chain
-For downloaded model files:
- * trusted source;
- * license review;
- * checksum;
- * signed metadata where available;
- * file-size validation;
- * no bundled executable;
- * isolated inference runtime;
- * model digest in traces.
-----------------------------------------
+    74.1 API key handling
+
+- store in OS vault;
+- retrieve only in provider worker;
+- do not expose to GUI;
+- do not include in traces;
+- redact headers;
+- support rotation;
+- test revoked-key behavior.
+  74.2 Endpoint validation
+- use HTTPS for cloud endpoints;
+- validate configured hosts;
+- prevent model configuration from targeting local privileged services;
+- block credentials from being sent to unapproved hosts;
+- separate generic OpenAI-compatible endpoints by explicit trust configuration;
+- show custom endpoint risk.
+  74.3 Model response trust
+  Model responses are untrusted.
+  They cannot:
+- choose arbitrary tools;
+- provide executable code that runs automatically;
+- alter policy;
+- broaden context;
+- define new endpoints;
+- write canonical facts directly;
+- invoke submission.
+  74.4 Provider compromise
+  If a provider is suspected:
+- disable provider;
+- rotate key;
+- inspect transmitted data classes;
+- identify affected requests;
+- use local or alternate approved provider;
+- notify user;
+- update threat and incident records.
+  74.5 Local model supply chain
+  For downloaded model files:
+- trusted source;
+- license review;
+- checksum;
+- signed metadata where available;
+- file-size validation;
+- no bundled executable;
+- isolated inference runtime;
+- model digest in traces.
+
+---
+
 75. Supply-chain security
-75.1 Dependency policy
-Every dependency should have:
- * clear purpose;
- * compatible license;
- * active maintenance or justified stability;
- * acceptable vulnerability history;
- * pinned version or lock;
- * transitive-dependency review;
- * removal plan where replaceable.
-Avoid adding a library for trivial functionality.
-75.2 Lock files
-Maintain and verify:
- * Python dependency lock;
- * frontend lock;
- * Rust lock if Tauri is used;
- * browser version metadata;
- * document tool versions;
- * CI action commit pins.
-75.3 Package installation
- * use official registries;
- * verify hashes where supported;
- * avoid install scripts unless reviewed;
- * disable arbitrary post-install execution where feasible;
- * use isolated build environments;
- * prohibit unpinned Git dependencies in releases;
- * scan package provenance.
-75.4 GitHub Actions
-Third-party actions should be pinned to immutable commit hashes.
-Review:
- * permissions;
- * secret access;
- * fork behavior;
- * artifact handling;
- * network access;
- * maintainer reputation.
-75.5 Build permissions
-CI defaults:
- * read-only repository token;
- * no production secrets in pull requests;
- * explicit permissions;
- * isolated release environment;
- * human approval for signing;
- * protected branches and tags;
- * two-person review for release workflow changes.
-75.6 SBOM
-Generate software bills of materials for:
- * Python package;
- * desktop application;
- * frontend;
- * container image;
- * browser extension;
- * optional adapter packages.
-Publish in CycloneDX or SPDX format.
-75.7 Provenance
-Release provenance should identify:
- * source commit;
- * workflow;
- * build environment;
- * dependency locks;
- * artifact hashes;
- * signer;
- * timestamp.
-Target SLSA-compatible provenance.
-75.8 Release signing
-Sign:
- * Git tags;
- * Windows installer;
- * Linux packages where supported;
- * update manifests;
- * adapter packages;
- * browser extension packages where distribution permits;
- * container images.
-75.9 Dependency advisories
- * automated daily scan;
- * severity triage;
- * exploitability assessment;
- * patch or mitigation SLA;
- * test before upgrade;
- * emergency release path;
- * record accepted risk.
-75.10 Typosquatting defense
- * use lock files;
- * review new package names;
- * verify publisher;
- * prevent unreviewed dependency additions;
- * use allowlists in release builds;
- * monitor namespace confusion.
-----------------------------------------
+    75.1 Dependency policy
+    Every dependency should have:
+
+- clear purpose;
+- compatible license;
+- active maintenance or justified stability;
+- acceptable vulnerability history;
+- pinned version or lock;
+- transitive-dependency review;
+- removal plan where replaceable.
+  Avoid adding a library for trivial functionality.
+  75.2 Lock files
+  Maintain and verify:
+- Python dependency lock;
+- frontend lock;
+- Rust lock if Tauri is used;
+- browser version metadata;
+- document tool versions;
+- CI action commit pins.
+  75.3 Package installation
+- use official registries;
+- verify hashes where supported;
+- avoid install scripts unless reviewed;
+- disable arbitrary post-install execution where feasible;
+- use isolated build environments;
+- prohibit unpinned Git dependencies in releases;
+- scan package provenance.
+  75.4 GitHub Actions
+  Third-party actions should be pinned to immutable commit hashes.
+  Review:
+- permissions;
+- secret access;
+- fork behavior;
+- artifact handling;
+- network access;
+- maintainer reputation.
+  75.5 Build permissions
+  CI defaults:
+- read-only repository token;
+- no production secrets in pull requests;
+- explicit permissions;
+- isolated release environment;
+- human approval for signing;
+- protected branches and tags;
+- two-person review for release workflow changes.
+  75.6 SBOM
+  Generate software bills of materials for:
+- Python package;
+- desktop application;
+- frontend;
+- container image;
+- browser extension;
+- optional adapter packages.
+  Publish in CycloneDX or SPDX format.
+  75.7 Provenance
+  Release provenance should identify:
+- source commit;
+- workflow;
+- build environment;
+- dependency locks;
+- artifact hashes;
+- signer;
+- timestamp.
+  Target SLSA-compatible provenance.
+  75.8 Release signing
+  Sign:
+- Git tags;
+- Windows installer;
+- Linux packages where supported;
+- update manifests;
+- adapter packages;
+- browser extension packages where distribution permits;
+- container images.
+  75.9 Dependency advisories
+- automated daily scan;
+- severity triage;
+- exploitability assessment;
+- patch or mitigation SLA;
+- test before upgrade;
+- emergency release path;
+- record accepted risk.
+  75.10 Typosquatting defense
+- use lock files;
+- review new package names;
+- verify publisher;
+- prevent unreviewed dependency additions;
+- use allowlists in release builds;
+- monitor namespace confusion.
+
+---
+
 76. Secure software development lifecycle
-76.1 Design review
-Security review is required for:
- * new external integration;
- * authentication;
- * new secret type;
- * new browser capability;
- * new data class;
- * remote access;
- * plugin system;
- * submission capability;
- * messaging;
- * deletion;
- * backup changes;
- * cryptographic changes.
-76.2 Coding controls
- * strict typing;
- * input validation;
- * safe subprocess APIs;
- * parameterized SQL;
- * bounded resource use;
- * explicit error handling;
- * no secret logging;
- * no unsafe deserialization;
- * no dynamic code execution from model or portal output;
- * safe temporary files.
-76.3 Code review
-High-risk files require specialist review:
- * encryption;
- * secret storage;
- * authentication;
- * authorization;
- * policy;
- * effect layer;
- * updates;
- * extension bridge;
- * hosted relay;
- * adapter permissions.
-76.4 Static analysis
-CI should include:
- * Python lint and type checks;
- * Python security static analysis;
- * frontend lint and type checks;
- * Rust lint and audit if used;
- * dependency vulnerability scanning;
- * secret scanning;
- * infrastructure and workflow scanning;
- * license scanning.
-Exact tools must be selected after repository and dependency validation.
-76.5 Dynamic testing
- * local API penetration tests;
- * browser-origin attacks;
- * malformed uploads;
- * path traversal;
- * SQL injection;
- * CSRF;
- * DNS rebinding;
- * hostile redirects;
- * oversized payloads;
- * corrupted encryption envelopes;
- * adapter sandbox escape attempts;
- * prompt injection;
- * authorization bypass.
-76.6 Fuzzing
-Fuzz:
- * profile import parsers;
- * résumé parsers;
- * URL normalization;
- * ATS field schemas;
- * email status parser;
- * encrypted envelope parser;
- * migration inputs;
- * browser message protocol;
- * local API serialization.
-76.7 Mutation testing
-Mandatory for critical decision logic:
- * approval;
- * duplicate blocking;
- * submission gate;
- * sensitive-field routing;
- * data-retention selection;
- * authorization;
- * effect reconciliation.
-Coverage alone is insufficient.
-76.8 Security regression suite
-Every vulnerability or near miss produces:
- * minimized fixture;
- * failing test before fix;
- * fix;
- * passing regression test;
- * affected-version record;
- * release-note or advisory decision.
-----------------------------------------
+    76.1 Design review
+    Security review is required for:
+
+- new external integration;
+- authentication;
+- new secret type;
+- new browser capability;
+- new data class;
+- remote access;
+- plugin system;
+- submission capability;
+- messaging;
+- deletion;
+- backup changes;
+- cryptographic changes.
+  76.2 Coding controls
+- strict typing;
+- input validation;
+- safe subprocess APIs;
+- parameterized SQL;
+- bounded resource use;
+- explicit error handling;
+- no secret logging;
+- no unsafe deserialization;
+- no dynamic code execution from model or portal output;
+- safe temporary files.
+  76.3 Code review
+  High-risk files require specialist review:
+- encryption;
+- secret storage;
+- authentication;
+- authorization;
+- policy;
+- effect layer;
+- updates;
+- extension bridge;
+- hosted relay;
+- adapter permissions.
+  76.4 Static analysis
+  CI should include:
+- Python lint and type checks;
+- Python security static analysis;
+- frontend lint and type checks;
+- Rust lint and audit if used;
+- dependency vulnerability scanning;
+- secret scanning;
+- infrastructure and workflow scanning;
+- license scanning.
+  Exact tools must be selected after repository and dependency validation.
+  76.5 Dynamic testing
+- local API penetration tests;
+- browser-origin attacks;
+- malformed uploads;
+- path traversal;
+- SQL injection;
+- CSRF;
+- DNS rebinding;
+- hostile redirects;
+- oversized payloads;
+- corrupted encryption envelopes;
+- adapter sandbox escape attempts;
+- prompt injection;
+- authorization bypass.
+  76.6 Fuzzing
+  Fuzz:
+- profile import parsers;
+- résumé parsers;
+- URL normalization;
+- ATS field schemas;
+- email status parser;
+- encrypted envelope parser;
+- migration inputs;
+- browser message protocol;
+- local API serialization.
+  76.7 Mutation testing
+  Mandatory for critical decision logic:
+- approval;
+- duplicate blocking;
+- submission gate;
+- sensitive-field routing;
+- data-retention selection;
+- authorization;
+- effect reconciliation.
+  Coverage alone is insufficient.
+  76.8 Security regression suite
+  Every vulnerability or near miss produces:
+- minimized fixture;
+- failing test before fix;
+- fix;
+- passing regression test;
+- affected-version record;
+- release-note or advisory decision.
+
+---
+
 77. Privacy program
-77.1 Privacy objective
-The product must enable job applications without turning the candidate’s professional and sensitive history into a centralized surveillance dataset.
-Privacy principles:
- * purpose limitation;
- * data minimization;
- * local processing;
- * transparency;
- * user control;
- * limited retention;
- * field-level disclosure;
- * secure deletion;
- * provider choice;
- * no telemetry by default;
- * no secondary use without consent.
-77.2 Privacy roles
-For the personal local edition, the user largely controls processing.
-For a hosted service, legal roles may vary by function and jurisdiction. Before launch, determine:
- * controller;
- * processor;
- * subprocessor;
- * service provider;
- * business;
- * data fiduciary or equivalent role;
- * user rights and contractual obligations.
-Do not publish generic legal labels without jurisdictional analysis.
-77.3 Privacy by architecture
- * canonical profile stored locally;
- * hosted relay receives ciphertext by default;
- * cloud models receive minimized task context;
- * sensitive categories excluded by default;
- * email parsed locally where feasible;
- * raw diagnostics expire;
- * users can inspect data use;
- * each external recipient is identifiable;
- * profile export is portable;
- * account deletion includes encryption-key destruction.
-77.4 Purpose registry
-Each data field should declare permitted purposes.
-Examples:
- * job matching;
- * résumé generation;
- * application form;
- * portal profile;
- * recruiter communication;
- * analytics;
- * local personalization;
- * cloud model processing;
- * local model processing.
-A fact collected for an application should not silently become telemetry.
-77.5 Data minimization
-Before every disclosure, ask:
- 1. Is the field required?
- 2. Is a less precise value sufficient?
- 3. Can the user decline?
- 4. Is the destination authoritative?
- 5. Does the user’s policy permit it?
- 6. Is the value current?
- 7. Is a cloud model necessary?
- 8. Can the operation happen locally?
- 9. How long must the disclosure evidence remain?
-77.6 Progressive disclosure
-Examples:
- * city instead of full address until required;
- * salary range instead of exact current compensation where permitted;
- * authorization status without visa-document details;
- * certification status without credential identifier;
- * portfolio link without unrelated social accounts.
-77.7 No dark patterns
-The interface must not:
- * preselect unnecessary consent;
- * make privacy-preserving choices hard to find;
- * shame users for declining data;
- * bundle unrelated permissions;
- * hide cloud transmission;
- * silently extend retention;
- * imply that telemetry is required;
- * obscure deletion consequences.
-----------------------------------------
+    77.1 Privacy objective
+    The product must enable job applications without turning the candidate’s professional and sensitive history into a centralized surveillance dataset.
+    Privacy principles:
+
+- purpose limitation;
+- data minimization;
+- local processing;
+- transparency;
+- user control;
+- limited retention;
+- field-level disclosure;
+- secure deletion;
+- provider choice;
+- no telemetry by default;
+- no secondary use without consent.
+  77.2 Privacy roles
+  For the personal local edition, the user largely controls processing.
+  For a hosted service, legal roles may vary by function and jurisdiction. Before launch, determine:
+- controller;
+- processor;
+- subprocessor;
+- service provider;
+- business;
+- data fiduciary or equivalent role;
+- user rights and contractual obligations.
+  Do not publish generic legal labels without jurisdictional analysis.
+  77.3 Privacy by architecture
+- canonical profile stored locally;
+- hosted relay receives ciphertext by default;
+- cloud models receive minimized task context;
+- sensitive categories excluded by default;
+- email parsed locally where feasible;
+- raw diagnostics expire;
+- users can inspect data use;
+- each external recipient is identifiable;
+- profile export is portable;
+- account deletion includes encryption-key destruction.
+  77.4 Purpose registry
+  Each data field should declare permitted purposes.
+  Examples:
+- job matching;
+- résumé generation;
+- application form;
+- portal profile;
+- recruiter communication;
+- analytics;
+- local personalization;
+- cloud model processing;
+- local model processing.
+  A fact collected for an application should not silently become telemetry.
+  77.5 Data minimization
+  Before every disclosure, ask:
+
+1.  Is the field required?
+2.  Is a less precise value sufficient?
+3.  Can the user decline?
+4.  Is the destination authoritative?
+5.  Does the user’s policy permit it?
+6.  Is the value current?
+7.  Is a cloud model necessary?
+8.  Can the operation happen locally?
+9.  How long must the disclosure evidence remain?
+    77.6 Progressive disclosure
+    Examples:
+
+- city instead of full address until required;
+- salary range instead of exact current compensation where permitted;
+- authorization status without visa-document details;
+- certification status without credential identifier;
+- portfolio link without unrelated social accounts.
+  77.7 No dark patterns
+  The interface must not:
+- preselect unnecessary consent;
+- make privacy-preserving choices hard to find;
+- shame users for declining data;
+- bundle unrelated permissions;
+- hide cloud transmission;
+- silently extend retention;
+- imply that telemetry is required;
+- obscure deletion consequences.
+
+---
+
 78. Jurisdictional privacy requirements
-78.1 India
-Research and map current obligations under India’s applicable data-protection framework, including:
- * lawful processing basis;
- * notice;
- * consent where required;
- * rights requests;
- * deletion;
- * grievance handling;
- * breach duties;
- * children’s data restrictions;
- * cross-border transfer requirements;
- * significant-data-fiduciary obligations if ever applicable.
-The product should avoid collecting data it cannot justify or protect.
-78.2 European Economic Area
-If GDPR applies, address:
- * lawful basis;
- * transparency;
- * data minimization;
- * purpose limitation;
- * storage limitation;
- * access;
- * rectification;
- * erasure;
- * restriction;
- * portability;
- * objection;
- * automated decision-making considerations;
- * processor agreements;
- * international transfers;
- * DPIA;
- * breach response.
-The local-only edition and hosted services may have different roles and obligations.
-78.3 United Kingdom
-Map UK GDPR and relevant national requirements separately rather than assuming complete identity with the EEA regime.
-78.4 California and US states
-Assess:
- * CCPA/CPRA applicability;
- * sensitive personal information;
- * service-provider contracts;
- * deletion and access rights;
- * sale/share definitions;
- * targeted advertising;
- * state-specific privacy regimes;
- * breach-notification laws.
-78.5 Employment-specific sensitivity
-Employment applications can include information protected by anti-discrimination and disability laws.
-The system should:
- * separate voluntary demographic data from qualification data;
- * prevent demographic fields from influencing match score;
- * prevent sensitive traits from entering résumé tailoring;
- * avoid proxy-based ranking;
- * retain disclosure evidence;
- * support “prefer not to answer” policies.
-78.6 Cross-border processing
-Cloud providers and hosted components must record:
- * processing region;
- * data categories;
- * transfer mechanism where required;
- * subprocessors;
- * retention;
- * user choice.
-Users who prohibit cross-border processing must be able to use local-only functionality.
-78.7 Legal-research status
-This plan defines engineering controls, not a final legal conclusion. Before hosted release:
- * obtain qualified jurisdictional review;
- * document applicability assumptions;
- * update notices and contracts;
- * complete DPIA where required;
- * record residual risk.
-----------------------------------------
+    78.1 India
+    Research and map current obligations under India’s applicable data-protection framework, including:
+
+- lawful processing basis;
+- notice;
+- consent where required;
+- rights requests;
+- deletion;
+- grievance handling;
+- breach duties;
+- children’s data restrictions;
+- cross-border transfer requirements;
+- significant-data-fiduciary obligations if ever applicable.
+  The product should avoid collecting data it cannot justify or protect.
+  78.2 European Economic Area
+  If GDPR applies, address:
+- lawful basis;
+- transparency;
+- data minimization;
+- purpose limitation;
+- storage limitation;
+- access;
+- rectification;
+- erasure;
+- restriction;
+- portability;
+- objection;
+- automated decision-making considerations;
+- processor agreements;
+- international transfers;
+- DPIA;
+- breach response.
+  The local-only edition and hosted services may have different roles and obligations.
+  78.3 United Kingdom
+  Map UK GDPR and relevant national requirements separately rather than assuming complete identity with the EEA regime.
+  78.4 California and US states
+  Assess:
+- CCPA/CPRA applicability;
+- sensitive personal information;
+- service-provider contracts;
+- deletion and access rights;
+- sale/share definitions;
+- targeted advertising;
+- state-specific privacy regimes;
+- breach-notification laws.
+  78.5 Employment-specific sensitivity
+  Employment applications can include information protected by anti-discrimination and disability laws.
+  The system should:
+- separate voluntary demographic data from qualification data;
+- prevent demographic fields from influencing match score;
+- prevent sensitive traits from entering résumé tailoring;
+- avoid proxy-based ranking;
+- retain disclosure evidence;
+- support “prefer not to answer” policies.
+  78.6 Cross-border processing
+  Cloud providers and hosted components must record:
+- processing region;
+- data categories;
+- transfer mechanism where required;
+- subprocessors;
+- retention;
+- user choice.
+  Users who prohibit cross-border processing must be able to use local-only functionality.
+  78.7 Legal-research status
+  This plan defines engineering controls, not a final legal conclusion. Before hosted release:
+- obtain qualified jurisdictional review;
+- document applicability assumptions;
+- update notices and contracts;
+- complete DPIA where required;
+- record residual risk.
+
+---
+
 79. Consent and disclosure control
-79.1 Consent records
-id: consent_...
-purpose: cloud_model_processing
-data_categories:
- - employment
- - skills
-recipient: provider_gemini
-status: granted
-granted_at: null
-expires_at: null
-withdrawn_at: null
-notice_version: 2
-evidence_ref: null
-79.2 Consent qualities
-Where consent is the chosen basis, it should be:
- * specific;
- * informed;
- * freely given where legally required;
- * unambiguous;
- * revocable;
- * recorded;
- * separated from unrelated choices.
-79.3 Disclosure event
-id: disclosure_...
-application_id: application_...
-recipient:
- type: employer_portal
- id: portal_...
-data_categories:
- - contact
- - employment
-fact_refs:
- - fact_...
-purpose: job_application
-policy_decision_id: policy_decision_...
-occurred_at: null
-status: entered_not_submitted
-79.4 Disclosure preview
-Before final review, summarize:
- * recipient;
- * fields;
- * sensitivity;
- * purpose;
- * persistence assumptions;
- * optional fields;
- * declined fields;
- * cloud providers used during preparation.
-79.5 Consent withdrawal
-Withdrawal should:
- * prevent future processing under that consent;
- * revoke provider or integration access where applicable;
- * delete local cached data according to policy;
- * not falsely claim removal from an employer that already received data;
- * explain external deletion options.
-----------------------------------------
+    79.1 Consent records
+    id: consent_...
+    purpose: cloud_model_processing
+    data_categories:
+
+- employment
+- skills
+  recipient: provider_gemini
+  status: granted
+  granted_at: null
+  expires_at: null
+  withdrawn_at: null
+  notice_version: 2
+  evidence_ref: null
+  79.2 Consent qualities
+  Where consent is the chosen basis, it should be:
+
+* specific;
+* informed;
+* freely given where legally required;
+* unambiguous;
+* revocable;
+* recorded;
+* separated from unrelated choices.
+  79.3 Disclosure event
+  id: disclosure_...
+  application_id: application_...
+  recipient:
+  type: employer_portal
+  id: portal_...
+  data_categories:
+
+- contact
+- employment
+  fact_refs:
+- fact_...
+  purpose: job_application
+  policy_decision_id: policy_decision_...
+  occurred_at: null
+  status: entered_not_submitted
+  79.4 Disclosure preview
+  Before final review, summarize:
+
+* recipient;
+* fields;
+* sensitivity;
+* purpose;
+* persistence assumptions;
+* optional fields;
+* declined fields;
+* cloud providers used during preparation.
+  79.5 Consent withdrawal
+  Withdrawal should:
+* prevent future processing under that consent;
+* revoke provider or integration access where applicable;
+* delete local cached data according to policy;
+* not falsely claim removal from an employer that already received data;
+* explain external deletion options.
+
+---
+
 80. Data retention and lifecycle
-80.1 Retention classes
-Data Default retention Canonical profile Until user deletes or supersedes Profile history Until user deletes; configurable Restricted demographic data Until user deletes; annual review Raw model prompts and responses 28 days Browser screenshots and DOM evidence 28 days Failed-run diagnostics 28 days Authentication diagnostics 28 days Normalized jobs 180 days Rejected jobs 90 days unless saved Application record Until user deletes Final review snapshot Until user deletes Confirmed receipt Until user deletes Audit metadata 365 days, configurable Email excerpts 28 days unless promoted to application evidence Session secrets Until expiration or revocation Temporary render files Delete immediately after successful import Quarantined files 7 days unless user extends
-80.2 Retention engine
-A scheduled local job should:
- 1. identify expired records;
- 2. respect legal or user holds;
- 3. delete derived indexes;
- 4. delete or cryptographically erase content;
- 5. update audit metadata;
- 6. retry safely;
- 7. report failures;
- 8. avoid deleting active workflow dependencies.
-80.3 Retention holds
-A hold may be created for:
- * active incident;
- * pending user export;
- * unresolved submission state;
- * security investigation;
- * explicit user preservation.
-Holds must be visible and expire or require periodic review.
-80.4 Raw versus promoted data
-A raw email may expire after 28 days while a minimized status event derived from it remains in the application timeline.
-A raw model response may expire while its validated answer artifact remains.
-Promotion must preserve provenance and purpose.
-80.5 Retention configuration
-Users may shorten most retention periods.
-Increasing retention beyond defaults should show:
- * data affected;
- * storage estimate;
- * privacy impact;
- * backup implications.
-----------------------------------------
+    80.1 Retention classes
+    Data Default retention Canonical profile Until user deletes or supersedes Profile history Until user deletes; configurable Restricted demographic data Until user deletes; annual review Raw model prompts and responses 28 days Browser screenshots and DOM evidence 28 days Failed-run diagnostics 28 days Authentication diagnostics 28 days Normalized jobs 180 days Rejected jobs 90 days unless saved Application record Until user deletes Final review snapshot Until user deletes Confirmed receipt Until user deletes Audit metadata 365 days, configurable Email excerpts 28 days unless promoted to application evidence Session secrets Until expiration or revocation Temporary render files Delete immediately after successful import Quarantined files 7 days unless user extends
+    80.2 Retention engine
+    A scheduled local job should:
+1.  identify expired records;
+1.  respect legal or user holds;
+1.  delete derived indexes;
+1.  delete or cryptographically erase content;
+1.  update audit metadata;
+1.  retry safely;
+1.  report failures;
+1.  avoid deleting active workflow dependencies.
+    80.3 Retention holds
+    A hold may be created for:
+
+- active incident;
+- pending user export;
+- unresolved submission state;
+- security investigation;
+- explicit user preservation.
+  Holds must be visible and expire or require periodic review.
+  80.4 Raw versus promoted data
+  A raw email may expire after 28 days while a minimized status event derived from it remains in the application timeline.
+  A raw model response may expire while its validated answer artifact remains.
+  Promotion must preserve provenance and purpose.
+  80.5 Retention configuration
+  Users may shorten most retention periods.
+  Increasing retention beyond defaults should show:
+- data affected;
+- storage estimate;
+- privacy impact;
+- backup implications.
+
+---
+
 81. Data-subject and user-control operations
-81.1 Export
-The user can export:
- * profile;
- * personas;
- * applications;
- * jobs;
- * approvals;
- * documents;
- * policies;
- * application timelines;
- * model-use metadata;
- * disclosure history;
- * audit events;
- * configuration excluding secrets.
-Formats:
- * human-readable archive;
- * structured JSON;
- * YAML where appropriate;
- * document originals;
- * encrypted full backup.
-81.2 Rectification
-When a fact is corrected:
- * create a new version;
- * supersede old fact;
- * identify derived records;
- * invalidate affected answers;
- * invalidate approvals;
- * flag submitted historical applications as historical rather than rewriting them;
- * offer correction guidance for external portals.
-81.3 Deletion scopes
- * one fact;
- * one sensitive category;
- * one document;
- * one application;
- * one portal account;
- * one provider trace;
- * all local data;
- * hosted encrypted replica;
- * full installation identity.
-81.4 Full deletion workflow
- 1. authenticate user;
- 2. show deletion scope;
- 3. stop active tasks;
- 4. revoke tokens where possible;
- 5. delete local database records;
- 6. delete artifacts;
- 7. delete embeddings and indexes;
- 8. delete browser profiles if selected;
- 9. destroy relevant keys;
- 10. request hosted ciphertext deletion;
- 11. remove backups according to selected policy;
- 12. generate non-sensitive deletion receipt;
- 13. shut down or reinitialize installation.
-81.5 Deletion verification
-Verify:
- * database query returns no targeted records;
- * indexes contain no target;
- * artifacts removed or cryptographically erased;
- * caches cleared;
- * hosted deletion acknowledged;
- * active secrets revoked;
- * retained exceptions documented.
-81.6 External recipient limitation
-The system cannot guarantee deletion from:
- * employers;
- * portals;
- * ATS providers;
- * recruiters;
- * model providers after their stated retention;
- * email recipients.
-It should provide destination-specific deletion guidance and records of prior disclosure.
-----------------------------------------
+    81.1 Export
+    The user can export:
+
+- profile;
+- personas;
+- applications;
+- jobs;
+- approvals;
+- documents;
+- policies;
+- application timelines;
+- model-use metadata;
+- disclosure history;
+- audit events;
+- configuration excluding secrets.
+  Formats:
+- human-readable archive;
+- structured JSON;
+- YAML where appropriate;
+- document originals;
+- encrypted full backup.
+  81.2 Rectification
+  When a fact is corrected:
+- create a new version;
+- supersede old fact;
+- identify derived records;
+- invalidate affected answers;
+- invalidate approvals;
+- flag submitted historical applications as historical rather than rewriting them;
+- offer correction guidance for external portals.
+  81.3 Deletion scopes
+- one fact;
+- one sensitive category;
+- one document;
+- one application;
+- one portal account;
+- one provider trace;
+- all local data;
+- hosted encrypted replica;
+- full installation identity.
+  81.4 Full deletion workflow
+
+1.  authenticate user;
+2.  show deletion scope;
+3.  stop active tasks;
+4.  revoke tokens where possible;
+5.  delete local database records;
+6.  delete artifacts;
+7.  delete embeddings and indexes;
+8.  delete browser profiles if selected;
+9.  destroy relevant keys;
+10. request hosted ciphertext deletion;
+11. remove backups according to selected policy;
+12. generate non-sensitive deletion receipt;
+13. shut down or reinitialize installation.
+    81.5 Deletion verification
+    Verify:
+
+- database query returns no targeted records;
+- indexes contain no target;
+- artifacts removed or cryptographically erased;
+- caches cleared;
+- hosted deletion acknowledged;
+- active secrets revoked;
+- retained exceptions documented.
+  81.6 External recipient limitation
+  The system cannot guarantee deletion from:
+- employers;
+- portals;
+- ATS providers;
+- recruiters;
+- model providers after their stated retention;
+- email recipients.
+  It should provide destination-specific deletion guidance and records of prior disclosure.
+
+---
+
 82. Backup and recovery
-82.1 Backup objectives
-Backups must protect against:
- * device failure;
- * database corruption;
- * accidental deletion;
- * failed migration;
- * ransomware;
- * lost browser state where export is appropriate.
-Backups must not become an easier data-exfiltration path.
-82.2 Backup types
-Configuration backup
- * non-secret settings;
- * policies;
- * adapter configuration.
-Profile backup
- * encrypted canonical profile;
- * personas;
- * provenance.
-Full application backup
- * encrypted database;
- * artifacts;
- * documents;
- * application history;
- * audit metadata.
-Browser-session backup
-Not enabled by default because it contains powerful secrets. Prefer reauthentication.
-82.3 Backup encryption
- * separate backup key;
- * authenticated encryption;
- * user-controlled recovery passphrase or external key;
- * versioned manifest;
- * checksums;
- * no plaintext temporary archive;
- * optional split recovery.
-82.4 Backup destinations
- * user-selected local directory;
- * removable storage;
- * user-controlled cloud-synced folder;
- * future end-to-end encrypted hosted storage.
-The application must not assume a cloud provider is safe merely because the folder is synchronized.
-82.5 Recovery key
-Options:
- * user passphrase;
- * printable recovery key;
- * password-manager storage;
- * hardware-backed key;
- * multiple-device recovery.
-No silent server escrow by default.
-82.6 Restore workflow
- 1. inspect backup without extracting plaintext broadly;
- 2. validate format and version;
- 3. authenticate recovery key;
- 4. verify integrity;
- 5. show contents and timestamp;
- 6. select replace or merge;
- 7. create current-state safety backup;
- 8. restore transactionally;
- 9. migrate if necessary;
- 10. rebuild indexes;
- 11. verify profile and applications;
- 12. require portal reauthentication where sessions were not restored.
-82.7 Restore tests
-Automated tests:
- * current version;
- * previous supported versions;
- * corrupted archive;
- * wrong password;
- * missing artifact;
- * interrupted restore;
- * duplicate application merge;
- * key rotation;
- * selective restore;
- * full deletion followed by authorized restore.
-82.8 Ransomware considerations
- * backups may be read-only or versioned;
- * keep at least one offline copy for users who require it;
- * do not automatically overwrite all backups;
- * detect suspicious mass changes where feasible;
- * document recovery procedure.
-----------------------------------------
+    82.1 Backup objectives
+    Backups must protect against:
+
+- device failure;
+- database corruption;
+- accidental deletion;
+- failed migration;
+- ransomware;
+- lost browser state where export is appropriate.
+  Backups must not become an easier data-exfiltration path.
+  82.2 Backup types
+  Configuration backup
+- non-secret settings;
+- policies;
+- adapter configuration.
+  Profile backup
+- encrypted canonical profile;
+- personas;
+- provenance.
+  Full application backup
+- encrypted database;
+- artifacts;
+- documents;
+- application history;
+- audit metadata.
+  Browser-session backup
+  Not enabled by default because it contains powerful secrets. Prefer reauthentication.
+  82.3 Backup encryption
+- separate backup key;
+- authenticated encryption;
+- user-controlled recovery passphrase or external key;
+- versioned manifest;
+- checksums;
+- no plaintext temporary archive;
+- optional split recovery.
+  82.4 Backup destinations
+- user-selected local directory;
+- removable storage;
+- user-controlled cloud-synced folder;
+- future end-to-end encrypted hosted storage.
+  The application must not assume a cloud provider is safe merely because the folder is synchronized.
+  82.5 Recovery key
+  Options:
+- user passphrase;
+- printable recovery key;
+- password-manager storage;
+- hardware-backed key;
+- multiple-device recovery.
+  No silent server escrow by default.
+  82.6 Restore workflow
+
+1.  inspect backup without extracting plaintext broadly;
+2.  validate format and version;
+3.  authenticate recovery key;
+4.  verify integrity;
+5.  show contents and timestamp;
+6.  select replace or merge;
+7.  create current-state safety backup;
+8.  restore transactionally;
+9.  migrate if necessary;
+10. rebuild indexes;
+11. verify profile and applications;
+12. require portal reauthentication where sessions were not restored.
+    82.7 Restore tests
+    Automated tests:
+
+- current version;
+- previous supported versions;
+- corrupted archive;
+- wrong password;
+- missing artifact;
+- interrupted restore;
+- duplicate application merge;
+- key rotation;
+- selective restore;
+- full deletion followed by authorized restore.
+  82.8 Ransomware considerations
+- backups may be read-only or versioned;
+- keep at least one offline copy for users who require it;
+- do not automatically overwrite all backups;
+- detect suspicious mass changes where feasible;
+- document recovery procedure.
+
+---
+
 83. Hosted encrypted relay security
-83.1 Hosted-relay role
-The relay provides:
- * device presence;
- * encrypted command delivery;
- * encrypted event synchronization;
- * optional encrypted backup transport;
- * remote notifications;
- * release and security advisories.
-It does not process plaintext candidate profile data by default.
-83.2 Device registration
-Registration:
- 1. local worker generates device key pair;
- 2. user authenticates to hosted account;
- 3. device presents public key;
- 4. user confirms device;
- 5. relay issues scoped device identity;
- 6. local worker records relay identity;
- 7. recovery and revocation options are shown.
-83.3 End-to-end encryption
-Payloads are encrypted for authorized user devices.
-Server-visible:
- * account identifier;
- * device identifier;
- * routing metadata;
- * ciphertext;
- * timestamps;
- * size;
- * delivery status.
-Server-hidden by design:
- * profile facts;
- * job content;
- * application answers;
- * documents;
- * browser screenshots;
- * credentials;
- * model prompts.
-83.4 Command signing
-Remote commands include:
- * command ID;
- * issuing device;
- * target device;
- * timestamp;
- * expiration;
- * sequence or nonce;
- * requested action;
- * encrypted payload;
- * signature.
-Local worker verifies:
- * authorized issuer;
- * signature;
- * freshness;
- * replay status;
- * local policy;
- * required local approval.
-83.5 Remote-command limits
-Remote UI may request:
- * ingest job;
- * run matching;
- * prepare draft;
- * show status;
- * pause;
- * cancel;
- * schedule permitted background task.
-High-risk actions require local confirmation unless an explicit bounded policy permits otherwise.
-Remote commands cannot:
- * reveal local secrets;
- * disable security controls;
- * enable submission;
- * install unsigned adapters;
- * expose the local API;
- * erase all data without strong reauthentication and local policy.
-83.6 Metadata minimization
-Avoid server-side storage of:
- * plaintext task names;
- * employer names;
- * job titles;
- * application status details;
- * document file names.
-Use encrypted labels where user experience permits.
-83.7 Multi-device conflicts
-Use:
- * version vectors or equivalent;
- * immutable events;
- * explicit conflict records;
- * no last-write-wins for sensitive facts;
- * user reconciliation for conflicting profile changes;
- * signed device authorship.
-83.8 Device revocation
-Revocation should:
- * invalidate relay credential;
- * rotate shared encryption material where required;
- * prevent new messages;
- * retain audit metadata;
- * allow remote ciphertext deletion;
- * prompt review of local provider and portal sessions if compromise is suspected.
----------------------------------------------------
+    83.1 Hosted-relay role
+    The relay provides:
+
+- device presence;
+- encrypted command delivery;
+- encrypted event synchronization;
+- optional encrypted backup transport;
+- remote notifications;
+- release and security advisories.
+  It does not process plaintext candidate profile data by default.
+  83.2 Device registration
+  Registration:
+
+1.  local worker generates device key pair;
+2.  user authenticates to hosted account;
+3.  device presents public key;
+4.  user confirms device;
+5.  relay issues scoped device identity;
+6.  local worker records relay identity;
+7.  recovery and revocation options are shown.
+    83.3 End-to-end encryption
+    Payloads are encrypted for authorized user devices.
+    Server-visible:
+
+- account identifier;
+- device identifier;
+- routing metadata;
+- ciphertext;
+- timestamps;
+- size;
+- delivery status.
+  Server-hidden by design:
+- profile facts;
+- job content;
+- application answers;
+- documents;
+- browser screenshots;
+- credentials;
+- model prompts.
+  83.4 Command signing
+  Remote commands include:
+- command ID;
+- issuing device;
+- target device;
+- timestamp;
+- expiration;
+- sequence or nonce;
+- requested action;
+- encrypted payload;
+- signature.
+  Local worker verifies:
+- authorized issuer;
+- signature;
+- freshness;
+- replay status;
+- local policy;
+- required local approval.
+  83.5 Remote-command limits
+  Remote UI may request:
+- ingest job;
+- run matching;
+- prepare draft;
+- show status;
+- pause;
+- cancel;
+- schedule permitted background task.
+  High-risk actions require local confirmation unless an explicit bounded policy permits otherwise.
+  Remote commands cannot:
+- reveal local secrets;
+- disable security controls;
+- enable submission;
+- install unsigned adapters;
+- expose the local API;
+- erase all data without strong reauthentication and local policy.
+  83.6 Metadata minimization
+  Avoid server-side storage of:
+- plaintext task names;
+- employer names;
+- job titles;
+- application status details;
+- document file names.
+  Use encrypted labels where user experience permits.
+  83.7 Multi-device conflicts
+  Use:
+- version vectors or equivalent;
+- immutable events;
+- explicit conflict records;
+- no last-write-wins for sensitive facts;
+- user reconciliation for conflicting profile changes;
+- signed device authorship.
+  83.8 Device revocation
+  Revocation should:
+- invalidate relay credential;
+- rotate shared encryption material where required;
+- prevent new messages;
+- retain audit metadata;
+- allow remote ciphertext deletion;
+- prompt review of local provider and portal sessions if compromise is suspected.
+
+---
+
 83. Hosted encrypted relay security
-83.9 Hosted account recovery
-Hosted account recovery must not silently grant access to end-to-end encrypted content.
-Recovery may restore:
- * account authentication;
- * subscription state;
- * device-registration ability;
- * release-channel preferences;
- * server-visible metadata.
-Recovery cannot decrypt user payloads unless the user supplies:
- * a recovery key;
- * an already authorized device;
- * an explicitly configured user-controlled escrow mechanism.
-The interface must distinguish clearly between:
- * recovering the hosted account;
- * recovering encrypted application data.
-83.10 Hosted administrator boundaries
-Hosted administrators must not be able to:
- * decrypt candidate payloads;
- * impersonate a registered device;
- * issue unsigned commands;
- * disable local policy;
- * retrieve local browser sessions;
- * access local model-provider keys.
-Administrative actions must be:
- * role-based;
- * logged;
- * approved for sensitive operations;
- * time-bound where practical;
- * reviewed periodically.
-83.11 Hosted database compromise
-Assume the hosted database may eventually be exfiltrated.
-The architecture should ensure that an attacker obtains, at most:
- * account identifiers;
- * device public keys;
- * opaque routing metadata;
- * encrypted payloads;
- * timestamps and approximate payload sizes;
- * subscription metadata where applicable.
-Mitigations for metadata leakage:
- * minimize plaintext labels;
- * batch nonurgent events where practical;
- * avoid employer and role names in routing fields;
- * expire delivered ciphertext;
- * separate identity and message stores;
- * restrict internal analytics;
- * prevent ad-targeting or data brokerage.
-83.12 Relay availability failure
-If the relay is unavailable:
- * local operation continues;
- * remote commands remain unavailable;
- * outbound encrypted events enter a bounded local queue;
- * no workflow loses its local checkpoint;
- * the UI reports relay degradation separately from core health;
- * queued messages are deduplicated after reconnect;
- * expired commands are discarded safely.
-83.13 Hosted abuse controls
-Protect the service against:
- * account enumeration;
- * credential stuffing;
- * malicious device registration;
- * replayed commands;
- * ciphertext flooding;
- * oversized messages;
- * notification spam;
- * denial-of-service amplification;
- * compromised clients generating unbounded storage.
-Controls:
- * rate limits;
- * message-size limits;
- * device quotas;
- * signed commands;
- * expiration;
- * abuse detection using minimized metadata;
- * account lock and recovery;
- * bounded retention;
- * administrative incident procedures.
-83.14 Hosted release gate
-Hosted mode may not become generally available until:
- 1. local-only operation is stable;
- 2. device identity is implemented;
- 3. command signing passes adversarial tests;
- 4. end-to-end encryption receives independent review;
- 5. metadata flows are documented;
- 6. account recovery is tested;
- 7. device revocation is tested;
- 8. multi-device conflicts are handled;
- 9. hosted deletion is verified;
- 10. a privacy impact assessment is complete;
- 11. penetration testing is complete;
- 12. local policy remains authoritative.
-----------------------------------------
+    83.9 Hosted account recovery
+    Hosted account recovery must not silently grant access to end-to-end encrypted content.
+    Recovery may restore:
+
+- account authentication;
+- subscription state;
+- device-registration ability;
+- release-channel preferences;
+- server-visible metadata.
+  Recovery cannot decrypt user payloads unless the user supplies:
+- a recovery key;
+- an already authorized device;
+- an explicitly configured user-controlled escrow mechanism.
+  The interface must distinguish clearly between:
+- recovering the hosted account;
+- recovering encrypted application data.
+  83.10 Hosted administrator boundaries
+  Hosted administrators must not be able to:
+- decrypt candidate payloads;
+- impersonate a registered device;
+- issue unsigned commands;
+- disable local policy;
+- retrieve local browser sessions;
+- access local model-provider keys.
+  Administrative actions must be:
+- role-based;
+- logged;
+- approved for sensitive operations;
+- time-bound where practical;
+- reviewed periodically.
+  83.11 Hosted database compromise
+  Assume the hosted database may eventually be exfiltrated.
+  The architecture should ensure that an attacker obtains, at most:
+- account identifiers;
+- device public keys;
+- opaque routing metadata;
+- encrypted payloads;
+- timestamps and approximate payload sizes;
+- subscription metadata where applicable.
+  Mitigations for metadata leakage:
+- minimize plaintext labels;
+- batch nonurgent events where practical;
+- avoid employer and role names in routing fields;
+- expire delivered ciphertext;
+- separate identity and message stores;
+- restrict internal analytics;
+- prevent ad-targeting or data brokerage.
+  83.12 Relay availability failure
+  If the relay is unavailable:
+- local operation continues;
+- remote commands remain unavailable;
+- outbound encrypted events enter a bounded local queue;
+- no workflow loses its local checkpoint;
+- the UI reports relay degradation separately from core health;
+- queued messages are deduplicated after reconnect;
+- expired commands are discarded safely.
+  83.13 Hosted abuse controls
+  Protect the service against:
+- account enumeration;
+- credential stuffing;
+- malicious device registration;
+- replayed commands;
+- ciphertext flooding;
+- oversized messages;
+- notification spam;
+- denial-of-service amplification;
+- compromised clients generating unbounded storage.
+  Controls:
+- rate limits;
+- message-size limits;
+- device quotas;
+- signed commands;
+- expiration;
+- abuse detection using minimized metadata;
+- account lock and recovery;
+- bounded retention;
+- administrative incident procedures.
+  83.14 Hosted release gate
+  Hosted mode may not become generally available until:
+
+1.  local-only operation is stable;
+2.  device identity is implemented;
+3.  command signing passes adversarial tests;
+4.  end-to-end encryption receives independent review;
+5.  metadata flows are documented;
+6.  account recovery is tested;
+7.  device revocation is tested;
+8.  multi-device conflicts are handled;
+9.  hosted deletion is verified;
+10. a privacy impact assessment is complete;
+11. penetration testing is complete;
+12. local policy remains authoritative.
+
+---
+
 84. Security and privacy acceptance criteria
-The security and privacy architecture is acceptable for release-1.0 only when:
- 1. no raw government identifier is retained;
- 2. no secret appears in ordinary logs;
- 3. no real personal data exists in repository fixtures;
- 4. canonical profile data is encrypted at rest;
- 5. restricted fields receive separate application-level protection;
- 6. keys are separated from encrypted data;
- 7. operating-system vault integrations pass platform tests;
- 8. local API rejects unauthorized and cross-origin requests;
- 9. browser pages cannot invoke privileged local actions;
- 10. adapters cannot access undeclared profile categories;
- 11. model providers receive only policy-approved data;
- 12. prompt injection cannot expand capabilities;
- 13. all release artifacts are signed;
- 14. SBOM and provenance are generated;
- 15. backup restore and cryptographic deletion are tested;
- 16. telemetry is disabled by default;
- 17. hosted services receive no plaintext profile data by default;
- 18. independent critical and high findings are remediated and retested;
- 19. vulnerability reporting and incident response are operational;
- 20. users can export, rectify, and delete their data.
-----------------------------------------
+    The security and privacy architecture is acceptable for release-1.0 only when:
+1.  no raw government identifier is retained;
+1.  no secret appears in ordinary logs;
+1.  no real personal data exists in repository fixtures;
+1.  canonical profile data is encrypted at rest;
+1.  restricted fields receive separate application-level protection;
+1.  keys are separated from encrypted data;
+1.  operating-system vault integrations pass platform tests;
+1.  local API rejects unauthorized and cross-origin requests;
+1.  browser pages cannot invoke privileged local actions;
+1.  adapters cannot access undeclared profile categories;
+1.  model providers receive only policy-approved data;
+1.  prompt injection cannot expand capabilities;
+1.  all release artifacts are signed;
+1.  SBOM and provenance are generated;
+1.  backup restore and cryptographic deletion are tested;
+1.  telemetry is disabled by default;
+1.  hosted services receive no plaintext profile data by default;
+1.  independent critical and high findings are remediated and retested;
+1.  vulnerability reporting and incident response are operational;
+1.  users can export, rectify, and delete their data.
+
+---
+
 85. Open-source governance
-85.1 Governance objectives
-The project should remain:
- * secure;
- * maintainable;
- * transparent;
- * resistant to capture by one commercial operator;
- * welcoming to technically competent contributors;
- * conservative about high-risk changes;
- * explicit about supported behavior;
- * sustainable without weakening user privacy.
-85.2 License
-The project will use:
-GNU Affero General Public License v3.0 only
-SPDX-License-Identifier: AGPL-3.0-only
-The -only designation means later AGPL versions are not automatically accepted.
-Before repository publication:
- * run a dependency-license compatibility review;
- * ensure copied code has compatible terms;
- * include attribution where required;
- * document asset and font licenses;
- * distinguish project code from generated artifacts;
- * review whether mobile-store or extension-store terms create conflicts.
-85.3 Commercial derivatives
-Closed-source commercial derivatives are not permitted under the selected license.
-Commercial use is possible only while complying with AGPL-3.0 obligations, including source-availability requirements applicable to network interaction.
-The project must not include an informal exception that undermines the chosen license.
-85.4 Copyright ownership
-Preferred contribution model:
- * contributors retain copyright;
- * contributions are licensed under AGPL-3.0-only;
- * Developer Certificate of Origin sign-off is required;
- * no broad copyright assignment initially.
-A contributor license agreement should be added only if a concrete legal need justifies its complexity.
-85.5 Developer Certificate of Origin
-Contributors certify that they have the right to submit their work.
-Commit sign-off:
-Signed-off-by: Contributor Name <email@example.com>
-CI should verify sign-off on contributed commits, with a documented remediation process for mistakes.
-85.6 Governance phases
-Founder-maintained phase
- * one or a few maintainers;
- * documented decision process;
- * protected branches;
- * mandatory review;
- * public roadmap;
- * transparent release criteria.
-Maintainer-team phase
- * component owners;
- * security reviewers;
- * adapter maintainers;
- * release managers;
- * voting and conflict process;
- * succession planning.
-Foundation or neutral-governance phase
-Consider only when:
- * contributor base is broad;
- * funding or commercial pressure threatens neutrality;
- * trademark and release infrastructure require independent custody;
- * governance overhead is justified.
-85.7 Maintainer roles
-Core maintainer
-May review ordinary core changes and roadmap work.
-Security maintainer
-Required for:
- * cryptography;
- * authentication;
- * authorization;
- * secret storage;
- * hosted relay;
- * update mechanism;
- * submission effect.
-Adapter maintainer
-Owns:
- * compatibility fixtures;
- * portal-policy review;
- * adapter releases;
- * incident response;
- * support matrix.
-Release manager
-Owns:
- * release checklist;
- * versioning;
- * signing;
- * provenance;
- * release notes;
- * rollback.
-Documentation maintainer
-Owns:
- * setup;
- * user guides;
- * architecture references;
- * compatibility documentation;
- * stale-link checks.
-85.8 Decision process
-Use architecture decision records for consequential technical choices.
-A decision record includes:
- * context;
- * decision;
- * alternatives;
- * evidence;
- * security and privacy impact;
- * operational impact;
- * migration;
- * reversal cost;
- * status;
- * review date.
-85.9 Request-for-comment process
-Use RFCs for:
- * new external effect;
- * new cloud data flow;
- * plugin architecture;
- * hosted service;
- * multi-user support;
- * new submission mode;
- * assessment-related capability;
- * major data-schema change;
- * cryptographic architecture;
- * licensing change.
-RFC lifecycle:
-draft
-→ discussion
-→ revision
-→ security/privacy review
-→ accepted or rejected
-→ implementation
-→ post-implementation review
-85.10 Code ownership
-Define owners for high-risk paths.
-Example:
-/src/security/ @security-maintainers
-/src/effects/ @security-maintainers @core-maintainers
-/src/adapters/ @adapter-maintainers
-/src/hosted-relay/ @security-maintainers @relay-maintainers
-/.github/workflows/ @release-managers @security-maintainers
-/prompts/security/ @security-maintainers
-Code ownership supplements branch protection; it does not replace careful review.
-----------------------------------------
+    85.1 Governance objectives
+    The project should remain:
+
+- secure;
+- maintainable;
+- transparent;
+- resistant to capture by one commercial operator;
+- welcoming to technically competent contributors;
+- conservative about high-risk changes;
+- explicit about supported behavior;
+- sustainable without weakening user privacy.
+  85.2 License
+  The project will use:
+  GNU Affero General Public License v3.0 only
+  SPDX-License-Identifier: AGPL-3.0-only
+  The -only designation means later AGPL versions are not automatically accepted.
+  Before repository publication:
+- run a dependency-license compatibility review;
+- ensure copied code has compatible terms;
+- include attribution where required;
+- document asset and font licenses;
+- distinguish project code from generated artifacts;
+- review whether mobile-store or extension-store terms create conflicts.
+  85.3 Commercial derivatives
+  Closed-source commercial derivatives are not permitted under the selected license.
+  Commercial use is possible only while complying with AGPL-3.0 obligations, including source-availability requirements applicable to network interaction.
+  The project must not include an informal exception that undermines the chosen license.
+  85.4 Copyright ownership
+  Preferred contribution model:
+- contributors retain copyright;
+- contributions are licensed under AGPL-3.0-only;
+- Developer Certificate of Origin sign-off is required;
+- no broad copyright assignment initially.
+  A contributor license agreement should be added only if a concrete legal need justifies its complexity.
+  85.5 Developer Certificate of Origin
+  Contributors certify that they have the right to submit their work.
+  Commit sign-off:
+  Signed-off-by: Contributor Name <email@example.com>
+  CI should verify sign-off on contributed commits, with a documented remediation process for mistakes.
+  85.6 Governance phases
+  Founder-maintained phase
+- one or a few maintainers;
+- documented decision process;
+- protected branches;
+- mandatory review;
+- public roadmap;
+- transparent release criteria.
+  Maintainer-team phase
+- component owners;
+- security reviewers;
+- adapter maintainers;
+- release managers;
+- voting and conflict process;
+- succession planning.
+  Foundation or neutral-governance phase
+  Consider only when:
+- contributor base is broad;
+- funding or commercial pressure threatens neutrality;
+- trademark and release infrastructure require independent custody;
+- governance overhead is justified.
+  85.7 Maintainer roles
+  Core maintainer
+  May review ordinary core changes and roadmap work.
+  Security maintainer
+  Required for:
+- cryptography;
+- authentication;
+- authorization;
+- secret storage;
+- hosted relay;
+- update mechanism;
+- submission effect.
+  Adapter maintainer
+  Owns:
+- compatibility fixtures;
+- portal-policy review;
+- adapter releases;
+- incident response;
+- support matrix.
+  Release manager
+  Owns:
+- release checklist;
+- versioning;
+- signing;
+- provenance;
+- release notes;
+- rollback.
+  Documentation maintainer
+  Owns:
+- setup;
+- user guides;
+- architecture references;
+- compatibility documentation;
+- stale-link checks.
+  85.8 Decision process
+  Use architecture decision records for consequential technical choices.
+  A decision record includes:
+- context;
+- decision;
+- alternatives;
+- evidence;
+- security and privacy impact;
+- operational impact;
+- migration;
+- reversal cost;
+- status;
+- review date.
+  85.9 Request-for-comment process
+  Use RFCs for:
+- new external effect;
+- new cloud data flow;
+- plugin architecture;
+- hosted service;
+- multi-user support;
+- new submission mode;
+- assessment-related capability;
+- major data-schema change;
+- cryptographic architecture;
+- licensing change.
+  RFC lifecycle:
+  draft
+  → discussion
+  → revision
+  → security/privacy review
+  → accepted or rejected
+  → implementation
+  → post-implementation review
+  85.10 Code ownership
+  Define owners for high-risk paths.
+  Example:
+  /src/security/ @security-maintainers
+  /src/effects/ @security-maintainers @core-maintainers
+  /src/adapters/ @adapter-maintainers
+  /src/hosted-relay/ @security-maintainers @relay-maintainers
+  /.github/workflows/ @release-managers @security-maintainers
+  /prompts/security/ @security-maintainers
+  Code ownership supplements branch protection; it does not replace careful review.
+
+---
+
 86. Contribution model
-86.1 Contributor setup
-The contributor experience should require:
- * supported Python;
- * Node and Rust only if the GUI architecture needs them;
- * browser dependencies only for browser tests;
- * no real portal credentials;
- * no cloud model key for core tests;
- * synthetic fixtures;
- * one setup command where feasible.
-86.2 Contribution categories
- * core domain;
- * CLI;
- * GUI;
- * portal adapter;
- * document template;
- * model provider;
- * test fixture;
- * documentation;
- * security;
- * accessibility;
- * localization;
- * research ledger.
-86.3 Pull-request requirements
-Every pull request should state:
- * problem;
- * scope;
- * approach;
- * tests;
- * security impact;
- * privacy impact;
- * compatibility impact;
- * migration impact;
- * screenshots for user-interface changes;
- * research sources where external behavior is assumed.
-86.4 Adapter contributions
-An adapter contribution must include:
- * manifest;
- * policy-research record;
- * supported domains;
- * permission declaration;
- * synthetic or sanitized fixtures;
- * contract tests;
- * failure cases;
- * final-review behavior;
- * account-challenge behavior;
- * compatibility state;
- * maintainer or ownership commitment.
-A contributed adapter is not automatically supported.
-86.5 Fixture privacy
-Contributors must not submit:
- * real application pages containing personal data;
- * authentication tokens;
- * browser cookies;
- * real candidate documents;
- * private employer information;
- * confidential recruiter correspondence.
-Fixture sanitizer requirements:
- * replace names;
- * replace addresses;
- * replace email and phone;
- * remove tokens;
- * remove tracking identifiers;
- * replace employer-private content where necessary;
- * preserve structural behavior;
- * run automated PII scans.
-86.6 Contributor security
-Untrusted pull requests:
- * receive no repository secrets;
- * cannot publish releases;
- * cannot access live portal accounts;
- * cannot modify protected environments without review;
- * run in bounded CI;
- * produce artifacts with short retention.
-86.7 Issue templates
-Issue types:
- * bug;
- * adapter compatibility;
- * security report redirect;
- * privacy issue;
- * feature request;
- * documentation;
- * accessibility;
- * performance;
- * research update;
- * portal-policy concern.
-Security vulnerabilities must not be reported publicly before coordinated disclosure.
-86.8 Community conduct
-Adopt a concise code of conduct that prohibits:
- * harassment;
- * doxxing;
- * publishing candidate data;
- * sharing credentials;
- * evasion-oriented contributions;
- * malicious portal targeting;
- * discriminatory feature requests.
-Technical criticism and rejection of unsafe changes must remain direct and evidence-based.
-----------------------------------------
+    86.1 Contributor setup
+    The contributor experience should require:
+
+- supported Python;
+- Node and Rust only if the GUI architecture needs them;
+- browser dependencies only for browser tests;
+- no real portal credentials;
+- no cloud model key for core tests;
+- synthetic fixtures;
+- one setup command where feasible.
+  86.2 Contribution categories
+- core domain;
+- CLI;
+- GUI;
+- portal adapter;
+- document template;
+- model provider;
+- test fixture;
+- documentation;
+- security;
+- accessibility;
+- localization;
+- research ledger.
+  86.3 Pull-request requirements
+  Every pull request should state:
+- problem;
+- scope;
+- approach;
+- tests;
+- security impact;
+- privacy impact;
+- compatibility impact;
+- migration impact;
+- screenshots for user-interface changes;
+- research sources where external behavior is assumed.
+  86.4 Adapter contributions
+  An adapter contribution must include:
+- manifest;
+- policy-research record;
+- supported domains;
+- permission declaration;
+- synthetic or sanitized fixtures;
+- contract tests;
+- failure cases;
+- final-review behavior;
+- account-challenge behavior;
+- compatibility state;
+- maintainer or ownership commitment.
+  A contributed adapter is not automatically supported.
+  86.5 Fixture privacy
+  Contributors must not submit:
+- real application pages containing personal data;
+- authentication tokens;
+- browser cookies;
+- real candidate documents;
+- private employer information;
+- confidential recruiter correspondence.
+  Fixture sanitizer requirements:
+- replace names;
+- replace addresses;
+- replace email and phone;
+- remove tokens;
+- remove tracking identifiers;
+- replace employer-private content where necessary;
+- preserve structural behavior;
+- run automated PII scans.
+  86.6 Contributor security
+  Untrusted pull requests:
+- receive no repository secrets;
+- cannot publish releases;
+- cannot access live portal accounts;
+- cannot modify protected environments without review;
+- run in bounded CI;
+- produce artifacts with short retention.
+  86.7 Issue templates
+  Issue types:
+- bug;
+- adapter compatibility;
+- security report redirect;
+- privacy issue;
+- feature request;
+- documentation;
+- accessibility;
+- performance;
+- research update;
+- portal-policy concern.
+  Security vulnerabilities must not be reported publicly before coordinated disclosure.
+  86.8 Community conduct
+  Adopt a concise code of conduct that prohibits:
+- harassment;
+- doxxing;
+- publishing candidate data;
+- sharing credentials;
+- evasion-oriented contributions;
+- malicious portal targeting;
+- discriminatory feature requests.
+  Technical criticism and rejection of unsafe changes must remain direct and evidence-based.
+
+---
+
 87. Vulnerability disclosure and security response
-87.1 Security policy
-SECURITY.md must include:
- * supported versions;
- * private reporting channel;
- * expected acknowledgement time;
- * triage process;
- * encryption option for reports;
- * coordinated disclosure policy;
- * reward status, if any;
- * safe-harbor statement subject to legal review.
-87.2 Response targets
-Provisional targets:
-Severity Acknowledge Initial assessment Mitigation target Critical 24 hours 48 hours Immediate emergency action High 48 hours 5 days 14 days Moderate 5 days 10 days 45 days Low 10 days 30 days Planned release
-Targets may change based on exploitability and maintainer capacity.
-87.3 Disclosure window
-Default coordinated disclosure target:
-90 days
-Shorten for:
- * active exploitation;
- * widespread secret exposure;
- * easy-to-exploit release compromise;
- * regulatory obligation.
-Extend only with reporter agreement and concrete remediation progress.
-87.4 Advisory content
- * affected versions;
- * severity;
- * impact;
- * prerequisites;
- * fixed version;
- * mitigation;
- * detection guidance;
- * credential-rotation guidance;
- * acknowledgements;
- * CVE where appropriate.
-Do not publish exploit details before users can reasonably update when doing so would increase risk.
-87.5 Security release
-Emergency release process:
- 1. private fix branch;
- 2. focused regression test;
- 3. security review;
- 4. signed build;
- 5. provenance and SBOM;
- 6. private maintainer verification;
- 7. coordinated publication;
- 8. adapter or feature kill switch;
- 9. user notification;
- 10. post-incident review.
-----------------------------------------
+    87.1 Security policy
+    SECURITY.md must include:
+
+- supported versions;
+- private reporting channel;
+- expected acknowledgement time;
+- triage process;
+- encryption option for reports;
+- coordinated disclosure policy;
+- reward status, if any;
+- safe-harbor statement subject to legal review.
+  87.2 Response targets
+  Provisional targets:
+  Severity Acknowledge Initial assessment Mitigation target Critical 24 hours 48 hours Immediate emergency action High 48 hours 5 days 14 days Moderate 5 days 10 days 45 days Low 10 days 30 days Planned release
+  Targets may change based on exploitability and maintainer capacity.
+  87.3 Disclosure window
+  Default coordinated disclosure target:
+  90 days
+  Shorten for:
+- active exploitation;
+- widespread secret exposure;
+- easy-to-exploit release compromise;
+- regulatory obligation.
+  Extend only with reporter agreement and concrete remediation progress.
+  87.4 Advisory content
+- affected versions;
+- severity;
+- impact;
+- prerequisites;
+- fixed version;
+- mitigation;
+- detection guidance;
+- credential-rotation guidance;
+- acknowledgements;
+- CVE where appropriate.
+  Do not publish exploit details before users can reasonably update when doing so would increase risk.
+  87.5 Security release
+  Emergency release process:
+
+1.  private fix branch;
+2.  focused regression test;
+3.  security review;
+4.  signed build;
+5.  provenance and SBOM;
+6.  private maintainer verification;
+7.  coordinated publication;
+8.  adapter or feature kill switch;
+9.  user notification;
+10. post-incident review.
+
+---
+
 88. Telemetry and product analytics
-88.1 Default
-Telemetry is disabled by default.
-The product must function fully without telemetry.
-88.2 Opt-in principles
-Telemetry consent must be:
- * explicit;
- * separate from necessary operation;
- * revocable;
- * visible;
- * purpose-limited;
- * documented by event;
- * nonpunitive when declined.
-88.3 Permitted opt-in metrics
-Potential aggregate metrics:
- * application version;
- * operating-system family;
- * feature enabled;
- * adapter success/failure category;
- * task duration bucket;
- * crash signature;
- * model-provider class without key;
- * performance bucket;
- * accessibility feature use;
- * installation and update success.
-88.4 Prohibited telemetry
-Do not collect:
- * candidate name;
- * email;
- * phone;
- * address;
- * résumé content;
- * job description text;
- * employer name by default;
- * application answers;
- * salary;
- * demographics;
- * authorization;
- * browser cookies;
- * portal username;
- * raw URLs containing identifiers;
- * screenshots;
- * model prompts;
- * recruiter messages.
-88.5 Event review
-Every telemetry event requires:
- * schema;
- * purpose;
- * data fields;
- * sensitivity;
- * retention;
- * recipient;
- * user control;
- * privacy review;
- * automated tests.
-Unknown event fields should be rejected rather than silently transmitted.
-88.6 Local analytics
-Useful personal analytics should remain local by default and need not be telemetry.
-Examples:
- * application funnel;
- * portal success;
- * match-score outcomes;
- * response rates;
- * document performance;
- * model cost.
-88.7 Crash reports
-Crash reports are separately opt-in and user-reviewable.
-Before upload:
- * redact paths;
- * redact identifiers;
- * remove memory dumps unless explicitly approved;
- * remove environment-variable values;
- * show included files;
- * encrypt in transit;
- * apply short retention.
-----------------------------------------
+    88.1 Default
+    Telemetry is disabled by default.
+    The product must function fully without telemetry.
+    88.2 Opt-in principles
+    Telemetry consent must be:
+
+- explicit;
+- separate from necessary operation;
+- revocable;
+- visible;
+- purpose-limited;
+- documented by event;
+- nonpunitive when declined.
+  88.3 Permitted opt-in metrics
+  Potential aggregate metrics:
+- application version;
+- operating-system family;
+- feature enabled;
+- adapter success/failure category;
+- task duration bucket;
+- crash signature;
+- model-provider class without key;
+- performance bucket;
+- accessibility feature use;
+- installation and update success.
+  88.4 Prohibited telemetry
+  Do not collect:
+- candidate name;
+- email;
+- phone;
+- address;
+- résumé content;
+- job description text;
+- employer name by default;
+- application answers;
+- salary;
+- demographics;
+- authorization;
+- browser cookies;
+- portal username;
+- raw URLs containing identifiers;
+- screenshots;
+- model prompts;
+- recruiter messages.
+  88.5 Event review
+  Every telemetry event requires:
+- schema;
+- purpose;
+- data fields;
+- sensitivity;
+- retention;
+- recipient;
+- user control;
+- privacy review;
+- automated tests.
+  Unknown event fields should be rejected rather than silently transmitted.
+  88.6 Local analytics
+  Useful personal analytics should remain local by default and need not be telemetry.
+  Examples:
+- application funnel;
+- portal success;
+- match-score outcomes;
+- response rates;
+- document performance;
+- model cost.
+  88.7 Crash reports
+  Crash reports are separately opt-in and user-reviewable.
+  Before upload:
+- redact paths;
+- redact identifiers;
+- remove memory dumps unless explicitly approved;
+- remove environment-variable values;
+- show included files;
+- encrypt in transit;
+- apply short retention.
+
+---
+
 89. Product experience doctrine
-89.1 Core promise
-Find relevant work.
-Prepare truthful applications.
-Stay in control.
-The interface should let the user:
- * ask for work in natural language;
- * inspect recommendations;
- * understand decisions;
- * review every application;
- * intervene without losing progress;
- * operate through GUI or CLI;
- * remain productive offline.
-89.2 Interface principles
- * intent over agent selection;
- * progressive disclosure;
- * explicit uncertainty;
- * calm status;
- * evidence on demand;
- * reversible defaults;
- * consistent terminology;
- * keyboard accessibility;
- * no dark patterns;
- * no false completion claims;
- * no visual overload for small tasks.
-89.3 Experience levels
-Micro level
- * validate one profile field;
- * add one job;
- * generate one document;
- * draft one answer.
-Application level
- * score one job;
- * prepare one application;
- * fill one form;
- * review one final snapshot.
-Search-program level
- * manage many opportunities;
- * inspect pipeline;
- * review blocked work;
- * track interviews;
- * refine personas.
-The same primitives should work at all levels:
- * state;
- * evidence;
- * next action;
- * approval;
- * artifacts;
- * timeline.
-89.4 User modes
-Novice mode
- * guided onboarding;
- * plain-language explanations;
- * conservative defaults;
- * fewer raw technical details;
- * prominent next action;
- * bundled setup checks.
-Expert mode
- * structured state;
- * adapter diagnostics;
- * policy editor;
- * model routing;
- * CLI parity;
- * raw schema views;
- * trace and fixture tools.
-Expert mode must not expose secrets unnecessarily or permit invariant bypass.
-89.5 Design language
-The GUI should be:
- * modern;
- * dense but legible;
- * keyboard-friendly;
- * responsive;
- * accessible;
- * restrained rather than decorative;
- * clear about risk.
-Visual system:
- * dark and light themes;
- * high-contrast status colors;
- * typography designed for long-form review;
- * consistent spacing;
- * reduced-motion support;
- * no color-only status indicators;
- * subtle animations;
- * accessible focus states.
-89.6 Terminology
-Use stable terms:
- * Job: normalized opportunity.
- * Requisition: employer-defined opening identity.
- * Application: candidate’s workflow for one requisition.
- * Persona: role-specific view over canonical facts.
- * Fact: source-backed candidate information.
- * Answer: application-specific response.
- * Approval: authorization for a defined action and snapshot.
- * Waitpoint: durable pause requiring an event or user action.
- * Adapter: integration with a portal or ATS.
- * Artifact: document or evidence file.
- * Incident: material security, privacy, or reliability failure.
-Avoid anthropomorphic terms that obscure system responsibility.
-----------------------------------------
+    89.1 Core promise
+    Find relevant work.
+    Prepare truthful applications.
+    Stay in control.
+    The interface should let the user:
+
+- ask for work in natural language;
+- inspect recommendations;
+- understand decisions;
+- review every application;
+- intervene without losing progress;
+- operate through GUI or CLI;
+- remain productive offline.
+  89.2 Interface principles
+- intent over agent selection;
+- progressive disclosure;
+- explicit uncertainty;
+- calm status;
+- evidence on demand;
+- reversible defaults;
+- consistent terminology;
+- keyboard accessibility;
+- no dark patterns;
+- no false completion claims;
+- no visual overload for small tasks.
+  89.3 Experience levels
+  Micro level
+- validate one profile field;
+- add one job;
+- generate one document;
+- draft one answer.
+  Application level
+- score one job;
+- prepare one application;
+- fill one form;
+- review one final snapshot.
+  Search-program level
+- manage many opportunities;
+- inspect pipeline;
+- review blocked work;
+- track interviews;
+- refine personas.
+  The same primitives should work at all levels:
+- state;
+- evidence;
+- next action;
+- approval;
+- artifacts;
+- timeline.
+  89.4 User modes
+  Novice mode
+- guided onboarding;
+- plain-language explanations;
+- conservative defaults;
+- fewer raw technical details;
+- prominent next action;
+- bundled setup checks.
+  Expert mode
+- structured state;
+- adapter diagnostics;
+- policy editor;
+- model routing;
+- CLI parity;
+- raw schema views;
+- trace and fixture tools.
+  Expert mode must not expose secrets unnecessarily or permit invariant bypass.
+  89.5 Design language
+  The GUI should be:
+- modern;
+- dense but legible;
+- keyboard-friendly;
+- responsive;
+- accessible;
+- restrained rather than decorative;
+- clear about risk.
+  Visual system:
+- dark and light themes;
+- high-contrast status colors;
+- typography designed for long-form review;
+- consistent spacing;
+- reduced-motion support;
+- no color-only status indicators;
+- subtle animations;
+- accessible focus states.
+  89.6 Terminology
+  Use stable terms:
+- Job: normalized opportunity.
+- Requisition: employer-defined opening identity.
+- Application: candidate’s workflow for one requisition.
+- Persona: role-specific view over canonical facts.
+- Fact: source-backed candidate information.
+- Answer: application-specific response.
+- Approval: authorization for a defined action and snapshot.
+- Waitpoint: durable pause requiring an event or user action.
+- Adapter: integration with a portal or ATS.
+- Artifact: document or evidence file.
+- Incident: material security, privacy, or reliability failure.
+  Avoid anthropomorphic terms that obscure system responsibility.
+
+---
+
 90. Information architecture
-90.1 Primary navigation
-Recommended navigation:
- 1. Home;
- 2. Jobs;
- 3. Applications;
- 4. Profile;
- 5. Documents;
- 6. Messages;
- 7. Calendar;
- 8. Automations;
- 9. Settings;
- 10. Help and diagnostics.
-Expert-only sections:
- * adapters;
- * sessions;
- * policies;
- * models;
- * research and compatibility;
- * incidents.
-90.2 Global command bar
-Accept:
- * text;
- * URL;
- * file;
- * command verbs;
- * selected persona;
- * constraints.
-Examples:
-Add this job: <URL>
-Show backend roles above 70%
-Prepare the highest-ranked Naukri application
-Why was this role rejected?
-Draft a follow-up for application 42
-Validate my profile
-Pause all Workday tasks
-The command bar should infer whether the user wants:
- * answer;
- * search;
- * preparation;
- * navigation;
- * monitoring;
- * configuration.
-Consequential actions still require policy checks.
-90.3 Global status
-Always show:
- * active application count;
- * current task;
- * pending clarification;
- * pending approval;
- * portal incident;
- * offline state;
- * model availability;
- * browser availability.
-90.4 Universal inbox
-Inbox items:
- * clarification;
- * sensitive answer;
- * final review;
- * portal login;
- * MFA or CAPTCHA;
- * failed task;
- * incident;
- * recruiter message;
- * interview invitation;
- * expiring job;
- * stale profile fact;
- * security update.
-Prioritize by:
- * deadline;
- * risk;
- * blocking impact;
- * opportunity value;
- * user preference.
-90.5 Search
-Search across:
- * jobs;
- * applications;
- * employers;
- * facts;
- * documents;
- * messages;
- * tasks;
- * incidents;
- * decisions.
-Restricted values remain hidden unless the user is authorized and reauthenticated where required.
-----------------------------------------
+    90.1 Primary navigation
+    Recommended navigation:
+1.  Home;
+1.  Jobs;
+1.  Applications;
+1.  Profile;
+1.  Documents;
+1.  Messages;
+1.  Calendar;
+1.  Automations;
+1.  Settings;
+1.  Help and diagnostics.
+    Expert-only sections:
+
+- adapters;
+- sessions;
+- policies;
+- models;
+- research and compatibility;
+- incidents.
+  90.2 Global command bar
+  Accept:
+- text;
+- URL;
+- file;
+- command verbs;
+- selected persona;
+- constraints.
+  Examples:
+  Add this job: <URL>
+  Show backend roles above 70%
+  Prepare the highest-ranked Naukri application
+  Why was this role rejected?
+  Draft a follow-up for application 42
+  Validate my profile
+  Pause all Workday tasks
+  The command bar should infer whether the user wants:
+- answer;
+- search;
+- preparation;
+- navigation;
+- monitoring;
+- configuration.
+  Consequential actions still require policy checks.
+  90.3 Global status
+  Always show:
+- active application count;
+- current task;
+- pending clarification;
+- pending approval;
+- portal incident;
+- offline state;
+- model availability;
+- browser availability.
+  90.4 Universal inbox
+  Inbox items:
+- clarification;
+- sensitive answer;
+- final review;
+- portal login;
+- MFA or CAPTCHA;
+- failed task;
+- incident;
+- recruiter message;
+- interview invitation;
+- expiring job;
+- stale profile fact;
+- security update.
+  Prioritize by:
+- deadline;
+- risk;
+- blocking impact;
+- opportunity value;
+- user preference.
+  90.5 Search
+  Search across:
+- jobs;
+- applications;
+- employers;
+- facts;
+- documents;
+- messages;
+- tasks;
+- incidents;
+- decisions.
+  Restricted values remain hidden unless the user is authorized and reauthenticated where required.
+
+---
+
 91. Home and command-center specification
-91.1 Home objectives
-Answer immediately:
- * What needs attention?
- * What is running?
- * What is blocked?
- * What changed?
- * What should happen next?
- * Are there security or portal problems?
-91.2 Home sections
-Attention now
- * applications nearing deadlines;
- * pending final reviews;
- * login waitpoints;
- * ambiguous questions;
- * interview invitations;
- * portal incidents.
-Recommended jobs
- * top score;
- * persona;
- * key strengths;
- * key gap;
- * deadline;
- * source;
- * action.
-Active work
- * current phase;
- * elapsed active time;
- * wait status;
- * last checkpoint;
- * next action.
-Pipeline
- * prepared;
- * awaiting submission;
- * submitted;
- * interviews;
- * offers;
- * rejected.
-Profile health
- * stale critical facts;
- * conflicts;
- * missing application data;
- * expiring authorization or certification.
-System health
- * browser;
- * database;
- * model provider;
- * email integration;
- * adapter compatibility;
- * backup status;
- * update status.
-91.3 Calm prioritization
-Do not display every event at equal prominence.
-Use:
- * critical banners only for critical conditions;
- * compact activity rollups;
- * grouped repeated failures;
- * clear “safe to wait” labels;
- * snooze and defer;
- * no alarming language for ordinary waitpoints.
-----------------------------------------
+    91.1 Home objectives
+    Answer immediately:
+
+- What needs attention?
+- What is running?
+- What is blocked?
+- What changed?
+- What should happen next?
+- Are there security or portal problems?
+  91.2 Home sections
+  Attention now
+- applications nearing deadlines;
+- pending final reviews;
+- login waitpoints;
+- ambiguous questions;
+- interview invitations;
+- portal incidents.
+  Recommended jobs
+- top score;
+- persona;
+- key strengths;
+- key gap;
+- deadline;
+- source;
+- action.
+  Active work
+- current phase;
+- elapsed active time;
+- wait status;
+- last checkpoint;
+- next action.
+  Pipeline
+- prepared;
+- awaiting submission;
+- submitted;
+- interviews;
+- offers;
+- rejected.
+  Profile health
+- stale critical facts;
+- conflicts;
+- missing application data;
+- expiring authorization or certification.
+  System health
+- browser;
+- database;
+- model provider;
+- email integration;
+- adapter compatibility;
+- backup status;
+- update status.
+  91.3 Calm prioritization
+  Do not display every event at equal prominence.
+  Use:
+- critical banners only for critical conditions;
+- compact activity rollups;
+- grouped repeated failures;
+- clear “safe to wait” labels;
+- snooze and defer;
+- no alarming language for ordinary waitpoints.
+
+---
+
 92. Jobs interface
-92.1 Job list
-Columns or cards:
- * title;
- * employer;
- * location;
- * source;
- * posted date;
- * match score;
- * eligibility;
- * duplicate state;
- * scam risk;
- * deadline;
- * persona;
- * status.
-92.2 Filters
- * title;
- * job family;
- * seniority;
- * location;
- * remote policy;
- * salary;
- * currency;
- * employer;
- * industry;
- * company size;
- * work authorization;
- * sponsorship;
- * required skill;
- * missing skill;
- * score;
- * source;
- * freshness;
- * application state;
- * scam risk;
- * blocked status.
-92.3 Job details
-Tabs:
- 1. Overview;
- 2. Requirements;
- 3. Match;
- 4. Company;
- 5. Source and changes;
- 6. Related applications;
- 7. Evidence.
-92.4 Match explanation
-Show:
- * total score;
- * score components;
- * hard gates;
- * matched required skills;
- * unmatched required skills;
- * preferred alignment;
- * experience derivation;
- * education;
- * authorization uncertainty;
- * compensation;
- * user preference conflict.
-92.5 Job actions
- * save;
- * reject;
- * prepare;
- * override score;
- * mark duplicate;
- * report suspicious;
- * open source;
- * refresh;
- * choose persona;
- * block employer;
- * create employer watch.
-92.6 Batch operations
-Permitted:
- * assign persona;
- * reject selected jobs;
- * archive stale jobs;
- * recalculate scores;
- * mark source;
- * add tags.
-Preparing many applications in a batch should create individual reviewable workflows, not one opaque mass action.
-----------------------------------------
+    92.1 Job list
+    Columns or cards:
+
+- title;
+- employer;
+- location;
+- source;
+- posted date;
+- match score;
+- eligibility;
+- duplicate state;
+- scam risk;
+- deadline;
+- persona;
+- status.
+  92.2 Filters
+- title;
+- job family;
+- seniority;
+- location;
+- remote policy;
+- salary;
+- currency;
+- employer;
+- industry;
+- company size;
+- work authorization;
+- sponsorship;
+- required skill;
+- missing skill;
+- score;
+- source;
+- freshness;
+- application state;
+- scam risk;
+- blocked status.
+  92.3 Job details
+  Tabs:
+
+1.  Overview;
+2.  Requirements;
+3.  Match;
+4.  Company;
+5.  Source and changes;
+6.  Related applications;
+7.  Evidence.
+    92.4 Match explanation
+    Show:
+
+- total score;
+- score components;
+- hard gates;
+- matched required skills;
+- unmatched required skills;
+- preferred alignment;
+- experience derivation;
+- education;
+- authorization uncertainty;
+- compensation;
+- user preference conflict.
+  92.5 Job actions
+- save;
+- reject;
+- prepare;
+- override score;
+- mark duplicate;
+- report suspicious;
+- open source;
+- refresh;
+- choose persona;
+- block employer;
+- create employer watch.
+  92.6 Batch operations
+  Permitted:
+- assign persona;
+- reject selected jobs;
+- archive stale jobs;
+- recalculate scores;
+- mark source;
+- add tags.
+  Preparing many applications in a batch should create individual reviewable workflows, not one opaque mass action.
+
+---
+
 93. Application workspace
-93.1 Workspace header
-Show:
- * employer;
- * role;
- * requisition;
- * portal;
- * state;
- * score;
- * deadline;
- * persona;
- * current phase;
- * duplicate status;
- * risk.
-93.2 Workspace tabs
- 1. Summary;
- 2. Plan;
- 3. Questions;
- 4. Documents;
- 5. Browser;
- 6. Review;
- 7. Timeline;
- 8. Evidence;
- 9. Messages;
- 10. Notes.
-93.3 Summary
- * eligibility;
- * recommendation;
- * key gaps;
- * unresolved items;
- * progress;
- * next action;
- * user decisions needed.
-93.4 Plan
-Represent the task graph:
- * completed;
- * active;
- * ready;
- * blocked;
- * skipped;
- * failed.
-The user can inspect dependencies without manually orchestrating them.
-93.5 Questions
-Question table:
- * question;
- * category;
- * proposed answer;
- * source;
- * confidence;
- * sensitivity;
- * status;
- * scope.
-Actions:
- * approve;
- * edit;
- * decline;
- * mark not applicable;
- * save override;
- * always ask;
- * set policy.
-93.6 Documents
-For each document:
- * type;
- * template;
- * version;
- * generated date;
- * job relevance;
- * validation;
- * attachment status;
- * preview;
- * diff;
- * hash.
-93.7 Browser view
-Not required for the first usable build but desirable.
-Possible capabilities:
- * live screenshot or embedded remote view;
- * current URL;
- * current step;
- * highlighted target;
- * pause;
- * take control;
- * resume;
- * evidence capture.
-If a secure embedded view is difficult, opening the controlled browser window is acceptable.
-93.8 Review
-The final review must support:
- * field grouping;
- * source badges;
- * generated-content badges;
- * sensitive-field highlighting;
- * changed-value warnings;
- * attachment preview;
- * unresolved blocker list;
- * print or export;
- * approval;
- * return to edit.
-93.9 Timeline
-Chronological:
- * job discovered;
- * score computed;
- * user override;
- * documents generated;
- * answers approved;
- * portal login;
- * pages completed;
- * review passed;
- * user submission;
- * confirmation email;
- * recruiter contact;
- * interview.
-----------------------------------------
+    93.1 Workspace header
+    Show:
+
+- employer;
+- role;
+- requisition;
+- portal;
+- state;
+- score;
+- deadline;
+- persona;
+- current phase;
+- duplicate status;
+- risk.
+  93.2 Workspace tabs
+
+1.  Summary;
+2.  Plan;
+3.  Questions;
+4.  Documents;
+5.  Browser;
+6.  Review;
+7.  Timeline;
+8.  Evidence;
+9.  Messages;
+10. Notes.
+    93.3 Summary
+
+- eligibility;
+- recommendation;
+- key gaps;
+- unresolved items;
+- progress;
+- next action;
+- user decisions needed.
+  93.4 Plan
+  Represent the task graph:
+- completed;
+- active;
+- ready;
+- blocked;
+- skipped;
+- failed.
+  The user can inspect dependencies without manually orchestrating them.
+  93.5 Questions
+  Question table:
+- question;
+- category;
+- proposed answer;
+- source;
+- confidence;
+- sensitivity;
+- status;
+- scope.
+  Actions:
+- approve;
+- edit;
+- decline;
+- mark not applicable;
+- save override;
+- always ask;
+- set policy.
+  93.6 Documents
+  For each document:
+- type;
+- template;
+- version;
+- generated date;
+- job relevance;
+- validation;
+- attachment status;
+- preview;
+- diff;
+- hash.
+  93.7 Browser view
+  Not required for the first usable build but desirable.
+  Possible capabilities:
+- live screenshot or embedded remote view;
+- current URL;
+- current step;
+- highlighted target;
+- pause;
+- take control;
+- resume;
+- evidence capture.
+  If a secure embedded view is difficult, opening the controlled browser window is acceptable.
+  93.8 Review
+  The final review must support:
+- field grouping;
+- source badges;
+- generated-content badges;
+- sensitive-field highlighting;
+- changed-value warnings;
+- attachment preview;
+- unresolved blocker list;
+- print or export;
+- approval;
+- return to edit.
+  93.9 Timeline
+  Chronological:
+- job discovered;
+- score computed;
+- user override;
+- documents generated;
+- answers approved;
+- portal login;
+- pages completed;
+- review passed;
+- user submission;
+- confirmation email;
+- recruiter contact;
+- interview.
+
+---
+
 94. Profile interface
-94.1 Profile overview
-Show completeness by workflow:
- * general matching;
- * India technology;
- * US technology;
- * Workday;
- * Naukri;
- * recruiter outreach;
- * demographic policy.
-94.2 Profile sections
- * identity;
- * contact;
- * links;
- * education;
- * experience;
- * projects;
- * skills;
- * certifications;
- * achievements;
- * publications;
- * preferences;
- * compensation;
- * authorization;
- * sensitive information;
- * personas;
- * evidence;
- * history.
-94.3 Fact editor
-Each fact shows:
- * current value;
- * source;
- * confirmation;
- * freshness;
- * sensitivity;
- * allowed uses;
- * model-access policy;
- * related documents;
- * prior values;
- * applications using it.
-94.4 Conflict resolution
-Display conflicting sources side by side.
-Example:
-Source Value Date Authority User confirmation Senior Engineer 2026-07-01 Highest LinkedIn import Software Engineer II 2026-06-10 Imported Résumé import Senior Software Engineer 2026-05-30 Imported
-Actions:
- * select one;
- * define presentation variant;
- * correct source;
- * preserve both with semantic distinction;
- * defer.
-94.5 Sensitive-data interface
-Requirements:
- * collapsed by default;
- * reauthentication to reveal;
- * explanation of use;
- * per-field policy;
- * no dashboard summaries;
- * no search-preview leakage;
- * audit of access;
- * bulk disable;
- * clear deletion.
-94.6 Persona editor
-Configure:
- * target roles;
- * seniority;
- * preferred locations;
- * salary;
- * skills;
- * projects;
- * résumé template;
- * matching weights;
- * cover-letter style;
- * exclusions.
-The interface must flag any attempt to create a persona-only unsupported fact.
-94.7 Profile review reminders
-Show:
- * stale notice period;
- * stale compensation;
- * expiring authorization;
- * expiring certification;
- * broken portfolio link;
- * unresolved conflict;
- * old preferred location.
-Allow:
- * confirm unchanged;
- * edit;
- * defer;
- * set review frequency.
-----------------------------------------
+    94.1 Profile overview
+    Show completeness by workflow:
+
+- general matching;
+- India technology;
+- US technology;
+- Workday;
+- Naukri;
+- recruiter outreach;
+- demographic policy.
+  94.2 Profile sections
+- identity;
+- contact;
+- links;
+- education;
+- experience;
+- projects;
+- skills;
+- certifications;
+- achievements;
+- publications;
+- preferences;
+- compensation;
+- authorization;
+- sensitive information;
+- personas;
+- evidence;
+- history.
+  94.3 Fact editor
+  Each fact shows:
+- current value;
+- source;
+- confirmation;
+- freshness;
+- sensitivity;
+- allowed uses;
+- model-access policy;
+- related documents;
+- prior values;
+- applications using it.
+  94.4 Conflict resolution
+  Display conflicting sources side by side.
+  Example:
+  Source Value Date Authority User confirmation Senior Engineer 2026-07-01 Highest LinkedIn import Software Engineer II 2026-06-10 Imported Résumé import Senior Software Engineer 2026-05-30 Imported
+  Actions:
+- select one;
+- define presentation variant;
+- correct source;
+- preserve both with semantic distinction;
+- defer.
+  94.5 Sensitive-data interface
+  Requirements:
+- collapsed by default;
+- reauthentication to reveal;
+- explanation of use;
+- per-field policy;
+- no dashboard summaries;
+- no search-preview leakage;
+- audit of access;
+- bulk disable;
+- clear deletion.
+  94.6 Persona editor
+  Configure:
+- target roles;
+- seniority;
+- preferred locations;
+- salary;
+- skills;
+- projects;
+- résumé template;
+- matching weights;
+- cover-letter style;
+- exclusions.
+  The interface must flag any attempt to create a persona-only unsupported fact.
+  94.7 Profile review reminders
+  Show:
+- stale notice period;
+- stale compensation;
+- expiring authorization;
+- expiring certification;
+- broken portfolio link;
+- unresolved conflict;
+- old preferred location.
+  Allow:
+- confirm unchanged;
+- edit;
+- defer;
+- set review frequency.
+
+---
+
 95. Document interface
-95.1 Document library
-Group by:
- * résumé;
- * cover letter;
- * transcript;
- * certificate;
- * portfolio;
- * writing sample;
- * research statement;
- * other.
-95.2 Document creation
-Inputs:
- * persona;
- * job;
- * template;
- * length;
- * style;
- * selected facts;
- * output formats;
- * model policy.
-95.3 Document comparison
-Show:
- * text diff;
- * section-order diff;
- * claims added and removed;
- * source facts;
- * page preview;
- * ATS extraction;
- * validation results.
-95.4 Template gallery
-For each template:
- * preview;
- * ATS compatibility;
- * intended role;
- * page-density range;
- * available formats;
- * accessibility notes;
- * font dependencies.
-95.5 Approval
-Approved document scope:
- * general persona;
- * employer;
- * requisition;
- * date range;
- * one application.
-Edits create a new version.
-95.6 Export
-Allow export to user-selected paths.
-Before export:
- * check sensitive metadata;
- * show output files;
- * verify render;
- * avoid overwriting without confirmation;
- * optionally create checksums.
-----------------------------------------
+    95.1 Document library
+    Group by:
+
+- résumé;
+- cover letter;
+- transcript;
+- certificate;
+- portfolio;
+- writing sample;
+- research statement;
+- other.
+  95.2 Document creation
+  Inputs:
+- persona;
+- job;
+- template;
+- length;
+- style;
+- selected facts;
+- output formats;
+- model policy.
+  95.3 Document comparison
+  Show:
+- text diff;
+- section-order diff;
+- claims added and removed;
+- source facts;
+- page preview;
+- ATS extraction;
+- validation results.
+  95.4 Template gallery
+  For each template:
+- preview;
+- ATS compatibility;
+- intended role;
+- page-density range;
+- available formats;
+- accessibility notes;
+- font dependencies.
+  95.5 Approval
+  Approved document scope:
+- general persona;
+- employer;
+- requisition;
+- date range;
+- one application.
+  Edits create a new version.
+  95.6 Export
+  Allow export to user-selected paths.
+  Before export:
+- check sensitive metadata;
+- show output files;
+- verify render;
+- avoid overwriting without confirmation;
+- optionally create checksums.
+
+---
+
 96. Settings and policy interface
-96.1 Settings categories
- * general;
- * storage;
- * security;
- * privacy;
- * browser;
- * portals;
- * models;
- * matching;
- * documents;
- * approvals;
- * notifications;
- * email;
- * calendar;
- * backups;
- * updates;
- * accessibility;
- * diagnostics.
-96.2 Provider setup
-For each provider:
- * key or credential setup;
- * model aliases;
- * data-class permission;
- * budget;
- * region;
- * retention information;
- * health test;
- * disable;
- * delete credential.
-Never redisplay full keys.
-96.3 Portal setup
- * supported mode;
- * login state;
- * browser profile;
- * last compatibility test;
- * policy date;
- * known limitation;
- * cooldown;
- * disable;
- * clear session.
-96.4 Privacy dashboard
-Show:
- * locally stored categories;
- * cloud providers used;
- * recent disclosures;
- * raw trace retention;
- * telemetry state;
- * hosted synchronization;
- * deletion controls;
- * export.
-96.5 Security dashboard
-Show:
- * encryption status;
- * key protection method;
- * backup age;
- * pending security updates;
- * active sessions;
- * paired devices;
- * extension pairings;
- * recent authentication events;
- * incidents.
-Do not show operational cost and model metrics unless the user opens expert details; the initial GUI need not include a full cost dashboard.
-----------------------------------------
+    96.1 Settings categories
+
+- general;
+- storage;
+- security;
+- privacy;
+- browser;
+- portals;
+- models;
+- matching;
+- documents;
+- approvals;
+- notifications;
+- email;
+- calendar;
+- backups;
+- updates;
+- accessibility;
+- diagnostics.
+  96.2 Provider setup
+  For each provider:
+- key or credential setup;
+- model aliases;
+- data-class permission;
+- budget;
+- region;
+- retention information;
+- health test;
+- disable;
+- delete credential.
+  Never redisplay full keys.
+  96.3 Portal setup
+- supported mode;
+- login state;
+- browser profile;
+- last compatibility test;
+- policy date;
+- known limitation;
+- cooldown;
+- disable;
+- clear session.
+  96.4 Privacy dashboard
+  Show:
+- locally stored categories;
+- cloud providers used;
+- recent disclosures;
+- raw trace retention;
+- telemetry state;
+- hosted synchronization;
+- deletion controls;
+- export.
+  96.5 Security dashboard
+  Show:
+- encryption status;
+- key protection method;
+- backup age;
+- pending security updates;
+- active sessions;
+- paired devices;
+- extension pairings;
+- recent authentication events;
+- incidents.
+  Do not show operational cost and model metrics unless the user opens expert details; the initial GUI need not include a full cost dashboard.
+
+---
+
 97. Command-line interface specification
-97.1 Principles
-The CLI must be:
- * composable;
- * scriptable;
- * safe by default;
- * useful interactively;
- * stable enough for automation;
- * explicit about state changes;
- * free of secrets in arguments where possible.
-97.2 Root command
-Provisional command name:
-ajos
-Final name requires project-name and trademark research.
-97.3 Global options
---config PATH
---data-dir PATH
---persona ID
---output human|json|yaml
---offline
---no-color
---quiet
---verbose
---trace-id ID
---yes
---help
---version
---yes must not bypass high-risk approvals or hard invariants.
-97.4 Initialization
-ajos init
-ajos doctor
-ajos status
-ajos update check
-ajos init should:
- * create local directories;
- * initialize encryption;
- * configure secret storage;
- * create database;
- * set defaults;
- * offer sample-profile import;
- * verify permissions;
- * avoid administrator requirements.
-97.5 Profile commands
-ajos profile show
-ajos profile import FILE
-ajos profile export
-ajos profile validate
-ajos profile review
-ajos profile edit FIELD
-ajos profile history FIELD
-ajos profile confirm FIELD
-ajos profile delete FIELD
-ajos profile conflicts
-Restricted values should be redacted unless explicitly revealed through a secure interaction.
-97.6 Persona commands
-ajos persona list
-ajos persona create
-ajos persona show ID
-ajos persona edit ID
-ajos persona validate ID
-ajos persona clone ID
-ajos persona delete ID
-97.7 Job commands
-ajos jobs add URL
-ajos jobs add --file FILE
-ajos jobs import FILE
-ajos jobs discover
-ajos jobs list
-ajos jobs show ID
-ajos jobs rank
-ajos jobs refresh ID
-ajos jobs reject ID
-ajos jobs mark-duplicate ID OTHER_ID
-ajos jobs inspect-risk ID
-97.8 Application commands
-ajos applications prepare JOB_ID
-ajos applications list
-ajos applications show ID
-ajos applications run ID
-ajos applications pause ID
-ajos applications resume ID
-ajos applications cancel ID
-ajos applications questions ID
-ajos applications review ID
-ajos applications confirm-submitted ID
-ajos applications status ID
-run means execute until a waitpoint or final review. It does not imply submission.
-97.9 Document commands
-ajos documents list
-ajos documents generate --job ID --template TEMPLATE
-ajos documents validate ID
-ajos documents diff ID_A ID_B
-ajos documents render ID --format pdf
-ajos documents approve ID
-ajos documents export ID PATH
-ajos documents delete ID
-97.10 Portal commands
-ajos portals list
-ajos portals show ID
-ajos portals doctor ID
-ajos portals login ID
-ajos portals logout ID
-ajos portals compatibility ID
-ajos portals disable ID
-ajos portals clear-session ID
-97.11 Provider commands
-ajos providers list
-ajos providers configure ID
-ajos providers test ID
-ajos providers models ID
-ajos providers budget
-ajos providers disable ID
-ajos providers delete-credential ID
-Credential input should use:
- * secure prompt;
- * standard input with warning;
- * OS-vault flow;
- * never a visible command-line flag by default.
-97.12 Security and privacy commands
-ajos security audit
-ajos security sessions
-ajos security rotate-keys
-ajos security incidents
-ajos privacy report
-ajos privacy disclosures
-ajos privacy export
-ajos privacy delete
-ajos privacy retention
-97.13 Session and diagnostic commands
-ajos sessions list
-ajos sessions show ID
-ajos sessions events ID
-ajos sessions artifacts ID
-ajos diagnostics doctor
-ajos diagnostics bundle
-ajos diagnostics verify-redaction
-97.14 Machine-readable output
-Read-only commands should generally support JSON and YAML.
-Mutating commands should provide structured results where practical.
-Stable output contract:
-{
- "status": "success",
- "command": "jobs.add",
- "data": {},
- "warnings": [],
- "trace_id": "trace_..."
-}
-Not every human-oriented command needs permanent JSON stability in early development. Commands advertised as automation-safe must be versioned.
-97.15 Exit codes
-Provisional:
-Code Meaning 0 Success 1 General failure 2 Invalid input 3 Configuration failure 4 Authentication required 5 User clarification required 6 Approval required 7 Policy blocked 8 External service unavailable 9 Verification failed 10 Duplicate blocked 11 Security incident 12 Partial completion
-97.16 Interactive behavior
- * detect noninteractive terminal;
- * never hang waiting for unavailable input;
- * support explicit --non-interactive;
- * return structured waitpoint information;
- * avoid pagers in scripts;
- * support keyboard cancellation;
- * preserve state on interruption.
-97.17 Shell history safety
-Do not request:
-ajos providers configure --api-key SECRET
-Prefer:
-ajos providers configure gemini
-API key: [hidden input]
-97.18 CLI parity
-Every consequential GUI feature should map to:
- * a CLI command;
- * or a documented local API operation.
-Exceptions must be documented, such as rich visual document editing.
-----------------------------------------
+    97.1 Principles
+    The CLI must be:
+
+- composable;
+- scriptable;
+- safe by default;
+- useful interactively;
+- stable enough for automation;
+- explicit about state changes;
+- free of secrets in arguments where possible.
+  97.2 Root command
+  Provisional command name:
+  ajos
+  Final name requires project-name and trademark research.
+  97.3 Global options
+  --config PATH
+  --data-dir PATH
+  --persona ID
+  --output human|json|yaml
+  --offline
+  --no-color
+  --quiet
+  --verbose
+  --trace-id ID
+  --yes
+  --help
+  --version
+  --yes must not bypass high-risk approvals or hard invariants.
+  97.4 Initialization
+  ajos init
+  ajos doctor
+  ajos status
+  ajos update check
+  ajos init should:
+- create local directories;
+- initialize encryption;
+- configure secret storage;
+- create database;
+- set defaults;
+- offer sample-profile import;
+- verify permissions;
+- avoid administrator requirements.
+  97.5 Profile commands
+  ajos profile show
+  ajos profile import FILE
+  ajos profile export
+  ajos profile validate
+  ajos profile review
+  ajos profile edit FIELD
+  ajos profile history FIELD
+  ajos profile confirm FIELD
+  ajos profile delete FIELD
+  ajos profile conflicts
+  Restricted values should be redacted unless explicitly revealed through a secure interaction.
+  97.6 Persona commands
+  ajos persona list
+  ajos persona create
+  ajos persona show ID
+  ajos persona edit ID
+  ajos persona validate ID
+  ajos persona clone ID
+  ajos persona delete ID
+  97.7 Job commands
+  ajos jobs add URL
+  ajos jobs add --file FILE
+  ajos jobs import FILE
+  ajos jobs discover
+  ajos jobs list
+  ajos jobs show ID
+  ajos jobs rank
+  ajos jobs refresh ID
+  ajos jobs reject ID
+  ajos jobs mark-duplicate ID OTHER_ID
+  ajos jobs inspect-risk ID
+  97.8 Application commands
+  ajos applications prepare JOB_ID
+  ajos applications list
+  ajos applications show ID
+  ajos applications run ID
+  ajos applications pause ID
+  ajos applications resume ID
+  ajos applications cancel ID
+  ajos applications questions ID
+  ajos applications review ID
+  ajos applications confirm-submitted ID
+  ajos applications status ID
+  run means execute until a waitpoint or final review. It does not imply submission.
+  97.9 Document commands
+  ajos documents list
+  ajos documents generate --job ID --template TEMPLATE
+  ajos documents validate ID
+  ajos documents diff ID_A ID_B
+  ajos documents render ID --format pdf
+  ajos documents approve ID
+  ajos documents export ID PATH
+  ajos documents delete ID
+  97.10 Portal commands
+  ajos portals list
+  ajos portals show ID
+  ajos portals doctor ID
+  ajos portals login ID
+  ajos portals logout ID
+  ajos portals compatibility ID
+  ajos portals disable ID
+  ajos portals clear-session ID
+  97.11 Provider commands
+  ajos providers list
+  ajos providers configure ID
+  ajos providers test ID
+  ajos providers models ID
+  ajos providers budget
+  ajos providers disable ID
+  ajos providers delete-credential ID
+  Credential input should use:
+- secure prompt;
+- standard input with warning;
+- OS-vault flow;
+- never a visible command-line flag by default.
+  97.12 Security and privacy commands
+  ajos security audit
+  ajos security sessions
+  ajos security rotate-keys
+  ajos security incidents
+  ajos privacy report
+  ajos privacy disclosures
+  ajos privacy export
+  ajos privacy delete
+  ajos privacy retention
+  97.13 Session and diagnostic commands
+  ajos sessions list
+  ajos sessions show ID
+  ajos sessions events ID
+  ajos sessions artifacts ID
+  ajos diagnostics doctor
+  ajos diagnostics bundle
+  ajos diagnostics verify-redaction
+  97.14 Machine-readable output
+  Read-only commands should generally support JSON and YAML.
+  Mutating commands should provide structured results where practical.
+  Stable output contract:
+  {
+  "status": "success",
+  "command": "jobs.add",
+  "data": {},
+  "warnings": [],
+  "trace_id": "trace_..."
+  }
+  Not every human-oriented command needs permanent JSON stability in early development. Commands advertised as automation-safe must be versioned.
+  97.15 Exit codes
+  Provisional:
+  Code Meaning 0 Success 1 General failure 2 Invalid input 3 Configuration failure 4 Authentication required 5 User clarification required 6 Approval required 7 Policy blocked 8 External service unavailable 9 Verification failed 10 Duplicate blocked 11 Security incident 12 Partial completion
+  97.16 Interactive behavior
+- detect noninteractive terminal;
+- never hang waiting for unavailable input;
+- support explicit --non-interactive;
+- return structured waitpoint information;
+- avoid pagers in scripts;
+- support keyboard cancellation;
+- preserve state on interruption.
+  97.17 Shell history safety
+  Do not request:
+  ajos providers configure --api-key SECRET
+  Prefer:
+  ajos providers configure gemini
+  API key: [hidden input]
+  97.18 CLI parity
+  Every consequential GUI feature should map to:
+- a CLI command;
+- or a documented local API operation.
+  Exceptions must be documented, such as rich visual document editing.
+
+---
+
 98. Accessibility program
-98.1 Standard
-Target:
-WCAG 2.2 AA
-Accessibility is required for desktop and local web interfaces.
-98.2 Keyboard operation
-All primary workflows must support:
- * logical tab order;
- * visible focus;
- * skip links;
- * keyboard activation;
- * no keyboard traps;
- * dialog escape;
- * accessible menus;
- * data-table navigation;
- * form-error navigation.
-98.3 Screen readers
-Test with representative combinations on supported platforms.
-Requirements:
- * semantic headings;
- * landmark regions;
- * accessible names;
- * live-region restraint;
- * form descriptions;
- * error association;
- * status text;
- * table headers;
- * meaningful link labels;
- * accessible progress state.
-98.4 Visual accessibility
- * sufficient contrast;
- * no color-only meaning;
- * scalable text;
- * zoom support;
- * high-contrast compatibility;
- * no clipped content at 200% zoom;
- * dark and light themes;
- * clear warning hierarchy.
-98.5 Motion
- * reduced-motion support;
- * no essential information conveyed only by animation;
- * no flashing content;
- * transitions short and interruptible;
- * progress indicators accessible.
-98.6 Cognitive accessibility
- * plain-language mode;
- * consistent terminology;
- * one primary action per approval;
- * explain consequences;
- * avoid long unstructured forms;
- * preserve progress;
- * use summaries and expandable evidence;
- * distinguish required from optional.
-98.7 Sensitive-data accessibility
-Masked values need accessible labels that do not reveal secrets inadvertently.
-Example:
-Current compensation: hidden; activate to reveal after verification.
-98.8 Accessibility testing
- * automated accessibility scans;
- * keyboard-only scenarios;
- * screen-reader manual tests;
- * contrast tests;
- * zoom and reflow;
- * reduced motion;
- * Windows high-contrast mode;
- * error and waitpoint flows;
- * final-review workflow.
-98.9 Accessibility release gate
-No critical accessibility defect may block:
- * onboarding;
- * profile editing;
- * job review;
- * application questions;
- * final review;
- * security and deletion controls.
-----------------------------------------
+    98.1 Standard
+    Target:
+    WCAG 2.2 AA
+    Accessibility is required for desktop and local web interfaces.
+    98.2 Keyboard operation
+    All primary workflows must support:
+
+- logical tab order;
+- visible focus;
+- skip links;
+- keyboard activation;
+- no keyboard traps;
+- dialog escape;
+- accessible menus;
+- data-table navigation;
+- form-error navigation.
+  98.3 Screen readers
+  Test with representative combinations on supported platforms.
+  Requirements:
+- semantic headings;
+- landmark regions;
+- accessible names;
+- live-region restraint;
+- form descriptions;
+- error association;
+- status text;
+- table headers;
+- meaningful link labels;
+- accessible progress state.
+  98.4 Visual accessibility
+- sufficient contrast;
+- no color-only meaning;
+- scalable text;
+- zoom support;
+- high-contrast compatibility;
+- no clipped content at 200% zoom;
+- dark and light themes;
+- clear warning hierarchy.
+  98.5 Motion
+- reduced-motion support;
+- no essential information conveyed only by animation;
+- no flashing content;
+- transitions short and interruptible;
+- progress indicators accessible.
+  98.6 Cognitive accessibility
+- plain-language mode;
+- consistent terminology;
+- one primary action per approval;
+- explain consequences;
+- avoid long unstructured forms;
+- preserve progress;
+- use summaries and expandable evidence;
+- distinguish required from optional.
+  98.7 Sensitive-data accessibility
+  Masked values need accessible labels that do not reveal secrets inadvertently.
+  Example:
+  Current compensation: hidden; activate to reveal after verification.
+  98.8 Accessibility testing
+- automated accessibility scans;
+- keyboard-only scenarios;
+- screen-reader manual tests;
+- contrast tests;
+- zoom and reflow;
+- reduced motion;
+- Windows high-contrast mode;
+- error and waitpoint flows;
+- final-review workflow.
+  98.9 Accessibility release gate
+  No critical accessibility defect may block:
+- onboarding;
+- profile editing;
+- job review;
+- application questions;
+- final review;
+- security and deletion controls.
+
+---
+
 99. Internationalization and localization
-99.1 Architecture
-Even with English-only UI initially:
- * externalize strings;
- * use Unicode;
- * avoid concatenated translatable fragments;
- * use locale-aware formatting;
- * support right-to-left layout in design tokens eventually;
- * avoid fixed-width assumptions;
- * preserve original external text.
-99.2 Names
- * support one-word names;
- * multiple family names;
- * no forced middle name;
- * preferred and legal variants;
- * native-order display;
- * phonetic representation;
- * portal-specific mapping.
-99.3 Dates
-Store canonical date values and render by locale.
-Support:
- * complete date;
- * month and year;
- * year only;
- * ongoing;
- * expected completion;
- * unknown day.
-Do not invent missing day values.
-99.4 Numbers and grading
-Preserve:
- * decimal separator;
- * percentage;
- * GPA scale;
- * rank;
- * percentile;
- * original score;
- * conversion method.
-99.5 Currency
-Store ISO currency code and period.
-Display:
- * locale format;
- * original value;
- * converted value separately;
- * dated exchange rate;
- * CTC/base/total semantics.
-99.6 Addresses
-Country-aware schemas should avoid forcing US state or ZIP concepts on Indian or global addresses.
-99.7 Phone numbers
- * E.164 normalization;
- * original display;
- * country;
- * extension;
- * portal formatting;
- * no invalid default country inference.
-99.8 Time zones
-Store interview and deadline times with:
- * instant;
- * source time zone;
- * user time zone;
- * daylight-saving interpretation;
- * ambiguity flag.
-----------------------------------------
+    99.1 Architecture
+    Even with English-only UI initially:
+
+- externalize strings;
+- use Unicode;
+- avoid concatenated translatable fragments;
+- use locale-aware formatting;
+- support right-to-left layout in design tokens eventually;
+- avoid fixed-width assumptions;
+- preserve original external text.
+  99.2 Names
+- support one-word names;
+- multiple family names;
+- no forced middle name;
+- preferred and legal variants;
+- native-order display;
+- phonetic representation;
+- portal-specific mapping.
+  99.3 Dates
+  Store canonical date values and render by locale.
+  Support:
+- complete date;
+- month and year;
+- year only;
+- ongoing;
+- expected completion;
+- unknown day.
+  Do not invent missing day values.
+  99.4 Numbers and grading
+  Preserve:
+- decimal separator;
+- percentage;
+- GPA scale;
+- rank;
+- percentile;
+- original score;
+- conversion method.
+  99.5 Currency
+  Store ISO currency code and period.
+  Display:
+- locale format;
+- original value;
+- converted value separately;
+- dated exchange rate;
+- CTC/base/total semantics.
+  99.6 Addresses
+  Country-aware schemas should avoid forcing US state or ZIP concepts on Indian or global addresses.
+  99.7 Phone numbers
+- E.164 normalization;
+- original display;
+- country;
+- extension;
+- portal formatting;
+- no invalid default country inference.
+  99.8 Time zones
+  Store interview and deadline times with:
+- instant;
+- source time zone;
+- user time zone;
+- daylight-saving interpretation;
+- ambiguity flag.
+
+---
+
 100. Desktop notifications
-100.1 Initial channel
-Initial notification channel:
- * native desktop notifications.
-100.2 Notification types
- * clarification required;
- * final review ready;
- * portal login required;
- * application deadline;
- * recruiter response;
- * interview invitation;
- * assessment deadline;
- * workflow failure;
- * security incident;
- * backup overdue;
- * update available.
-100.3 Privacy defaults
-Lock-screen notifications should not display:
- * salary;
- * demographic information;
- * full recruiter message;
- * precise role details if hidden mode enabled;
- * authentication codes;
- * restricted profile data.
-Default format:
-AJOS requires your attention.
-Open the application to review.
-Users may opt into richer notifications.
-100.4 Notification actions
-Safe actions:
- * open;
- * snooze;
- * dismiss.
-Avoid high-risk direct actions such as:
- * approve final application;
- * send message;
- * disclose sensitive data;
- * delete records.
-100.5 Notification deduplication
-Group:
- * repeated adapter failures;
- * multiple jobs from one scheduled scan;
- * repeated login reminders;
- * email-status updates.
-Do not create alert fatigue.
-100.6 Quiet hours
-User-configurable:
- * time range;
- * time zone;
- * critical security exception;
- * deadline exception;
- * weekend behavior.
-----------------------------------------
+     100.1 Initial channel
+     Initial notification channel:
+
+- native desktop notifications.
+  100.2 Notification types
+- clarification required;
+- final review ready;
+- portal login required;
+- application deadline;
+- recruiter response;
+- interview invitation;
+- assessment deadline;
+- workflow failure;
+- security incident;
+- backup overdue;
+- update available.
+  100.3 Privacy defaults
+  Lock-screen notifications should not display:
+- salary;
+- demographic information;
+- full recruiter message;
+- precise role details if hidden mode enabled;
+- authentication codes;
+- restricted profile data.
+  Default format:
+  AJOS requires your attention.
+  Open the application to review.
+  Users may opt into richer notifications.
+  100.4 Notification actions
+  Safe actions:
+- open;
+- snooze;
+- dismiss.
+  Avoid high-risk direct actions such as:
+- approve final application;
+- send message;
+- disclose sensitive data;
+- delete records.
+  100.5 Notification deduplication
+  Group:
+- repeated adapter failures;
+- multiple jobs from one scheduled scan;
+- repeated login reminders;
+- email-status updates.
+  Do not create alert fatigue.
+  100.6 Quiet hours
+  User-configurable:
+- time range;
+- time zone;
+- critical security exception;
+- deadline exception;
+- weekend behavior.
+
+---
+
 101. Gmail integration
-101.1 Scope
-Initial Gmail features:
- * OAuth connection;
- * read relevant job-application messages;
- * classify application status;
- * extract interview and assessment deadlines;
- * associate messages with applications;
- * draft replies;
- * create local notifications.
-Sending requires a future explicit permission and approval path.
-101.2 OAuth setup
-Requirements:
- * supported Google OAuth flow;
- * PKCE where applicable;
- * exact redirect validation;
- * state and nonce validation;
- * narrow scopes;
- * token in OS vault;
- * revocation;
- * no Google password storage;
- * privacy notice before connection.
-101.3 Message discovery
-Use a combination of:
- * sender;
- * subject;
- * known employer domains;
- * known application IDs;
- * labels;
- * recent date window;
- * user-selected mailbox scope;
- * local heuristics.
-Do not ingest the entire mailbox without need.
-101.4 Message normalization
-id: message_...
-provider: gmail
-provider_message_id: null
-thread_id: null
-received_at: null
-sender:
- address: null
- display_name: null
-subject: null
-application_candidates: []
-classification:
- type: interview_invitation
- confidence: null
-body_artifact_ref: null
-retention_class: transient
-101.5 Status classes
- * application acknowledgement;
- * application update;
- * recruiter outreach;
- * rejection;
- * assessment;
- * interview invitation;
- * scheduling;
- * offer;
- * background check;
- * onboarding;
- * unrelated;
- * suspicious;
- * unknown.
-101.6 Application association
-Match using:
- * requisition ID;
- * employer;
- * role;
- * recipient account;
- * application date;
- * portal;
- * thread history;
- * unique tracking link.
-Low-confidence associations require confirmation.
-101.7 Email content retention
-Default:
- * metadata and minimized status event may persist;
- * raw body expires after 28 days;
- * attachments expire or enter quarantine unless promoted;
- * user may shorten retention;
- * no cloud model use without policy.
-101.8 Draft replies
-Draft types:
- * acknowledgement;
- * scheduling response;
- * clarification;
- * recruiter follow-up;
- * assessment receipt;
- * offer acknowledgement.
-Draft generation must verify:
- * recipient;
- * employer;
- * role;
- * current stage;
- * dates and time zones;
- * user tone;
- * no acceptance of commitments not authorized.
-101.9 Gmail disconnect
-On disconnect:
- * revoke token where possible;
- * delete local token;
- * stop polling;
- * retain historical application events according to user policy;
- * optionally delete cached raw messages;
- * show what remains.
-----------------------------------------
+     101.1 Scope
+     Initial Gmail features:
+
+- OAuth connection;
+- read relevant job-application messages;
+- classify application status;
+- extract interview and assessment deadlines;
+- associate messages with applications;
+- draft replies;
+- create local notifications.
+  Sending requires a future explicit permission and approval path.
+  101.2 OAuth setup
+  Requirements:
+- supported Google OAuth flow;
+- PKCE where applicable;
+- exact redirect validation;
+- state and nonce validation;
+- narrow scopes;
+- token in OS vault;
+- revocation;
+- no Google password storage;
+- privacy notice before connection.
+  101.3 Message discovery
+  Use a combination of:
+- sender;
+- subject;
+- known employer domains;
+- known application IDs;
+- labels;
+- recent date window;
+- user-selected mailbox scope;
+- local heuristics.
+  Do not ingest the entire mailbox without need.
+  101.4 Message normalization
+  id: message_...
+  provider: gmail
+  provider_message_id: null
+  thread_id: null
+  received_at: null
+  sender:
+  address: null
+  display_name: null
+  subject: null
+  application_candidates: []
+  classification:
+  type: interview_invitation
+  confidence: null
+  body_artifact_ref: null
+  retention_class: transient
+  101.5 Status classes
+- application acknowledgement;
+- application update;
+- recruiter outreach;
+- rejection;
+- assessment;
+- interview invitation;
+- scheduling;
+- offer;
+- background check;
+- onboarding;
+- unrelated;
+- suspicious;
+- unknown.
+  101.6 Application association
+  Match using:
+- requisition ID;
+- employer;
+- role;
+- recipient account;
+- application date;
+- portal;
+- thread history;
+- unique tracking link.
+  Low-confidence associations require confirmation.
+  101.7 Email content retention
+  Default:
+- metadata and minimized status event may persist;
+- raw body expires after 28 days;
+- attachments expire or enter quarantine unless promoted;
+- user may shorten retention;
+- no cloud model use without policy.
+  101.8 Draft replies
+  Draft types:
+- acknowledgement;
+- scheduling response;
+- clarification;
+- recruiter follow-up;
+- assessment receipt;
+- offer acknowledgement.
+  Draft generation must verify:
+- recipient;
+- employer;
+- role;
+- current stage;
+- dates and time zones;
+- user tone;
+- no acceptance of commitments not authorized.
+  101.9 Gmail disconnect
+  On disconnect:
+- revoke token where possible;
+- delete local token;
+- stop polling;
+- retain historical application events according to user policy;
+- optionally delete cached raw messages;
+- show what remains.
+
+---
+
 102. Calendar integration
-102.1 Initial scope
-Calendar integration may:
- * propose interview times;
- * display conflicts;
- * create tentative local holds;
- * draft calendar events;
- * add approved events;
- * send reminders.
-It does not accept interview times automatically.
-102.2 Supported calendars
-Initial priority:
- * Google Calendar.
-Future:
- * Microsoft 365;
- * CalDAV.
-102.3 Event proposal
-id: calendar_proposal_...
-application_id: application_...
-type: interview
-source_message_id: message_...
-proposed_times: []
-selected_time: null
-time_zone: null
-duration_minutes: null
-participants: []
-status: awaiting_user
-102.4 Time-zone verification
-Before event creation:
- * parse source zone;
- * show user-local time;
- * detect ambiguous abbreviations;
- * handle daylight-saving changes;
- * show date and day of week;
- * verify duration;
- * preserve original wording.
-102.5 Conflict handling
-Show:
- * hard conflicts;
- * travel buffers;
- * existing private events as busy without exposing details unnecessarily;
- * working-hours preferences;
- * time-zone inconvenience.
-102.6 Calendar privacy
-When inspecting availability:
- * retrieve only necessary free/busy information where possible;
- * do not send unrelated event titles to models;
- * store minimized event metadata;
- * protect attendee addresses.
-102.7 Event creation approval
-Show:
- * calendar;
- * title;
- * employer;
- * date;
- * time zone;
- * attendees;
- * conferencing link;
- * reminders;
- * notes.
-User approval is mandatory before external event creation in the initial implementation.
-102.8 Deadline events
-The system may create local reminders for:
- * application deadline;
- * assessment deadline;
- * interview preparation;
- * follow-up date;
- * offer deadline.
-Deadline reminders are not the same as accepting external invitations.
-----------------------------------------
+     102.1 Initial scope
+     Calendar integration may:
+
+- propose interview times;
+- display conflicts;
+- create tentative local holds;
+- draft calendar events;
+- add approved events;
+- send reminders.
+  It does not accept interview times automatically.
+  102.2 Supported calendars
+  Initial priority:
+- Google Calendar.
+  Future:
+- Microsoft 365;
+- CalDAV.
+  102.3 Event proposal
+  id: calendar_proposal_...
+  application_id: application_...
+  type: interview
+  source_message_id: message_...
+  proposed_times: []
+  selected_time: null
+  time_zone: null
+  duration_minutes: null
+  participants: []
+  status: awaiting_user
+  102.4 Time-zone verification
+  Before event creation:
+- parse source zone;
+- show user-local time;
+- detect ambiguous abbreviations;
+- handle daylight-saving changes;
+- show date and day of week;
+- verify duration;
+- preserve original wording.
+  102.5 Conflict handling
+  Show:
+- hard conflicts;
+- travel buffers;
+- existing private events as busy without exposing details unnecessarily;
+- working-hours preferences;
+- time-zone inconvenience.
+  102.6 Calendar privacy
+  When inspecting availability:
+- retrieve only necessary free/busy information where possible;
+- do not send unrelated event titles to models;
+- store minimized event metadata;
+- protect attendee addresses.
+  102.7 Event creation approval
+  Show:
+- calendar;
+- title;
+- employer;
+- date;
+- time zone;
+- attendees;
+- conferencing link;
+- reminders;
+- notes.
+  User approval is mandatory before external event creation in the initial implementation.
+  102.8 Deadline events
+  The system may create local reminders for:
+- application deadline;
+- assessment deadline;
+- interview preparation;
+- follow-up date;
+- offer deadline.
+  Deadline reminders are not the same as accepting external invitations.
+
+---
+
 103. Recruiter communication
-103.1 Supported functions
- * draft initial outreach;
- * draft response;
- * draft follow-up;
- * summarize thread;
- * extract action items;
- * propose scheduling;
- * verify employer and role context.
-103.2 Communication policy
-Sending is always approval-gated initially.
-The system must not:
- * spam recruiters;
- * send repeated follow-ups against user policy;
- * fabricate referrals;
- * claim prior relationships;
- * misstate competing offers;
- * pretend a generated message was manually written;
- * send after rejection unless clearly appropriate.
-103.3 Message grounding
-Ground:
- * candidate qualifications;
- * role;
- * employer;
- * application state;
- * availability;
- * portfolio links;
- * previous interaction.
-Do not invent:
- * recruiter name;
- * referral;
- * enthusiasm based on unsupported company research;
- * interview stage;
- * competing deadline.
-103.4 Tone profiles
- * concise professional;
- * warm professional;
- * technical;
- * executive;
- * follow-up brief.
-Tone cannot alter factual meaning.
-103.5 Follow-up cadence
-Default recommendations, subject to research and user settings:
- * no automatic immediate follow-up;
- * one reasonable follow-up after an appropriate interval;
- * stop after rejection or explicit no-contact instruction;
- * avoid multiple channels simultaneously;
- * suppress duplicate drafts.
-103.6 Recipient verification
-Before sending:
- * validate address;
- * compare domain with employer or known recruiter organization;
- * show external recipient;
- * warn on consumer email domains;
- * detect reply-all;
- * inspect attachments;
- * verify application context.
-103.7 Message effect
-Sending uses the external-effect layer:
- * immutable approved draft;
- * recipient hash;
- * message hash;
- * idempotency key;
- * send attempt;
- * reconciliation through sent folder or provider ID;
- * no blind retry.
-----------------------------------------
+     103.1 Supported functions
+
+- draft initial outreach;
+- draft response;
+- draft follow-up;
+- summarize thread;
+- extract action items;
+- propose scheduling;
+- verify employer and role context.
+  103.2 Communication policy
+  Sending is always approval-gated initially.
+  The system must not:
+- spam recruiters;
+- send repeated follow-ups against user policy;
+- fabricate referrals;
+- claim prior relationships;
+- misstate competing offers;
+- pretend a generated message was manually written;
+- send after rejection unless clearly appropriate.
+  103.3 Message grounding
+  Ground:
+- candidate qualifications;
+- role;
+- employer;
+- application state;
+- availability;
+- portfolio links;
+- previous interaction.
+  Do not invent:
+- recruiter name;
+- referral;
+- enthusiasm based on unsupported company research;
+- interview stage;
+- competing deadline.
+  103.4 Tone profiles
+- concise professional;
+- warm professional;
+- technical;
+- executive;
+- follow-up brief.
+  Tone cannot alter factual meaning.
+  103.5 Follow-up cadence
+  Default recommendations, subject to research and user settings:
+- no automatic immediate follow-up;
+- one reasonable follow-up after an appropriate interval;
+- stop after rejection or explicit no-contact instruction;
+- avoid multiple channels simultaneously;
+- suppress duplicate drafts.
+  103.6 Recipient verification
+  Before sending:
+- validate address;
+- compare domain with employer or known recruiter organization;
+- show external recipient;
+- warn on consumer email domains;
+- detect reply-all;
+- inspect attachments;
+- verify application context.
+  103.7 Message effect
+  Sending uses the external-effect layer:
+- immutable approved draft;
+- recipient hash;
+- message hash;
+- idempotency key;
+- send attempt;
+- reconciliation through sent folder or provider ID;
+- no blind retry.
+
+---
+
 104. Assessments and timed evaluations
-104.1 Boundary
-Assessments must be human-completed and human-submitted.
-This boundary applies to:
- * coding tests;
- * aptitude tests;
- * personality assessments;
- * take-home assignments;
- * technical quizzes;
- * video interviews;
- * case studies;
- * writing exercises;
- * proctored examinations.
-Deadline pressure does not authorize autonomous submission.
-104.2 Permitted assistance
-The system may:
- * detect assessment invitation;
- * identify provider and deadline;
- * add reminder;
- * open the assessment landing page;
- * summarize permitted instructions;
- * check technical prerequisites;
- * prepare an environment;
- * organize user-owned study material;
- * track user-confirmed completion;
- * draft clarification questions.
-104.3 Prohibited assistance
-The system must not:
- * answer live assessment questions;
- * impersonate the candidate;
- * evade proctoring;
- * automate keyboard or mouse input during an assessment;
- * access prohibited external resources;
- * submit automatically;
- * continue after instructions prohibit assistance;
- * misrepresent who completed the work.
-104.4 Take-home work
-For take-home assignments, the system must inspect stated rules.
-Modes:
- * assistance explicitly allowed;
- * assistance restricted;
- * assistance prohibited;
- * rules unclear.
-If unclear, ask the user to clarify with the employer.
-The project’s coding-assistance capability must not be used to violate assessment rules.
-104.5 Deadline handling
-Near deadline:
- * escalate notification;
- * show exact remaining time;
- * open the appropriate page;
- * preserve instructions;
- * let the user act.
-Never auto-submit.
+     104.1 Boundary
+     Assessments must be human-completed and human-submitted.
+     This boundary applies to:
+
+- coding tests;
+- aptitude tests;
+- personality assessments;
+- take-home assignments;
+- technical quizzes;
+- video interviews;
+- case studies;
+- writing exercises;
+- proctored examinations.
+  Deadline pressure does not authorize autonomous submission.
+  104.2 Permitted assistance
+  The system may:
+- detect assessment invitation;
+- identify provider and deadline;
+- add reminder;
+- open the assessment landing page;
+- summarize permitted instructions;
+- check technical prerequisites;
+- prepare an environment;
+- organize user-owned study material;
+- track user-confirmed completion;
+- draft clarification questions.
+  104.3 Prohibited assistance
+  The system must not:
+- answer live assessment questions;
+- impersonate the candidate;
+- evade proctoring;
+- automate keyboard or mouse input during an assessment;
+- access prohibited external resources;
+- submit automatically;
+- continue after instructions prohibit assistance;
+- misrepresent who completed the work.
+  104.4 Take-home work
+  For take-home assignments, the system must inspect stated rules.
+  Modes:
+- assistance explicitly allowed;
+- assistance restricted;
+- assistance prohibited;
+- rules unclear.
+  If unclear, ask the user to clarify with the employer.
+  The project’s coding-assistance capability must not be used to violate assessment rules.
+  104.5 Deadline handling
+  Near deadline:
+- escalate notification;
+- show exact remaining time;
+- open the appropriate page;
+- preserve instructions;
+- let the user act.
+  Never auto-submit.
+
 104.
------------------------------------------
+
+---
+
 104. Assessments and timed evaluations
-104.6 Assessment record
-id: assessment_...
-application_id: application_...
-provider:
- name: null
- domain: null
-type: coding_test
-received_at: null
-deadline:
- instant: null
- source_time_zone: null
- parsed_confidence: null
-duration_minutes: null
-attempt_limit: null
-instructions:
- artifact_ref: null
- assistance_policy: unknown
- proctoring: unknown
- required_software: []
- environment_requirements: []
-status: invited
-human_completion_required: true
-automatic_submission_allowed: false
-reminders: []
-evidence_refs: []
-created_at: null
-updated_at: null
-104.7 Assessment state machine
-stateDiagram-v2
- [*] --> InvitationDetected
- InvitationDetected --> InstructionsParsed
- InstructionsParsed --> RulesUnclear
- RulesUnclear --> AwaitingClarification
- AwaitingClarification --> InstructionsParsed
- InstructionsParsed --> PreparationAllowed
- InstructionsParsed --> AssistanceRestricted
- InstructionsParsed --> AssistanceProhibited
- PreparationAllowed --> ReadyForUser
- AssistanceRestricted --> ReadyForUser
- AssistanceProhibited --> ReadyForUser
- ReadyForUser --> HumanInProgress
- HumanInProgress --> AwaitingHumanSubmission
- AwaitingHumanSubmission --> UserConfirmedSubmitted
- UserConfirmedSubmitted --> CompletionReconciled
- CompletionReconciled --> [*]
- ReadyForUser --> Expired
- HumanInProgress --> Expired
- Expired --> [*]
-No transition executes assessment answers or submission.
-104.8 Assessment reminders
-Suggested reminders:
- * invitation received;
- * 72 hours before deadline;
- * 24 hours before deadline;
- * 4 hours before deadline;
- * user-configured final reminder.
-Adjust reminders for:
- * shorter deadlines;
- * time zones;
- * user quiet hours;
- * already confirmed completion;
- * provider-specific expiration behavior.
-104.9 Assessment software safety
-If an assessment requires software installation:
- 1. identify official source;
- 2. validate publisher;
- 3. verify supported operating system;
- 4. show requested privileges;
- 5. inspect known security concerns where feasible;
- 6. avoid automated installation;
- 7. recommend an isolated environment where appropriate;
- 8. do not weaken endpoint protections;
- 9. preserve employer instructions;
- 10. require the user to install and operate it.
-104.10 Assessment accessibility
-The system may help the user:
- * identify accommodation instructions;
- * draft an accommodation request;
- * track approval;
- * preserve revised deadlines;
- * verify accessible technology requirements.
-Accommodation data is restricted and must not affect job ranking.
-104.11 Assessment completion evidence
-The tracker may store:
- * user confirmation;
- * provider completion page;
- * confirmation email;
- * completion timestamp;
- * result when supplied;
- * next-step instructions.
-Do not retain assessment questions or answers unless the user explicitly imports permitted take-home materials for legitimate recordkeeping.
-----------------------------------------
+     104.6 Assessment record
+     id: assessment_...
+     application_id: application_...
+     provider:
+     name: null
+     domain: null
+     type: coding_test
+     received_at: null
+     deadline:
+     instant: null
+     source_time_zone: null
+     parsed_confidence: null
+     duration_minutes: null
+     attempt_limit: null
+     instructions:
+     artifact_ref: null
+     assistance_policy: unknown
+     proctoring: unknown
+     required_software: []
+     environment_requirements: []
+     status: invited
+     human_completion_required: true
+     automatic_submission_allowed: false
+     reminders: []
+     evidence_refs: []
+     created_at: null
+     updated_at: null
+     104.7 Assessment state machine
+     stateDiagram-v2
+     [_] --> InvitationDetected
+     InvitationDetected --> InstructionsParsed
+     InstructionsParsed --> RulesUnclear
+     RulesUnclear --> AwaitingClarification
+     AwaitingClarification --> InstructionsParsed
+     InstructionsParsed --> PreparationAllowed
+     InstructionsParsed --> AssistanceRestricted
+     InstructionsParsed --> AssistanceProhibited
+     PreparationAllowed --> ReadyForUser
+     AssistanceRestricted --> ReadyForUser
+     AssistanceProhibited --> ReadyForUser
+     ReadyForUser --> HumanInProgress
+     HumanInProgress --> AwaitingHumanSubmission
+     AwaitingHumanSubmission --> UserConfirmedSubmitted
+     UserConfirmedSubmitted --> CompletionReconciled
+     CompletionReconciled --> [_]
+     ReadyForUser --> Expired
+     HumanInProgress --> Expired
+     Expired --> [*]
+     No transition executes assessment answers or submission.
+     104.8 Assessment reminders
+     Suggested reminders:
+
+- invitation received;
+- 72 hours before deadline;
+- 24 hours before deadline;
+- 4 hours before deadline;
+- user-configured final reminder.
+  Adjust reminders for:
+- shorter deadlines;
+- time zones;
+- user quiet hours;
+- already confirmed completion;
+- provider-specific expiration behavior.
+  104.9 Assessment software safety
+  If an assessment requires software installation:
+
+1.  identify official source;
+2.  validate publisher;
+3.  verify supported operating system;
+4.  show requested privileges;
+5.  inspect known security concerns where feasible;
+6.  avoid automated installation;
+7.  recommend an isolated environment where appropriate;
+8.  do not weaken endpoint protections;
+9.  preserve employer instructions;
+10. require the user to install and operate it.
+    104.10 Assessment accessibility
+    The system may help the user:
+
+- identify accommodation instructions;
+- draft an accommodation request;
+- track approval;
+- preserve revised deadlines;
+- verify accessible technology requirements.
+  Accommodation data is restricted and must not affect job ranking.
+  104.11 Assessment completion evidence
+  The tracker may store:
+- user confirmation;
+- provider completion page;
+- confirmation email;
+- completion timestamp;
+- result when supplied;
+- next-step instructions.
+  Do not retain assessment questions or answers unless the user explicitly imports permitted take-home materials for legitimate recordkeeping.
+
+---
+
 105. Personal application analytics
-105.1 Purpose
-Analytics should help the user improve job-search decisions without encouraging indiscriminate application volume.
-The system should answer:
- * Which sources produce relevant jobs?
- * Which personas receive responses?
- * Which résumé variants correlate with interviews?
- * Where do applications stall?
- * Which required skills are frequently missing?
- * Which portals consume disproportionate effort?
- * How long do employers take to respond?
- * Are match scores calibrated?
-105.2 Funnel model
-discovered
-→ eligible
-→ recommended
-→ prepared
-→ reviewed
-→ submitted
-→ acknowledged
-→ recruiter response
-→ assessment
-→ interview
-→ offer
-→ accepted or declined
-Each transition records:
- * timestamp;
- * source;
- * confidence;
- * application;
- * prior state;
- * evidence.
-105.3 Core analytics
-Opportunity metrics
- * jobs discovered;
- * duplicate rate;
- * stale-listing rate;
- * scam-risk rate;
- * eligibility rate;
- * recommendation rate;
- * score distribution;
- * source quality.
-Application metrics
- * applications prepared;
- * preparation duration;
- * clarification count;
- * user correction count;
- * document-generation count;
- * form-completion duration;
- * portal failure rate;
- * final-review pass rate.
-Outcome metrics
- * acknowledgement rate;
- * recruiter-response rate;
- * interview rate;
- * offer rate;
- * time to first response;
- * time between stages;
- * rejection stage;
- * no-response rate.
-Efficiency metrics
- * active user time;
- * automated active time;
- * wait time;
- * model cost;
- * browser retries;
- * portal-specific effort;
- * documents reused;
- * saved answers reused.
-105.4 Analytics dimensions
-Break down by:
- * persona;
- * role family;
- * seniority;
- * location;
- * remote policy;
- * employer;
- * industry;
- * portal;
- * ATS;
- * résumé template;
- * match-score band;
- * application month;
- * authorization requirement;
- * compensation range.
-Small-sample warnings are required.
-105.5 Match-score calibration
-Compare score bands with:
- * user decision to apply;
- * final-review correction rate;
- * recruiter response;
- * interview;
- * offer.
-Calibration must account for confounders such as:
- * application timing;
- * employer selectivity;
- * market conditions;
- * referral status;
- * role volume;
- * small sample size.
-The product must not imply that a score causes an outcome.
-105.6 Skill-gap analysis
-Aggregate unmatched requirements while preserving context.
-Show:
- * frequently requested skill;
- * number of relevant jobs;
- * required versus preferred frequency;
- * evidence currently available;
- * adjacent skills;
- * potential learning priority;
- * whether the skill is concentrated in roles the user actually wants.
-Do not add a skill to the profile merely because it is frequently requested.
-105.7 Portal-efficiency analysis
-For each portal:
- * relevant jobs discovered;
- * duplicate percentage;
- * preparation success;
- * median active user time;
- * login interruptions;
- * compatibility incidents;
- * response outcomes;
- * account warnings;
- * data requested.
-This supports portal prioritization and possible disablement.
-105.8 Privacy
-Analytics are local by default.
-Exports should:
- * omit restricted fields unless selected;
- * support aggregate-only mode;
- * avoid employer or recruiter identification where unnecessary;
- * state date range;
- * preserve methodology.
-105.9 Analytics limitations
-Display:
- * sample size;
- * missing statuses;
- * uncertain email classifications;
- * unobserved employer decisions;
- * delayed outcomes;
- * manual applications not tracked;
- * selection bias.
-105.10 No automated discrimination
-Sensitive traits must not be used to:
- * lower or raise job score;
- * predict interview likelihood;
- * recommend disclosure;
- * alter résumé wording;
- * select employers.
-Demographic data may be used only for user-directed personal reporting where lawful, private, and clearly separated from recommendation logic.
-----------------------------------------
+     105.1 Purpose
+     Analytics should help the user improve job-search decisions without encouraging indiscriminate application volume.
+     The system should answer:
+
+- Which sources produce relevant jobs?
+- Which personas receive responses?
+- Which résumé variants correlate with interviews?
+- Where do applications stall?
+- Which required skills are frequently missing?
+- Which portals consume disproportionate effort?
+- How long do employers take to respond?
+- Are match scores calibrated?
+  105.2 Funnel model
+  discovered
+  → eligible
+  → recommended
+  → prepared
+  → reviewed
+  → submitted
+  → acknowledged
+  → recruiter response
+  → assessment
+  → interview
+  → offer
+  → accepted or declined
+  Each transition records:
+- timestamp;
+- source;
+- confidence;
+- application;
+- prior state;
+- evidence.
+  105.3 Core analytics
+  Opportunity metrics
+- jobs discovered;
+- duplicate rate;
+- stale-listing rate;
+- scam-risk rate;
+- eligibility rate;
+- recommendation rate;
+- score distribution;
+- source quality.
+  Application metrics
+- applications prepared;
+- preparation duration;
+- clarification count;
+- user correction count;
+- document-generation count;
+- form-completion duration;
+- portal failure rate;
+- final-review pass rate.
+  Outcome metrics
+- acknowledgement rate;
+- recruiter-response rate;
+- interview rate;
+- offer rate;
+- time to first response;
+- time between stages;
+- rejection stage;
+- no-response rate.
+  Efficiency metrics
+- active user time;
+- automated active time;
+- wait time;
+- model cost;
+- browser retries;
+- portal-specific effort;
+- documents reused;
+- saved answers reused.
+  105.4 Analytics dimensions
+  Break down by:
+- persona;
+- role family;
+- seniority;
+- location;
+- remote policy;
+- employer;
+- industry;
+- portal;
+- ATS;
+- résumé template;
+- match-score band;
+- application month;
+- authorization requirement;
+- compensation range.
+  Small-sample warnings are required.
+  105.5 Match-score calibration
+  Compare score bands with:
+- user decision to apply;
+- final-review correction rate;
+- recruiter response;
+- interview;
+- offer.
+  Calibration must account for confounders such as:
+- application timing;
+- employer selectivity;
+- market conditions;
+- referral status;
+- role volume;
+- small sample size.
+  The product must not imply that a score causes an outcome.
+  105.6 Skill-gap analysis
+  Aggregate unmatched requirements while preserving context.
+  Show:
+- frequently requested skill;
+- number of relevant jobs;
+- required versus preferred frequency;
+- evidence currently available;
+- adjacent skills;
+- potential learning priority;
+- whether the skill is concentrated in roles the user actually wants.
+  Do not add a skill to the profile merely because it is frequently requested.
+  105.7 Portal-efficiency analysis
+  For each portal:
+- relevant jobs discovered;
+- duplicate percentage;
+- preparation success;
+- median active user time;
+- login interruptions;
+- compatibility incidents;
+- response outcomes;
+- account warnings;
+- data requested.
+  This supports portal prioritization and possible disablement.
+  105.8 Privacy
+  Analytics are local by default.
+  Exports should:
+- omit restricted fields unless selected;
+- support aggregate-only mode;
+- avoid employer or recruiter identification where unnecessary;
+- state date range;
+- preserve methodology.
+  105.9 Analytics limitations
+  Display:
+- sample size;
+- missing statuses;
+- uncertain email classifications;
+- unobserved employer decisions;
+- delayed outcomes;
+- manual applications not tracked;
+- selection bias.
+  105.10 No automated discrimination
+  Sensitive traits must not be used to:
+- lower or raise job score;
+- predict interview likelihood;
+- recommend disclosure;
+- alter résumé wording;
+- select employers.
+  Demographic data may be used only for user-directed personal reporting where lawful, private, and clearly separated from recommendation logic.
+
+---
+
 106. Scheduled automation
-106.1 Automation objective
-Repeated, validated workflows should become explicit automations rather than recurring prompts.
-An automation must define:
- * trigger;
- * scope;
- * inputs;
- * phases;
- * outputs;
- * policy;
- * budget;
- * evidence;
- * notifications;
- * failure handling;
- * owner;
- * schedule;
- * next-run time.
-106.2 Initial automation types
- * job-alert email ingestion;
- * permitted employer-careers scan;
- * job rescoring;
- * duplicate reconciliation;
- * stale-profile review;
- * application-status email scan;
- * deadline reminder;
- * follow-up recommendation;
- * portal-compatibility check;
- * retention sweep;
- * backup verification;
- * dependency and update check.
-106.3 Automation object
-id: automation_...
-name: "Daily India backend job review"
-type: job_discovery
-enabled: true
-trigger:
- type: schedule
- schedule: "0 7 * * *"
- time_zone: "Asia/Kolkata"
-scope:
- persona_ids:
- - persona_backend
- regions:
- - IN
- source_ids:
- - approved_source_...
-policy:
- maximum_jobs_per_run: 100
- prepare_applications: false
- send_messages: false
- external_submission: false
-budget:
- maximum_active_minutes: 20
- maximum_model_cost: 0.25
-notifications:
- on_success: summary
- on_failure: immediate
-last_run: null
-next_run: null
-106.4 Scheduler
-For a personal local installation:
- * use an application-managed persistent scheduler;
- * persist schedules in SQLite;
- * survive application restart;
- * account for missed runs;
- * avoid duplicate execution;
- * respect device sleep;
- * use local time zones correctly;
- * run only when the local worker is available.
-Optional OS scheduler integration may improve wake behavior but increases platform complexity.
-106.5 Missed-run policy
-Choices:
- * run immediately after startup;
- * skip and wait for next schedule;
- * run only if less than a configured age;
- * ask user.
-Default by automation:
-Automation Missed-run behavior Deadline reminder Run immediately Email status scan Run immediately Daily job discovery Run if less than 12 hours late Weekly profile review Run if less than 3 days late Compatibility check Run when idle Retention sweep Run immediately Backup verification Run when idle
-106.6 Concurrency
- * one instance of an automation at a time;
- * do not overlap browser workflows on the same portal;
- * allow independent local parsing in parallel;
- * apply global CPU and memory limits;
- * defer low-priority maintenance during active application work.
-106.7 Automation approval
-Creating or changing an automation must show:
- * schedule;
- * external systems accessed;
- * personal data used;
- * model providers;
- * expected cost;
- * possible side effects;
- * notification policy.
-No automation may include submission in the initial release.
-106.8 Automation monitoring
-Track:
- * last successful run;
- * last failure;
- * duration;
- * cost;
- * items processed;
- * waitpoints;
- * skipped runs;
- * next run;
- * consecutive failures.
-After two materially similar failures:
- * pause or degrade;
- * create improvement task;
- * avoid repeated unattended retries.
-106.9 Automation cancellation
-Cancellation:
- * stops new steps;
- * checkpoints current state;
- * preserves discovered jobs;
- * avoids rolling back legitimate completed reads;
- * reconciles any external writes;
- * releases scheduler lock.
-106.10 Automation export
-Support export and import of automation definitions without secrets.
-On import:
- * validate schema;
- * require user review;
- * resolve local providers;
- * resolve portal accounts;
- * preserve disabled state until approved.
-----------------------------------------
+     106.1 Automation objective
+     Repeated, validated workflows should become explicit automations rather than recurring prompts.
+     An automation must define:
+
+- trigger;
+- scope;
+- inputs;
+- phases;
+- outputs;
+- policy;
+- budget;
+- evidence;
+- notifications;
+- failure handling;
+- owner;
+- schedule;
+- next-run time.
+  106.2 Initial automation types
+- job-alert email ingestion;
+- permitted employer-careers scan;
+- job rescoring;
+- duplicate reconciliation;
+- stale-profile review;
+- application-status email scan;
+- deadline reminder;
+- follow-up recommendation;
+- portal-compatibility check;
+- retention sweep;
+- backup verification;
+- dependency and update check.
+  106.3 Automation object
+  id: automation_...
+  name: "Daily India backend job review"
+  type: job_discovery
+  enabled: true
+  trigger:
+  type: schedule
+  schedule: "0 7 * * *"
+  time_zone: "Asia/Kolkata"
+  scope:
+  persona_ids:
+
+* persona_backend
+  regions:
+* IN
+  source_ids:
+* approved_source_...
+  policy:
+  maximum_jobs_per_run: 100
+  prepare_applications: false
+  send_messages: false
+  external_submission: false
+  budget:
+  maximum_active_minutes: 20
+  maximum_model_cost: 0.25
+  notifications:
+  on_success: summary
+  on_failure: immediate
+  last_run: null
+  next_run: null
+  106.4 Scheduler
+  For a personal local installation:
+
+- use an application-managed persistent scheduler;
+- persist schedules in SQLite;
+- survive application restart;
+- account for missed runs;
+- avoid duplicate execution;
+- respect device sleep;
+- use local time zones correctly;
+- run only when the local worker is available.
+  Optional OS scheduler integration may improve wake behavior but increases platform complexity.
+  106.5 Missed-run policy
+  Choices:
+- run immediately after startup;
+- skip and wait for next schedule;
+- run only if less than a configured age;
+- ask user.
+  Default by automation:
+  Automation Missed-run behavior Deadline reminder Run immediately Email status scan Run immediately Daily job discovery Run if less than 12 hours late Weekly profile review Run if less than 3 days late Compatibility check Run when idle Retention sweep Run immediately Backup verification Run when idle
+  106.6 Concurrency
+- one instance of an automation at a time;
+- do not overlap browser workflows on the same portal;
+- allow independent local parsing in parallel;
+- apply global CPU and memory limits;
+- defer low-priority maintenance during active application work.
+  106.7 Automation approval
+  Creating or changing an automation must show:
+- schedule;
+- external systems accessed;
+- personal data used;
+- model providers;
+- expected cost;
+- possible side effects;
+- notification policy.
+  No automation may include submission in the initial release.
+  106.8 Automation monitoring
+  Track:
+- last successful run;
+- last failure;
+- duration;
+- cost;
+- items processed;
+- waitpoints;
+- skipped runs;
+- next run;
+- consecutive failures.
+  After two materially similar failures:
+- pause or degrade;
+- create improvement task;
+- avoid repeated unattended retries.
+  106.9 Automation cancellation
+  Cancellation:
+- stops new steps;
+- checkpoints current state;
+- preserves discovered jobs;
+- avoids rolling back legitimate completed reads;
+- reconciles any external writes;
+- releases scheduler lock.
+  106.10 Automation export
+  Support export and import of automation definitions without secrets.
+  On import:
+- validate schema;
+- require user review;
+- resolve local providers;
+- resolve portal accounts;
+- preserve disabled state until approved.
+
+---
+
 107. Proactive operations
-107.1 Objective
-The system should notice neglected work and propose actions without surprising the user.
-Signals:
- * application deadline approaching;
- * stale preparation;
- * unanswered recruiter message;
- * unresolved portal login;
- * expiring work authorization;
- * stale notice period;
- * broken portfolio link;
- * duplicate job cluster;
- * adapter compatibility warning;
- * backup overdue;
- * model budget exhausted;
- * repeated correction pattern.
-107.2 Proactive-goal policy
-The system may create:
- * recommendation;
- * draft goal;
- * low-risk local maintenance task;
- * reminder.
-It may not proactively:
- * disclose data;
- * message recruiters;
- * apply;
- * submit;
- * change sensitive facts;
- * broaden cloud processing;
- * install software.
-107.3 Priority model
-priority =
- urgency
- × consequence
- × confidence
- × user_relevance
- × unblock_value
- - interruption_cost
-Priority remains explainable.
-107.4 Examples
-Deadline drift
-Signal:
-application prepared
-AND not submitted
-AND deadline < 24 hours
-Action:
- * notify;
- * show blocking questions;
- * open final review;
- * do not submit.
-Stale authorization
-Signal:
-authorization expires within configured period
-Action:
- * request review;
- * identify affected applications;
- * suspend reuse after expiration.
-Repeated question correction
-Signal:
-same concept corrected twice
-Action:
- * propose answer-policy update;
- * add regression fixture;
- * do not silently alter canonical fact.
-107.5 Proactive recommendation queue
-Each proposal includes:
- * trigger;
- * evidence;
- * confidence;
- * recommended action;
- * consequence of waiting;
- * estimated time;
- * cost;
- * approval requirement;
- * dismissal and snooze.
-107.6 Anti-noise controls
- * group similar recommendations;
- * suppress low-confidence repeats;
- * learn dismissal reasons;
- * enforce daily interruption cap;
- * respect quiet hours;
- * distinguish urgent from useful;
- * allow disabling categories.
-----------------------------------------
+     107.1 Objective
+     The system should notice neglected work and propose actions without surprising the user.
+     Signals:
+
+- application deadline approaching;
+- stale preparation;
+- unanswered recruiter message;
+- unresolved portal login;
+- expiring work authorization;
+- stale notice period;
+- broken portfolio link;
+- duplicate job cluster;
+- adapter compatibility warning;
+- backup overdue;
+- model budget exhausted;
+- repeated correction pattern.
+  107.2 Proactive-goal policy
+  The system may create:
+- recommendation;
+- draft goal;
+- low-risk local maintenance task;
+- reminder.
+  It may not proactively:
+- disclose data;
+- message recruiters;
+- apply;
+- submit;
+- change sensitive facts;
+- broaden cloud processing;
+- install software.
+  107.3 Priority model
+  priority =
+  urgency
+  × consequence
+  × confidence
+  × user_relevance
+  × unblock_value
+
+* interruption_cost
+  Priority remains explainable.
+  107.4 Examples
+  Deadline drift
+  Signal:
+  application prepared
+  AND not submitted
+  AND deadline < 24 hours
+  Action:
+
+- notify;
+- show blocking questions;
+- open final review;
+- do not submit.
+  Stale authorization
+  Signal:
+  authorization expires within configured period
+  Action:
+- request review;
+- identify affected applications;
+- suspend reuse after expiration.
+  Repeated question correction
+  Signal:
+  same concept corrected twice
+  Action:
+- propose answer-policy update;
+- add regression fixture;
+- do not silently alter canonical fact.
+  107.5 Proactive recommendation queue
+  Each proposal includes:
+- trigger;
+- evidence;
+- confidence;
+- recommended action;
+- consequence of waiting;
+- estimated time;
+- cost;
+- approval requirement;
+- dismissal and snooze.
+  107.6 Anti-noise controls
+- group similar recommendations;
+- suppress low-confidence repeats;
+- learn dismissal reasons;
+- enforce daily interruption cap;
+- respect quiet hours;
+- distinguish urgent from useful;
+- allow disabling categories.
+
+---
+
 108. Job discovery system
-108.1 Discovery principles
-Discovery must prioritize:
- * authoritative sources;
- * relevant roles;
- * fresh listings;
- * low duplicate rates;
- * user constraints;
- * source policy;
- * efficient retrieval.
-The system should not indiscriminately crawl the web.
-108.2 Discovery sources
-Direct employer sources
- * careers pages;
- * ATS public job boards;
- * official feeds;
- * employer newsletters;
- * employer job alerts.
-Portals
- * LinkedIn;
- * Naukri;
- * Indeed;
- * other researched portals.
-Email
- * saved-search alerts;
- * recruiter messages;
- * employer notifications.
-User sources
- * pasted links;
- * imported lists;
- * browser extension;
- * CSV;
- * bookmarks.
-108.3 Discovery query model
-id: search_...
-persona_id: persona_backend
-titles:
- - Backend Engineer
- - Software Engineer
-skills:
- required_any:
- - Python
-locations:
- countries:
- - IN
- cities: []
-remote:
- allowed: true
-seniority:
- - intermediate
- - senior
-compensation: {}
-employer_filters: {}
-freshness_days: 14
-108.4 Source adapter contract
-A discovery adapter returns:
- * source job ID;
- * title;
- * employer;
- * location;
- * URL;
- * posting date where available;
- * short description;
- * pagination state;
- * retrieval timestamp;
- * source policy reference.
-The normalization pipeline determines canonical identity.
-108.5 Crawl boundaries
-For employer careers discovery:
- * begin from approved careers roots;
- * obey policy and technical restrictions;
- * remain on approved domains;
- * cap depth;
- * avoid unrelated content;
- * cache pages;
- * deduplicate URLs;
- * back off;
- * expose user agent truthfully where appropriate;
- * stop on challenge or prohibition.
-108.6 Careers-page discovery
-Methods:
- * employer registry;
- * structured data;
- * sitemap;
- * ATS-domain links;
- * user-supplied careers page;
- * trusted search provider if configured.
-Do not trust arbitrary search results without domain validation.
-108.7 Search-provider abstraction
-Optional providers may supply web search.
-Requirements:
- * explicit API configuration;
- * cost control;
- * result provenance;
- * no profile over-sharing;
- * local query construction;
- * provider policy record;
- * cache.
-The search provider does not become an application adapter.
-108.8 Saved searches
-Users may save:
- * persona;
- * filters;
- * sources;
- * schedule;
- * notification threshold;
- * maximum results;
- * automatic scoring;
- * whether to create preparation suggestions.
-108.9 Discovery result limits
-“Unlimited applications” does not justify unlimited retrieval.
-Each run needs:
- * maximum pages;
- * maximum jobs;
- * time budget;
- * cost budget;
- * source-specific pacing;
- * cancellation;
- * continuation cursor.
-108.10 Discovery evidence
-For each discovered job, preserve:
- * source;
- * retrieval time;
- * query;
- * source ID;
- * canonical URL;
- * minimal source snapshot;
- * policy basis;
- * discovery automation ID.
-----------------------------------------
+     108.1 Discovery principles
+     Discovery must prioritize:
+
+- authoritative sources;
+- relevant roles;
+- fresh listings;
+- low duplicate rates;
+- user constraints;
+- source policy;
+- efficient retrieval.
+  The system should not indiscriminately crawl the web.
+  108.2 Discovery sources
+  Direct employer sources
+- careers pages;
+- ATS public job boards;
+- official feeds;
+- employer newsletters;
+- employer job alerts.
+  Portals
+- LinkedIn;
+- Naukri;
+- Indeed;
+- other researched portals.
+  Email
+- saved-search alerts;
+- recruiter messages;
+- employer notifications.
+  User sources
+- pasted links;
+- imported lists;
+- browser extension;
+- CSV;
+- bookmarks.
+  108.3 Discovery query model
+  id: search_...
+  persona_id: persona_backend
+  titles:
+
+* Backend Engineer
+* Software Engineer
+  skills:
+  required_any:
+* Python
+  locations:
+  countries:
+* IN
+  cities: []
+  remote:
+  allowed: true
+  seniority:
+* intermediate
+* senior
+  compensation: {}
+  employer_filters: {}
+  freshness_days: 14
+  108.4 Source adapter contract
+  A discovery adapter returns:
+
+- source job ID;
+- title;
+- employer;
+- location;
+- URL;
+- posting date where available;
+- short description;
+- pagination state;
+- retrieval timestamp;
+- source policy reference.
+  The normalization pipeline determines canonical identity.
+  108.5 Crawl boundaries
+  For employer careers discovery:
+- begin from approved careers roots;
+- obey policy and technical restrictions;
+- remain on approved domains;
+- cap depth;
+- avoid unrelated content;
+- cache pages;
+- deduplicate URLs;
+- back off;
+- expose user agent truthfully where appropriate;
+- stop on challenge or prohibition.
+  108.6 Careers-page discovery
+  Methods:
+- employer registry;
+- structured data;
+- sitemap;
+- ATS-domain links;
+- user-supplied careers page;
+- trusted search provider if configured.
+  Do not trust arbitrary search results without domain validation.
+  108.7 Search-provider abstraction
+  Optional providers may supply web search.
+  Requirements:
+- explicit API configuration;
+- cost control;
+- result provenance;
+- no profile over-sharing;
+- local query construction;
+- provider policy record;
+- cache.
+  The search provider does not become an application adapter.
+  108.8 Saved searches
+  Users may save:
+- persona;
+- filters;
+- sources;
+- schedule;
+- notification threshold;
+- maximum results;
+- automatic scoring;
+- whether to create preparation suggestions.
+  108.9 Discovery result limits
+  “Unlimited applications” does not justify unlimited retrieval.
+  Each run needs:
+- maximum pages;
+- maximum jobs;
+- time budget;
+- cost budget;
+- source-specific pacing;
+- cancellation;
+- continuation cursor.
+  108.10 Discovery evidence
+  For each discovered job, preserve:
+- source;
+- retrieval time;
+- query;
+- source ID;
+- canonical URL;
+- minimal source snapshot;
+- policy basis;
+- discovery automation ID.
+
+---
+
 109. Portal-specific research and implementation sequence
-109.1 General sequence
-For each portal:
- 1. primary-source policy research;
- 2. current authentication research;
- 3. user workflow mapping;
- 4. data-flow mapping;
- 5. capability matrix;
- 6. threat review;
- 7. static fixture acquisition or synthetic reconstruction;
- 8. adapter skeleton;
- 9. discovery-only implementation where permitted;
- 10. assisted workflow;
- 11. final-review workflow;
- 12. repeated-run qualification;
- 13. preview release;
- 14. incident monitoring;
- 15. supported graduation.
-109.2 No simultaneous broad rollout
-Do not implement ten portal adapters at once.
-Preferred order:
- 1. mock ATS;
- 2. one structurally simple ATS;
- 3. Workday;
- 4. one portal source;
- 5. one India-specific portal;
- 6. expand based on evidence.
-This produces reusable contracts before breadth.
-109.3 Suggested implementation order
-Subject to research:
- 1. Greenhouse job-board ingestion;
- 2. Lever job-board ingestion;
- 3. Workday assisted applications;
- 4. LinkedIn discovery and handoff;
- 5. Naukri profile/application assistance;
- 6. Indeed discovery and handoff;
- 7. Ashby;
- 8. SmartRecruiters;
- 9. iCIMS;
- 10. Oracle/Taleo;
- 11. SAP SuccessFactors;
- 12. Jobvite;
- 13. BambooHR.
-This ordering is provisional, not a current compatibility claim.
-----------------------------------------
+     109.1 General sequence
+     For each portal:
+1. primary-source policy research;
+1. current authentication research;
+1. user workflow mapping;
+1. data-flow mapping;
+1. capability matrix;
+1. threat review;
+1. static fixture acquisition or synthetic reconstruction;
+1. adapter skeleton;
+1. discovery-only implementation where permitted;
+1. assisted workflow;
+1. final-review workflow;
+1. repeated-run qualification;
+1. preview release;
+1. incident monitoring;
+1. supported graduation.
+   109.2 No simultaneous broad rollout
+   Do not implement ten portal adapters at once.
+   Preferred order:
+1. mock ATS;
+1. one structurally simple ATS;
+1. Workday;
+1. one portal source;
+1. one India-specific portal;
+1. expand based on evidence.
+   This produces reusable contracts before breadth.
+   109.3 Suggested implementation order
+   Subject to research:
+1. Greenhouse job-board ingestion;
+1. Lever job-board ingestion;
+1. Workday assisted applications;
+1. LinkedIn discovery and handoff;
+1. Naukri profile/application assistance;
+1. Indeed discovery and handoff;
+1. Ashby;
+1. SmartRecruiters;
+1. iCIMS;
+1. Oracle/Taleo;
+1. SAP SuccessFactors;
+1. Jobvite;
+1. BambooHR.
+   This ordering is provisional, not a current compatibility claim.
+
+---
+
 110. Workday integration plan
-110.1 Priority
-Workday is a high-priority ATS family because users frequently encounter repeated, tenant-specific application workflows.
-The integration must be treated as a specialized harness, not a collection of ad hoc selectors.
-110.2 Workday research questions
- * tenant URL patterns;
- * regional differences;
- * account-per-tenant behavior;
- * social-login availability;
- * résumé parsing;
- * candidate-home behavior;
- * form-step structure;
- * repeatable employment and education;
- * custom questions;
- * draft saving;
- * session expiration;
- * final review;
- * confirmation receipts;
- * accessibility labels;
- * tenant customization;
- * portal terms and restrictions.
-110.3 Tenant model
-id: ats_instance_...
-ats_family: workday
-employer_id: employer_...
-tenant_identifier: null
-base_url: null
-region: null
-authentication_modes: []
-fingerprint_version: null
-customization_profile: null
-last_validated_at: null
-support_state: researching
-110.4 Specialized workflow phases
-resolve tenant
-→ verify requisition
-→ inspect authentication
-→ authenticate or wait
-→ inspect candidate-home state
-→ start or resume application
-→ upload or select résumé
-→ reconcile parsed profile
-→ personal information
-→ experience
-→ education
-→ skills
-→ custom questions
-→ voluntary disclosures
-→ attachments
-→ final review
-→ stop for human submission
-→ reconcile confirmation
-110.5 Résumé parsing reconciliation
-If Workday parses a résumé:
- 1. capture the parsed fields;
- 2. compare with canonical profile;
- 3. identify missing or changed entries;
- 4. reject unsupported inferred values;
- 5. correct according to policy;
- 6. show all differences in final review.
-Do not assume portal parsing is accurate.
-110.6 Repeatable sections
-Employment and education insertion must be:
- * deterministic;
- * order-aware;
- * restart-safe;
- * duplicate-aware;
- * verifiable.
-Each record receives a portal-local identity or fingerprint.
-Before adding:
- * inspect existing records;
- * match against canonical data;
- * update or skip as appropriate;
- * avoid duplicate rows after retries.
-110.7 Tenant-specific questions
-Classify questions as:
- * standard Workday;
- * regional;
- * employer-specific;
- * role-specific;
- * voluntary demographic;
- * legal or compliance.
-Promote mappings only after tenant and semantic scope are established.
-110.8 Workday session handling
- * detect candidate-home versus requisition application;
- * handle expired session through durable waitpoint;
- * preserve tenant identity;
- * verify requisition after login;
- * avoid cross-tenant account confusion;
- * do not retry failed authentication automatically.
-110.9 Workday final verification
-Verify:
- * tenant;
- * employer;
- * requisition;
- * candidate identity;
- * every visible section;
- * uploaded files;
- * custom answers;
- * voluntary fields;
- * unresolved errors;
- * final review page.
-110.10 Workday qualification suite
-Fixtures should vary:
- * India and US tenant;
- * social login and email login;
- * existing candidate account;
- * new account;
- * résumé parsing enabled and disabled;
- * multiple employment records;
- * degree with GPA and percentage;
- * sponsorship;
- * voluntary disclosure;
- * custom questions;
- * session timeout;
- * tenant redesign;
- * saved draft;
- * duplicate prior application.
-----------------------------------------
+     110.1 Priority
+     Workday is a high-priority ATS family because users frequently encounter repeated, tenant-specific application workflows.
+     The integration must be treated as a specialized harness, not a collection of ad hoc selectors.
+     110.2 Workday research questions
+
+- tenant URL patterns;
+- regional differences;
+- account-per-tenant behavior;
+- social-login availability;
+- résumé parsing;
+- candidate-home behavior;
+- form-step structure;
+- repeatable employment and education;
+- custom questions;
+- draft saving;
+- session expiration;
+- final review;
+- confirmation receipts;
+- accessibility labels;
+- tenant customization;
+- portal terms and restrictions.
+  110.3 Tenant model
+  id: ats_instance_...
+  ats_family: workday
+  employer_id: employer_...
+  tenant_identifier: null
+  base_url: null
+  region: null
+  authentication_modes: []
+  fingerprint_version: null
+  customization_profile: null
+  last_validated_at: null
+  support_state: researching
+  110.4 Specialized workflow phases
+  resolve tenant
+  → verify requisition
+  → inspect authentication
+  → authenticate or wait
+  → inspect candidate-home state
+  → start or resume application
+  → upload or select résumé
+  → reconcile parsed profile
+  → personal information
+  → experience
+  → education
+  → skills
+  → custom questions
+  → voluntary disclosures
+  → attachments
+  → final review
+  → stop for human submission
+  → reconcile confirmation
+  110.5 Résumé parsing reconciliation
+  If Workday parses a résumé:
+
+1.  capture the parsed fields;
+2.  compare with canonical profile;
+3.  identify missing or changed entries;
+4.  reject unsupported inferred values;
+5.  correct according to policy;
+6.  show all differences in final review.
+    Do not assume portal parsing is accurate.
+    110.6 Repeatable sections
+    Employment and education insertion must be:
+
+- deterministic;
+- order-aware;
+- restart-safe;
+- duplicate-aware;
+- verifiable.
+  Each record receives a portal-local identity or fingerprint.
+  Before adding:
+- inspect existing records;
+- match against canonical data;
+- update or skip as appropriate;
+- avoid duplicate rows after retries.
+  110.7 Tenant-specific questions
+  Classify questions as:
+- standard Workday;
+- regional;
+- employer-specific;
+- role-specific;
+- voluntary demographic;
+- legal or compliance.
+  Promote mappings only after tenant and semantic scope are established.
+  110.8 Workday session handling
+- detect candidate-home versus requisition application;
+- handle expired session through durable waitpoint;
+- preserve tenant identity;
+- verify requisition after login;
+- avoid cross-tenant account confusion;
+- do not retry failed authentication automatically.
+  110.9 Workday final verification
+  Verify:
+- tenant;
+- employer;
+- requisition;
+- candidate identity;
+- every visible section;
+- uploaded files;
+- custom answers;
+- voluntary fields;
+- unresolved errors;
+- final review page.
+  110.10 Workday qualification suite
+  Fixtures should vary:
+- India and US tenant;
+- social login and email login;
+- existing candidate account;
+- new account;
+- résumé parsing enabled and disabled;
+- multiple employment records;
+- degree with GPA and percentage;
+- sponsorship;
+- voluntary disclosure;
+- custom questions;
+- session timeout;
+- tenant redesign;
+- saved draft;
+- duplicate prior application.
+
+---
+
 111. LinkedIn integration plan
-111.1 Scope boundary
-LinkedIn integration must begin with:
- * user-supplied links;
- * job normalization;
- * authorized discovery where supported;
- * browser handoff;
- * profile-import support through user-provided export where available;
- * application tracking.
-No assumption is made here that autonomous application filling is permitted.
-111.2 Research questions
- * current job-search and application policies;
- * supported APIs and partner programs;
- * Easy Apply behavior;
- * external redirect behavior;
- * data export;
- * social login;
- * account restrictions;
- * application history;
- * messaging policies;
- * geographic differences;
- * current automation restrictions.
-111.3 Link handling
-For a supplied LinkedIn job URL:
- 1. normalize URL;
- 2. remove nonessential tracking parameters;
- 3. retrieve through user-authorized session if required;
- 4. extract source job ID;
- 5. resolve employer;
- 6. detect Easy Apply or external ATS;
- 7. preserve redirect chain;
- 8. compute duplicate identity;
- 9. select supported mode.
-111.4 Easy Apply
-Easy Apply must remain a distinct workflow because it may include:
- * stored résumé selection;
- * phone;
- * screening questions;
- * multiple pages;
- * optional demographics;
- * final submission control.
-Until current policy and reliability are validated, operate in:
- * prepare-and-handoff; or
- * assisted pre-submission mode only when authorized.
-111.5 LinkedIn profile import
-Preferred source:
- * user-provided official data export or explicit user entry.
-Imported values:
- * remain unconfirmed;
- * preserve source date;
- * undergo contradiction analysis;
- * do not override user-confirmed facts silently.
-111.6 Messaging
-Recruiter message drafting is supported.
-Sending requires:
- * policy validation;
- * user approval;
- * rate and duplication controls;
- * exact recipient review;
- * current platform-policy validation.
-111.7 Account safety
-On warnings, challenges, or restrictions:
- * stop integration;
- * preserve no workaround;
- * require user resolution;
- * suspend affected operating mode;
- * create compatibility incident.
-----------------------------------------
+     111.1 Scope boundary
+     LinkedIn integration must begin with:
+
+- user-supplied links;
+- job normalization;
+- authorized discovery where supported;
+- browser handoff;
+- profile-import support through user-provided export where available;
+- application tracking.
+  No assumption is made here that autonomous application filling is permitted.
+  111.2 Research questions
+- current job-search and application policies;
+- supported APIs and partner programs;
+- Easy Apply behavior;
+- external redirect behavior;
+- data export;
+- social login;
+- account restrictions;
+- application history;
+- messaging policies;
+- geographic differences;
+- current automation restrictions.
+  111.3 Link handling
+  For a supplied LinkedIn job URL:
+
+1.  normalize URL;
+2.  remove nonessential tracking parameters;
+3.  retrieve through user-authorized session if required;
+4.  extract source job ID;
+5.  resolve employer;
+6.  detect Easy Apply or external ATS;
+7.  preserve redirect chain;
+8.  compute duplicate identity;
+9.  select supported mode.
+    111.4 Easy Apply
+    Easy Apply must remain a distinct workflow because it may include:
+
+- stored résumé selection;
+- phone;
+- screening questions;
+- multiple pages;
+- optional demographics;
+- final submission control.
+  Until current policy and reliability are validated, operate in:
+- prepare-and-handoff; or
+- assisted pre-submission mode only when authorized.
+  111.5 LinkedIn profile import
+  Preferred source:
+- user-provided official data export or explicit user entry.
+  Imported values:
+- remain unconfirmed;
+- preserve source date;
+- undergo contradiction analysis;
+- do not override user-confirmed facts silently.
+  111.6 Messaging
+  Recruiter message drafting is supported.
+  Sending requires:
+- policy validation;
+- user approval;
+- rate and duplication controls;
+- exact recipient review;
+- current platform-policy validation.
+  111.7 Account safety
+  On warnings, challenges, or restrictions:
+- stop integration;
+- preserve no workaround;
+- require user resolution;
+- suspend affected operating mode;
+- create compatibility incident.
+
+---
+
 112. Naukri integration plan
-112.1 Priority
-Naukri is a launch-critical India portal.
-Research and implementation must account for India-specific profile and employer workflows.
-112.2 Research questions
- * account and profile structure;
- * résumé upload and parsing;
- * profile-completeness behavior;
- * recruiter visibility settings;
- * job alerts;
- * application workflow;
- * external ATS redirects;
- * current and expected CTC fields;
- * notice period;
- * employment and education formats;
- * authentication and social login;
- * communication preferences;
- * application history;
- * portal policy.
-112.3 Profile synchronization
-Potential supported operation:
-local canonical profile
-→ proposed Naukri profile diff
-→ user review
-→ approved field updates
-→ verification
-Do not treat the portal profile as the canonical source.
-112.4 India-specific fields
-Expected categories requiring strong semantics:
- * current CTC;
- * expected CTC;
- * fixed and variable components;
- * notice period;
- * current location;
- * preferred locations;
- * employment type;
- * education percentage or CGPA;
- * Class X and XII results;
- * key skills;
- * industry;
- * functional area;
- * role;
- * availability;
- * résumé headline;
- * profile summary.
-Every portal-specific field must map to canonical facts with units and dates.
-112.5 Recruiter visibility
-Profile-update workflows must display:
- * whether the update changes recruiter visibility;
- * whether the résumé becomes searchable;
- * whether current employer blocking exists;
- * contact-visibility behavior;
- * marketing and alert settings.
-No visibility expansion without explicit approval.
-112.6 Naukri applications
-Workflow:
- 1. resolve job ID;
- 2. detect duplicate;
- 3. inspect internal versus external application;
- 4. prepare correct documents;
- 5. answer portal questions;
- 6. verify CTC and notice-period units;
- 7. stop before submission;
- 8. reconcile user submission.
-112.7 Qualification fixtures
-Include:
- * fresher;
- * experienced candidate;
- * serving notice;
- * negotiable notice;
- * current CTC with variable pay;
- * multiple education scales;
- * external ATS redirect;
- * internal application;
- * stale profile;
- * duplicate listing;
- * recruiter visibility change.
-----------------------------------------
+     112.1 Priority
+     Naukri is a launch-critical India portal.
+     Research and implementation must account for India-specific profile and employer workflows.
+     112.2 Research questions
+
+- account and profile structure;
+- résumé upload and parsing;
+- profile-completeness behavior;
+- recruiter visibility settings;
+- job alerts;
+- application workflow;
+- external ATS redirects;
+- current and expected CTC fields;
+- notice period;
+- employment and education formats;
+- authentication and social login;
+- communication preferences;
+- application history;
+- portal policy.
+  112.3 Profile synchronization
+  Potential supported operation:
+  local canonical profile
+  → proposed Naukri profile diff
+  → user review
+  → approved field updates
+  → verification
+  Do not treat the portal profile as the canonical source.
+  112.4 India-specific fields
+  Expected categories requiring strong semantics:
+- current CTC;
+- expected CTC;
+- fixed and variable components;
+- notice period;
+- current location;
+- preferred locations;
+- employment type;
+- education percentage or CGPA;
+- Class X and XII results;
+- key skills;
+- industry;
+- functional area;
+- role;
+- availability;
+- résumé headline;
+- profile summary.
+  Every portal-specific field must map to canonical facts with units and dates.
+  112.5 Recruiter visibility
+  Profile-update workflows must display:
+- whether the update changes recruiter visibility;
+- whether the résumé becomes searchable;
+- whether current employer blocking exists;
+- contact-visibility behavior;
+- marketing and alert settings.
+  No visibility expansion without explicit approval.
+  112.6 Naukri applications
+  Workflow:
+
+1.  resolve job ID;
+2.  detect duplicate;
+3.  inspect internal versus external application;
+4.  prepare correct documents;
+5.  answer portal questions;
+6.  verify CTC and notice-period units;
+7.  stop before submission;
+8.  reconcile user submission.
+    112.7 Qualification fixtures
+    Include:
+
+- fresher;
+- experienced candidate;
+- serving notice;
+- negotiable notice;
+- current CTC with variable pay;
+- multiple education scales;
+- external ATS redirect;
+- internal application;
+- stale profile;
+- duplicate listing;
+- recruiter visibility change.
+
+---
+
 113. Indeed integration plan
-113.1 Initial scope
- * supplied-link ingestion;
- * permitted discovery;
- * job normalization;
- * employer resolution;
- * Indeed-hosted application assistance where supported;
- * external ATS handoff;
- * application-status tracking.
-113.2 Research questions
- * current API and partner options;
- * account requirements;
- * résumé/profile behavior;
- * hosted applications;
- * screener questions;
- * assessments;
- * external redirects;
- * application history;
- * regional differences;
- * automation and browser policy.
-113.3 Hosted versus external application
-Classify:
- * Indeed-hosted;
- * employer ATS;
- * employer email;
- * unavailable or expired.
-Preserve the full source-to-destination chain.
-113.4 Screener questions
-Use canonical question handling.
-Questions may include:
- * experience years;
- * authorization;
- * schedule;
- * location;
- * certification;
- * salary;
- * willingness to travel;
- * custom employer questions.
-Unknown answers pause.
-113.5 Indeed assessments
-Assessment invitations remain human-completed and human-submitted under Section 104.
-113.6 Qualification
-Test:
- * India and US job;
- * hosted and external apply;
- * required résumé;
- * screener questions;
- * expired listing;
- * duplicate employer requisition;
- * authentication wait;
- * application confirmation.
-----------------------------------------
+     113.1 Initial scope
+
+- supplied-link ingestion;
+- permitted discovery;
+- job normalization;
+- employer resolution;
+- Indeed-hosted application assistance where supported;
+- external ATS handoff;
+- application-status tracking.
+  113.2 Research questions
+- current API and partner options;
+- account requirements;
+- résumé/profile behavior;
+- hosted applications;
+- screener questions;
+- assessments;
+- external redirects;
+- application history;
+- regional differences;
+- automation and browser policy.
+  113.3 Hosted versus external application
+  Classify:
+- Indeed-hosted;
+- employer ATS;
+- employer email;
+- unavailable or expired.
+  Preserve the full source-to-destination chain.
+  113.4 Screener questions
+  Use canonical question handling.
+  Questions may include:
+- experience years;
+- authorization;
+- schedule;
+- location;
+- certification;
+- salary;
+- willingness to travel;
+- custom employer questions.
+  Unknown answers pause.
+  113.5 Indeed assessments
+  Assessment invitations remain human-completed and human-submitted under Section 104.
+  113.6 Qualification
+  Test:
+- India and US job;
+- hosted and external apply;
+- required résumé;
+- screener questions;
+- expired listing;
+- duplicate employer requisition;
+- authentication wait;
+- application confirmation.
+
+---
+
 114. Greenhouse integration plan
-114.1 Why early
-Greenhouse often exposes structured employer job boards, making it a useful first ATS for validating:
- * job ingestion;
- * employer-specific boards;
- * canonical requisition identity;
- * application form schemas;
- * custom questions.
-Current public interfaces and policies must still be verified.
-114.2 Workflow
-resolve employer board
-→ ingest jobs
-→ normalize requisition
-→ inspect application form
-→ classify custom fields
-→ prepare documents and answers
-→ assisted filling
-→ final verification
-→ human submission
-114.3 Custom fields
-Greenhouse implementations may include employer-specific questions. Map:
- * prompt;
- * field type;
- * options;
- * required state;
- * privacy category;
- * canonical concept;
- * confidence.
-114.4 Qualification
-Fixtures:
- * simple public board;
- * location variants;
- * custom demographic forms;
- * multiple attachments;
- * referral question;
- * sponsorship;
- * long free-text response;
- * external redirect;
- * form redesign.
-----------------------------------------
+     114.1 Why early
+     Greenhouse often exposes structured employer job boards, making it a useful first ATS for validating:
+
+- job ingestion;
+- employer-specific boards;
+- canonical requisition identity;
+- application form schemas;
+- custom questions.
+  Current public interfaces and policies must still be verified.
+  114.2 Workflow
+  resolve employer board
+  → ingest jobs
+  → normalize requisition
+  → inspect application form
+  → classify custom fields
+  → prepare documents and answers
+  → assisted filling
+  → final verification
+  → human submission
+  114.3 Custom fields
+  Greenhouse implementations may include employer-specific questions. Map:
+- prompt;
+- field type;
+- options;
+- required state;
+- privacy category;
+- canonical concept;
+- confidence.
+  114.4 Qualification
+  Fixtures:
+- simple public board;
+- location variants;
+- custom demographic forms;
+- multiple attachments;
+- referral question;
+- sponsorship;
+- long free-text response;
+- external redirect;
+- form redesign.
+
+---
+
 115. Lever integration plan
-115.1 Scope
- * employer-board ingestion;
- * requisition normalization;
- * structured application preparation;
- * custom-question mapping;
- * assisted pre-submission.
-115.2 Research and fixtures
-Investigate:
- * public postings;
- * application endpoints;
- * document upload;
- * custom fields;
- * location;
- * remote classification;
- * consent;
- * confirmation behavior.
-Do not infer permission from technical accessibility.
-----------------------------------------
+     115.1 Scope
+
+- employer-board ingestion;
+- requisition normalization;
+- structured application preparation;
+- custom-question mapping;
+- assisted pre-submission.
+  115.2 Research and fixtures
+  Investigate:
+- public postings;
+- application endpoints;
+- document upload;
+- custom fields;
+- location;
+- remote classification;
+- consent;
+- confirmation behavior.
+  Do not infer permission from technical accessibility.
+
+---
+
 116. Ashby and SmartRecruiters integration plan
-116.1 Ashby
-Research:
- * hosted job boards;
- * application forms;
- * authentication;
- * custom questions;
- * attachments;
- * demographic data;
- * receipt behavior;
- * accessibility.
-116.2 SmartRecruiters
-Research:
- * public listings;
- * account behavior;
- * social login;
- * candidate profile reuse;
- * country variants;
- * document parsing;
- * custom questions;
- * final review.
-116.3 Shared implementation
-Both should reuse:
- * ATS job ingestion contract;
- * form-schema extraction;
- * question ontology;
- * document upload;
- * final review;
- * receipt reconciliation.
-----------------------------------------
+     116.1 Ashby
+     Research:
+
+- hosted job boards;
+- application forms;
+- authentication;
+- custom questions;
+- attachments;
+- demographic data;
+- receipt behavior;
+- accessibility.
+  116.2 SmartRecruiters
+  Research:
+- public listings;
+- account behavior;
+- social login;
+- candidate profile reuse;
+- country variants;
+- document parsing;
+- custom questions;
+- final review.
+  116.3 Shared implementation
+  Both should reuse:
+- ATS job ingestion contract;
+- form-schema extraction;
+- question ontology;
+- document upload;
+- final review;
+- receipt reconciliation.
+
+---
+
 117. Enterprise ATS integration plan
-117.1 Systems
- * iCIMS;
- * Oracle Recruiting;
- * Taleo;
- * SAP SuccessFactors;
- * Jobvite;
- * BambooHR.
-117.2 Strategy
-These systems may have:
- * substantial tenant customization;
- * older interfaces;
- * embedded frames;
- * account reuse;
- * complex regional forms;
- * inconsistent accessibility;
- * long workflows.
-Implement only after:
- * adapter contracts stabilize;
- * generic assisted fallback is reliable;
- * representative fixtures exist;
- * maintenance ownership is available.
-117.3 Tenant customization
-Use configuration before code when the difference is:
- * labels;
- * section order;
- * optional fields;
- * known URL pattern;
- * accepted file type.
-Use code only when behavior differs materially.
-117.4 Legacy interfaces
-For legacy pages:
- * prefer HTML labels and field names;
- * validate frame boundaries;
- * use coordinate fallback only when unavoidable;
- * capture stronger evidence;
- * reduce autonomy;
- * expect manual handoff.
-----------------------------------------
+     117.1 Systems
+
+- iCIMS;
+- Oracle Recruiting;
+- Taleo;
+- SAP SuccessFactors;
+- Jobvite;
+- BambooHR.
+  117.2 Strategy
+  These systems may have:
+- substantial tenant customization;
+- older interfaces;
+- embedded frames;
+- account reuse;
+- complex regional forms;
+- inconsistent accessibility;
+- long workflows.
+  Implement only after:
+- adapter contracts stabilize;
+- generic assisted fallback is reliable;
+- representative fixtures exist;
+- maintenance ownership is available.
+  117.3 Tenant customization
+  Use configuration before code when the difference is:
+- labels;
+- section order;
+- optional fields;
+- known URL pattern;
+- accepted file type.
+  Use code only when behavior differs materially.
+  117.4 Legacy interfaces
+  For legacy pages:
+- prefer HTML labels and field names;
+- validate frame boundaries;
+- use coordinate fallback only when unavoidable;
+- capture stronger evidence;
+- reduce autonomy;
+- expect manual handoff.
+
+---
+
 118. Generic unsupported-site harness
-118.1 Purpose
-A generic harness allows structured assistance without claiming full adapter support.
-Modes:
- * capture job;
- * extract visible form schema;
- * propose mappings;
- * prepare answers;
- * user-guided filling;
- * final checklist.
-118.2 Generic workflow
-validate destination
-→ capture job and employer
-→ detect known ATS
-→ if unknown, enter generic assisted mode
-→ extract fields
-→ classify low-risk fields
-→ request user mapping for uncertainty
-→ fill only approved mappings
-→ verify observed values
-→ stop before submission
-118.3 Safety limits
-Generic mode must not automatically:
- * accept terms;
- * answer legal questions;
- * disclose demographics;
- * upload unusual documents;
- * navigate unknown domains;
- * execute scripts;
- * submit;
- * persist global mappings from one observation.
-118.4 Mapping session
-The user can map:
-portal field
-→ canonical concept
-→ answer
-→ scope
-→ sensitivity
-→ reuse permission
-118.5 Generic-harness graduation
-When the same site is repeatedly used:
- 1. collect sanitized observations;
- 2. identify stable structure;
- 3. create adapter candidate;
- 4. add fixtures;
- 5. test;
- 6. review policy;
- 7. release experimentally.
-118.6 Failure mode
-If the page cannot be understood safely:
- * prepare a side panel with answers and documents;
- * allow copy or manual entry;
- * preserve tracking;
- * make no compatibility claim.
-Partial assistance is preferable to unsafe automation.
-----------------------------------------
+     118.1 Purpose
+     A generic harness allows structured assistance without claiming full adapter support.
+     Modes:
+
+- capture job;
+- extract visible form schema;
+- propose mappings;
+- prepare answers;
+- user-guided filling;
+- final checklist.
+  118.2 Generic workflow
+  validate destination
+  → capture job and employer
+  → detect known ATS
+  → if unknown, enter generic assisted mode
+  → extract fields
+  → classify low-risk fields
+  → request user mapping for uncertainty
+  → fill only approved mappings
+  → verify observed values
+  → stop before submission
+  118.3 Safety limits
+  Generic mode must not automatically:
+- accept terms;
+- answer legal questions;
+- disclose demographics;
+- upload unusual documents;
+- navigate unknown domains;
+- execute scripts;
+- submit;
+- persist global mappings from one observation.
+  118.4 Mapping session
+  The user can map:
+  portal field
+  → canonical concept
+  → answer
+  → scope
+  → sensitivity
+  → reuse permission
+  118.5 Generic-harness graduation
+  When the same site is repeatedly used:
+
+1.  collect sanitized observations;
+2.  identify stable structure;
+3.  create adapter candidate;
+4.  add fixtures;
+5.  test;
+6.  review policy;
+7.  release experimentally.
+    118.6 Failure mode
+    If the page cannot be understood safely:
+
+- prepare a side panel with answers and documents;
+- allow copy or manual entry;
+- preserve tracking;
+- make no compatibility claim.
+  Partial assistance is preferable to unsafe automation.
+
+---
+
 119. Browser extension plan
-119.1 Initial features
- * add active job to AJOS;
- * show duplicate warning;
- * show existing application;
- * open local application workspace;
- * send user-selected job text;
- * recognize known portal;
- * initiate explicit handoff.
-119.2 Deferred features
- * form-field highlighting;
- * side-panel answer suggestions;
- * live final-review comparison;
- * selected-field mapping.
-119.3 Excluded features
- * background browsing surveillance;
- * automatic application submission;
- * reading unrelated tabs;
- * capturing all page content;
- * storing profile data;
- * storing portal credentials;
- * stealth behavior.
-119.4 Pairing UX
- 1. install extension;
- 2. open local application;
- 3. generate pairing code;
- 4. enter or confirm code;
- 5. show requested permissions;
- 6. issue scoped token;
- 7. test connection;
- 8. allow revoke.
-119.5 Store release
-Before browser-store publication:
- * review store policy;
- * minimize permissions;
- * publish privacy disclosure;
- * provide source;
- * sign package;
- * verify build;
- * establish update and revocation process.
-----------------------------------------
+     119.1 Initial features
+
+- add active job to AJOS;
+- show duplicate warning;
+- show existing application;
+- open local application workspace;
+- send user-selected job text;
+- recognize known portal;
+- initiate explicit handoff.
+  119.2 Deferred features
+- form-field highlighting;
+- side-panel answer suggestions;
+- live final-review comparison;
+- selected-field mapping.
+  119.3 Excluded features
+- background browsing surveillance;
+- automatic application submission;
+- reading unrelated tabs;
+- capturing all page content;
+- storing profile data;
+- storing portal credentials;
+- stealth behavior.
+  119.4 Pairing UX
+
+1.  install extension;
+2.  open local application;
+3.  generate pairing code;
+4.  enter or confirm code;
+5.  show requested permissions;
+6.  issue scoped token;
+7.  test connection;
+8.  allow revoke.
+    119.5 Store release
+    Before browser-store publication:
+
+- review store policy;
+- minimize permissions;
+- publish privacy disclosure;
+- provide source;
+- sign package;
+- verify build;
+- establish update and revocation process.
+
+---
+
 120. External integration registry
-120.1 Purpose
-All integrations should be visible and governable.
-Registry record:
-id: integration_...
-type: portal
-provider: workday
-enabled: true
-credential_ref: null
-data_classes:
- - contact
- - education
-operating_modes:
- - assisted_navigation
-policy_reviewed_at: null
-privacy_reviewed_at: null
-security_reviewed_at: null
-health: available
-last_used_at: null
-120.2 Integration categories
- * job portal;
- * ATS;
- * identity provider;
- * email;
- * calendar;
- * model provider;
- * search provider;
- * password manager;
- * secret vault;
- * notification channel;
- * hosted relay;
- * local inference runtime;
- * document renderer.
-120.3 Integration health
-Health states:
- * available;
- * degraded;
- * authentication required;
- * permission required;
- * policy review expired;
- * disabled;
- * suspended;
- * unavailable.
-120.4 Integration removal
-Removing an integration should:
- * stop tasks;
- * revoke tokens where possible;
- * remove credentials;
- * preserve historical application records;
- * delete caches according to policy;
- * show residual external data;
- * update automations.
-----------------------------------------
+     120.1 Purpose
+     All integrations should be visible and governable.
+     Registry record:
+     id: integration_...
+     type: portal
+     provider: workday
+     enabled: true
+     credential_ref: null
+     data_classes:
+
+- contact
+- education
+  operating_modes:
+- assisted_navigation
+  policy_reviewed_at: null
+  privacy_reviewed_at: null
+  security_reviewed_at: null
+  health: available
+  last_used_at: null
+  120.2 Integration categories
+
+* job portal;
+* ATS;
+* identity provider;
+* email;
+* calendar;
+* model provider;
+* search provider;
+* password manager;
+* secret vault;
+* notification channel;
+* hosted relay;
+* local inference runtime;
+* document renderer.
+  120.3 Integration health
+  Health states:
+* available;
+* degraded;
+* authentication required;
+* permission required;
+* policy review expired;
+* disabled;
+* suspended;
+* unavailable.
+  120.4 Integration removal
+  Removing an integration should:
+* stop tasks;
+* revoke tokens where possible;
+* remove credentials;
+* preserve historical application records;
+* delete caches according to policy;
+* show residual external data;
+* update automations.
+
+---
+
 121. Deployment topology
-121.1 Supported initial topology
-single user
-single machine
-local core service
-local encrypted SQLite
-local browser worker
-desktop or local web UI
-optional cloud model
-optional Gmail and calendar
-121.2 Future hybrid topology
-hosted encrypted relay
- │
-user-controlled local worker
- ├── local profile
- ├── browser
- ├── secret vault
- └── optional local model
-121.3 Future multi-machine topology
-Potential machines:
- * primary Windows desktop;
- * Linux workstation;
- * always-on local server;
- * remote browser machine.
-Rules:
- * explicit device registration;
- * machine-local browser sessions;
- * task capability routing;
- * no shared mutable browser profile;
- * project-state synchronization;
- * conflict handling;
- * per-machine trust;
- * remote revocation.
-121.4 No premature distributed system
-dev-0.1 and most of dev-0.5 should operate as a modular monolith with isolated worker processes.
-Do not introduce:
- * Kubernetes;
- * external message brokers;
- * distributed databases;
- * service mesh;
- * separate vector service;
- * Temporal cluster;
-unless measured requirements justify them.
-121.5 Process topology
-Provisional local processes:
-ajos-core
-├── local API
-├── scheduler
-├── task orchestrator
-└── database access
-ajos-browser-worker
-ajos-document-worker
-ajos-model-worker
-ajos-ui
-Some workers may initially be subprocess modules to simplify installation.
-121.6 Interprocess communication
-Requirements:
- * local authenticated transport;
- * typed messages;
- * bounded payloads;
- * artifact references for large data;
- * timeouts;
- * cancellation;
- * worker identity;
- * no secrets in command-line arguments;
- * crash detection.
-Candidate transports:
- * loopback HTTP;
- * named pipes;
- * Unix-domain sockets;
- * standard input/output for narrow sidecars.
-Choose through implementation experiments.
-----------------------------------------
+     121.1 Supported initial topology
+     single user
+     single machine
+     local core service
+     local encrypted SQLite
+     local browser worker
+     desktop or local web UI
+     optional cloud model
+     optional Gmail and calendar
+     121.2 Future hybrid topology
+     hosted encrypted relay
+     │
+     user-controlled local worker
+     ├── local profile
+     ├── browser
+     ├── secret vault
+     └── optional local model
+     121.3 Future multi-machine topology
+     Potential machines:
+
+- primary Windows desktop;
+- Linux workstation;
+- always-on local server;
+- remote browser machine.
+  Rules:
+- explicit device registration;
+- machine-local browser sessions;
+- task capability routing;
+- no shared mutable browser profile;
+- project-state synchronization;
+- conflict handling;
+- per-machine trust;
+- remote revocation.
+  121.4 No premature distributed system
+  dev-0.1 and most of dev-0.5 should operate as a modular monolith with isolated worker processes.
+  Do not introduce:
+- Kubernetes;
+- external message brokers;
+- distributed databases;
+- service mesh;
+- separate vector service;
+- Temporal cluster;
+  unless measured requirements justify them.
+  121.5 Process topology
+  Provisional local processes:
+  ajos-core
+  ├── local API
+  ├── scheduler
+  ├── task orchestrator
+  └── database access
+  ajos-browser-worker
+  ajos-document-worker
+  ajos-model-worker
+  ajos-ui
+  Some workers may initially be subprocess modules to simplify installation.
+  121.6 Interprocess communication
+  Requirements:
+- local authenticated transport;
+- typed messages;
+- bounded payloads;
+- artifact references for large data;
+- timeouts;
+- cancellation;
+- worker identity;
+- no secrets in command-line arguments;
+- crash detection.
+  Candidate transports:
+- loopback HTTP;
+- named pipes;
+- Unix-domain sockets;
+- standard input/output for narrow sidecars.
+  Choose through implementation experiments.
+
+---
+
 122. Packaging strategy
-122.1 Packaging objectives
- * one-command or one-installer setup;
- * no administrator requirement;
- * Windows first;
- * Linux support;
- * optional portable mode;
- * optional Docker;
- * signed artifacts;
- * predictable upgrades;
- * minimal dependency burden.
-122.2 Windows package
-Candidate formats:
- * signed installer;
- * portable archive;
- * package-manager manifest later.
-Installer responsibilities:
- * install application;
- * initialize per-user directories;
- * register optional URL protocol;
- * install no browser extension silently;
- * avoid system-wide services by default;
- * preserve user data on upgrade;
- * offer explicit data removal on uninstall;
- * verify architecture and requirements.
-122.3 Linux package
-Candidate formats:
- * AppImage;
- * .deb;
- * portable archive;
- * Python package for CLI;
- * container image.
-Release selection should be based on:
- * dependency reliability;
- * desktop integration;
- * signing;
- * update behavior;
- * maintainer burden.
-122.4 Python CLI package
-The CLI may be distributed through:
- * standalone binary;
- * isolated Python installer;
- * package index;
- * source installation.
-A standalone package improves onboarding but must be tested for:
- * antivirus false positives;
- * startup time;
- * native library inclusion;
- * encrypted SQLite;
- * document rendering;
- * browser worker.
-122.5 GUI package
-If Tauri is selected:
- * system webview minimizes UI bundle;
- * Python sidecar must be versioned and signed;
- * sidecar location and permissions must be controlled;
- * IPC must be authenticated;
- * update both components atomically.
-122.6 Portable mode
-Portable mode:
- * stores state under a user-selected directory;
- * does not require installation;
- * still uses OS vault where available;
- * clearly distinguishes executable and private data;
- * supports encrypted removable storage;
- * warns about insecure filesystems;
- * avoids registry dependence where practical.
-122.7 Docker mode
-Docker is optional.
-Suitable for:
- * headless CLI;
- * local web UI;
- * controlled development;
- * remote worker;
- * CI.
-Limitations:
- * browser profile integration;
- * desktop takeover;
- * OS vault access;
- * GPU local models;
- * filesystem permissions.
-Docker must not be the only supported setup path.
-122.8 Package-size budget
-Provisional targets:
-Package Target Core CLI standalone Under 150 MB Desktop package excluding optional browser/model assets Under 250 MB Browser extension Under 10 MB Base container compressed Under 500 MB Optional embedding model Separately disclosed Optional local LLM Separately downloaded
-Targets require measurement and may be revised with evidence.
-122.9 Optional assets
-Do not bundle by default:
- * local language models;
- * large embedding models;
- * multiple browser binaries;
- * office suites;
- * TeX distribution;
- * unnecessary document engines.
-Offer component installation with:
- * size;
- * license;
- * purpose;
- * checksum;
- * removal.
-----------------------------------------
+     122.1 Packaging objectives
+
+- one-command or one-installer setup;
+- no administrator requirement;
+- Windows first;
+- Linux support;
+- optional portable mode;
+- optional Docker;
+- signed artifacts;
+- predictable upgrades;
+- minimal dependency burden.
+  122.2 Windows package
+  Candidate formats:
+- signed installer;
+- portable archive;
+- package-manager manifest later.
+  Installer responsibilities:
+- install application;
+- initialize per-user directories;
+- register optional URL protocol;
+- install no browser extension silently;
+- avoid system-wide services by default;
+- preserve user data on upgrade;
+- offer explicit data removal on uninstall;
+- verify architecture and requirements.
+  122.3 Linux package
+  Candidate formats:
+- AppImage;
+- .deb;
+- portable archive;
+- Python package for CLI;
+- container image.
+  Release selection should be based on:
+- dependency reliability;
+- desktop integration;
+- signing;
+- update behavior;
+- maintainer burden.
+  122.4 Python CLI package
+  The CLI may be distributed through:
+- standalone binary;
+- isolated Python installer;
+- package index;
+- source installation.
+  A standalone package improves onboarding but must be tested for:
+- antivirus false positives;
+- startup time;
+- native library inclusion;
+- encrypted SQLite;
+- document rendering;
+- browser worker.
+  122.5 GUI package
+  If Tauri is selected:
+- system webview minimizes UI bundle;
+- Python sidecar must be versioned and signed;
+- sidecar location and permissions must be controlled;
+- IPC must be authenticated;
+- update both components atomically.
+  122.6 Portable mode
+  Portable mode:
+- stores state under a user-selected directory;
+- does not require installation;
+- still uses OS vault where available;
+- clearly distinguishes executable and private data;
+- supports encrypted removable storage;
+- warns about insecure filesystems;
+- avoids registry dependence where practical.
+  122.7 Docker mode
+  Docker is optional.
+  Suitable for:
+- headless CLI;
+- local web UI;
+- controlled development;
+- remote worker;
+- CI.
+  Limitations:
+- browser profile integration;
+- desktop takeover;
+- OS vault access;
+- GPU local models;
+- filesystem permissions.
+  Docker must not be the only supported setup path.
+  122.8 Package-size budget
+  Provisional targets:
+  Package Target Core CLI standalone Under 150 MB Desktop package excluding optional browser/model assets Under 250 MB Browser extension Under 10 MB Base container compressed Under 500 MB Optional embedding model Separately disclosed Optional local LLM Separately downloaded
+  Targets require measurement and may be revised with evidence.
+  122.9 Optional assets
+  Do not bundle by default:
+- local language models;
+- large embedding models;
+- multiple browser binaries;
+- office suites;
+- TeX distribution;
+- unnecessary document engines.
+  Offer component installation with:
+- size;
+- license;
+- purpose;
+- checksum;
+- removal.
+
+---
+
 123. Installation and onboarding engineering
-123.1 First-run objective
-Reach a useful, secure state quickly.
-Target first-run sequence:
- 1. launch;
- 2. choose local data directory or accept safe default;
- 3. initialize encryption;
- 4. establish recovery;
- 5. choose novice or expert mode;
- 6. import résumé or start profile;
- 7. resolve critical facts;
- 8. create persona;
- 9. configure browser;
- 10. optionally configure Gemini;
- 11. run system doctor;
- 12. add first job.
-123.2 One-command development setup
-Target:
-./scripts/bootstrap
-or platform equivalent.
-It should:
- * verify tool versions;
- * create virtual environment;
- * install locked dependencies;
- * initialize synthetic development state;
- * install browser test dependencies if requested;
- * run smoke tests;
- * print next command.
-123.3 Production setup
-Windows:
-installer → launch → guided initialization
-CLI alternative:
-ajos init
-Linux:
-package install or portable extraction
-→ ajos init
-123.4 Dependency doctor
-Check:
- * OS version;
- * CPU architecture;
- * RAM;
- * disk;
- * write permission;
- * credential-vault availability;
- * webview;
- * browser;
- * PDF renderer;
- * database encryption;
- * network;
- * provider credentials;
- * clock and time zone.
-123.5 Graceful optional-dependency handling
-If missing:
- * Gemini key: continue without cloud AI;
- * local model: use deterministic or configured cloud route;
- * browser: prepare documents and manual handoff;
- * PDF renderer: produce source format and diagnostic;
- * email integration: allow manual status entry;
- * hosted relay: operate locally;
- * desktop notifications: use in-app inbox.
-123.6 Setup security
- * no secret echo;
- * no secrets in process arguments;
- * no automatic public-network binding;
- * no admin requirement;
- * verify download signatures;
- * do not modify unrelated browser profiles;
- * do not install extension without user action;
- * explain recovery-key consequences.
-123.7 Setup performance target
-On supported low-end hardware:
- * installer launch under 10 seconds;
- * core initialization under 30 seconds excluding downloads;
- * no mandatory model download;
- * no mandatory browser download if compatible installed browser can be used safely;
- * first profile import should stream progress.
-123.8 Uninstallation
-Options:
- * remove application only;
- * remove caches and logs;
- * remove all local data;
- * revoke integrations;
- * remove browser profile;
- * remove extension pairing;
- * delete hosted ciphertext.
-Default uninstall must not silently delete profile data. Full deletion requires explicit choice.
-----------------------------------------
+     123.1 First-run objective
+     Reach a useful, secure state quickly.
+     Target first-run sequence:
+1. launch;
+1. choose local data directory or accept safe default;
+1. initialize encryption;
+1. establish recovery;
+1. choose novice or expert mode;
+1. import résumé or start profile;
+1. resolve critical facts;
+1. create persona;
+1. configure browser;
+1. optionally configure Gemini;
+1. run system doctor;
+1. add first job.
+   123.2 One-command development setup
+   Target:
+   ./scripts/bootstrap
+   or platform equivalent.
+   It should:
+
+- verify tool versions;
+- create virtual environment;
+- install locked dependencies;
+- initialize synthetic development state;
+- install browser test dependencies if requested;
+- run smoke tests;
+- print next command.
+  123.3 Production setup
+  Windows:
+  installer → launch → guided initialization
+  CLI alternative:
+  ajos init
+  Linux:
+  package install or portable extraction
+  → ajos init
+  123.4 Dependency doctor
+  Check:
+- OS version;
+- CPU architecture;
+- RAM;
+- disk;
+- write permission;
+- credential-vault availability;
+- webview;
+- browser;
+- PDF renderer;
+- database encryption;
+- network;
+- provider credentials;
+- clock and time zone.
+  123.5 Graceful optional-dependency handling
+  If missing:
+- Gemini key: continue without cloud AI;
+- local model: use deterministic or configured cloud route;
+- browser: prepare documents and manual handoff;
+- PDF renderer: produce source format and diagnostic;
+- email integration: allow manual status entry;
+- hosted relay: operate locally;
+- desktop notifications: use in-app inbox.
+  123.6 Setup security
+- no secret echo;
+- no secrets in process arguments;
+- no automatic public-network binding;
+- no admin requirement;
+- verify download signatures;
+- do not modify unrelated browser profiles;
+- do not install extension without user action;
+- explain recovery-key consequences.
+  123.7 Setup performance target
+  On supported low-end hardware:
+- installer launch under 10 seconds;
+- core initialization under 30 seconds excluding downloads;
+- no mandatory model download;
+- no mandatory browser download if compatible installed browser can be used safely;
+- first profile import should stream progress.
+  123.8 Uninstallation
+  Options:
+- remove application only;
+- remove caches and logs;
+- remove all local data;
+- revoke integrations;
+- remove browser profile;
+- remove extension pairing;
+- delete hosted ciphertext.
+  Default uninstall must not silently delete profile data. Full deletion requires explicit choice.
+
+---
+
 124. Update architecture
-124.1 Update types
- * core application;
- * GUI;
- * browser extension;
- * integrated adapters;
- * independent adapters;
- * schemas;
- * policy advisories;
- * local model manifests;
- * document templates.
-124.2 Release channels
- * stable;
- * preview;
- * development.
-Default:
-stable
-124.3 Signed manifests
-Update manifest:
-version: 1.2.3
-channel: stable
-artifacts:
- - platform: windows-x64
- url: null
- sha256: null
- signature: null
-minimum_supported_version: null
-security_release: false
-published_at: null
-124.4 Update checks
- * daily or user-configurable;
- * minimal metadata;
- * no profile data;
- * respect offline mode;
- * show release notes;
- * no silent major upgrade;
- * allow security urgency indication.
-124.5 Automatic updates
-Permitted only when:
- * signatures verify;
- * user enabled;
- * rollback exists;
- * active workflow is checkpointed;
- * browser worker is idle;
- * database migration safety is established.
-Security updates may be strongly recommended but not installed from an unverifiable source.
-124.6 Adapter hot updates
-Independent adapters may update separately if:
- * signed;
- * compatible with core contract;
- * permissions unchanged or reapproved;
- * fixtures pass;
- * source available;
- * rollback retained.
-Permission expansion always requires review.
-124.7 Rollback
-Preserve:
- * previous application binary;
- * previous adapter;
- * pre-migration backup;
- * update log.
-Rollback must not reuse an old binary against an irreversibly migrated database without a compatibility plan.
-124.8 End-of-support
-When a version is unsupported:
- * warn;
- * identify security risk;
- * provide migration;
- * preserve data export;
- * avoid remotely disabling local operation except compromised capabilities;
- * allow adapter suspension where continued operation is unsafe.
-----------------------------------------
+     124.1 Update types
+
+- core application;
+- GUI;
+- browser extension;
+- integrated adapters;
+- independent adapters;
+- schemas;
+- policy advisories;
+- local model manifests;
+- document templates.
+  124.2 Release channels
+- stable;
+- preview;
+- development.
+  Default:
+  stable
+  124.3 Signed manifests
+  Update manifest:
+  version: 1.2.3
+  channel: stable
+  artifacts:
+
+* platform: windows-x64
+  url: null
+  sha256: null
+  signature: null
+  minimum_supported_version: null
+  security_release: false
+  published_at: null
+  124.4 Update checks
+
+- daily or user-configurable;
+- minimal metadata;
+- no profile data;
+- respect offline mode;
+- show release notes;
+- no silent major upgrade;
+- allow security urgency indication.
+  124.5 Automatic updates
+  Permitted only when:
+- signatures verify;
+- user enabled;
+- rollback exists;
+- active workflow is checkpointed;
+- browser worker is idle;
+- database migration safety is established.
+  Security updates may be strongly recommended but not installed from an unverifiable source.
+  124.6 Adapter hot updates
+  Independent adapters may update separately if:
+- signed;
+- compatible with core contract;
+- permissions unchanged or reapproved;
+- fixtures pass;
+- source available;
+- rollback retained.
+  Permission expansion always requires review.
+  124.7 Rollback
+  Preserve:
+- previous application binary;
+- previous adapter;
+- pre-migration backup;
+- update log.
+  Rollback must not reuse an old binary against an irreversibly migrated database without a compatibility plan.
+  124.8 End-of-support
+  When a version is unsupported:
+- warn;
+- identify security risk;
+- provide migration;
+- preserve data export;
+- avoid remotely disabling local operation except compromised capabilities;
+- allow adapter suspension where continued operation is unsafe.
+
+---
+
 125. Performance engineering
-125.1 Performance objectives
-The program must remain useful on low-end devices while supporting richer optional capabilities on stronger machines.
-Performance dimensions:
- * startup;
- * memory;
- * CPU;
- * disk;
- * search;
- * browser responsiveness;
- * model latency;
- * document rendering;
- * scheduler overhead;
- * battery use;
- * network requests.
-125.2 Reference low-end device
-Qualification baseline:
- * Windows;
- * four logical or physical CPU cores;
- * 8 GB RAM;
- * integrated graphics;
- * SSD with limited free space;
- * no dedicated GPU;
- * ordinary broadband;
- * current supported Chromium-family browser.
-A secondary HDD scenario should be tested for degradation, though SSD may be recommended.
-125.3 Performance budgets
-Metric Initial target CLI cold start Under 2 seconds GUI usable state Under 5 seconds Idle core memory Under 150 MB Idle GUI total excluding browser Under 300 MB Active deterministic workflow excluding browser Under 600 MB Idle CPU Under 1% average Search across 10,000 jobs Under 500 ms typical Application list initial render Under 1 second Profile validation Under 2 seconds typical Graceful checkpoint shutdown Under 5 seconds Local event ingestion At least 1,000 events/second in test Scheduler idle wakeups Minimized and measurable
-125.4 Browser budgets
- * one active context per portal by default;
- * bounded tabs;
- * close completed pages;
- * monitor browser memory;
- * restart at safe checkpoints;
- * no hidden persistent pages without reason;
- * screenshots compressed within quality constraints;
- * DOM snapshots minimized.
-125.5 Model budgets
-Cloud:
- * bounded context;
- * cache validated results;
- * no unnecessary repeated prompts;
- * stream only when useful.
-Local:
- * no default background model;
- * one inference at a time on low-end hardware;
- * configurable thread count;
- * memory preflight;
- * unload when idle where practical;
- * embeddings batched during idle periods.
-125.6 Database performance
- * proper indexes;
- * bounded full-text index;
- * WAL checkpoint policy;
- * prepared queries;
- * archive old events;
- * avoid unbounded JSON scans;
- * explain-query checks for critical paths;
- * vacuum during idle maintenance;
- * preserve encryption compatibility.
-125.7 Artifact storage performance
- * content-addressed deduplication;
- * streaming encryption;
- * lazy preview generation;
- * thumbnail cache;
- * configurable evidence quality;
- * retention sweeps;
- * no duplicate document copies by filename alone.
-125.8 Frontend performance
- * virtualize long lists;
- * lazy-load heavy previews;
- * avoid giant state payloads;
- * paginate timelines;
- * debounce search;
- * minimize animation;
- * cache stable summaries;
- * cancel stale requests.
-125.9 Performance profiling
-Tools and methods:
- * startup traces;
- * memory snapshots;
- * CPU profiles;
- * database query timings;
- * browser tracing in test;
- * network request counts;
- * document-render timings;
- * model usage traces;
- * long-running leak tests.
-Exact tooling should match the selected stack.
-125.10 Performance regression gates
-Fail CI or release qualification when:
- * startup regresses beyond agreed tolerance;
- * memory leaks across repeated workflows;
- * database queries exceed budget;
- * package size grows without approval;
- * background CPU remains elevated;
- * browser tabs leak;
- * artifact retention fails;
- * model requests duplicate unexpectedly.
-125.11 Performance versus reliability
-Do not remove:
- * verification;
- * encryption;
- * checkpoints;
- * evidence;
- * schema validation;
-merely to improve benchmark speed.
-Optimize implementations, not safety requirements.
-----------------------------------------
+     125.1 Performance objectives
+     The program must remain useful on low-end devices while supporting richer optional capabilities on stronger machines.
+     Performance dimensions:
+
+- startup;
+- memory;
+- CPU;
+- disk;
+- search;
+- browser responsiveness;
+- model latency;
+- document rendering;
+- scheduler overhead;
+- battery use;
+- network requests.
+  125.2 Reference low-end device
+  Qualification baseline:
+- Windows;
+- four logical or physical CPU cores;
+- 8 GB RAM;
+- integrated graphics;
+- SSD with limited free space;
+- no dedicated GPU;
+- ordinary broadband;
+- current supported Chromium-family browser.
+  A secondary HDD scenario should be tested for degradation, though SSD may be recommended.
+  125.3 Performance budgets
+  Metric Initial target CLI cold start Under 2 seconds GUI usable state Under 5 seconds Idle core memory Under 150 MB Idle GUI total excluding browser Under 300 MB Active deterministic workflow excluding browser Under 600 MB Idle CPU Under 1% average Search across 10,000 jobs Under 500 ms typical Application list initial render Under 1 second Profile validation Under 2 seconds typical Graceful checkpoint shutdown Under 5 seconds Local event ingestion At least 1,000 events/second in test Scheduler idle wakeups Minimized and measurable
+  125.4 Browser budgets
+- one active context per portal by default;
+- bounded tabs;
+- close completed pages;
+- monitor browser memory;
+- restart at safe checkpoints;
+- no hidden persistent pages without reason;
+- screenshots compressed within quality constraints;
+- DOM snapshots minimized.
+  125.5 Model budgets
+  Cloud:
+- bounded context;
+- cache validated results;
+- no unnecessary repeated prompts;
+- stream only when useful.
+  Local:
+- no default background model;
+- one inference at a time on low-end hardware;
+- configurable thread count;
+- memory preflight;
+- unload when idle where practical;
+- embeddings batched during idle periods.
+  125.6 Database performance
+- proper indexes;
+- bounded full-text index;
+- WAL checkpoint policy;
+- prepared queries;
+- archive old events;
+- avoid unbounded JSON scans;
+- explain-query checks for critical paths;
+- vacuum during idle maintenance;
+- preserve encryption compatibility.
+  125.7 Artifact storage performance
+- content-addressed deduplication;
+- streaming encryption;
+- lazy preview generation;
+- thumbnail cache;
+- configurable evidence quality;
+- retention sweeps;
+- no duplicate document copies by filename alone.
+  125.8 Frontend performance
+- virtualize long lists;
+- lazy-load heavy previews;
+- avoid giant state payloads;
+- paginate timelines;
+- debounce search;
+- minimize animation;
+- cache stable summaries;
+- cancel stale requests.
+  125.9 Performance profiling
+  Tools and methods:
+- startup traces;
+- memory snapshots;
+- CPU profiles;
+- database query timings;
+- browser tracing in test;
+- network request counts;
+- document-render timings;
+- model usage traces;
+- long-running leak tests.
+  Exact tooling should match the selected stack.
+  125.10 Performance regression gates
+  Fail CI or release qualification when:
+- startup regresses beyond agreed tolerance;
+- memory leaks across repeated workflows;
+- database queries exceed budget;
+- package size grows without approval;
+- background CPU remains elevated;
+- browser tabs leak;
+- artifact retention fails;
+- model requests duplicate unexpectedly.
+  125.11 Performance versus reliability
+  Do not remove:
+- verification;
+- encryption;
+- checkpoints;
+- evidence;
+- schema validation;
+  merely to improve benchmark speed.
+  Optimize implementations, not safety requirements.
+
+---
+
 126. Resilience and availability
-126.1 Local availability objective
-The product should remain available for:
- * profile access;
- * job review;
- * document generation;
- * tracking;
- * deterministic matching;
-even when:
- * cloud model is down;
- * hosted relay is down;
- * email is disconnected;
- * a portal is unavailable;
- * one adapter is suspended.
-126.2 Component failure matrix
-Failure Continued capability Gemini unavailable Deterministic core and approved alternate/local routes Browser unavailable Preparation, review, manual handoff Portal unavailable Preserve tasks; retry according to policy Gmail unavailable Manual status updates Database read-only Export and diagnosis; no unsafe mutations Artifact renderer unavailable Structured document source and repair task Hosted relay unavailable Full local operation Extension unavailable URL paste and controlled browser workflow Embedding index unavailable Lexical retrieval Scheduler unavailable Manual runs; repair notification
-126.3 Circuit breakers
-Circuit breakers by:
- * portal;
- * adapter version;
- * model;
- * provider;
- * email integration;
- * document renderer;
- * external action type.
-States:
- * closed;
- * open;
- * half-open;
----------------------------------
+     126.1 Local availability objective
+     The product should remain available for:
+
+- profile access;
+- job review;
+- document generation;
+- tracking;
+- deterministic matching;
+  even when:
+- cloud model is down;
+- hosted relay is down;
+- email is disconnected;
+- a portal is unavailable;
+- one adapter is suspended.
+  126.2 Component failure matrix
+  Failure Continued capability Gemini unavailable Deterministic core and approved alternate/local routes Browser unavailable Preparation, review, manual handoff Portal unavailable Preserve tasks; retry according to policy Gmail unavailable Manual status updates Database read-only Export and diagnosis; no unsafe mutations Artifact renderer unavailable Structured document source and repair task Hosted relay unavailable Full local operation Extension unavailable URL paste and controlled browser workflow Embedding index unavailable Lexical retrieval Scheduler unavailable Manual runs; repair notification
+  126.3 Circuit breakers
+  Circuit breakers by:
+- portal;
+- adapter version;
+- model;
+- provider;
+- email integration;
+- document renderer;
+- external action type.
+  States:
+- closed;
+- open;
+- half-open;
+
+---
+
 Progress estimate
 Approximately 52% complete. Confidence: moderate.
 This is a structural estimate because chat does not provide a reliable cumulative word or rendered-page count. The generated plan already covers most product, data, workflow, AI, browser, security, privacy, portal, UX, deployment, and performance architecture. The largest unfinished volumes are:
- * complete testing and evaluation strategy;
- * GitHub Actions and release engineering;
- * detailed phase-by-phase roadmap for every requested version;
- * operational runbooks and disaster recovery;
- * implementation contracts and API schemas;
- * milestone task graphs and acceptance criteria;
- * risk register and dependency-selection process;
- * documentation/PDF build system;
- * appendices, checklists, and traceability matrices.
-The document is therefore slightly over halfway complete by planned subject coverage, but likely below halfway toward the requested rendered 500-page target.
-----------------------------------------
+
+- complete testing and evaluation strategy;
+- GitHub Actions and release engineering;
+- detailed phase-by-phase roadmap for every requested version;
+- operational runbooks and disaster recovery;
+- implementation contracts and API schemas;
+- milestone task graphs and acceptance criteria;
+- risk register and dependency-selection process;
+- documentation/PDF build system;
+- appendices, checklists, and traceability matrices.
+  The document is therefore slightly over halfway complete by planned subject coverage, but likely below halfway toward the requested rendered 500-page target.
+
+---
+
 126. Resilience and availability
-126.3 Circuit breakers
-Circuit breakers apply independently by:
- * portal;
- * portal account;
- * adapter version;
- * employer tenant;
- * model;
- * model provider;
- * email integration;
- * document renderer;
- * external action type;
- * hosted relay;
- * browser worker.
-States:
- * closed: ordinary operation permitted;
- * open: operation blocked;
- * half_open: one bounded probe permitted;
- * manual_hold: user or maintainer action required;
- * retired: capability permanently disabled.
-126.4 Circuit-breaker triggers
-Potential triggers:
- * two materially similar failures;
- * portal warning;
- * authentication challenge suggesting account risk;
- * repeated HTTP rate limits;
- * adapter fingerprint mismatch;
- * schema-validity collapse;
- * unsupported-claim regression;
- * secret-redaction failure;
- * wrong attachment;
- * destination mismatch;
- * possible duplicate external effect;
- * provider privacy-policy expiration;
- * security advisory;
- * compatibility test failure.
-126.5 Circuit-breaker state
-id: circuit_...
-scope:
- type: portal_adapter
- portal_id: workday
- adapter_version: 0.4.1
-state: open
-reason: fingerprint_mismatch
-opened_at: null
-opened_by: automatic_policy
-evidence_refs: []
-probe_policy:
- allowed: true
- maximum_attempts: 1
-manual_review_required: true
-expires_at: null
-126.6 Half-open probes
-A probe must:
- * use a nonconsequential operation where possible;
- * avoid submission;
- * avoid sensitive disclosure;
- * capture evidence;
- * use one worker;
- * stop after one failure;
- * restore the circuit to open on failure;
- * close only after all required checks pass.
-126.7 Process crashes
-Every worker process must:
- * emit heartbeats;
- * write checkpoints at phase boundaries;
- * leave task leases to expire;
- * avoid holding irreplaceable state only in memory;
- * flush security-relevant events;
- * identify possibly committed effects;
- * support supervised restart.
-126.8 Power loss
-Test forced termination during:
- * database write;
- * artifact encryption;
- * document render;
- * browser form entry;
- * file upload;
- * profile migration;
- * key rotation;
- * backup creation;
- * restore;
- * retention deletion.
-Recovery must preserve consistency or enter a diagnosable blocked state.
-126.9 Disk exhaustion
-Before large operations:
- * estimate required space;
- * check available space;
- * reserve safety margin;
- * stream rather than duplicate where possible;
- * stop before corrupting active state;
- * preserve the prior checkpoint;
- * clean only safe caches automatically.
-Never delete canonical profile or application evidence automatically to recover space.
-126.10 Clock errors
-Incorrect system time can affect:
- * OAuth;
- * deadlines;
- * certificate validation;
- * token expiration;
- * schedules;
- * audit ordering;
- * retention.
-The application should:
- * detect implausible clock changes;
- * preserve monotonic durations separately;
- * warn about deadline uncertainty;
- * avoid irreversible expiration based solely on a suspicious clock jump;
- * require reauthentication when token timing becomes invalid.
-126.11 Network partitions
-Classify network operations as:
- * local-only;
- * retriable read;
- * idempotent external write;
- * non-idempotent external effect;
- * long-lived stream.
-Each class gets a distinct recovery policy.
-126.12 Degraded-mode visibility
-The interface must state:
- * failed component;
- * capabilities still available;
- * affected tasks;
- * last successful operation;
- * planned retry;
- * required user action;
- * whether external state might have changed.
-“Offline” must not be used as a generic explanation for unrelated errors.
-126.13 Availability targets
-For the personal local edition:
- * local profile and tracking should remain usable without external services;
- * a worker crash should not lose a completed checkpoint;
- * model outage should not corrupt or cancel deterministic work;
- * hosted-relay outage should not block local operation;
- * one suspended adapter should not disable other adapters;
- * database corruption should enter read-only recovery rather than silent reset.
-126.14 Resilience acceptance criteria
- 1. Forced process termination loses no completed checkpoint.
- 2. A possibly committed effect is never retried blindly.
- 3. Model unavailability creates a waitpoint or approved fallback.
- 4. Portal failure affects only the relevant scope.
- 5. Disk exhaustion produces an actionable error without corrupting state.
- 6. An interrupted migration restores or resumes safely.
- 7. Browser restart preserves the application task.
- 8. Offline mode supports core profile, job, document, and tracking functions.
- 9. Repeated failures open a circuit breaker.
- 10. Every degraded state is visible and queryable.
-----------------------------------------
+     126.3 Circuit breakers
+     Circuit breakers apply independently by:
+
+- portal;
+- portal account;
+- adapter version;
+- employer tenant;
+- model;
+- model provider;
+- email integration;
+- document renderer;
+- external action type;
+- hosted relay;
+- browser worker.
+  States:
+- closed: ordinary operation permitted;
+- open: operation blocked;
+- half_open: one bounded probe permitted;
+- manual_hold: user or maintainer action required;
+- retired: capability permanently disabled.
+  126.4 Circuit-breaker triggers
+  Potential triggers:
+- two materially similar failures;
+- portal warning;
+- authentication challenge suggesting account risk;
+- repeated HTTP rate limits;
+- adapter fingerprint mismatch;
+- schema-validity collapse;
+- unsupported-claim regression;
+- secret-redaction failure;
+- wrong attachment;
+- destination mismatch;
+- possible duplicate external effect;
+- provider privacy-policy expiration;
+- security advisory;
+- compatibility test failure.
+  126.5 Circuit-breaker state
+  id: circuit_...
+  scope:
+  type: portal_adapter
+  portal_id: workday
+  adapter_version: 0.4.1
+  state: open
+  reason: fingerprint_mismatch
+  opened_at: null
+  opened_by: automatic_policy
+  evidence_refs: []
+  probe_policy:
+  allowed: true
+  maximum_attempts: 1
+  manual_review_required: true
+  expires_at: null
+  126.6 Half-open probes
+  A probe must:
+- use a nonconsequential operation where possible;
+- avoid submission;
+- avoid sensitive disclosure;
+- capture evidence;
+- use one worker;
+- stop after one failure;
+- restore the circuit to open on failure;
+- close only after all required checks pass.
+  126.7 Process crashes
+  Every worker process must:
+- emit heartbeats;
+- write checkpoints at phase boundaries;
+- leave task leases to expire;
+- avoid holding irreplaceable state only in memory;
+- flush security-relevant events;
+- identify possibly committed effects;
+- support supervised restart.
+  126.8 Power loss
+  Test forced termination during:
+- database write;
+- artifact encryption;
+- document render;
+- browser form entry;
+- file upload;
+- profile migration;
+- key rotation;
+- backup creation;
+- restore;
+- retention deletion.
+  Recovery must preserve consistency or enter a diagnosable blocked state.
+  126.9 Disk exhaustion
+  Before large operations:
+- estimate required space;
+- check available space;
+- reserve safety margin;
+- stream rather than duplicate where possible;
+- stop before corrupting active state;
+- preserve the prior checkpoint;
+- clean only safe caches automatically.
+  Never delete canonical profile or application evidence automatically to recover space.
+  126.10 Clock errors
+  Incorrect system time can affect:
+- OAuth;
+- deadlines;
+- certificate validation;
+- token expiration;
+- schedules;
+- audit ordering;
+- retention.
+  The application should:
+- detect implausible clock changes;
+- preserve monotonic durations separately;
+- warn about deadline uncertainty;
+- avoid irreversible expiration based solely on a suspicious clock jump;
+- require reauthentication when token timing becomes invalid.
+  126.11 Network partitions
+  Classify network operations as:
+- local-only;
+- retriable read;
+- idempotent external write;
+- non-idempotent external effect;
+- long-lived stream.
+  Each class gets a distinct recovery policy.
+  126.12 Degraded-mode visibility
+  The interface must state:
+- failed component;
+- capabilities still available;
+- affected tasks;
+- last successful operation;
+- planned retry;
+- required user action;
+- whether external state might have changed.
+  “Offline” must not be used as a generic explanation for unrelated errors.
+  126.13 Availability targets
+  For the personal local edition:
+- local profile and tracking should remain usable without external services;
+- a worker crash should not lose a completed checkpoint;
+- model outage should not corrupt or cancel deterministic work;
+- hosted-relay outage should not block local operation;
+- one suspended adapter should not disable other adapters;
+- database corruption should enter read-only recovery rather than silent reset.
+  126.14 Resilience acceptance criteria
+
+1.  Forced process termination loses no completed checkpoint.
+2.  A possibly committed effect is never retried blindly.
+3.  Model unavailability creates a waitpoint or approved fallback.
+4.  Portal failure affects only the relevant scope.
+5.  Disk exhaustion produces an actionable error without corrupting state.
+6.  An interrupted migration restores or resumes safely.
+7.  Browser restart preserves the application task.
+8.  Offline mode supports core profile, job, document, and tracking functions.
+9.  Repeated failures open a circuit breaker.
+10. Every degraded state is visible and queryable.
+
+---
+
 127. Testing doctrine
-127.1 Purpose
-Testing must establish more than code correctness. It must establish that the system:
- * represents user facts accurately;
- * does not fabricate application information;
- * does not bypass approval;
- * does not repeat external effects;
- * handles portal variation;
- * protects secrets;
- * survives interruption;
- * remains operable on low-end hardware;
- * produces accessible interfaces;
- * can be packaged and upgraded reliably.
-127.2 Testing principles
- 1. Test observable contracts, not implementation trivia.
- 2. Prefer deterministic checks over model judgment.
- 3. Preserve synthetic fixtures for every material failure.
- 4. Test recovery paths, not only happy paths.
- 5. Separate simulation from live portal qualification.
- 6. Never use real personal data in public CI.
- 7. Do not declare an adapter supported after one successful run.
- 8. Test traces and trajectories, not only final output.
- 9. Treat security and privacy invariants as executable requirements.
- 10. Require evidence for every release gate.
-127.3 Test layers
-static checks
-→ unit tests
-→ property-based tests
-→ schema tests
-→ contract tests
-→ component integration tests
-→ workflow tests
-→ browser fixture tests
-→ security and privacy tests
-→ packaging tests
-→ repeated-run qualification
-→ controlled live compatibility tests
-→ release soak
-127.4 Test environments
-Pure unit environment
- * no network;
- * no browser;
- * temporary database;
- * deterministic clock;
- * synthetic data;
- * no model provider.
-Component integration environment
- * local encrypted database;
- * local artifact store;
- * mock secret vault;
- * mock model provider;
- * local mock ATS;
- * isolated browser.
-Browser fixture environment
- * local portal simulations;
- * sanitized snapshots;
- * deterministic routes;
- * browser engine matrix;
- * failure injection.
-Private compatibility environment
- * protected credentials;
- * dedicated or maintainer-owned authorized accounts;
- * no public pull requests;
- * manual approval;
- * no real submission.
-Release environment
- * clean Windows and Linux machines;
- * signed candidates;
- * upgrade scenarios;
- * low-end reference hardware;
- * multi-day soak.
-127.5 Test traceability
-Every requirement should link to:
- * implementation component;
- * test suite;
- * release gate;
- * evidence artifact.
-Example:
-requirement_id: INV-TRUTH-001
-statement: "No unknown fact becomes an asserted answer."
-components:
- - answer_resolution
- - grounding_verifier
-tests:
- - test_unknown_answer_blocks
- - test_not_applicable_requires_evidence
-release_gates:
- - truthfulness_zero_unsupported_claims
-127.6 Test naming
-Test names should describe:
- * condition;
- * behavior;
- * expected outcome.
-Example:
-test_unknown_sponsorship_answer_creates_clarification_waitpoint
-Avoid names such as:
-test_answer_1
-127.7 Test isolation
-Each test must:
- * use its own data namespace;
- * avoid shared browser profile state;
- * clean temporary files;
- * avoid real provider credentials;
- * reset clock and random sources;
- * declare network requirements;
- * avoid order dependence.
-127.8 Determinism
-Control where practical:
- * clock;
- * random seeds;
- * UUID generation;
- * model responses;
- * network responses;
- * browser viewport;
- * locale;
- * time zone;
- * font availability;
- * exchange rates.
-Tests involving nondeterministic models must use repeated-run metrics and explicit tolerances.
-----------------------------------------
+     127.1 Purpose
+     Testing must establish more than code correctness. It must establish that the system:
+
+- represents user facts accurately;
+- does not fabricate application information;
+- does not bypass approval;
+- does not repeat external effects;
+- handles portal variation;
+- protects secrets;
+- survives interruption;
+- remains operable on low-end hardware;
+- produces accessible interfaces;
+- can be packaged and upgraded reliably.
+  127.2 Testing principles
+
+1.  Test observable contracts, not implementation trivia.
+2.  Prefer deterministic checks over model judgment.
+3.  Preserve synthetic fixtures for every material failure.
+4.  Test recovery paths, not only happy paths.
+5.  Separate simulation from live portal qualification.
+6.  Never use real personal data in public CI.
+7.  Do not declare an adapter supported after one successful run.
+8.  Test traces and trajectories, not only final output.
+9.  Treat security and privacy invariants as executable requirements.
+10. Require evidence for every release gate.
+    127.3 Test layers
+    static checks
+    → unit tests
+    → property-based tests
+    → schema tests
+    → contract tests
+    → component integration tests
+    → workflow tests
+    → browser fixture tests
+    → security and privacy tests
+    → packaging tests
+    → repeated-run qualification
+    → controlled live compatibility tests
+    → release soak
+    127.4 Test environments
+    Pure unit environment
+
+- no network;
+- no browser;
+- temporary database;
+- deterministic clock;
+- synthetic data;
+- no model provider.
+  Component integration environment
+- local encrypted database;
+- local artifact store;
+- mock secret vault;
+- mock model provider;
+- local mock ATS;
+- isolated browser.
+  Browser fixture environment
+- local portal simulations;
+- sanitized snapshots;
+- deterministic routes;
+- browser engine matrix;
+- failure injection.
+  Private compatibility environment
+- protected credentials;
+- dedicated or maintainer-owned authorized accounts;
+- no public pull requests;
+- manual approval;
+- no real submission.
+  Release environment
+- clean Windows and Linux machines;
+- signed candidates;
+- upgrade scenarios;
+- low-end reference hardware;
+- multi-day soak.
+  127.5 Test traceability
+  Every requirement should link to:
+- implementation component;
+- test suite;
+- release gate;
+- evidence artifact.
+  Example:
+  requirement_id: INV-TRUTH-001
+  statement: "No unknown fact becomes an asserted answer."
+  components:
+
+* answer_resolution
+* grounding_verifier
+  tests:
+* test_unknown_answer_blocks
+* test_not_applicable_requires_evidence
+  release_gates:
+* truthfulness_zero_unsupported_claims
+  127.6 Test naming
+  Test names should describe:
+
+- condition;
+- behavior;
+- expected outcome.
+  Example:
+  test_unknown_sponsorship_answer_creates_clarification_waitpoint
+  Avoid names such as:
+  test_answer_1
+  127.7 Test isolation
+  Each test must:
+- use its own data namespace;
+- avoid shared browser profile state;
+- clean temporary files;
+- avoid real provider credentials;
+- reset clock and random sources;
+- declare network requirements;
+- avoid order dependence.
+  127.8 Determinism
+  Control where practical:
+- clock;
+- random seeds;
+- UUID generation;
+- model responses;
+- network responses;
+- browser viewport;
+- locale;
+- time zone;
+- font availability;
+- exchange rates.
+  Tests involving nondeterministic models must use repeated-run metrics and explicit tolerances.
+
+---
+
 128. Synthetic test-data program
-128.1 Objectives
-Synthetic data must exercise realistic complexity without exposing real users.
-The fixture corpus should include:
- * India and USA candidates;
- * multiple academic systems;
- * international names;
- * single-name identities;
- * employment gaps;
- * overlapping roles;
- * internships;
- * freelancing;
- * compensation variants;
- * visa and sponsorship scenarios;
- * voluntary demographic questions;
- * stale and conflicting facts;
- * multiple professional personas.
-128.2 Candidate archetypes
-India experienced engineer
- * B.Tech degree;
- * Class X and XII percentages;
- * current CTC;
- * expected CTC;
- * 60-day notice period;
- * multiple employers;
- * LinkedIn and résumé conflict;
- * Naukri profile;
- * sponsorship not required in India.
-India graduate
- * expected graduation;
- * internship;
- * projects;
- * entrance score;
- * no current CTC;
- * multiple GPA/percentage formats;
- * campus and off-campus applications.
-US software engineer
- * bachelor’s degree;
- * base salary and equity;
- * work authorization;
- * remote preferences;
- * voluntary EEO questions;
- * multiple ATS applications.
-International student in the USA
- * expected graduation;
- * student work authorization;
- * future sponsorship requirement;
- * internship restrictions;
- * authorization expiration.
-Quantitative candidate
- * advanced degree;
- * publications;
- * competition achievements;
- * mathematical and programming skills;
- * role-specific projects;
- * restricted proprietary work.
-Career changer
- * adjacent experience;
- * transferable skills;
- * lower direct match;
- * multiple personas;
- * incomplete evidence.
-128.3 Synthetic employer archetypes
- * Indian product company;
- * Indian services company;
- * US startup;
- * global cloud company;
- * quantitative trading firm;
- * university;
- * government employer;
- * staffing agency;
- * suspicious fake employer;
- * subsidiary using parent-brand careers site.
-128.4 Synthetic job corpus
-The corpus must vary:
- * required versus preferred wording;
- * location restrictions;
- * contradictory remote statements;
- * salary periods;
- * authorization;
- * degree equivalence;
- * security clearance;
- * custom questions;
- * malformed descriptions;
- * prompt injections;
- * stale listings;
- * duplicate cross-postings;
- * employer-name aliases.
-128.5 Synthetic portal corpus
-Provide local simulations for:
- * generic ATS;
- * Workday-like multistep form;
- * Greenhouse-like public board;
- * Lever-like board;
- * portal with external redirect;
- * account-required portal;
- * session expiration;
- * CAPTCHA placeholder requiring human wait;
- * dynamic fields;
- * inaccessible legacy form;
- * changed-page fingerprint.
-The simulations must not copy proprietary interfaces beyond what is necessary to test generic behavior.
-128.6 PII scanner fixtures
-Include positive and negative examples for:
- * names;
- * email;
- * phone;
- * addresses;
- * Aadhaar-like patterns;
- * PAN-like patterns;
- * SSN-like patterns;
- * passport-like identifiers;
- * API keys;
- * tokens;
- * cookies;
- * false positives.
-Prohibited identifier fixtures must be synthetically generated and unmistakably non-real.
-128.7 Fixture governance
-Every fixture includes:
- * origin;
- * synthetic or sanitized status;
- * schema version;
- * intended tests;
- * sensitivity class;
- * license or permission;
- * review date;
- * content hash.
-----------------------------------------
+     128.1 Objectives
+     Synthetic data must exercise realistic complexity without exposing real users.
+     The fixture corpus should include:
+
+- India and USA candidates;
+- multiple academic systems;
+- international names;
+- single-name identities;
+- employment gaps;
+- overlapping roles;
+- internships;
+- freelancing;
+- compensation variants;
+- visa and sponsorship scenarios;
+- voluntary demographic questions;
+- stale and conflicting facts;
+- multiple professional personas.
+  128.2 Candidate archetypes
+  India experienced engineer
+- B.Tech degree;
+- Class X and XII percentages;
+- current CTC;
+- expected CTC;
+- 60-day notice period;
+- multiple employers;
+- LinkedIn and résumé conflict;
+- Naukri profile;
+- sponsorship not required in India.
+  India graduate
+- expected graduation;
+- internship;
+- projects;
+- entrance score;
+- no current CTC;
+- multiple GPA/percentage formats;
+- campus and off-campus applications.
+  US software engineer
+- bachelor’s degree;
+- base salary and equity;
+- work authorization;
+- remote preferences;
+- voluntary EEO questions;
+- multiple ATS applications.
+  International student in the USA
+- expected graduation;
+- student work authorization;
+- future sponsorship requirement;
+- internship restrictions;
+- authorization expiration.
+  Quantitative candidate
+- advanced degree;
+- publications;
+- competition achievements;
+- mathematical and programming skills;
+- role-specific projects;
+- restricted proprietary work.
+  Career changer
+- adjacent experience;
+- transferable skills;
+- lower direct match;
+- multiple personas;
+- incomplete evidence.
+  128.3 Synthetic employer archetypes
+- Indian product company;
+- Indian services company;
+- US startup;
+- global cloud company;
+- quantitative trading firm;
+- university;
+- government employer;
+- staffing agency;
+- suspicious fake employer;
+- subsidiary using parent-brand careers site.
+  128.4 Synthetic job corpus
+  The corpus must vary:
+- required versus preferred wording;
+- location restrictions;
+- contradictory remote statements;
+- salary periods;
+- authorization;
+- degree equivalence;
+- security clearance;
+- custom questions;
+- malformed descriptions;
+- prompt injections;
+- stale listings;
+- duplicate cross-postings;
+- employer-name aliases.
+  128.5 Synthetic portal corpus
+  Provide local simulations for:
+- generic ATS;
+- Workday-like multistep form;
+- Greenhouse-like public board;
+- Lever-like board;
+- portal with external redirect;
+- account-required portal;
+- session expiration;
+- CAPTCHA placeholder requiring human wait;
+- dynamic fields;
+- inaccessible legacy form;
+- changed-page fingerprint.
+  The simulations must not copy proprietary interfaces beyond what is necessary to test generic behavior.
+  128.6 PII scanner fixtures
+  Include positive and negative examples for:
+- names;
+- email;
+- phone;
+- addresses;
+- Aadhaar-like patterns;
+- PAN-like patterns;
+- SSN-like patterns;
+- passport-like identifiers;
+- API keys;
+- tokens;
+- cookies;
+- false positives.
+  Prohibited identifier fixtures must be synthetically generated and unmistakably non-real.
+  128.7 Fixture governance
+  Every fixture includes:
+- origin;
+- synthetic or sanitized status;
+- schema version;
+- intended tests;
+- sensitivity class;
+- license or permission;
+- review date;
+- content hash.
+
+---
+
 129. Static analysis and repository checks
-129.1 Python checks
-After selecting exact tools, enforce:
- * formatting;
- * linting;
- * strict type checking;
- * import boundaries;
- * dead-code checks where useful;
- * security static analysis;
- * dependency audit;
- * package metadata validation.
-129.2 Frontend checks
- * formatting;
- * linting;
- * TypeScript type checking;
- * accessibility linting;
- * dependency audit;
- * bundle-size checks;
- * CSP validation;
- * prohibited API checks.
-129.3 Rust checks
-If Tauri is used:
- * formatting;
- * compiler warnings as errors in protected paths;
- * linting;
- * dependency audit;
- * unsafe-code review;
- * capability manifest validation.
-129.4 Configuration checks
-Validate:
- * example configuration against schema;
- * .env.example completeness;
- * no unknown settings;
- * safe default binding;
- * retention values;
- * portal manifests;
- * adapter permissions;
- * prompt metadata;
- * workflow definitions;
- * GitHub Actions permissions.
-129.5 Documentation checks
- * broken links;
- * invalid anchors;
- * missing referenced files;
- * Mermaid render failures;
- * malformed Markdown;
- * code-block syntax;
- * schema examples;
- * stale compatibility dates;
- * unresolved placeholders;
- * duplicate section identifiers.
-129.6 Secret scanning
-Scan:
- * full Git history for release;
- * working tree;
- * generated artifacts;
- * test fixtures;
- * documentation;
- * screenshots where supported;
- * diagnostic bundles.
-A secret-scanning allowlist requires review and explanation.
-129.7 Personal-data scanning
-Add repository checks for:
- * ordinary real-looking email domains;
- * phone numbers;
- * physical addresses;
- * government-ID patterns;
- * browser cookies;
- * bearer tokens;
- * real candidate documents;
- * local absolute user paths.
-Because false positives are likely, suppressions must remain narrow.
-129.8 License checks
-Validate:
- * source-file SPDX identifiers where required;
- * dependency licenses;
- * fonts;
- * icons;
- * templates;
- * generated assets;
- * copied snippets;
- * browser-extension assets.
-----------------------------------------
+     129.1 Python checks
+     After selecting exact tools, enforce:
+
+- formatting;
+- linting;
+- strict type checking;
+- import boundaries;
+- dead-code checks where useful;
+- security static analysis;
+- dependency audit;
+- package metadata validation.
+  129.2 Frontend checks
+- formatting;
+- linting;
+- TypeScript type checking;
+- accessibility linting;
+- dependency audit;
+- bundle-size checks;
+- CSP validation;
+- prohibited API checks.
+  129.3 Rust checks
+  If Tauri is used:
+- formatting;
+- compiler warnings as errors in protected paths;
+- linting;
+- dependency audit;
+- unsafe-code review;
+- capability manifest validation.
+  129.4 Configuration checks
+  Validate:
+- example configuration against schema;
+- .env.example completeness;
+- no unknown settings;
+- safe default binding;
+- retention values;
+- portal manifests;
+- adapter permissions;
+- prompt metadata;
+- workflow definitions;
+- GitHub Actions permissions.
+  129.5 Documentation checks
+- broken links;
+- invalid anchors;
+- missing referenced files;
+- Mermaid render failures;
+- malformed Markdown;
+- code-block syntax;
+- schema examples;
+- stale compatibility dates;
+- unresolved placeholders;
+- duplicate section identifiers.
+  129.6 Secret scanning
+  Scan:
+- full Git history for release;
+- working tree;
+- generated artifacts;
+- test fixtures;
+- documentation;
+- screenshots where supported;
+- diagnostic bundles.
+  A secret-scanning allowlist requires review and explanation.
+  129.7 Personal-data scanning
+  Add repository checks for:
+- ordinary real-looking email domains;
+- phone numbers;
+- physical addresses;
+- government-ID patterns;
+- browser cookies;
+- bearer tokens;
+- real candidate documents;
+- local absolute user paths.
+  Because false positives are likely, suppressions must remain narrow.
+  129.8 License checks
+  Validate:
+- source-file SPDX identifiers where required;
+- dependency licenses;
+- fonts;
+- icons;
+- templates;
+- generated assets;
+- copied snippets;
+- browser-extension assets.
+
+---
+
 130. Unit-test strategy
-130.1 Domain tests
-Test:
- * fact status transitions;
- * source precedence;
- * contradiction creation;
- * freshness;
- * sensitivity;
- * permitted use;
- * persona inheritance;
- * answer scope;
- * approval invalidation;
- * duplicate classes;
- * workflow transitions;
- * effect states.
-130.2 Profile validation
-Cases:
- * single-name candidate;
- * Unicode names;
- * missing family name;
- * multiple addresses;
- * malformed phone;
- * invalid email;
- * overlapping employment;
- * current job with end date;
- * completed degree without completion date;
- * invalid GPA scale;
- * percentage over valid range;
- * expired certification;
- * stale notice period;
- * contradictory current compensation.
-130.3 Experience calculations
-Test:
- * sequential full-time roles;
- * overlapping part-time roles;
- * internship overlapping education;
- * freelance and full-time overlap;
- * employment gaps;
- * month-only dates;
- * ongoing role;
- * skill-specific durations;
- * duplicate evidence;
- * leap years and date boundaries.
-130.4 Compensation calculations
-Test:
- * annual versus monthly;
- * fixed versus variable;
- * CTC versus base;
- * hourly versus annual;
- * currency conversion;
- * missing period;
- * dated exchange rate;
- * range formatting;
- * zero and negative values;
- * confidential disclosure policy.
-130.5 Eligibility rules
-Test:
- * clear pass;
- * clear failure;
- * unknown authorization;
- * degree equivalence;
- * required active license;
- * expired clearance;
- * remote jurisdiction restriction;
- * application deadline;
- * user blocklist;
- * manual override;
- * rule-version change.
-130.6 Match scoring
-Test:
- * exact skill;
- * alias;
- * related but nonequivalent skill;
- * stale skill;
- * professional versus personal evidence;
- * required and preferred weights;
- * threshold boundary at 50;
- * hard gate overriding high score;
- * persona weight bounds;
- * explainability totals;
- * score normalization.
-130.7 Duplicate resolution
-Test:
- * same employer and requisition ID;
- * same job on two portals;
- * employer alias;
- * subsidiary;
- * title variation;
- * location variation;
- * modified description;
- * reposted distinct requisition;
- * recruiter duplicate;
- * prior unconfirmed attempt;
- * three-attempt hard ceiling.
-130.8 Answer resolution
-Test:
- * confirmed global answer;
- * employer override;
- * application override;
- * expired answer;
- * unknown answer;
- * ambiguous question;
- * not_applicable;
- * declined answer;
- * sensitive category;
- * model-proposed unsupported answer;
- * deterministic derivation.
-130.9 Policy rules
-Every policy branch must have tests:
- * allow;
- * deny;
- * require approval;
- * require user presence;
- * require reauthentication;
- * policy conflict;
- * expired approval;
- * changed snapshot;
- * portal mode unsupported;
- * budget exceeded;
- * offline restriction.
-130.10 Effect model
-Test:
- * planned to approved;
- * approved to attempting;
- * committed;
- * possibly committed;
- * reconciliation;
- * duplicate idempotency key;
- * retry prevention;
- * compensation;
- * cancellation;
- * user-confirmed external submission.
-130.11 Retention
-Test:
- * expiration;
- * active hold;
- * derived index deletion;
- * raw-versus-promoted record;
- * active workflow dependency;
- * backup exception;
- * cryptographic erasure metadata;
- * failed deletion retry.
-----------------------------------------
+     130.1 Domain tests
+     Test:
+
+- fact status transitions;
+- source precedence;
+- contradiction creation;
+- freshness;
+- sensitivity;
+- permitted use;
+- persona inheritance;
+- answer scope;
+- approval invalidation;
+- duplicate classes;
+- workflow transitions;
+- effect states.
+  130.2 Profile validation
+  Cases:
+- single-name candidate;
+- Unicode names;
+- missing family name;
+- multiple addresses;
+- malformed phone;
+- invalid email;
+- overlapping employment;
+- current job with end date;
+- completed degree without completion date;
+- invalid GPA scale;
+- percentage over valid range;
+- expired certification;
+- stale notice period;
+- contradictory current compensation.
+  130.3 Experience calculations
+  Test:
+- sequential full-time roles;
+- overlapping part-time roles;
+- internship overlapping education;
+- freelance and full-time overlap;
+- employment gaps;
+- month-only dates;
+- ongoing role;
+- skill-specific durations;
+- duplicate evidence;
+- leap years and date boundaries.
+  130.4 Compensation calculations
+  Test:
+- annual versus monthly;
+- fixed versus variable;
+- CTC versus base;
+- hourly versus annual;
+- currency conversion;
+- missing period;
+- dated exchange rate;
+- range formatting;
+- zero and negative values;
+- confidential disclosure policy.
+  130.5 Eligibility rules
+  Test:
+- clear pass;
+- clear failure;
+- unknown authorization;
+- degree equivalence;
+- required active license;
+- expired clearance;
+- remote jurisdiction restriction;
+- application deadline;
+- user blocklist;
+- manual override;
+- rule-version change.
+  130.6 Match scoring
+  Test:
+- exact skill;
+- alias;
+- related but nonequivalent skill;
+- stale skill;
+- professional versus personal evidence;
+- required and preferred weights;
+- threshold boundary at 50;
+- hard gate overriding high score;
+- persona weight bounds;
+- explainability totals;
+- score normalization.
+  130.7 Duplicate resolution
+  Test:
+- same employer and requisition ID;
+- same job on two portals;
+- employer alias;
+- subsidiary;
+- title variation;
+- location variation;
+- modified description;
+- reposted distinct requisition;
+- recruiter duplicate;
+- prior unconfirmed attempt;
+- three-attempt hard ceiling.
+  130.8 Answer resolution
+  Test:
+- confirmed global answer;
+- employer override;
+- application override;
+- expired answer;
+- unknown answer;
+- ambiguous question;
+- not_applicable;
+- declined answer;
+- sensitive category;
+- model-proposed unsupported answer;
+- deterministic derivation.
+  130.9 Policy rules
+  Every policy branch must have tests:
+- allow;
+- deny;
+- require approval;
+- require user presence;
+- require reauthentication;
+- policy conflict;
+- expired approval;
+- changed snapshot;
+- portal mode unsupported;
+- budget exceeded;
+- offline restriction.
+  130.10 Effect model
+  Test:
+- planned to approved;
+- approved to attempting;
+- committed;
+- possibly committed;
+- reconciliation;
+- duplicate idempotency key;
+- retry prevention;
+- compensation;
+- cancellation;
+- user-confirmed external submission.
+  130.11 Retention
+  Test:
+- expiration;
+- active hold;
+- derived index deletion;
+- raw-versus-promoted record;
+- active workflow dependency;
+- backup exception;
+- cryptographic erasure metadata;
+- failed deletion retry.
+
+---
+
 131. Property-based testing
-131.1 Purpose
-Property-based tests should explore combinations that example-based tests miss.
-131.2 Date properties
- * experience duration never negative;
- * overlapping intervals are not double-counted under unique-time metrics;
- * ongoing role ends at evaluation date;
- * adding irrelevant employment cannot decrease total employment duration;
- * changing time zone cannot change date-only education records.
-131.3 Compensation properties
- * unit conversion round trips within tolerance;
- * disclosure formatting preserves currency;
- * range minimum never exceeds maximum after normalization;
- * annualization records assumptions;
- * missing period never produces a confident annual amount.
-131.4 Duplicate properties
- * exact identity is symmetric;
- * exact identity is reflexive;
- * canonical URL normalization is idempotent;
- * tracking-parameter removal does not alter requisition identity;
- * distinct authoritative requisition IDs prevent exact classification unless evidence explains aliasing.
-131.5 Approval properties
- * any material payload change invalidates approval;
- * nonmaterial display change does not alter approved hash when policy says so;
- * expired approval never authorizes action;
- * approval cannot authorize a broader action than requested;
- * denied action cannot become approved through serialization round trip.
-131.6 Encryption-envelope properties
- * decrypt(encrypt(value)) equals value;
- * changed ciphertext fails authentication;
- * changed associated data fails authentication;
- * wrong key fails;
- * duplicate nonce conditions are prevented according to implementation contract;
- * serialization preserves key and schema version.
-131.7 Workflow properties
- * terminal states have no outgoing transitions unless explicitly defined;
- * blocked tasks are not claimable;
- * dependency failure prevents dependent execution;
- * completed task requires verification evidence;
- * cancelled workflow cannot initiate a new external effect;
- * state serialization and restore preserve legal transitions.
-131.8 Parser properties
-Generate:
- * Unicode;
- * long strings;
- * malformed HTML;
- * unexpected field options;
- * missing labels;
- * duplicate IDs;
- * nested forms;
- * invalid dates;
- * unusual currency symbols.
-Expected outcome is safe parsing, rejection, or bounded error—not crash or unsafe guess.
-----------------------------------------
+     131.1 Purpose
+     Property-based tests should explore combinations that example-based tests miss.
+     131.2 Date properties
+
+- experience duration never negative;
+- overlapping intervals are not double-counted under unique-time metrics;
+- ongoing role ends at evaluation date;
+- adding irrelevant employment cannot decrease total employment duration;
+- changing time zone cannot change date-only education records.
+  131.3 Compensation properties
+- unit conversion round trips within tolerance;
+- disclosure formatting preserves currency;
+- range minimum never exceeds maximum after normalization;
+- annualization records assumptions;
+- missing period never produces a confident annual amount.
+  131.4 Duplicate properties
+- exact identity is symmetric;
+- exact identity is reflexive;
+- canonical URL normalization is idempotent;
+- tracking-parameter removal does not alter requisition identity;
+- distinct authoritative requisition IDs prevent exact classification unless evidence explains aliasing.
+  131.5 Approval properties
+- any material payload change invalidates approval;
+- nonmaterial display change does not alter approved hash when policy says so;
+- expired approval never authorizes action;
+- approval cannot authorize a broader action than requested;
+- denied action cannot become approved through serialization round trip.
+  131.6 Encryption-envelope properties
+- decrypt(encrypt(value)) equals value;
+- changed ciphertext fails authentication;
+- changed associated data fails authentication;
+- wrong key fails;
+- duplicate nonce conditions are prevented according to implementation contract;
+- serialization preserves key and schema version.
+  131.7 Workflow properties
+- terminal states have no outgoing transitions unless explicitly defined;
+- blocked tasks are not claimable;
+- dependency failure prevents dependent execution;
+- completed task requires verification evidence;
+- cancelled workflow cannot initiate a new external effect;
+- state serialization and restore preserve legal transitions.
+  131.8 Parser properties
+  Generate:
+- Unicode;
+- long strings;
+- malformed HTML;
+- unexpected field options;
+- missing labels;
+- duplicate IDs;
+- nested forms;
+- invalid dates;
+- unusual currency symbols.
+  Expected outcome is safe parsing, rejection, or bounded error—not crash or unsafe guess.
+
+---
+
 132. Schema and migration testing
-132.1 Schema tests
-For every schema:
- * valid minimum instance;
- * valid complete instance;
- * missing required field;
- * unknown enum;
- * unknown field policy;
- * boundary values;
- * invalid references;
- * unsupported version;
- * forward-compatible metadata behavior.
-132.2 Serialization round trips
-Test:
-domain object
-→ serialized representation
-→ encrypted storage
-→ decrypted representation
-→ domain object
-No semantic loss is permitted.
-132.3 Migration matrix
-Support migrations from every currently supported version to the current version.
-Source Target Required test Empty database Current Fresh install Previous patch Current Automatic Previous minor Current Automatic with backup Previous major supported Current Staged migration Future version Current Refuse safely
-132.4 Migration invariants
- * IDs preserved;
- * provenance preserved;
- * timestamps preserved;
- * sensitivity never downgraded silently;
- * approvals invalidated when semantics change;
- * effect state preserved;
- * no plaintext fallback;
- * migration is restart-safe;
- * backup created before destructive changes.
-132.5 Interrupted migration
-Inject termination:
- * before transaction;
- * mid-record batch;
- * after schema change;
- * before index rebuild;
- * during artifact migration;
- * during key rotation.
-Recovery must resume or restore.
-132.6 Golden migration fixtures
-Maintain encrypted synthetic database fixtures for supported historical versions.
-Keys are synthetic and test-only.
-----------------------------------------
+     132.1 Schema tests
+     For every schema:
+
+- valid minimum instance;
+- valid complete instance;
+- missing required field;
+- unknown enum;
+- unknown field policy;
+- boundary values;
+- invalid references;
+- unsupported version;
+- forward-compatible metadata behavior.
+  132.2 Serialization round trips
+  Test:
+  domain object
+  → serialized representation
+  → encrypted storage
+  → decrypted representation
+  → domain object
+  No semantic loss is permitted.
+  132.3 Migration matrix
+  Support migrations from every currently supported version to the current version.
+  Source Target Required test Empty database Current Fresh install Previous patch Current Automatic Previous minor Current Automatic with backup Previous major supported Current Staged migration Future version Current Refuse safely
+  132.4 Migration invariants
+- IDs preserved;
+- provenance preserved;
+- timestamps preserved;
+- sensitivity never downgraded silently;
+- approvals invalidated when semantics change;
+- effect state preserved;
+- no plaintext fallback;
+- migration is restart-safe;
+- backup created before destructive changes.
+  132.5 Interrupted migration
+  Inject termination:
+- before transaction;
+- mid-record batch;
+- after schema change;
+- before index rebuild;
+- during artifact migration;
+- during key rotation.
+  Recovery must resume or restore.
+  132.6 Golden migration fixtures
+  Maintain encrypted synthetic database fixtures for supported historical versions.
+  Keys are synthetic and test-only.
+
+---
+
 133. Component integration testing
-133.1 Profile-to-document integration
-Test:
- * selected facts enter document model;
- * persona filtering;
- * approved wording;
- * unsupported claims rejected;
- * stale values trigger review;
- * generated PDF preserves text;
- * document version links to facts.
-133.2 Job-to-matching integration
-Test:
- * raw source;
- * normalized job;
- * requirement extraction;
- * eligibility;
- * score;
- * explanation;
- * threshold decision;
- * user override.
-133.3 Question-to-browser integration
-Test:
- * form schema;
- * semantic mapping;
- * answer resolution;
- * policy;
- * browser action;
- * observed value;
- * verification;
- * final-review record.
-133.4 Email-to-application integration
-Test:
- * synthetic Gmail message;
- * local classification;
- * application association;
- * status proposal;
- * user confirmation;
- * timeline update;
- * raw-body expiration.
-133.5 Calendar integration
-Test:
- * interview invitation;
- * time-zone parsing;
- * conflict check;
- * event proposal;
- * user approval;
- * provider effect;
- * reconciliation.
-133.6 Vault integration
-Test:
- * store;
- * retrieve by reference;
- * deny unauthorized component;
- * rotate;
- * revoke;
- * missing vault;
- * locked vault;
- * headless fallback;
- * no secret in logs.
-133.7 Artifact integration
-Test:
- * stream encryption;
- * content hash;
- * deduplication;
- * metadata;
- * preview;
- * retention;
- * deletion;
- * corruption;
- * wrong key.
-133.8 Scheduler integration
-Test:
- * due task;
- * missed run;
- * duplicate lock;
- * application restart;
- * time-zone change;
- * daylight-saving transition;
- * cancellation;
- * consecutive failure pause.
-----------------------------------------
+     133.1 Profile-to-document integration
+     Test:
+
+- selected facts enter document model;
+- persona filtering;
+- approved wording;
+- unsupported claims rejected;
+- stale values trigger review;
+- generated PDF preserves text;
+- document version links to facts.
+  133.2 Job-to-matching integration
+  Test:
+- raw source;
+- normalized job;
+- requirement extraction;
+- eligibility;
+- score;
+- explanation;
+- threshold decision;
+- user override.
+  133.3 Question-to-browser integration
+  Test:
+- form schema;
+- semantic mapping;
+- answer resolution;
+- policy;
+- browser action;
+- observed value;
+- verification;
+- final-review record.
+  133.4 Email-to-application integration
+  Test:
+- synthetic Gmail message;
+- local classification;
+- application association;
+- status proposal;
+- user confirmation;
+- timeline update;
+- raw-body expiration.
+  133.5 Calendar integration
+  Test:
+- interview invitation;
+- time-zone parsing;
+- conflict check;
+- event proposal;
+- user approval;
+- provider effect;
+- reconciliation.
+  133.6 Vault integration
+  Test:
+- store;
+- retrieve by reference;
+- deny unauthorized component;
+- rotate;
+- revoke;
+- missing vault;
+- locked vault;
+- headless fallback;
+- no secret in logs.
+  133.7 Artifact integration
+  Test:
+- stream encryption;
+- content hash;
+- deduplication;
+- metadata;
+- preview;
+- retention;
+- deletion;
+- corruption;
+- wrong key.
+  133.8 Scheduler integration
+  Test:
+- due task;
+- missed run;
+- duplicate lock;
+- application restart;
+- time-zone change;
+- daylight-saving transition;
+- cancellation;
+- consecutive failure pause.
+
+---
+
 134. Contract testing
-134.1 Adapter contracts
-Every adapter must pass a shared suite:
- * recognize supported URL;
- * reject unsupported URL;
- * declare capabilities;
- * inspect page safely;
- * return typed form schema;
- * never expose raw credentials;
- * respect unsupported submission;
- * produce compatibility evidence;
- * create human waitpoint for CAPTCHA;
- * stop on fingerprint mismatch.
-134.2 Model-provider contracts
-Every provider must:
- * report capabilities;
- * handle authentication failure;
- * return usage where available;
- * support timeout;
- * support cancellation where feasible;
- * validate structured output;
- * redact request logs;
- * reject disallowed data class;
- * handle provider unavailability;
- * expose health.
-134.3 Secret-store contracts
-Every implementation must:
- * store opaque value;
- * retrieve by authorized reference;
- * not reveal through listing;
- * delete;
- * rotate;
- * distinguish missing from denied;
- * preserve no value in ordinary logs;
- * enforce per-user access.
-134.4 Document-renderer contracts
-Every renderer must:
- * accept canonical model;
- * produce declared format;
- * return hash and metadata;
- * report missing fonts;
- * report unsupported features;
- * avoid external network access by default;
- * preserve text;
- * clean temporary files.
-134.5 Notification contracts
-Every notification backend must:
- * accept minimized content;
- * respect quiet hours;
- * deduplicate;
- * report delivery result;
- * avoid high-risk inline actions;
- * expose disablement.
-134.6 Hosted-relay contracts
- * register device;
- * authenticate;
- * sign command;
- * reject replay;
- * reject expired command;
- * route ciphertext;
- * delete ciphertext;
- * revoke device;
- * continue after reconnect;
- * never require plaintext payload.
-134.7 Contract-version compatibility
-For each interface:
- * exact version support;
- * supported range;
- * incompatible version error;
- * upgrade path;
- * rollback behavior;
- * deprecation notice.
-----------------------------------------
+     134.1 Adapter contracts
+     Every adapter must pass a shared suite:
+
+- recognize supported URL;
+- reject unsupported URL;
+- declare capabilities;
+- inspect page safely;
+- return typed form schema;
+- never expose raw credentials;
+- respect unsupported submission;
+- produce compatibility evidence;
+- create human waitpoint for CAPTCHA;
+- stop on fingerprint mismatch.
+  134.2 Model-provider contracts
+  Every provider must:
+- report capabilities;
+- handle authentication failure;
+- return usage where available;
+- support timeout;
+- support cancellation where feasible;
+- validate structured output;
+- redact request logs;
+- reject disallowed data class;
+- handle provider unavailability;
+- expose health.
+  134.3 Secret-store contracts
+  Every implementation must:
+- store opaque value;
+- retrieve by authorized reference;
+- not reveal through listing;
+- delete;
+- rotate;
+- distinguish missing from denied;
+- preserve no value in ordinary logs;
+- enforce per-user access.
+  134.4 Document-renderer contracts
+  Every renderer must:
+- accept canonical model;
+- produce declared format;
+- return hash and metadata;
+- report missing fonts;
+- report unsupported features;
+- avoid external network access by default;
+- preserve text;
+- clean temporary files.
+  134.5 Notification contracts
+  Every notification backend must:
+- accept minimized content;
+- respect quiet hours;
+- deduplicate;
+- report delivery result;
+- avoid high-risk inline actions;
+- expose disablement.
+  134.6 Hosted-relay contracts
+- register device;
+- authenticate;
+- sign command;
+- reject replay;
+- reject expired command;
+- route ciphertext;
+- delete ciphertext;
+- revoke device;
+- continue after reconnect;
+- never require plaintext payload.
+  134.7 Contract-version compatibility
+  For each interface:
+- exact version support;
+- supported range;
+- incompatible version error;
+- upgrade path;
+- rollback behavior;
+- deprecation notice.
+
+---
+
 135. Workflow and state-machine testing
-135.1 Full workflow scenarios
-Happy path
-ingest
-→ eligible
-→ score above threshold
-→ prepare documents
-→ fill mock form
-→ verify
-→ final review
-→ human submission confirmation
-→ track
-Unknown answer
-fill
-→ unknown required question
-→ durable wait
-→ restart
-→ user answer
-→ resume
-→ verify
-Duplicate
-ingest
-→ exact prior requisition
-→ block
-→ user inspects evidence
-→ no application workflow
-Portal change
-known adapter
-→ fingerprint mismatch
-→ circuit opens
-→ assisted fallback
-→ incident
-Model outage
-require model-dependent extraction
-→ provider unavailable
-→ deterministic fallback insufficient
-→ waitpoint
-→ provider restored
-→ resume
-Wrong attachment attempt
-attachment selection mismatch
-→ verification failure
-→ repair
-→ approval invalidated
-→ user reapproves
-135.2 Illegal-transition tests
-Examples:
- * pending → completed without execution;
- * awaiting_review → submitted without user confirmation;
- * failed → committed;
- * cancelled → running;
- * ineligible → filling without override;
- * duplicate_blocked → preparation without approved exception;
- * unknown answer → approved without confirmation.
-135.3 State-machine model checking
-For critical state machines, use exhaustive or model-based exploration where feasible.
-Properties:
- * no dead state without explanation;
- * no action bypass;
- * waitpoints resumable;
- * cancellation reachable;
- * external effects reconcile;
- * completion requires verification.
-135.4 Long-running workflows
-Simulate:
- * days-long human wait;
- * application deadline passing while paused;
- * profile fact changing during wait;
- * adapter update during wait;
- * session expiration;
- * provider policy expiration;
- * device restart;
- * clock change.
-135.5 Workflow-version changes
-Test active run created under version N and resumed under N+1:
- * compatible continuation;
- * explicit migration;
- * refusal with actionable message;
- * preservation of approval constraints.
-----------------------------------------
+     135.1 Full workflow scenarios
+     Happy path
+     ingest
+     → eligible
+     → score above threshold
+     → prepare documents
+     → fill mock form
+     → verify
+     → final review
+     → human submission confirmation
+     → track
+     Unknown answer
+     fill
+     → unknown required question
+     → durable wait
+     → restart
+     → user answer
+     → resume
+     → verify
+     Duplicate
+     ingest
+     → exact prior requisition
+     → block
+     → user inspects evidence
+     → no application workflow
+     Portal change
+     known adapter
+     → fingerprint mismatch
+     → circuit opens
+     → assisted fallback
+     → incident
+     Model outage
+     require model-dependent extraction
+     → provider unavailable
+     → deterministic fallback insufficient
+     → waitpoint
+     → provider restored
+     → resume
+     Wrong attachment attempt
+     attachment selection mismatch
+     → verification failure
+     → repair
+     → approval invalidated
+     → user reapproves
+     135.2 Illegal-transition tests
+     Examples:
+
+- pending → completed without execution;
+- awaiting_review → submitted without user confirmation;
+- failed → committed;
+- cancelled → running;
+- ineligible → filling without override;
+- duplicate_blocked → preparation without approved exception;
+- unknown answer → approved without confirmation.
+  135.3 State-machine model checking
+  For critical state machines, use exhaustive or model-based exploration where feasible.
+  Properties:
+- no dead state without explanation;
+- no action bypass;
+- waitpoints resumable;
+- cancellation reachable;
+- external effects reconcile;
+- completion requires verification.
+  135.4 Long-running workflows
+  Simulate:
+- days-long human wait;
+- application deadline passing while paused;
+- profile fact changing during wait;
+- adapter update during wait;
+- session expiration;
+- provider policy expiration;
+- device restart;
+- clock change.
+  135.5 Workflow-version changes
+  Test active run created under version N and resumed under N+1:
+- compatible continuation;
+- explicit migration;
+- refusal with actionable message;
+- preservation of approval constraints.
+
+---
+
 136. Browser fixture testing
-136.1 Fixture types
-Local synthetic ATS
-Fully controlled application used for broad workflow testing.
-Sanitized static snapshots
-Useful for parser and selector regression.
-Dynamic replay fixture
-Reproduces:
- * asynchronous fields;
- * validation;
- * navigation;
- * session state;
- * uploads.
-Portal-specific private fixture
-Sanitized and access-controlled where public distribution would violate policy or expose proprietary content.
-136.2 Browser matrix
-Initial:
- * current stable Chromium;
- * previous supported Chromium;
- * installed Chrome or Edge where supported;
- * Firefox for generic local UI tests;
- * WebKit for portability signal, not necessarily portal support.
-136.3 Viewport matrix
- * common desktop resolution;
- * small laptop;
- * 125% and 150% scaling;
- * browser zoom;
- * high-contrast mode;
- * reduced motion.
-136.4 Selector tests
-Test each strategy:
- * accessibility role;
- * label;
- * field name;
- * stable attribute;
- * structural relation;
- * visual fallback.
-Deliberately alter:
- * element IDs;
- * class names;
- * wrapper depth;
- * optional help text;
- * field order.
-The adapter should survive nonsemantic change but stop on semantic ambiguity.
-136.5 Dynamic form tests
- * conditional fields;
- * repeated sections;
- * asynchronous option loading;
- * dependent country/state fields;
- * client-side validation;
- * server-side validation;
- * auto-save;
- * browser back navigation;
- * draft resume;
- * stale page.
-136.6 Upload tests
- * correct PDF;
- * correct DOCX;
- * oversized file;
- * wrong MIME;
- * renamed executable;
- * corrupt file;
- * duplicate upload;
- * portal filename transformation;
- * upload timeout;
- * parsed résumé mismatch.
-136.7 Authentication tests
- * already authenticated;
- * logged out;
- * session expires between pages;
- * OAuth redirect;
- * MFA waitpoint;
- * CAPTCHA waitpoint;
- * suspicious-login warning;
- * wrong account;
- * cross-tenant session.
-No real credentials are used in ordinary CI.
-136.8 Final-review tests
- * all fields visible;
- * fields omitted from portal review;
- * collapsed sections;
- * transformed salary format;
- * wrong attachment name;
- * changed answer after validation;
- * employer/requisition redirect;
- * validation warning hidden above viewport.
-136.9 Browser evidence tests
-Verify:
- * screenshot captured when required;
- * restricted values redacted;
- * DOM minimized;
- * evidence linked to action;
- * retention assigned;
- * no password field captured;
- * correct before/after ordering.
-136.10 Browser repeated-run qualification
-For a supported fixture:
- * run at least 100 representative iterations;
- * vary timing within safe bounds;
- * restart browser between subsets;
- * inject transient delays;
- * record success, retries, time, and resource growth.
-Target:
-at least 99% successful verified pre-submission completion
-Critical safety invariants remain 100%.
-----------------------------------------
+     136.1 Fixture types
+     Local synthetic ATS
+     Fully controlled application used for broad workflow testing.
+     Sanitized static snapshots
+     Useful for parser and selector regression.
+     Dynamic replay fixture
+     Reproduces:
+
+- asynchronous fields;
+- validation;
+- navigation;
+- session state;
+- uploads.
+  Portal-specific private fixture
+  Sanitized and access-controlled where public distribution would violate policy or expose proprietary content.
+  136.2 Browser matrix
+  Initial:
+- current stable Chromium;
+- previous supported Chromium;
+- installed Chrome or Edge where supported;
+- Firefox for generic local UI tests;
+- WebKit for portability signal, not necessarily portal support.
+  136.3 Viewport matrix
+- common desktop resolution;
+- small laptop;
+- 125% and 150% scaling;
+- browser zoom;
+- high-contrast mode;
+- reduced motion.
+  136.4 Selector tests
+  Test each strategy:
+- accessibility role;
+- label;
+- field name;
+- stable attribute;
+- structural relation;
+- visual fallback.
+  Deliberately alter:
+- element IDs;
+- class names;
+- wrapper depth;
+- optional help text;
+- field order.
+  The adapter should survive nonsemantic change but stop on semantic ambiguity.
+  136.5 Dynamic form tests
+- conditional fields;
+- repeated sections;
+- asynchronous option loading;
+- dependent country/state fields;
+- client-side validation;
+- server-side validation;
+- auto-save;
+- browser back navigation;
+- draft resume;
+- stale page.
+  136.6 Upload tests
+- correct PDF;
+- correct DOCX;
+- oversized file;
+- wrong MIME;
+- renamed executable;
+- corrupt file;
+- duplicate upload;
+- portal filename transformation;
+- upload timeout;
+- parsed résumé mismatch.
+  136.7 Authentication tests
+- already authenticated;
+- logged out;
+- session expires between pages;
+- OAuth redirect;
+- MFA waitpoint;
+- CAPTCHA waitpoint;
+- suspicious-login warning;
+- wrong account;
+- cross-tenant session.
+  No real credentials are used in ordinary CI.
+  136.8 Final-review tests
+- all fields visible;
+- fields omitted from portal review;
+- collapsed sections;
+- transformed salary format;
+- wrong attachment name;
+- changed answer after validation;
+- employer/requisition redirect;
+- validation warning hidden above viewport.
+  136.9 Browser evidence tests
+  Verify:
+- screenshot captured when required;
+- restricted values redacted;
+- DOM minimized;
+- evidence linked to action;
+- retention assigned;
+- no password field captured;
+- correct before/after ordering.
+  136.10 Browser repeated-run qualification
+  For a supported fixture:
+- run at least 100 representative iterations;
+- vary timing within safe bounds;
+- restart browser between subsets;
+- inject transient delays;
+- record success, retries, time, and resource growth.
+  Target:
+  at least 99% successful verified pre-submission completion
+  Critical safety invariants remain 100%.
+
+---
+
 137. Document testing
-137.1 Import tests
-For each format:
- * ordinary document;
- * large document;
- * malformed document;
- * password-protected document;
- * scanned PDF;
- * unusual Unicode;
- * tables;
- * multiple columns;
- * headers and footers;
- * embedded links;
- * tracked changes;
- * hidden text.
-137.2 Extraction tests
-Measure:
- * identity extraction;
- * dates;
- * employer;
- * title;
- * education;
- * GPA;
- * skills;
- * project boundaries;
- * bullet ordering;
- * page association.
-Imported values remain proposals even when extraction accuracy is high.
-137.3 Generation tests
-For every template:
- * one-page candidate;
- * two-page candidate;
- * long name;
- * long employer;
- * Unicode;
- * no projects;
- * many projects;
- * academic publication list;
- * India percentage;
- * US GPA;
- * no address;
- * multiple links.
-137.4 ATS text extraction
-After rendering:
- * extract text through independent parser;
- * compare section order;
- * verify all required content;
- * check no garbling;
- * check dates;
- * check contact data;
- * check headings;
- * check hidden content absent.
-137.5 Visual regression
-Render pages to images and compare:
- * clipping;
- * overflow;
- * spacing;
- * page breaks;
- * missing glyphs;
- * font changes;
- * broken links;
- * empty sections;
- * accidental blank page.
-Use perceptual tolerance for platform rendering differences.
-137.6 Metadata tests
-Verify documents contain no unintended:
- * author identity beyond configured value;
- * local username;
- * file path;
- * revision history;
- * template comments;
- * hidden text;
- * model prompt;
- * employer from another application.
-137.7 Wrong-document tests
-Attempt to attach:
- * another employer’s cover letter;
- * outdated résumé;
- * another persona’s résumé;
- * unapproved version;
- * changed file with same name;
- * unsupported file.
-All must be detected or explicitly reviewed.
-137.8 Content-grounding tests
-Generated documents must contain:
- * only supported facts;
- * correct dates;
- * correct titles;
- * correct metrics;
- * correct employer target;
- * no unresolved placeholders.
-----------------------------------------
+     137.1 Import tests
+     For each format:
+
+- ordinary document;
+- large document;
+- malformed document;
+- password-protected document;
+- scanned PDF;
+- unusual Unicode;
+- tables;
+- multiple columns;
+- headers and footers;
+- embedded links;
+- tracked changes;
+- hidden text.
+  137.2 Extraction tests
+  Measure:
+- identity extraction;
+- dates;
+- employer;
+- title;
+- education;
+- GPA;
+- skills;
+- project boundaries;
+- bullet ordering;
+- page association.
+  Imported values remain proposals even when extraction accuracy is high.
+  137.3 Generation tests
+  For every template:
+- one-page candidate;
+- two-page candidate;
+- long name;
+- long employer;
+- Unicode;
+- no projects;
+- many projects;
+- academic publication list;
+- India percentage;
+- US GPA;
+- no address;
+- multiple links.
+  137.4 ATS text extraction
+  After rendering:
+- extract text through independent parser;
+- compare section order;
+- verify all required content;
+- check no garbling;
+- check dates;
+- check contact data;
+- check headings;
+- check hidden content absent.
+  137.5 Visual regression
+  Render pages to images and compare:
+- clipping;
+- overflow;
+- spacing;
+- page breaks;
+- missing glyphs;
+- font changes;
+- broken links;
+- empty sections;
+- accidental blank page.
+  Use perceptual tolerance for platform rendering differences.
+  137.6 Metadata tests
+  Verify documents contain no unintended:
+- author identity beyond configured value;
+- local username;
+- file path;
+- revision history;
+- template comments;
+- hidden text;
+- model prompt;
+- employer from another application.
+  137.7 Wrong-document tests
+  Attempt to attach:
+- another employer’s cover letter;
+- outdated résumé;
+- another persona’s résumé;
+- unapproved version;
+- changed file with same name;
+- unsupported file.
+  All must be detected or explicitly reviewed.
+  137.8 Content-grounding tests
+  Generated documents must contain:
+- only supported facts;
+- correct dates;
+- correct titles;
+- correct metrics;
+- correct employer target;
+- no unresolved placeholders.
+
+---
+
 138. Model and AI testing
-138.1 Offline provider simulation
-A mock provider should reproduce:
- * valid structured output;
- * malformed JSON;
- * wrong schema;
- * timeout;
- * rate limit;
- * authentication failure;
- * content filter;
- * truncated output;
- * streaming interruption;
- * unsupported claim;
- * prompt-injection compliance.
-138.2 Recorded response tests
-Store synthetic encrypted or repository-safe responses for deterministic regression.
-Each record includes:
- * provider class;
- * model alias;
- * prompt version;
- * response;
- * expected validation;
- * synthetic status.
-138.3 Live model tests
-Live provider tests:
- * use synthetic content;
- * run in protected scheduled workflows;
- * enforce strict cost budget;
- * never include real user profile data;
- * produce trend metrics;
- * do not block ordinary pull requests for provider outages.
-138.4 Grounding suite
-Cases:
- * unsupported skill;
- * inflated title;
- * changed employment date;
- * invented degree;
- * false authorization;
- * fabricated metric;
- * team leadership inflation;
- * professional versus personal project confusion;
- * stale certification;
- * wrong employer name.
-Required result:
-zero accepted unsupported claims
-138.5 Abstention suite
-Cases with:
- * unknown notice period;
- * missing current salary;
- * ambiguous sponsorship;
- * missing graduation result;
- * unclear criminal-history question;
- * unmatched custom question.
-The model must not convert uncertainty into a confident answer.
-138.6 Injection suite
-Sources:
- * job page;
- * application help text;
- * email;
- * uploaded résumé;
- * recruiter message;
- * file name;
- * model-generated prior answer.
-Expected:
- * untrusted instruction ignored;
- * no capability expansion;
- * no secret request;
- * no unrelated navigation;
- * security event where appropriate.
-138.7 Repeated-run stability
-For probabilistic tasks:
- * at least 20 runs during development;
- * at least 100 runs for release-critical configurations;
- * record pass rate;
- * record variance;
- * record cost;
- * record output disagreement.
-138.8 Model-routing tests
- * deterministic method selected when sufficient;
- * local-only data remains local;
- * budget fallback;
- * provider outage fallback;
- * context-size fallback;
- * high-risk task uses qualified model;
- * no fallback to disallowed provider.
-138.9 Model-drift tests
-Scheduled synthetic benchmark:
- * compare current model alias with prior baseline;
- * identify schema changes;
- * identify grounding changes;
- * identify latency and cost shifts;
- * suspend affected task route on critical regression.
-----------------------------------------
+     138.1 Offline provider simulation
+     A mock provider should reproduce:
+
+- valid structured output;
+- malformed JSON;
+- wrong schema;
+- timeout;
+- rate limit;
+- authentication failure;
+- content filter;
+- truncated output;
+- streaming interruption;
+- unsupported claim;
+- prompt-injection compliance.
+  138.2 Recorded response tests
+  Store synthetic encrypted or repository-safe responses for deterministic regression.
+  Each record includes:
+- provider class;
+- model alias;
+- prompt version;
+- response;
+- expected validation;
+- synthetic status.
+  138.3 Live model tests
+  Live provider tests:
+- use synthetic content;
+- run in protected scheduled workflows;
+- enforce strict cost budget;
+- never include real user profile data;
+- produce trend metrics;
+- do not block ordinary pull requests for provider outages.
+  138.4 Grounding suite
+  Cases:
+- unsupported skill;
+- inflated title;
+- changed employment date;
+- invented degree;
+- false authorization;
+- fabricated metric;
+- team leadership inflation;
+- professional versus personal project confusion;
+- stale certification;
+- wrong employer name.
+  Required result:
+  zero accepted unsupported claims
+  138.5 Abstention suite
+  Cases with:
+- unknown notice period;
+- missing current salary;
+- ambiguous sponsorship;
+- missing graduation result;
+- unclear criminal-history question;
+- unmatched custom question.
+  The model must not convert uncertainty into a confident answer.
+  138.6 Injection suite
+  Sources:
+- job page;
+- application help text;
+- email;
+- uploaded résumé;
+- recruiter message;
+- file name;
+- model-generated prior answer.
+  Expected:
+- untrusted instruction ignored;
+- no capability expansion;
+- no secret request;
+- no unrelated navigation;
+- security event where appropriate.
+  138.7 Repeated-run stability
+  For probabilistic tasks:
+- at least 20 runs during development;
+- at least 100 runs for release-critical configurations;
+- record pass rate;
+- record variance;
+- record cost;
+- record output disagreement.
+  138.8 Model-routing tests
+- deterministic method selected when sufficient;
+- local-only data remains local;
+- budget fallback;
+- provider outage fallback;
+- context-size fallback;
+- high-risk task uses qualified model;
+- no fallback to disallowed provider.
+  138.9 Model-drift tests
+  Scheduled synthetic benchmark:
+- compare current model alias with prior baseline;
+- identify schema changes;
+- identify grounding changes;
+- identify latency and cost shifts;
+- suspend affected task route on critical regression.
+
+---
+
 139. Security testing
-139.1 Local API tests
- * unauthenticated request;
- * wrong token;
- * expired token;
- * CSRF;
- * malicious origin;
- * wildcard origin;
- * forged host;
- * DNS rebinding;
- * oversized body;
- * malformed JSON;
- * path traversal;
- * unauthorized artifact;
- * rate-limit exhaustion.
-139.2 Authorization tests
- * GUI token used as extension token;
- * extension requests restricted profile;
- * adapter requests undeclared category;
- * model worker requests secret;
- * remote command requests local policy change;
- * revoked device sends command;
- * ordinary user operation requests administrator capability.
-139.3 Secret tests
- * API key in environment;
- * API key in vault;
- * log redaction;
- * exception trace;
- * diagnostic bundle;
- * process listing;
- * shell history;
- * crash report;
- * screenshot;
- * database dump.
-No secret may appear outside approved storage.
-139.4 Encryption tests
- * correct key;
- * wrong key;
- * corrupt nonce;
- * corrupt ciphertext;
- * changed associated data;
- * old key version;
- * interrupted key rotation;
- * missing vault;
- * locked vault;
- * backup restore;
- * cryptographic deletion.
-139.5 File tests
- * path traversal;
- * symlink attack;
- * hard-link attack;
- * race during temporary file creation;
- * executable masquerading as PDF;
- * oversized decompression;
- * malicious archive;
- * macro-enabled document;
- * unexpected network reference;
- * local path leakage.
-139.6 Browser security tests
- * malicious portal tries loopback API;
- * page attempts file URL;
- * page requests arbitrary upload;
- * unknown redirect;
- * TLS error;
- * hidden submit control;
- * deceptive button label;
- * prompt injection;
- * cross-origin frame;
- * downloaded executable.
-139.7 Extension tests
- * unpaired extension;
- * revoked token;
- * unrelated active tab;
- * missing user activation;
- * hostile page messages;
- * permission escalation;
- * replayed pairing code;
- * oversized page content.
-139.8 Hosted-relay tests
- * forged device;
- * replayed command;
- * expired command;
- * altered ciphertext;
- * revoked device;
- * server returns malicious command;
- * metadata leakage;
- * unauthorized ciphertext access;
- * account recovery without recovery key;
- * multi-device conflict.
-139.9 Update tests
- * unsigned manifest;
- * altered package;
- * wrong platform;
- * downgrade attack;
- * expired signature;
- * compromised adapter permission expansion;
- * interrupted update;
- * rollback;
- * migration incompatibility.
-139.10 Dependency and supply-chain tests
- * known vulnerable dependency;
- * unpinned action;
- * incompatible license;
- * package hash mismatch;
- * unexpected install script;
- * unsigned adapter;
- * typosquatted package simulation.
-139.11 Security acceptance
-No unresolved:
- * critical vulnerability;
- * high-severity vulnerability;
- * authorization bypass;
- * secret leakage;
- * unauthenticated local mutation;
- * unsigned update path;
- * submission-gate bypass.
-Moderate findings require explicit risk acceptance and scheduled remediation.
-----------------------------------------
+     139.1 Local API tests
+
+- unauthenticated request;
+- wrong token;
+- expired token;
+- CSRF;
+- malicious origin;
+- wildcard origin;
+- forged host;
+- DNS rebinding;
+- oversized body;
+- malformed JSON;
+- path traversal;
+- unauthorized artifact;
+- rate-limit exhaustion.
+  139.2 Authorization tests
+- GUI token used as extension token;
+- extension requests restricted profile;
+- adapter requests undeclared category;
+- model worker requests secret;
+- remote command requests local policy change;
+- revoked device sends command;
+- ordinary user operation requests administrator capability.
+  139.3 Secret tests
+- API key in environment;
+- API key in vault;
+- log redaction;
+- exception trace;
+- diagnostic bundle;
+- process listing;
+- shell history;
+- crash report;
+- screenshot;
+- database dump.
+  No secret may appear outside approved storage.
+  139.4 Encryption tests
+- correct key;
+- wrong key;
+- corrupt nonce;
+- corrupt ciphertext;
+- changed associated data;
+- old key version;
+- interrupted key rotation;
+- missing vault;
+- locked vault;
+- backup restore;
+- cryptographic deletion.
+  139.5 File tests
+- path traversal;
+- symlink attack;
+- hard-link attack;
+- race during temporary file creation;
+- executable masquerading as PDF;
+- oversized decompression;
+- malicious archive;
+- macro-enabled document;
+- unexpected network reference;
+- local path leakage.
+  139.6 Browser security tests
+- malicious portal tries loopback API;
+- page attempts file URL;
+- page requests arbitrary upload;
+- unknown redirect;
+- TLS error;
+- hidden submit control;
+- deceptive button label;
+- prompt injection;
+- cross-origin frame;
+- downloaded executable.
+  139.7 Extension tests
+- unpaired extension;
+- revoked token;
+- unrelated active tab;
+- missing user activation;
+- hostile page messages;
+- permission escalation;
+- replayed pairing code;
+- oversized page content.
+  139.8 Hosted-relay tests
+- forged device;
+- replayed command;
+- expired command;
+- altered ciphertext;
+- revoked device;
+- server returns malicious command;
+- metadata leakage;
+- unauthorized ciphertext access;
+- account recovery without recovery key;
+- multi-device conflict.
+  139.9 Update tests
+- unsigned manifest;
+- altered package;
+- wrong platform;
+- downgrade attack;
+- expired signature;
+- compromised adapter permission expansion;
+- interrupted update;
+- rollback;
+- migration incompatibility.
+  139.10 Dependency and supply-chain tests
+- known vulnerable dependency;
+- unpinned action;
+- incompatible license;
+- package hash mismatch;
+- unexpected install script;
+- unsigned adapter;
+- typosquatted package simulation.
+  139.11 Security acceptance
+  No unresolved:
+- critical vulnerability;
+- high-severity vulnerability;
+- authorization bypass;
+- secret leakage;
+- unauthenticated local mutation;
+- unsigned update path;
+- submission-gate bypass.
+  Moderate findings require explicit risk acceptance and scheduled remediation.
+
+---
+
 140. Privacy testing
-140.1 Data-flow verification
-For each workflow, assert:
- * expected data categories;
- * recipients;
- * storage;
- * retention;
- * model routing;
- * disclosure event;
- * deletion path.
-140.2 Cloud minimization tests
- * unrelated profile facts excluded;
- * restricted fields excluded by default;
- * credentials excluded;
- * only relevant job excerpt included;
- * provider policy checked;
- * context manifest accurate.
-140.3 Retention tests
-Advance synthetic clock and verify:
- * raw model traces expire;
- * screenshots expire;
- * promoted status event remains;
- * active hold prevents deletion;
- * expired hold releases data;
- * deletion failure is visible.
-140.4 Export tests
- * complete structured export;
- * secrets excluded;
- * restricted fields included only when selected;
- * provenance retained;
- * readable manifest;
- * correct document references;
- * no stale temporary files.
-140.5 Full deletion tests
-Verify removal from:
- * database;
- * artifacts;
- * embeddings;
- * caches;
- * search index;
- * browser profile if selected;
- * hosted ciphertext;
- * queued events;
- * local backups according to policy.
-140.6 Consent tests
- * consent absent;
- * consent granted;
- * consent expired;
- * consent withdrawn;
- * provider changed;
- * notice version changed;
- * data category broadened;
- * user decline.
-140.7 Telemetry tests
-With telemetry disabled:
- * no telemetry network request;
- * no queued telemetry;
- * no crash upload;
- * no hidden analytics SDK operation.
-With opt-in:
- * only declared fields;
- * no PII;
- * withdrawal stops future events;
- * retention applied.
-140.8 Cross-application leakage
-Prepare two applications with distinct synthetic employers.
-Assert:
- * no employer-name crossover;
- * no document crossover;
- * no answer crossover outside approved scope;
- * no screenshot crossover;
- * no model-context crossover;
- * no application-ID crossover.
-140.9 Sensitive-attribute separation
-Assert demographics cannot influence:
- * eligibility except where explicitly legally relevant and user-directed;
- * match score;
- * document selection;
- * résumé wording;
- * employer ranking;
- * model routing except privacy controls.
-----------------------------------------
+     140.1 Data-flow verification
+     For each workflow, assert:
+
+- expected data categories;
+- recipients;
+- storage;
+- retention;
+- model routing;
+- disclosure event;
+- deletion path.
+  140.2 Cloud minimization tests
+- unrelated profile facts excluded;
+- restricted fields excluded by default;
+- credentials excluded;
+- only relevant job excerpt included;
+- provider policy checked;
+- context manifest accurate.
+  140.3 Retention tests
+  Advance synthetic clock and verify:
+- raw model traces expire;
+- screenshots expire;
+- promoted status event remains;
+- active hold prevents deletion;
+- expired hold releases data;
+- deletion failure is visible.
+  140.4 Export tests
+- complete structured export;
+- secrets excluded;
+- restricted fields included only when selected;
+- provenance retained;
+- readable manifest;
+- correct document references;
+- no stale temporary files.
+  140.5 Full deletion tests
+  Verify removal from:
+- database;
+- artifacts;
+- embeddings;
+- caches;
+- search index;
+- browser profile if selected;
+- hosted ciphertext;
+- queued events;
+- local backups according to policy.
+  140.6 Consent tests
+- consent absent;
+- consent granted;
+- consent expired;
+- consent withdrawn;
+- provider changed;
+- notice version changed;
+- data category broadened;
+- user decline.
+  140.7 Telemetry tests
+  With telemetry disabled:
+- no telemetry network request;
+- no queued telemetry;
+- no crash upload;
+- no hidden analytics SDK operation.
+  With opt-in:
+- only declared fields;
+- no PII;
+- withdrawal stops future events;
+- retention applied.
+  140.8 Cross-application leakage
+  Prepare two applications with distinct synthetic employers.
+  Assert:
+- no employer-name crossover;
+- no document crossover;
+- no answer crossover outside approved scope;
+- no screenshot crossover;
+- no model-context crossover;
+- no application-ID crossover.
+  140.9 Sensitive-attribute separation
+  Assert demographics cannot influence:
+- eligibility except where explicitly legally relevant and user-directed;
+- match score;
+- document selection;
+- résumé wording;
+- employer ranking;
+- model routing except privacy controls.
+
+---
+
 141. Accessibility testing
-141.1 Automated checks
-Run on:
- * onboarding;
- * home;
- * jobs;
- * application workspace;
- * profile;
- * document review;
- * final review;
- * settings;
- * deletion;
- * incidents.
-141.2 Keyboard scenarios
-Complete without mouse:
- 1. initialize profile;
- 2. add a job;
- 3. inspect match;
- 4. answer clarification;
- 5. approve document;
- 6. review application;
- 7. pause workflow;
- 8. export data;
- 9. delete a sensitive fact.
-141.3 Screen-reader scenarios
-Verify:
- * headings;
- * live updates;
- * progress;
- * field errors;
- * table relationships;
- * masked values;
- * dialogs;
- * final review;
- * timeline;
- * browser takeover instructions.
-141.4 Zoom and reflow
-At 200% zoom:
- * no lost action;
- * no horizontal scrolling for ordinary content where avoidable;
- * dialogs remain usable;
- * tables provide alternative compact layouts;
- * final review remains readable.
-141.5 Color and contrast
-Test:
- * light;
- * dark;
- * high contrast;
- * color-vision deficiencies;
- * disabled state;
- * warning severity;
- * selected rows;
- * focus.
-141.6 Motion tests
-With reduced motion:
- * animations disabled or minimized;
- * progress still understandable;
- * no focus loss;
- * no delayed controls dependent on transitions.
-141.7 Accessibility defect severity
-Critical:
- * cannot complete primary workflow;
- * inaccessible approval;
- * inaccessible security or deletion control;
- * keyboard trap;
- * screen reader cannot identify required field.
-High:
- * substantial loss of understanding;
- * incorrect focus order affecting completion;
- * contrast failure in critical status.
-----------------------------------------
+     141.1 Automated checks
+     Run on:
+
+- onboarding;
+- home;
+- jobs;
+- application workspace;
+- profile;
+- document review;
+- final review;
+- settings;
+- deletion;
+- incidents.
+  141.2 Keyboard scenarios
+  Complete without mouse:
+
+1.  initialize profile;
+2.  add a job;
+3.  inspect match;
+4.  answer clarification;
+5.  approve document;
+6.  review application;
+7.  pause workflow;
+8.  export data;
+9.  delete a sensitive fact.
+    141.3 Screen-reader scenarios
+    Verify:
+
+- headings;
+- live updates;
+- progress;
+- field errors;
+- table relationships;
+- masked values;
+- dialogs;
+- final review;
+- timeline;
+- browser takeover instructions.
+  141.4 Zoom and reflow
+  At 200% zoom:
+- no lost action;
+- no horizontal scrolling for ordinary content where avoidable;
+- dialogs remain usable;
+- tables provide alternative compact layouts;
+- final review remains readable.
+  141.5 Color and contrast
+  Test:
+- light;
+- dark;
+- high contrast;
+- color-vision deficiencies;
+- disabled state;
+- warning severity;
+- selected rows;
+- focus.
+  141.6 Motion tests
+  With reduced motion:
+- animations disabled or minimized;
+- progress still understandable;
+- no focus loss;
+- no delayed controls dependent on transitions.
+  141.7 Accessibility defect severity
+  Critical:
+- cannot complete primary workflow;
+- inaccessible approval;
+- inaccessible security or deletion control;
+- keyboard trap;
+- screen reader cannot identify required field.
+  High:
+- substantial loss of understanding;
+- incorrect focus order affecting completion;
+- contrast failure in critical status.
+
+---
+
 142. Performance and endurance testing
-142.1 Benchmarks
-Benchmark:
- * startup;
- * profile load;
- * job ingestion;
- * score calculation;
- * search;
- * document rendering;
- * encryption;
- * artifact retrieval;
- * browser workflow;
- * GUI list rendering;
- * scheduler idle use.
-142.2 Dataset scales
- * 100 jobs;
- * 1,000 jobs;
- * 10,000 jobs;
- * 100,000 events;
- * 1,000 application records;
- * 10 GB optional artifact corpus.
-The release target is personal scale, but pathological degradation should be understood.
-142.3 Memory-leak tests
-Repeat:
- * open and close application workspace;
- * render documents;
- * launch browser workflow;
- * capture evidence;
- * model request;
- * email scan.
-Measure retained memory after garbage collection and safe worker restart.
-142.4 Browser endurance
-Run repeated mock applications for:
- * 24 hours in development;
- * 72 hours for release candidate;
- * seven days before production release.
-Inject:
- * browser restart;
- * network delay;
- * session expiration;
- * device sleep;
- * low disk;
- * clock change;
- * model outage.
-142.5 Database endurance
- * sustained event writes;
- * WAL growth;
- * checkpointing;
- * concurrent read and write;
- * backup during activity;
- * retention sweep;
- * index rebuild;
- * interrupted process.
-142.6 Low-end reference tests
-Measure on the defined 8 GB Windows device:
- * startup;
- * idle memory;
- * browser plus GUI;
- * profile import;
- * PDF render;
- * lexical search;
- * optional embedding performance;
- * thermal and battery behavior where practical.
-142.7 Package-size regression
-Set CI thresholds with an approved override process.
-Every significant increase must explain:
- * dependency;
- * user benefit;
- * alternatives;
- * optionalization feasibility.
-142.8 Performance acceptance
-Release must meet the budgets in Section 125 or document a consciously revised target backed by measurements.
-----------------------------------------
+     142.1 Benchmarks
+     Benchmark:
+
+- startup;
+- profile load;
+- job ingestion;
+- score calculation;
+- search;
+- document rendering;
+- encryption;
+- artifact retrieval;
+- browser workflow;
+- GUI list rendering;
+- scheduler idle use.
+  142.2 Dataset scales
+- 100 jobs;
+- 1,000 jobs;
+- 10,000 jobs;
+- 100,000 events;
+- 1,000 application records;
+- 10 GB optional artifact corpus.
+  The release target is personal scale, but pathological degradation should be understood.
+  142.3 Memory-leak tests
+  Repeat:
+- open and close application workspace;
+- render documents;
+- launch browser workflow;
+- capture evidence;
+- model request;
+- email scan.
+  Measure retained memory after garbage collection and safe worker restart.
+  142.4 Browser endurance
+  Run repeated mock applications for:
+- 24 hours in development;
+- 72 hours for release candidate;
+- seven days before production release.
+  Inject:
+- browser restart;
+- network delay;
+- session expiration;
+- device sleep;
+- low disk;
+- clock change;
+- model outage.
+  142.5 Database endurance
+- sustained event writes;
+- WAL growth;
+- checkpointing;
+- concurrent read and write;
+- backup during activity;
+- retention sweep;
+- index rebuild;
+- interrupted process.
+  142.6 Low-end reference tests
+  Measure on the defined 8 GB Windows device:
+- startup;
+- idle memory;
+- browser plus GUI;
+- profile import;
+- PDF render;
+- lexical search;
+- optional embedding performance;
+- thermal and battery behavior where practical.
+  142.7 Package-size regression
+  Set CI thresholds with an approved override process.
+  Every significant increase must explain:
+- dependency;
+- user benefit;
+- alternatives;
+- optionalization feasibility.
+  142.8 Performance acceptance
+  Release must meet the budgets in Section 125 or document a consciously revised target backed by measurements.
+
+---
+
 143. Failure-injection testing
-143.1 Purpose
-Reliability claims require testing failures at every phase, not waiting for accidental production incidents.
-143.2 Injection points
- * before task claim;
- * after task claim;
- * before checkpoint;
- * after checkpoint;
- * before browser action;
- * after browser action but before verification;
- * during upload;
- * during model stream;
- * during database transaction;
- * during encryption;
- * during backup;
- * during migration;
- * during remote command delivery.
-143.3 Failure types
- * process termination;
- * exception;
- * timeout;
- * network disconnect;
- * malformed response;
- * duplicate response;
- * delayed response;
- * disk full;
- * permission denied;
- * corrupted file;
- * clock jump;
- * provider rate limit;
- * portal redirect;
- * stale session;
- * invalid approval.
-143.4 Expected outcomes
-For each injection:
- * no invariant violation;
- * clear state;
- * preserved checkpoint;
- * no blind duplicate effect;
- * bounded retries;
- * visible error;
- * recoverable or quarantined task;
- * evidence retained.
-143.5 Chaos scope
-Chaos testing must remain inside:
- * local simulations;
- * test accounts where permitted;
- * isolated infrastructure.
-Do not generate disruptive traffic against real portals.
-----------------------------------------
+     143.1 Purpose
+     Reliability claims require testing failures at every phase, not waiting for accidental production incidents.
+     143.2 Injection points
+
+- before task claim;
+- after task claim;
+- before checkpoint;
+- after checkpoint;
+- before browser action;
+- after browser action but before verification;
+- during upload;
+- during model stream;
+- during database transaction;
+- during encryption;
+- during backup;
+- during migration;
+- during remote command delivery.
+  143.3 Failure types
+- process termination;
+- exception;
+- timeout;
+- network disconnect;
+- malformed response;
+- duplicate response;
+- delayed response;
+- disk full;
+- permission denied;
+- corrupted file;
+- clock jump;
+- provider rate limit;
+- portal redirect;
+- stale session;
+- invalid approval.
+  143.4 Expected outcomes
+  For each injection:
+- no invariant violation;
+- clear state;
+- preserved checkpoint;
+- no blind duplicate effect;
+- bounded retries;
+- visible error;
+- recoverable or quarantined task;
+- evidence retained.
+  143.5 Chaos scope
+  Chaos testing must remain inside:
+- local simulations;
+- test accounts where permitted;
+- isolated infrastructure.
+  Do not generate disruptive traffic against real portals.
+
+---
+
 144. Mutation testing
-144.1 Critical targets
-Mutation testing is required for:
- * source precedence;
- * unknown-answer handling;
- * duplicate blocking;
- * match threshold;
- * hard eligibility gates;
- * approval invalidation;
- * sensitive-field policy;
- * submission disablement;
- * effect reconciliation;
- * retention and deletion;
- * adapter permission checks.
-144.2 Mutation examples
- * reverse approval condition;
- * change >= 50 to > 50;
- * remove duplicate check;
- * treat unknown as not applicable;
- * skip sensitivity rule;
- * allow expired approval;
- * retry possibly committed effect;
- * omit attachment-hash check;
- * allow unsupported adapter mode.
-Tests must kill these mutations.
-144.3 Mutation threshold
-For critical policy modules:
-target mutation score: at least 95%
-Surviving mutations require review, not automatic exclusion.
-----------------------------------------
+     144.1 Critical targets
+     Mutation testing is required for:
+
+- source precedence;
+- unknown-answer handling;
+- duplicate blocking;
+- match threshold;
+- hard eligibility gates;
+- approval invalidation;
+- sensitive-field policy;
+- submission disablement;
+- effect reconciliation;
+- retention and deletion;
+- adapter permission checks.
+  144.2 Mutation examples
+- reverse approval condition;
+- change >= 50 to > 50;
+- remove duplicate check;
+- treat unknown as not applicable;
+- skip sensitivity rule;
+- allow expired approval;
+- retry possibly committed effect;
+- omit attachment-hash check;
+- allow unsupported adapter mode.
+  Tests must kill these mutations.
+  144.3 Mutation threshold
+  For critical policy modules:
+  target mutation score: at least 95%
+  Surviving mutations require review, not automatic exclusion.
+
+---
+
 145. Live portal compatibility testing
-145.1 Boundary
-Live portal tests validate compatibility. They must not:
- * overwhelm portals;
- * submit real applications in automated tests;
- * bypass controls;
- * use public CI secrets;
- * create deceptive test accounts;
- * violate current portal policy.
-145.2 Qualification hierarchy
- 1. synthetic local portal;
- 2. sanitized fixtures;
- 3. static live read-only check;
- 4. authenticated nonmutating check;
- 5. draft or pre-submission check where permitted;
- 6. user-supervised real workflow;
- 7. supported status after repeated evidence.
-145.3 Accounts
-Use dedicated test accounts only when permitted.
-Otherwise:
- * maintainer-owned authorized account;
- * no submission;
- * no false profile;
- * minimal data;
- * manual approval;
- * strict cleanup.
-145.4 Protected environment
-Live tests require:
- * protected GitHub environment or local secure runner;
- * manual approval;
- * no fork trigger;
- * no untrusted code checkout with secrets;
- * short-lived credentials where possible;
- * log redaction;
- * restricted artifact retention;
- * one portal at a time.
-145.5 Schedule
-Recommended:
- * read-only compatibility canary: weekly;
- * authenticated pre-submission fixture: monthly where permitted;
- * before adapter release;
-----------------------------
+     145.1 Boundary
+     Live portal tests validate compatibility. They must not:
+
+- overwhelm portals;
+- submit real applications in automated tests;
+- bypass controls;
+- use public CI secrets;
+- create deceptive test accounts;
+- violate current portal policy.
+  145.2 Qualification hierarchy
+
+1.  synthetic local portal;
+2.  sanitized fixtures;
+3.  static live read-only check;
+4.  authenticated nonmutating check;
+5.  draft or pre-submission check where permitted;
+6.  user-supervised real workflow;
+7.  supported status after repeated evidence.
+    145.3 Accounts
+    Use dedicated test accounts only when permitted.
+    Otherwise:
+
+- maintainer-owned authorized account;
+- no submission;
+- no false profile;
+- minimal data;
+- manual approval;
+- strict cleanup.
+  145.4 Protected environment
+  Live tests require:
+- protected GitHub environment or local secure runner;
+- manual approval;
+- no fork trigger;
+- no untrusted code checkout with secrets;
+- short-lived credentials where possible;
+- log redaction;
+- restricted artifact retention;
+- one portal at a time.
+  145.5 Schedule
+  Recommended:
+- read-only compatibility canary: weekly;
+- authenticated pre-submission fixture: monthly where permitted;
+- before adapter release;
+
+---
+
 145. Live portal compatibility testing
-145.5 Schedule
-Recommended cadence:
- * read-only compatibility canary: weekly;
- * authenticated pre-submission check: monthly where permitted;
- * before every adapter release;
- * immediately after a detected portal change;
- * immediately after a browser-engine upgrade affecting an adapter;
- * immediately after a user reports a material mismatch;
- * before promoting an adapter from preview to supported.
-Scheduling must remain conservative. A missed compatibility run must mark validation stale rather than trigger aggressive catch-up traffic.
-145.6 Live-test scope
-A live test should exercise only the minimum path necessary to establish compatibility.
-Possible scope:
- * recognize URL;
- * identify employer and requisition;
- * extract public job information;
- * determine authentication state;
- * open application workflow;
- * inspect form schema;
- * verify document-upload control;
- * navigate to final review using a permitted test or maintainer workflow;
- * stop before submission;
- * close or delete a saved draft when safely supported.
-A test must not enter false candidate information merely to reach later pages. If realistic data is required, use an authorized maintainer-owned profile or a portal-approved test facility.
-145.7 Live-test record
-id: live_test_...
-portal_id: workday
-adapter_version: 0.5.2
-region: IN
-browser:
- engine: chromium
- version: null
-account_type: maintainer_owned
-authorization_basis_ref: source_...
-scope:
- - authentication_detection
- - form_schema
- - final_review
-submission_attempted: false
-started_at: null
-completed_at: null
-result: passed
-warnings: []
-evidence_refs: []
-reviewer: null
-next_review_due_at: null
-145.8 Redaction
-Before retaining evidence:
- * remove candidate name;
- * remove email;
- * remove phone;
- * remove address;
- * remove session identifiers;
- * remove cookies;
- * remove tokens;
- * remove employer-confidential custom questions where necessary;
- * minimize full-page content;
- * retain only structural evidence needed for compatibility.
-145.9 Live-test failure
-On failure:
- 1. stop;
- 2. do not retry automatically;
- 3. preserve minimal evidence;
- 4. open compatibility incident;
- 5. downgrade affected adapter capability;
- 6. notify maintainers;
- 7. update support matrix;
- 8. reproduce through a fixture;
- 9. repair;
- 10. rerun qualification.
-145.10 Portal warning
-If a live test triggers:
- * account warning;
- * CAPTCHA escalation;
- * suspicious-activity notice;
- * temporary restriction;
- * terms warning;
- * identity-verification request,
-then:
- * suspend the relevant test and adapter mode;
- * prohibit automatic retries;
- * notify the account owner;
- * review portal policy;
- * assess whether the integration should remain available;
- * record the event as a security and compatibility incident.
-145.11 Live-test evidence retention
-Recommended defaults:
-Evidence Retention Structured pass/fail result 365 days Redacted compatibility metadata 365 days Screenshots 28 days Minimized DOM evidence 28 days Authentication diagnostics 7–28 days Raw network traces Disabled by default; maximum 7 days if approved
-145.12 Graduation to supported
-A live adapter may be called supported only when:
- * current policy review permits the claimed mode;
- * fixture suite passes;
- * repeated-run target passes;
- * live qualification passes;
- * no unresolved high-risk warning exists;
- * final-review verification passes;
- * authentication waitpoints work;
- * recovery after restart works;
- * known limitations are published;
- * a maintainer owns compatibility;
- * kill switch is operational.
-145.13 Support claim precision
-Do not state:
+     145.5 Schedule
+     Recommended cadence:
+
+- read-only compatibility canary: weekly;
+- authenticated pre-submission check: monthly where permitted;
+- before every adapter release;
+- immediately after a detected portal change;
+- immediately after a browser-engine upgrade affecting an adapter;
+- immediately after a user reports a material mismatch;
+- before promoting an adapter from preview to supported.
+  Scheduling must remain conservative. A missed compatibility run must mark validation stale rather than trigger aggressive catch-up traffic.
+  145.6 Live-test scope
+  A live test should exercise only the minimum path necessary to establish compatibility.
+  Possible scope:
+- recognize URL;
+- identify employer and requisition;
+- extract public job information;
+- determine authentication state;
+- open application workflow;
+- inspect form schema;
+- verify document-upload control;
+- navigate to final review using a permitted test or maintainer workflow;
+- stop before submission;
+- close or delete a saved draft when safely supported.
+  A test must not enter false candidate information merely to reach later pages. If realistic data is required, use an authorized maintainer-owned profile or a portal-approved test facility.
+  145.7 Live-test record
+  id: live_test_...
+  portal_id: workday
+  adapter_version: 0.5.2
+  region: IN
+  browser:
+  engine: chromium
+  version: null
+  account_type: maintainer_owned
+  authorization_basis_ref: source_...
+  scope:
+
+* authentication_detection
+* form_schema
+* final_review
+  submission_attempted: false
+  started_at: null
+  completed_at: null
+  result: passed
+  warnings: []
+  evidence_refs: []
+  reviewer: null
+  next_review_due_at: null
+  145.8 Redaction
+  Before retaining evidence:
+
+- remove candidate name;
+- remove email;
+- remove phone;
+- remove address;
+- remove session identifiers;
+- remove cookies;
+- remove tokens;
+- remove employer-confidential custom questions where necessary;
+- minimize full-page content;
+- retain only structural evidence needed for compatibility.
+  145.9 Live-test failure
+  On failure:
+
+1.  stop;
+2.  do not retry automatically;
+3.  preserve minimal evidence;
+4.  open compatibility incident;
+5.  downgrade affected adapter capability;
+6.  notify maintainers;
+7.  update support matrix;
+8.  reproduce through a fixture;
+9.  repair;
+10. rerun qualification.
+    145.10 Portal warning
+    If a live test triggers:
+
+- account warning;
+- CAPTCHA escalation;
+- suspicious-activity notice;
+- temporary restriction;
+- terms warning;
+- identity-verification request,
+  then:
+- suspend the relevant test and adapter mode;
+- prohibit automatic retries;
+- notify the account owner;
+- review portal policy;
+- assess whether the integration should remain available;
+- record the event as a security and compatibility incident.
+  145.11 Live-test evidence retention
+  Recommended defaults:
+  Evidence Retention Structured pass/fail result 365 days Redacted compatibility metadata 365 days Screenshots 28 days Minimized DOM evidence 28 days Authentication diagnostics 7–28 days Raw network traces Disabled by default; maximum 7 days if approved
+  145.12 Graduation to supported
+  A live adapter may be called supported only when:
+- current policy review permits the claimed mode;
+- fixture suite passes;
+- repeated-run target passes;
+- live qualification passes;
+- no unresolved high-risk warning exists;
+- final-review verification passes;
+- authentication waitpoints work;
+- recovery after restart works;
+- known limitations are published;
+- a maintainer owns compatibility;
+- kill switch is operational.
+  145.13 Support claim precision
+  Do not state:
+
 > “Workday is supported.”
-State:
+> State:
 > “Workday-hosted application assistance is supported for the listed tested workflow variants, regions, browser versions, and adapter version, up to the pre-submission review boundary.”
-Compatibility claims must be narrowly accurate.
-----------------------------------------
+> Compatibility claims must be narrowly accurate.
+
+---
+
 146. Coverage policy
-146.1 Purpose
-Coverage is a guardrail, not proof of correctness.
-The project uses:
- * branch coverage;
- * decision-rule coverage;
- * mutation coverage;
- * scenario coverage;
- * adapter contract coverage;
- * state-transition coverage;
- * repeated-run reliability;
- * security and privacy invariant coverage.
-146.2 Coverage targets
-Component Target Profile validation and provenance At least 95% branch coverage Eligibility engine At least 95% branch coverage Policy and approval engine 100% decision-rule coverage Submission and effect gate 100% branch coverage Duplicate prevention 100% branch coverage Restricted-data routing At least 95% branch coverage Encryption and key lifecycle At least 95% branch coverage plus dedicated security tests Core domain layer At least 90% branch coverage Workflow state transitions 100% legal and illegal transition coverage Portal adapters Contract and scenario matrix rather than one line percentage GUI Behavior and accessibility coverage Repository overall At least 85% line coverage as a secondary guardrail
-146.3 Modified-code coverage
-New or materially changed critical code should ordinarily achieve:
-at least 95% branch coverage
-Noncritical generated code, declarations, and platform glue may use documented exclusions.
-146.4 Coverage exclusions
-Exclusions require justification.
-Potentially acceptable:
- * unreachable platform guard proven by build matrix;
- * generated schema code;
- * defensive branch requiring unavailable hardware;
- * third-party code;
- * simple declarative UI metadata.
-Unacceptable exclusions:
- * approval decisions;
- * submission gate;
- * secret access;
- * duplicate detection;
- * sensitive-data routing;
- * effect reconciliation;
- * deletion;
- * authentication.
-146.5 Scenario coverage
-For every supported adapter, maintain a matrix across:
- * region;
- * login mode;
- * account state;
- * job type;
- * form structure;
- * document type;
- * sensitive questions;
- * session expiration;
- * final review;
- * recovery.
-146.6 Coverage trend
-Protected branches must not reduce critical-module coverage without explicit review.
-Track:
- * baseline;
- * candidate;
- * changed files;
- * uncovered branches;
- * mutation score;
- * scenario gaps.
-146.7 Coverage artifacts
-CI should publish:
- * HTML report;
- * machine-readable summary;
- * changed-line report;
- * critical-module status;
- * mutation report;
- * scenario matrix.
-Reports must contain no personal data.
-----------------------------------------
+     146.1 Purpose
+     Coverage is a guardrail, not proof of correctness.
+     The project uses:
+
+- branch coverage;
+- decision-rule coverage;
+- mutation coverage;
+- scenario coverage;
+- adapter contract coverage;
+- state-transition coverage;
+- repeated-run reliability;
+- security and privacy invariant coverage.
+  146.2 Coverage targets
+  Component Target Profile validation and provenance At least 95% branch coverage Eligibility engine At least 95% branch coverage Policy and approval engine 100% decision-rule coverage Submission and effect gate 100% branch coverage Duplicate prevention 100% branch coverage Restricted-data routing At least 95% branch coverage Encryption and key lifecycle At least 95% branch coverage plus dedicated security tests Core domain layer At least 90% branch coverage Workflow state transitions 100% legal and illegal transition coverage Portal adapters Contract and scenario matrix rather than one line percentage GUI Behavior and accessibility coverage Repository overall At least 85% line coverage as a secondary guardrail
+  146.3 Modified-code coverage
+  New or materially changed critical code should ordinarily achieve:
+  at least 95% branch coverage
+  Noncritical generated code, declarations, and platform glue may use documented exclusions.
+  146.4 Coverage exclusions
+  Exclusions require justification.
+  Potentially acceptable:
+- unreachable platform guard proven by build matrix;
+- generated schema code;
+- defensive branch requiring unavailable hardware;
+- third-party code;
+- simple declarative UI metadata.
+  Unacceptable exclusions:
+- approval decisions;
+- submission gate;
+- secret access;
+- duplicate detection;
+- sensitive-data routing;
+- effect reconciliation;
+- deletion;
+- authentication.
+  146.5 Scenario coverage
+  For every supported adapter, maintain a matrix across:
+- region;
+- login mode;
+- account state;
+- job type;
+- form structure;
+- document type;
+- sensitive questions;
+- session expiration;
+- final review;
+- recovery.
+  146.6 Coverage trend
+  Protected branches must not reduce critical-module coverage without explicit review.
+  Track:
+- baseline;
+- candidate;
+- changed files;
+- uncovered branches;
+- mutation score;
+- scenario gaps.
+  146.7 Coverage artifacts
+  CI should publish:
+- HTML report;
+- machine-readable summary;
+- changed-line report;
+- critical-module status;
+- mutation report;
+- scenario matrix.
+  Reports must contain no personal data.
+
+---
+
 147. GitHub Actions architecture
-147.1 Objectives
-GitHub Actions should provide:
- * fast pull-request feedback;
- * deep scheduled testing;
- * cross-platform packaging;
- * security analysis;
- * release provenance;
- * protected live compatibility checks;
- * minimal permissions;
- * reproducible evidence.
-147.2 Workflow classes
-pull request
-├── repository policy
-├── formatting and lint
-├── type checks
-├── unit tests
-├── fast integration
-├── documentation
-└── security baseline
-protected branch
-├── full integration
-├── browser fixtures
-├── document rendering
-├── accessibility
-├── mutation tests
-└── packaging smoke tests
-scheduled
-├── dependency audit
-├── model drift
-├── browser compatibility
-├── portal compatibility
-├── long-running tests
-└── stale research checks
-release
-├── full qualification
-├── reproducible build
-├── signing
-├── SBOM
-├── provenance
-├── publication
-└── post-release smoke tests
-147.3 Workflow files
-Planned workflows:
-.github/workflows/
-├── pr-policy.yml
-├── lint-and-types.yml
-├── unit.yml
-├── integration.yml
-├── browser-fixtures.yml
-├── documents.yml
-├── accessibility.yml
-├── security.yml
-├── privacy.yml
-├── mutation.yml
-├── package-windows.yml
-├── package-linux.yml
-├── package-extension.yml
-├── scheduled-dependencies.yml
-├── scheduled-model-drift.yml
-├── scheduled-browser-compatibility.yml
-├── scheduled-portal-compatibility.yml
-├── scheduled-soak.yml
-├── release-candidate.yml
-├── release.yml
-└── post-release.yml
-The exact split should be simplified if it creates duplicated setup and maintenance.
-147.4 Workflow permissions
-Default:
-permissions:
- contents: read
-Grant additional permissions only at job level.
-Examples:
- * security-events write for approved scanners;
- * packages write for release publication;
- * id-token write for provenance or keyless signing;
- * pull-requests write only for a dedicated trusted reporting job.
-147.5 Fork safety
-Pull requests from forks:
- * receive no secrets;
- * do not run live portal tests;
- * do not sign;
- * do not publish;
- * do not access protected environments;
- * do not execute privileged repository code after manual approval without inspection.
-Avoid unsafe use of pull_request_target.
-147.6 Action pinning
-Third-party actions must be pinned to immutable commit hashes.
-A dependency-update process should:
- * identify new action release;
- * review changes;
- * update hash;
- * run test workflow;
- * record provenance.
-147.7 Concurrency controls
-Use workflow concurrency groups to prevent:
- * two releases for the same tag;
- * overlapping live tests for one portal;
- * multiple signing jobs;
- * concurrent environment migrations;
- * duplicated scheduled soak tests.
-Example:
-concurrency:
- group: portal-live-${{ inputs.portal }}
- cancel-in-progress: false
-147.8 Timeouts
-Every job needs a timeout.
-Indicative values:
-Job Timeout Lint and types 15 minutes Unit tests 20 minutes Integration 30 minutes Browser fixture shard 30 minutes Document tests 30 minutes Security scan 45 minutes Packaging 60 minutes Mutation tests 90 minutes Release qualification 180 minutes Soak controller Explicit long-running environment, not an unbounded job
-147.9 Cache policy
-Cache:
- * package downloads;
- * build artifacts;
- * browser binaries;
- * static analysis databases;
- * compiled dependencies.
-Do not cache:
- * secrets;
- * browser sessions;
- * real profile data;
- * live portal artifacts;
- * decrypted test vaults;
- * signing keys.
-Cache keys must include lock-file hashes and relevant tool versions.
-147.10 Artifact retention
-Artifact Retention Unit and coverage reports 14 days Pull-request browser traces 7 days Security reports 30–90 days Release candidates 30 days Published release artifacts Indefinite Live portal screenshots Maximum 7–28 days, protected SBOM and provenance Indefinite with release Soak-test summaries 90 days
-147.11 Secret use
-Repository secrets should be minimized.
-Prefer:
- * environment-scoped secrets;
- * short-lived OIDC credentials;
- * external signing service;
- * temporary cloud credentials;
- * provider test keys with strict budgets;
- * dedicated test accounts.
-No live secret should be accessible to code from an unreviewed pull request.
-147.12 Environment protection
-Protected environments:
- * portal-compatibility;
- * model-live-tests;
- * release-signing;
- * production-release;
- * hosted-staging;
- * hosted-production.
-Controls:
- * required reviewers;
- * branch restrictions;
- * wait periods where appropriate;
- * environment-specific secrets;
- * audit.
-147.13 Matrix strategy
-Fast pull-request matrix:
- * Windows current;
- * Ubuntu current LTS;
- * supported Python versions as selected;
- * one primary browser.
-Scheduled or release matrix:
- * Windows current and previous supported;
- * Ubuntu current and previous supported LTS;
- * selected browser versions;
- * package install and portable modes;
- * local web and desktop modes.
-Avoid matrices so large that failures become routinely ignored.
-----------------------------------------
+     147.1 Objectives
+     GitHub Actions should provide:
+
+- fast pull-request feedback;
+- deep scheduled testing;
+- cross-platform packaging;
+- security analysis;
+- release provenance;
+- protected live compatibility checks;
+- minimal permissions;
+- reproducible evidence.
+  147.2 Workflow classes
+  pull request
+  ├── repository policy
+  ├── formatting and lint
+  ├── type checks
+  ├── unit tests
+  ├── fast integration
+  ├── documentation
+  └── security baseline
+  protected branch
+  ├── full integration
+  ├── browser fixtures
+  ├── document rendering
+  ├── accessibility
+  ├── mutation tests
+  └── packaging smoke tests
+  scheduled
+  ├── dependency audit
+  ├── model drift
+  ├── browser compatibility
+  ├── portal compatibility
+  ├── long-running tests
+  └── stale research checks
+  release
+  ├── full qualification
+  ├── reproducible build
+  ├── signing
+  ├── SBOM
+  ├── provenance
+  ├── publication
+  └── post-release smoke tests
+  147.3 Workflow files
+  Planned workflows:
+  .github/workflows/
+  ├── pr-policy.yml
+  ├── lint-and-types.yml
+  ├── unit.yml
+  ├── integration.yml
+  ├── browser-fixtures.yml
+  ├── documents.yml
+  ├── accessibility.yml
+  ├── security.yml
+  ├── privacy.yml
+  ├── mutation.yml
+  ├── package-windows.yml
+  ├── package-linux.yml
+  ├── package-extension.yml
+  ├── scheduled-dependencies.yml
+  ├── scheduled-model-drift.yml
+  ├── scheduled-browser-compatibility.yml
+  ├── scheduled-portal-compatibility.yml
+  ├── scheduled-soak.yml
+  ├── release-candidate.yml
+  ├── release.yml
+  └── post-release.yml
+  The exact split should be simplified if it creates duplicated setup and maintenance.
+  147.4 Workflow permissions
+  Default:
+  permissions:
+  contents: read
+  Grant additional permissions only at job level.
+  Examples:
+- security-events write for approved scanners;
+- packages write for release publication;
+- id-token write for provenance or keyless signing;
+- pull-requests write only for a dedicated trusted reporting job.
+  147.5 Fork safety
+  Pull requests from forks:
+- receive no secrets;
+- do not run live portal tests;
+- do not sign;
+- do not publish;
+- do not access protected environments;
+- do not execute privileged repository code after manual approval without inspection.
+  Avoid unsafe use of pull_request_target.
+  147.6 Action pinning
+  Third-party actions must be pinned to immutable commit hashes.
+  A dependency-update process should:
+- identify new action release;
+- review changes;
+- update hash;
+- run test workflow;
+- record provenance.
+  147.7 Concurrency controls
+  Use workflow concurrency groups to prevent:
+- two releases for the same tag;
+- overlapping live tests for one portal;
+- multiple signing jobs;
+- concurrent environment migrations;
+- duplicated scheduled soak tests.
+  Example:
+  concurrency:
+  group: portal-live-${{ inputs.portal }}
+  cancel-in-progress: false
+  147.8 Timeouts
+  Every job needs a timeout.
+  Indicative values:
+  Job Timeout Lint and types 15 minutes Unit tests 20 minutes Integration 30 minutes Browser fixture shard 30 minutes Document tests 30 minutes Security scan 45 minutes Packaging 60 minutes Mutation tests 90 minutes Release qualification 180 minutes Soak controller Explicit long-running environment, not an unbounded job
+  147.9 Cache policy
+  Cache:
+- package downloads;
+- build artifacts;
+- browser binaries;
+- static analysis databases;
+- compiled dependencies.
+  Do not cache:
+- secrets;
+- browser sessions;
+- real profile data;
+- live portal artifacts;
+- decrypted test vaults;
+- signing keys.
+  Cache keys must include lock-file hashes and relevant tool versions.
+  147.10 Artifact retention
+  Artifact Retention Unit and coverage reports 14 days Pull-request browser traces 7 days Security reports 30–90 days Release candidates 30 days Published release artifacts Indefinite Live portal screenshots Maximum 7–28 days, protected SBOM and provenance Indefinite with release Soak-test summaries 90 days
+  147.11 Secret use
+  Repository secrets should be minimized.
+  Prefer:
+- environment-scoped secrets;
+- short-lived OIDC credentials;
+- external signing service;
+- temporary cloud credentials;
+- provider test keys with strict budgets;
+- dedicated test accounts.
+  No live secret should be accessible to code from an unreviewed pull request.
+  147.12 Environment protection
+  Protected environments:
+- portal-compatibility;
+- model-live-tests;
+- release-signing;
+- production-release;
+- hosted-staging;
+- hosted-production.
+  Controls:
+- required reviewers;
+- branch restrictions;
+- wait periods where appropriate;
+- environment-specific secrets;
+- audit.
+  147.13 Matrix strategy
+  Fast pull-request matrix:
+- Windows current;
+- Ubuntu current LTS;
+- supported Python versions as selected;
+- one primary browser.
+  Scheduled or release matrix:
+- Windows current and previous supported;
+- Ubuntu current and previous supported LTS;
+- selected browser versions;
+- package install and portable modes;
+- local web and desktop modes.
+  Avoid matrices so large that failures become routinely ignored.
+
+---
+
 148. Pull-request CI
-148.1 Policy checks
-Validate:
- * DCO sign-off;
- * required pull-request fields;
- * changed high-risk paths;
- * required reviewers;
- * generated files synchronized;
- * changelog requirement;
- * architecture-decision requirement;
- * no forbidden binary or private files.
-148.2 Fast checks
-Target completion:
-under 15 minutes for ordinary pull requests
-Run:
- * formatting;
- * lint;
- * type checks;
- * unit tests;
- * schema validation;
- * documentation links;
- * secret scan;
- * dependency manifest validation;
- * selected integration smoke tests.
-148.3 Path-aware execution
-Use path filters carefully.
-Examples:
- * documentation-only change may skip browser packaging;
- * adapter change must run adapter contracts and browser fixtures;
- * security change must run full security suite;
- * schema change must run migrations;
- * GUI change must run accessibility;
- * workflow change must run state-machine tests.
-A path filter must never suppress a relevant critical check.
-148.4 Required checks
-Protected branches require:
- * policy;
- * lint and types;
- * unit;
- * integration;
- * security baseline;
- * relevant component suite;
- * documentation validation.
-148.5 Flaky-test policy
-A flaky test is a defect.
-When detected:
- 1. identify owner;
- 2. preserve evidence;
- 3. fix promptly;
- 4. quarantine only with an issue and deadline;
- 5. do not count quarantined test as coverage;
- 6. do not normalize routine reruns.
-Automatic rerun may distinguish infrastructure noise, but a pass-after-rerun remains recorded as instability.
-----------------------------------------
+     148.1 Policy checks
+     Validate:
+
+- DCO sign-off;
+- required pull-request fields;
+- changed high-risk paths;
+- required reviewers;
+- generated files synchronized;
+- changelog requirement;
+- architecture-decision requirement;
+- no forbidden binary or private files.
+  148.2 Fast checks
+  Target completion:
+  under 15 minutes for ordinary pull requests
+  Run:
+- formatting;
+- lint;
+- type checks;
+- unit tests;
+- schema validation;
+- documentation links;
+- secret scan;
+- dependency manifest validation;
+- selected integration smoke tests.
+  148.3 Path-aware execution
+  Use path filters carefully.
+  Examples:
+- documentation-only change may skip browser packaging;
+- adapter change must run adapter contracts and browser fixtures;
+- security change must run full security suite;
+- schema change must run migrations;
+- GUI change must run accessibility;
+- workflow change must run state-machine tests.
+  A path filter must never suppress a relevant critical check.
+  148.4 Required checks
+  Protected branches require:
+- policy;
+- lint and types;
+- unit;
+- integration;
+- security baseline;
+- relevant component suite;
+- documentation validation.
+  148.5 Flaky-test policy
+  A flaky test is a defect.
+  When detected:
+
+1.  identify owner;
+2.  preserve evidence;
+3.  fix promptly;
+4.  quarantine only with an issue and deadline;
+5.  do not count quarantined test as coverage;
+6.  do not normalize routine reruns.
+    Automatic rerun may distinguish infrastructure noise, but a pass-after-rerun remains recorded as instability.
+
+---
+
 149. Scheduled CI
-149.1 Nightly
- * full unit and integration matrix;
- * browser fixture suite;
- * document renders;
- * dependency scan;
- * secret scan;
- * selected mutation tests;
- * model mocks;
- * database migration matrix.
-149.2 Weekly
- * current browser compatibility;
- * local model qualification sample;
- * provider synthetic live tests;
- * read-only portal canaries where permitted;
- * backup/restore;
- * deletion;
- * package installation smoke tests;
- * license scan.
-149.3 Monthly
- * broader portal compatibility;
- * full mutation suite;
- * repeated-run AI eval;
- * research-ledger freshness;
- * adapter policy-review status;
- * performance benchmarks;
- * package-size trend;
- * incident drill subset.
-149.4 Release-candidate schedule
- * 72-hour soak;
- * cross-platform clean install;
- * upgrade from all supported versions;
- * rollback;
- * full security and privacy suite;
- * accessibility manual checks;
- * signed-candidate verification;
- * supported-adapter qualification.
-149.5 Production-release schedule
-Before release-1.0:
-seven-day representative soak
-The soak should use simulations and fixtures, not high-volume real portal activity.
-----------------------------------------
+     149.1 Nightly
+
+- full unit and integration matrix;
+- browser fixture suite;
+- document renders;
+- dependency scan;
+- secret scan;
+- selected mutation tests;
+- model mocks;
+- database migration matrix.
+  149.2 Weekly
+- current browser compatibility;
+- local model qualification sample;
+- provider synthetic live tests;
+- read-only portal canaries where permitted;
+- backup/restore;
+- deletion;
+- package installation smoke tests;
+- license scan.
+  149.3 Monthly
+- broader portal compatibility;
+- full mutation suite;
+- repeated-run AI eval;
+- research-ledger freshness;
+- adapter policy-review status;
+- performance benchmarks;
+- package-size trend;
+- incident drill subset.
+  149.4 Release-candidate schedule
+- 72-hour soak;
+- cross-platform clean install;
+- upgrade from all supported versions;
+- rollback;
+- full security and privacy suite;
+- accessibility manual checks;
+- signed-candidate verification;
+- supported-adapter qualification.
+  149.5 Production-release schedule
+  Before release-1.0:
+  seven-day representative soak
+  The soak should use simulations and fixtures, not high-volume real portal activity.
+
+---
+
 150. GitHub Actions workflow detail
-150.1 pr-policy.yml
-Checks:
- * DCO;
- * labels;
- * pull-request template;
- * high-risk paths;
- * generated artifact policy;
- * file-size limit;
- * prohibited private paths;
- * workflow-permission diff.
-150.2 lint-and-types.yml
-Jobs:
- * Python formatting and lint;
- * Python strict typing;
- * frontend formatting and lint;
- * TypeScript checks;
- * Rust checks if present;
- * schema generation consistency;
- * import-boundary checks.
-150.3 unit.yml
- * platform-independent unit suite;
- * critical branch coverage;
- * property-based tests;
- * deterministic seed reporting;
- * JUnit and coverage artifacts.
-150.4 integration.yml
-Services should remain local where possible:
- * encrypted test database;
- * artifact store;
- * mock vault;
- * mock provider;
- * mock Gmail;
- * mock calendar;
- * mock hosted relay;
- * mock ATS.
-150.5 browser-fixtures.yml
- * install pinned browser;
- * start local synthetic portals;
- * shard scenarios;
- * record trace only on failure;
- * redact artifacts;
- * upload bounded evidence;
- * summarize adapter matrix.
-150.6 documents.yml
- * import fixtures;
- * generate templates;
- * extract text;
- * visual regression;
- * metadata scan;
- * format validity;
- * page-count checks;
- * store only synthetic outputs.
-150.7 accessibility.yml
- * automated scan;
- * keyboard-focused browser scenarios;
- * reduced-motion checks;
- * high-contrast snapshots where feasible;
- * report violations by severity.
-150.8 security.yml
- * SAST;
- * dependency audit;
- * secret scan;
- * workflow scan;
- * license scan;
- * local API attack suite;
- * prohibited capability checks;
- * SBOM dry run.
-150.9 privacy.yml
- * data-flow tests;
- * retention;
- * export;
- * deletion;
- * telemetry disabled;
- * cloud minimization;
- * cross-application leakage;
- * restricted-attribute separation.
-150.10 mutation.yml
- * critical policy modules;
- * workflow transitions;
- * duplicate detection;
- * effect layer;
- * encryption boundary logic.
-Run a focused slice on pull requests and full suite on schedule.
-150.11 Packaging workflows
-Each packaging workflow:
- 1. checks out exact commit;
- 2. installs pinned toolchain;
- 3. restores safe caches;
- 4. builds;
- 5. runs package smoke tests;
- 6. generates SBOM;
- 7. records hashes;
- 8. publishes unsigned CI artifact.
-Signing occurs only in protected release workflows.
-150.12 release-candidate.yml
-Inputs:
- * version;
- * commit or tag;
- * channel;
- * release notes;
- * migration target.
-Outputs:
- * unsigned and signed candidate artifacts;
- * SBOM;
- * provenance;
- * checksums;
- * qualification report;
- * known limitations.
-150.13 release.yml
-Requires:
- * approved release candidate;
- * immutable tag;
- * successful qualification;
- * signing authorization;
- * no unresolved release blockers;
- * changelog;
- * support matrix;
- * rollback plan.
-150.14 post-release.yml
-Verify:
- * downloadable artifacts;
- * checksums;
- * signatures;
- * installer launch;
- * update channel;
- * package metadata;
- * release notes;
- * SBOM links;
- * no accidental draft or debug configuration.
-----------------------------------------
+     150.1 pr-policy.yml
+     Checks:
+
+- DCO;
+- labels;
+- pull-request template;
+- high-risk paths;
+- generated artifact policy;
+- file-size limit;
+- prohibited private paths;
+- workflow-permission diff.
+  150.2 lint-and-types.yml
+  Jobs:
+- Python formatting and lint;
+- Python strict typing;
+- frontend formatting and lint;
+- TypeScript checks;
+- Rust checks if present;
+- schema generation consistency;
+- import-boundary checks.
+  150.3 unit.yml
+- platform-independent unit suite;
+- critical branch coverage;
+- property-based tests;
+- deterministic seed reporting;
+- JUnit and coverage artifacts.
+  150.4 integration.yml
+  Services should remain local where possible:
+- encrypted test database;
+- artifact store;
+- mock vault;
+- mock provider;
+- mock Gmail;
+- mock calendar;
+- mock hosted relay;
+- mock ATS.
+  150.5 browser-fixtures.yml
+- install pinned browser;
+- start local synthetic portals;
+- shard scenarios;
+- record trace only on failure;
+- redact artifacts;
+- upload bounded evidence;
+- summarize adapter matrix.
+  150.6 documents.yml
+- import fixtures;
+- generate templates;
+- extract text;
+- visual regression;
+- metadata scan;
+- format validity;
+- page-count checks;
+- store only synthetic outputs.
+  150.7 accessibility.yml
+- automated scan;
+- keyboard-focused browser scenarios;
+- reduced-motion checks;
+- high-contrast snapshots where feasible;
+- report violations by severity.
+  150.8 security.yml
+- SAST;
+- dependency audit;
+- secret scan;
+- workflow scan;
+- license scan;
+- local API attack suite;
+- prohibited capability checks;
+- SBOM dry run.
+  150.9 privacy.yml
+- data-flow tests;
+- retention;
+- export;
+- deletion;
+- telemetry disabled;
+- cloud minimization;
+- cross-application leakage;
+- restricted-attribute separation.
+  150.10 mutation.yml
+- critical policy modules;
+- workflow transitions;
+- duplicate detection;
+- effect layer;
+- encryption boundary logic.
+  Run a focused slice on pull requests and full suite on schedule.
+  150.11 Packaging workflows
+  Each packaging workflow:
+
+1.  checks out exact commit;
+2.  installs pinned toolchain;
+3.  restores safe caches;
+4.  builds;
+5.  runs package smoke tests;
+6.  generates SBOM;
+7.  records hashes;
+8.  publishes unsigned CI artifact.
+    Signing occurs only in protected release workflows.
+    150.12 release-candidate.yml
+    Inputs:
+
+- version;
+- commit or tag;
+- channel;
+- release notes;
+- migration target.
+  Outputs:
+- unsigned and signed candidate artifacts;
+- SBOM;
+- provenance;
+- checksums;
+- qualification report;
+- known limitations.
+  150.13 release.yml
+  Requires:
+- approved release candidate;
+- immutable tag;
+- successful qualification;
+- signing authorization;
+- no unresolved release blockers;
+- changelog;
+- support matrix;
+- rollback plan.
+  150.14 post-release.yml
+  Verify:
+- downloadable artifacts;
+- checksums;
+- signatures;
+- installer launch;
+- update channel;
+- package metadata;
+- release notes;
+- SBOM links;
+- no accidental draft or debug configuration.
+
+---
+
 151. Test evidence and qualification reports
-151.1 Evidence objective
-A release claim must be backed by a machine-readable and human-readable qualification report.
-151.2 Qualification report
-release: 1.0.0
-commit: null
-generated_at: null
-platforms:
- windows_current: passed
- ubuntu_lts: passed
-tests:
- unit:
- passed: null
- failed: 0
- integration:
- passed: null
- failed: 0
- browser:
- passed: null
- failed: 0
- security:
- critical_failures: 0
- high_failures: 0
-coverage:
- core_branch: null
- policy_decision: 1.0
- effect_branch: 1.0
-adapters: []
-performance: {}
-accessibility: {}
-known_limitations: []
-approvals: []
-151.3 Evidence immutability
-Release evidence should be:
- * tied to commit;
- * hashed;
- * stored with release;
- * generated by protected workflow;
- * signed or included in provenance;
- * reproducible where feasible.
-151.4 Failure waiver
-A release waiver requires:
- * exact failed check;
- * impact;
- * reason;
- * compensating control;
- * owner;
- * expiration;
- * approval.
-No waiver is allowed for:
- * unapproved submission;
- * unsupported factual claim in critical qualification;
- * secret leakage;
- * authorization bypass;
- * incorrect attachment;
- * unsigned release artifact;
- * unresolved critical security finding.
-----------------------------------------
+     151.1 Evidence objective
+     A release claim must be backed by a machine-readable and human-readable qualification report.
+     151.2 Qualification report
+     release: 1.0.0
+     commit: null
+     generated_at: null
+     platforms:
+     windows_current: passed
+     ubuntu_lts: passed
+     tests:
+     unit:
+     passed: null
+     failed: 0
+     integration:
+     passed: null
+     failed: 0
+     browser:
+     passed: null
+     failed: 0
+     security:
+     critical_failures: 0
+     high_failures: 0
+     coverage:
+     core_branch: null
+     policy_decision: 1.0
+     effect_branch: 1.0
+     adapters: []
+     performance: {}
+     accessibility: {}
+     known_limitations: []
+     approvals: []
+     151.3 Evidence immutability
+     Release evidence should be:
+
+- tied to commit;
+- hashed;
+- stored with release;
+- generated by protected workflow;
+- signed or included in provenance;
+- reproducible where feasible.
+  151.4 Failure waiver
+  A release waiver requires:
+- exact failed check;
+- impact;
+- reason;
+- compensating control;
+- owner;
+- expiration;
+- approval.
+  No waiver is allowed for:
+- unapproved submission;
+- unsupported factual claim in critical qualification;
+- secret leakage;
+- authorization bypass;
+- incorrect attachment;
+- unsigned release artifact;
+- unresolved critical security finding.
+
+---
+
 152. Release engineering doctrine
-152.1 Objectives
-Release engineering must ensure that users receive:
- * authentic artifacts;
- * tested installers;
- * compatible database migrations;
- * accurate release notes;
- * documented portal support;
- * rollback or recovery;
- * known security posture.
-152.2 Release types
-Development snapshot
- * internal or expert use;
- * no compatibility promise;
- * may be unsigned in local development;
- * clearly labeled.
-Preview
- * public testing;
- * incomplete support;
- * telemetry remains opt-in;
- * known limitations prominent;
- * no production compatibility claim.
-Release candidate
- * feature complete;
- * qualification underway;
- * signed candidate;
- * migration frozen except fixes.
-Stable release
- * release gates passed;
- * signed;
- * supported;
- * documented.
-Security release
- * expedited;
- * minimal changes;
- * advisory;
- * credential guidance;
- * no unrelated features.
-152.3 Versioning
-Use semantic versioning for stable releases:
-MAJOR.MINOR.PATCH
-Development milestones retain requested labels:
- * dev-0.1;
- * dev-0.5;
- * dev-1.0;
- * dev-2.0;
- * dev-3.0;
- * dev-4.0;
- * release-1.0.
-Possible artifact versions:
-0.1.0-dev.1
-0.5.0-dev.1
-1.0.0-rc.1
-1.0.0
-152.4 Component versions
-Track independently where necessary:
- * core;
- * database schema;
- * workflow contracts;
- * adapter contract;
- * individual adapter;
- * browser extension;
- * hosted protocol;
- * prompt bundle;
- * profile schema.
-Compatibility rules must be explicit.
-152.5 Release branch strategy
-Prefer trunk-based development with short-lived branches.
-For releases:
- * immutable tag;
- * temporary release branch only when maintaining a stable line requires it;
- * security patches cherry-picked with review;
- * no long-running divergent branches without need.
-152.6 Change categories
-Release notes classify:
- * security;
- * privacy;
- * portal compatibility;
- * new feature;
- * reliability;
- * performance;
- * accessibility;
- * breaking change;
- * migration;
- * deprecation;
- * documentation.
-152.7 Feature freeze
-Before release candidate:
- * no new broad features;
- * only defects, documentation, compatibility, and release work;
- * schema changes require exceptional review;
- * dependency upgrades limited to required fixes;
- * prompts and policies frozen except verified corrections.
-----------------------------------------
+     152.1 Objectives
+     Release engineering must ensure that users receive:
+
+- authentic artifacts;
+- tested installers;
+- compatible database migrations;
+- accurate release notes;
+- documented portal support;
+- rollback or recovery;
+- known security posture.
+  152.2 Release types
+  Development snapshot
+- internal or expert use;
+- no compatibility promise;
+- may be unsigned in local development;
+- clearly labeled.
+  Preview
+- public testing;
+- incomplete support;
+- telemetry remains opt-in;
+- known limitations prominent;
+- no production compatibility claim.
+  Release candidate
+- feature complete;
+- qualification underway;
+- signed candidate;
+- migration frozen except fixes.
+  Stable release
+- release gates passed;
+- signed;
+- supported;
+- documented.
+  Security release
+- expedited;
+- minimal changes;
+- advisory;
+- credential guidance;
+- no unrelated features.
+  152.3 Versioning
+  Use semantic versioning for stable releases:
+  MAJOR.MINOR.PATCH
+  Development milestones retain requested labels:
+- dev-0.1;
+- dev-0.5;
+- dev-1.0;
+- dev-2.0;
+- dev-3.0;
+- dev-4.0;
+- release-1.0.
+  Possible artifact versions:
+  0.1.0-dev.1
+  0.5.0-dev.1
+  1.0.0-rc.1
+  1.0.0
+  152.4 Component versions
+  Track independently where necessary:
+- core;
+- database schema;
+- workflow contracts;
+- adapter contract;
+- individual adapter;
+- browser extension;
+- hosted protocol;
+- prompt bundle;
+- profile schema.
+  Compatibility rules must be explicit.
+  152.5 Release branch strategy
+  Prefer trunk-based development with short-lived branches.
+  For releases:
+- immutable tag;
+- temporary release branch only when maintaining a stable line requires it;
+- security patches cherry-picked with review;
+- no long-running divergent branches without need.
+  152.6 Change categories
+  Release notes classify:
+- security;
+- privacy;
+- portal compatibility;
+- new feature;
+- reliability;
+- performance;
+- accessibility;
+- breaking change;
+- migration;
+- deprecation;
+- documentation.
+  152.7 Feature freeze
+  Before release candidate:
+- no new broad features;
+- only defects, documentation, compatibility, and release work;
+- schema changes require exceptional review;
+- dependency upgrades limited to required fixes;
+- prompts and policies frozen except verified corrections.
+
+---
+
 153. Reproducible builds
-153.1 Objective
-Independent builders should be able to reproduce release artifacts as closely as the platform permits.
-153.2 Inputs
-Pin:
- * source commit;
- * dependency locks;
- * Python version;
- * Node version;
- * Rust version;
- * package manager;
- * compiler;
- * browser-extension toolchain;
- * document toolchain;
- * build flags;
- * source date;
- * locale;
- * time zone.
-153.3 Nondeterminism sources
- * timestamps;
- * archive ordering;
- * compiler paths;
- * generated IDs;
- * platform signatures;
- * installer metadata;
- * Python bytecode;
- * minifier behavior;
- * embedded file paths;
- * code signing.
-Document and isolate unavoidable differences.
-153.4 Reproducibility process
- 1. build in clean environment;
- 2. build again independently;
- 3. normalize allowed metadata;
- 4. compare hashes;
- 5. inspect differences;
- 6. publish reproducibility status;
- 7. improve until stable.
-153.5 Signing separation
-Unsigned artifacts should be reproducible.
-Signing may alter bytes. Publish:
- * unsigned artifact hash;
- * signed artifact hash;
- * signature metadata;
- * relation between them.
-153.6 Reproduction instructions
-Provide:
- * containerized build environment where useful;
- * toolchain versions;
- * exact commands;
- * expected hashes;
- * known nondeterminism;
- * verification script.
-----------------------------------------
+     153.1 Objective
+     Independent builders should be able to reproduce release artifacts as closely as the platform permits.
+     153.2 Inputs
+     Pin:
+
+- source commit;
+- dependency locks;
+- Python version;
+- Node version;
+- Rust version;
+- package manager;
+- compiler;
+- browser-extension toolchain;
+- document toolchain;
+- build flags;
+- source date;
+- locale;
+- time zone.
+  153.3 Nondeterminism sources
+- timestamps;
+- archive ordering;
+- compiler paths;
+- generated IDs;
+- platform signatures;
+- installer metadata;
+- Python bytecode;
+- minifier behavior;
+- embedded file paths;
+- code signing.
+  Document and isolate unavoidable differences.
+  153.4 Reproducibility process
+
+1.  build in clean environment;
+2.  build again independently;
+3.  normalize allowed metadata;
+4.  compare hashes;
+5.  inspect differences;
+6.  publish reproducibility status;
+7.  improve until stable.
+    153.5 Signing separation
+    Unsigned artifacts should be reproducible.
+    Signing may alter bytes. Publish:
+
+- unsigned artifact hash;
+- signed artifact hash;
+- signature metadata;
+- relation between them.
+  153.6 Reproduction instructions
+  Provide:
+- containerized build environment where useful;
+- toolchain versions;
+- exact commands;
+- expected hashes;
+- known nondeterminism;
+- verification script.
+
+---
+
 154. Release signing and provenance
-154.1 Signing keys
-Protect release keys through:
- * hardware-backed signing;
- * managed signing service;
- * short-lived identity-based signing where ecosystem support is mature;
- * multi-person release approval.
-Do not store long-lived signing keys in ordinary repository secrets.
-154.2 Signed objects
- * Git tags;
- * Windows installers;
- * executable archives;
- * Linux packages where supported;
- * update manifests;
- * browser extension;
- * adapters;
- * container images;
- * checksums;
- * release provenance.
-154.3 Key rotation
-Plan:
- * key identifiers;
- * validity;
- * rollover overlap;
- * old-key trust;
- * revocation;
- * emergency compromise procedure;
- * user verification instructions.
-154.4 Compromised signing key
- 1. stop releases;
- 2. revoke key;
- 3. publish advisory through independent channels;
- 4. rotate update trust roots if architecture permits;
- 5. identify affected artifacts;
- 6. rebuild and resign;
- 7. inspect release infrastructure;
- 8. complete incident review.
-154.5 Provenance statement
-Include:
- * source repository;
- * commit;
- * build workflow;
- * builder identity;
- * invocation;
- * materials;
- * artifact digest;
- * timestamp.
-Target SLSA-compatible provenance at a level justified by project resources.
-154.6 User verification
-Provide commands and GUI support to verify:
- * checksum;
- * signature;
- * publisher;
- * version;
- * update channel.
-----------------------------------------
+     154.1 Signing keys
+     Protect release keys through:
+
+- hardware-backed signing;
+- managed signing service;
+- short-lived identity-based signing where ecosystem support is mature;
+- multi-person release approval.
+  Do not store long-lived signing keys in ordinary repository secrets.
+  154.2 Signed objects
+- Git tags;
+- Windows installers;
+- executable archives;
+- Linux packages where supported;
+- update manifests;
+- browser extension;
+- adapters;
+- container images;
+- checksums;
+- release provenance.
+  154.3 Key rotation
+  Plan:
+- key identifiers;
+- validity;
+- rollover overlap;
+- old-key trust;
+- revocation;
+- emergency compromise procedure;
+- user verification instructions.
+  154.4 Compromised signing key
+
+1.  stop releases;
+2.  revoke key;
+3.  publish advisory through independent channels;
+4.  rotate update trust roots if architecture permits;
+5.  identify affected artifacts;
+6.  rebuild and resign;
+7.  inspect release infrastructure;
+8.  complete incident review.
+    154.5 Provenance statement
+    Include:
+
+- source repository;
+- commit;
+- build workflow;
+- builder identity;
+- invocation;
+- materials;
+- artifact digest;
+- timestamp.
+  Target SLSA-compatible provenance at a level justified by project resources.
+  154.6 User verification
+  Provide commands and GUI support to verify:
+- checksum;
+- signature;
+- publisher;
+- version;
+- update channel.
+
+---
+
 155. Software bill of materials
-155.1 Required formats
-Publish at least one standard machine-readable format:
- * CycloneDX;
- * SPDX.
-Using both may improve ecosystem compatibility if low-cost.
-155.2 SBOM scope
-Include:
- * Python dependencies;
- * frontend dependencies;
- * Rust dependencies;
- * native libraries;
- * document engines;
- * bundled browser components;
- * extension dependencies;
- * adapter dependencies;
- * container base images.
-155.3 SBOM validation
- * valid schema;
- * exact versions;
- * package identifiers;
- * hashes where possible;
- * license metadata;
- * dependency relationships;
- * no secrets;
- * tied to release artifact.
-155.4 Vulnerability correlation
-Security tooling should correlate advisories with the exact release SBOM.
-Do not claim a vulnerability affects the product solely because a package name matches; assess reachability and usage.
-----------------------------------------
+     155.1 Required formats
+     Publish at least one standard machine-readable format:
+
+- CycloneDX;
+- SPDX.
+  Using both may improve ecosystem compatibility if low-cost.
+  155.2 SBOM scope
+  Include:
+- Python dependencies;
+- frontend dependencies;
+- Rust dependencies;
+- native libraries;
+- document engines;
+- bundled browser components;
+- extension dependencies;
+- adapter dependencies;
+- container base images.
+  155.3 SBOM validation
+- valid schema;
+- exact versions;
+- package identifiers;
+- hashes where possible;
+- license metadata;
+- dependency relationships;
+- no secrets;
+- tied to release artifact.
+  155.4 Vulnerability correlation
+  Security tooling should correlate advisories with the exact release SBOM.
+  Do not claim a vulnerability affects the product solely because a package name matches; assess reachability and usage.
+
+---
+
 156. Release-candidate qualification
-156.1 Entry criteria
- * feature scope frozen;
- * migrations complete;
- * documentation current;
- * support matrix current;
- * all required tests available;
- * no unresolved critical blocker;
- * known limitations drafted;
- * signing path tested;
- * rollback prepared.
-156.2 Qualification matrix
-Functional
- * onboarding;
- * profile import;
- * profile validation;
- * persona;
- * job ingestion;
- * eligibility;
- * matching;
- * documents;
- * mock application;
- * final review;
- * human submission tracking;
- * email;
- * calendar;
- * export;
- * deletion.
-Platforms
- * Windows current;
- * Windows previous supported;
- * Ubuntu current LTS;
- * Ubuntu previous supported LTS;
- * local web;
- * desktop;
- * CLI;
- * portable;
- * installer;
- * optional Docker.
-Reliability
- * browser restart;
- * application restart;
- * session expiry;
- * model outage;
- * low disk;
- * network loss;
- * interrupted migration;
- * backup restore;
- * circuit breaker.
-Security and privacy
- * local API;
- * vault;
- * encryption;
- * redaction;
- * prompt injection;
- * update verification;
- * telemetry disabled;
- * retention;
- * deletion.
-Accessibility
- * keyboard;
- * screen reader;
- * zoom;
- * contrast;
- * reduced motion;
- * final review;
- * deletion.
-156.3 Release-candidate blockers
- * incorrect material field;
- * unsupported claim;
- * wrong document;
- * unapproved effect;
- * duplicate prevention failure;
- * secret leakage;
- * data deletion failure;
- * corrupted migration;
- * inaccessible final review;
- * unsigned update;
- * unsupported portal mode presented as supported.
-156.4 Soak
-Release candidate soak:
-72 hours minimum
-Production release soak:
-7 days
-Use representative synthetic workflows and ordinary idle periods.
-156.5 Soak observations
- * memory;
- * CPU;
- * disk growth;
- * scheduler;
- * event queue;
- * browser resources;
- * database WAL;
- * artifact retention;
- * provider retry;
- * notification duplication;
- * stale locks;
- * worker recovery;
- * clock and sleep behavior.
-----------------------------------------
+     156.1 Entry criteria
+
+- feature scope frozen;
+- migrations complete;
+- documentation current;
+- support matrix current;
+- all required tests available;
+- no unresolved critical blocker;
+- known limitations drafted;
+- signing path tested;
+- rollback prepared.
+  156.2 Qualification matrix
+  Functional
+- onboarding;
+- profile import;
+- profile validation;
+- persona;
+- job ingestion;
+- eligibility;
+- matching;
+- documents;
+- mock application;
+- final review;
+- human submission tracking;
+- email;
+- calendar;
+- export;
+- deletion.
+  Platforms
+- Windows current;
+- Windows previous supported;
+- Ubuntu current LTS;
+- Ubuntu previous supported LTS;
+- local web;
+- desktop;
+- CLI;
+- portable;
+- installer;
+- optional Docker.
+  Reliability
+- browser restart;
+- application restart;
+- session expiry;
+- model outage;
+- low disk;
+- network loss;
+- interrupted migration;
+- backup restore;
+- circuit breaker.
+  Security and privacy
+- local API;
+- vault;
+- encryption;
+- redaction;
+- prompt injection;
+- update verification;
+- telemetry disabled;
+- retention;
+- deletion.
+  Accessibility
+- keyboard;
+- screen reader;
+- zoom;
+- contrast;
+- reduced motion;
+- final review;
+- deletion.
+  156.3 Release-candidate blockers
+- incorrect material field;
+- unsupported claim;
+- wrong document;
+- unapproved effect;
+- duplicate prevention failure;
+- secret leakage;
+- data deletion failure;
+- corrupted migration;
+- inaccessible final review;
+- unsigned update;
+- unsupported portal mode presented as supported.
+  156.4 Soak
+  Release candidate soak:
+  72 hours minimum
+  Production release soak:
+  7 days
+  Use representative synthetic workflows and ordinary idle periods.
+  156.5 Soak observations
+- memory;
+- CPU;
+- disk growth;
+- scheduler;
+- event queue;
+- browser resources;
+- database WAL;
+- artifact retention;
+- provider retry;
+- notification duplication;
+- stale locks;
+- worker recovery;
+- clock and sleep behavior.
+
+---
+
 157. Release rollout
-157.1 Rollout phases
-Phase 1: Maintainers
- * clean install;
- * migration;
- * ordinary workflows;
- * release-channel verification.
-Phase 2: Designated preview users
- * opt-in;
- * technical audience;
- * explicit limitations;
- * rapid feedback;
- * no unsupported automation.
-Phase 3: Percentage rollout
-If hosted update infrastructure supports it:
- * small stable cohort;
- * monitor crashes and incidents;
- * expand gradually;
- * stop on regression.
-For fully manual downloads, use staged announcement rather than hidden percentage control.
-Phase 4: General availability
- * support process active;
- * compatibility documentation published;
- * known limitations visible;
- * update path validated.
-157.2 Rollout monitoring
- * install success;
- * startup failure;
- * migration failure;
- * crash rate;
- * adapter incidents;
- * browser compatibility;
- * support requests;
- * security reports;
- * package-signature failures.
-Telemetry remains opt-in; support and signed update checks provide limited additional signals.
-157.3 Automatic rollback trigger
-Potential triggers:
- * startup failure above threshold;
- * migration corruption;
- * secret exposure;
- * wrong application data;
- * widespread adapter failure;
- * signed package mismatch;
- * security incident;
- * severe accessibility regression.
-Rollback may mean:
- * stop update rollout;
- * pull artifact;
- * disable adapter;
- * publish prior stable version;
- * issue emergency patch.
-----------------------------------------
+     157.1 Rollout phases
+     Phase 1: Maintainers
+
+- clean install;
+- migration;
+- ordinary workflows;
+- release-channel verification.
+  Phase 2: Designated preview users
+- opt-in;
+- technical audience;
+- explicit limitations;
+- rapid feedback;
+- no unsupported automation.
+  Phase 3: Percentage rollout
+  If hosted update infrastructure supports it:
+- small stable cohort;
+- monitor crashes and incidents;
+- expand gradually;
+- stop on regression.
+  For fully manual downloads, use staged announcement rather than hidden percentage control.
+  Phase 4: General availability
+- support process active;
+- compatibility documentation published;
+- known limitations visible;
+- update path validated.
+  157.2 Rollout monitoring
+- install success;
+- startup failure;
+- migration failure;
+- crash rate;
+- adapter incidents;
+- browser compatibility;
+- support requests;
+- security reports;
+- package-signature failures.
+  Telemetry remains opt-in; support and signed update checks provide limited additional signals.
+  157.3 Automatic rollback trigger
+  Potential triggers:
+- startup failure above threshold;
+- migration corruption;
+- secret exposure;
+- wrong application data;
+- widespread adapter failure;
+- signed package mismatch;
+- security incident;
+- severe accessibility regression.
+  Rollback may mean:
+- stop update rollout;
+- pull artifact;
+- disable adapter;
+- publish prior stable version;
+- issue emergency patch.
+
+---
+
 158. Rollback and recovery
-158.1 Application rollback
-A binary rollback is permitted only when database and artifact formats remain compatible.
-If not:
- * restore pre-upgrade backup;
- * preserve post-upgrade changes separately;
- * provide migration repair;
- * avoid silent data loss.
-158.2 Adapter rollback
-Maintain:
- * current adapter;
- * previous known-good adapter;
- * compatibility manifest;
- * fixture results.
-Rollback must not reenable a version disabled for security reasons.
-158.3 Prompt and model rollback
- * restore prior prompt bundle;
- * restore model alias;
- * invalidate candidate cache;
- * rerun affected eval;
- * mark outputs produced by regressed version for review where necessary.
-158.4 Policy rollback
-Security policy should not roll back automatically to a less restrictive version.
-If a new policy causes functional regression:
- * retain safety boundary;
- * issue targeted correction;
- * allow manual workflow;
- * document impact.
-158.5 Data recovery
-Recovery tools should support:
- * integrity check;
- * safe read-only export;
- * backup restore;
- * index rebuild;
- * artifact reconciliation;
- * interrupted migration resume;
- * key-rotation recovery.
-158.6 Rollback drill
-Before stable release, perform:
- 1. install previous stable;
- 2. create synthetic data;
- 3. upgrade;
- 4. execute workflows;
- 5. roll back using documented method;
- 6. verify data;
- 7. verify audit and approvals;
- 8. document incompatible state where applicable.
-----------------------------------------
+     158.1 Application rollback
+     A binary rollback is permitted only when database and artifact formats remain compatible.
+     If not:
+
+- restore pre-upgrade backup;
+- preserve post-upgrade changes separately;
+- provide migration repair;
+- avoid silent data loss.
+  158.2 Adapter rollback
+  Maintain:
+- current adapter;
+- previous known-good adapter;
+- compatibility manifest;
+- fixture results.
+  Rollback must not reenable a version disabled for security reasons.
+  158.3 Prompt and model rollback
+- restore prior prompt bundle;
+- restore model alias;
+- invalidate candidate cache;
+- rerun affected eval;
+- mark outputs produced by regressed version for review where necessary.
+  158.4 Policy rollback
+  Security policy should not roll back automatically to a less restrictive version.
+  If a new policy causes functional regression:
+- retain safety boundary;
+- issue targeted correction;
+- allow manual workflow;
+- document impact.
+  158.5 Data recovery
+  Recovery tools should support:
+- integrity check;
+- safe read-only export;
+- backup restore;
+- index rebuild;
+- artifact reconciliation;
+- interrupted migration resume;
+- key-rotation recovery.
+  158.6 Rollback drill
+  Before stable release, perform:
+
+1.  install previous stable;
+2.  create synthetic data;
+3.  upgrade;
+4.  execute workflows;
+5.  roll back using documented method;
+6.  verify data;
+7.  verify audit and approvals;
+8.  document incompatible state where applicable.
+
+---
+
 159. Production support model
-159.1 Support scope
-For release-1.0, support should cover:
- * installation;
- * startup;
- * profile import;
- * browser setup;
- * supported adapters;
- * document rendering;
- * model setup;
- * backup and restore;
- * data export and deletion;
- * security incidents;
- * accessibility defects.
-159.2 Support channels
-Open-source:
- * public issue tracker for non-sensitive bugs;
- * discussion forum for usage;
- * private security channel;
- * private privacy channel where sensitive data may be involved.
-Users must be warned not to post:
- * résumés;
- * credentials;
- * screenshots with personal data;
- * session cookies;
- * recruiter messages;
- * API keys.
-159.3 Diagnostic intake
-Support request should collect:
- * application version;
- * OS;
- * component;
- * adapter;
- * safe error code;
- * trace ID;
- * reproduction steps;
- * redacted diagnostic bundle only if necessary.
-159.4 Support severity
-Severity Example Critical Secret exposure, unapproved external effect High Data corruption, wrong attachment, installation unusable for many users Moderate One supported adapter degraded, recoverable workflow failure Low Cosmetic defect, documentation issue
-159.5 Support boundaries
-The project cannot guarantee:
- * portal availability;
- * employer response;
- * interview or offer outcome;
- * continued portal permission;
- * uninterrupted third-party model service;
- * recovery without keys;
- * correctness of user-supplied facts.
-It must guarantee honest reporting of its own verification state.
-159.6 Knowledge base
-Create runbooks for:
- * installation;
- * browser login;
- * provider setup;
- * adapter failure;
- * unknown question;
- * document rendering;
- * backup;
- * restore;
- * key loss;
- * full deletion;
- * extension pairing;
- * incident reporting.
-159.7 Compatibility support window
-Define:
- * supported core versions;
- * supported schema versions;
- * adapter compatibility range;
- * browser-version range;
- * operating-system support;
- * deprecation period.
-Security fixes may require shortening support for vulnerable versions.
-----------------------------------------
+     159.1 Support scope
+     For release-1.0, support should cover:
+
+- installation;
+- startup;
+- profile import;
+- browser setup;
+- supported adapters;
+- document rendering;
+- model setup;
+- backup and restore;
+- data export and deletion;
+- security incidents;
+- accessibility defects.
+  159.2 Support channels
+  Open-source:
+- public issue tracker for non-sensitive bugs;
+- discussion forum for usage;
+- private security channel;
+- private privacy channel where sensitive data may be involved.
+  Users must be warned not to post:
+- résumés;
+- credentials;
+- screenshots with personal data;
+- session cookies;
+- recruiter messages;
+- API keys.
+  159.3 Diagnostic intake
+  Support request should collect:
+- application version;
+- OS;
+- component;
+- adapter;
+- safe error code;
+- trace ID;
+- reproduction steps;
+- redacted diagnostic bundle only if necessary.
+  159.4 Support severity
+  Severity Example Critical Secret exposure, unapproved external effect High Data corruption, wrong attachment, installation unusable for many users Moderate One supported adapter degraded, recoverable workflow failure Low Cosmetic defect, documentation issue
+  159.5 Support boundaries
+  The project cannot guarantee:
+- portal availability;
+- employer response;
+- interview or offer outcome;
+- continued portal permission;
+- uninterrupted third-party model service;
+- recovery without keys;
+- correctness of user-supplied facts.
+  It must guarantee honest reporting of its own verification state.
+  159.6 Knowledge base
+  Create runbooks for:
+- installation;
+- browser login;
+- provider setup;
+- adapter failure;
+- unknown question;
+- document rendering;
+- backup;
+- restore;
+- key loss;
+- full deletion;
+- extension pairing;
+- incident reporting.
+  159.7 Compatibility support window
+  Define:
+- supported core versions;
+- supported schema versions;
+- adapter compatibility range;
+- browser-version range;
+- operating-system support;
+- deprecation period.
+  Security fixes may require shortening support for vulnerable versions.
+
+---
+
 160. Operational service-level objectives
-160.1 Local product objectives
-Since this is initially local software, conventional hosted uptime is not the primary measure.
-Objectives:
- * clean startup success;
- * recovery after ordinary crash;
- * local data integrity;
- * deterministic function availability;
- * bounded external failures;
- * diagnosable degradation.
-160.2 Provisional objectives
-Objective Target Clean startup success on supported systems At least 99.5% Completed checkpoint recovery At least 99.5% Deterministic profile validation At least 99.99% Exact duplicate blocking 100% in qualification Material final-review field inclusion 100% Incorrect external submission 0 Unapproved external submission 0 Wrong attachment at final review 0 Secret in ordinary logs 0 Local deletion completion 100% in qualification
-160.3 Hosted relay objectives
-When introduced:
- * availability target defined separately;
- * message durability;
- * command-delivery latency;
- * ciphertext deletion;
- * device-revocation latency;
- * no plaintext content access.
-Hosted SLOs must not create pressure to weaken end-to-end encryption.
-160.4 Error budgets
-Error budgets apply only to noncritical reliability measures.
-There is no acceptable error budget for:
- * unapproved submission;
- * credential leakage;
- * unsupported factual claim accepted by critical verification;
- * raw government-ID retention;
- * unauthorized sensitive disclosure.
-----------------------------------------
+     160.1 Local product objectives
+     Since this is initially local software, conventional hosted uptime is not the primary measure.
+     Objectives:
+
+- clean startup success;
+- recovery after ordinary crash;
+- local data integrity;
+- deterministic function availability;
+- bounded external failures;
+- diagnosable degradation.
+  160.2 Provisional objectives
+  Objective Target Clean startup success on supported systems At least 99.5% Completed checkpoint recovery At least 99.5% Deterministic profile validation At least 99.99% Exact duplicate blocking 100% in qualification Material final-review field inclusion 100% Incorrect external submission 0 Unapproved external submission 0 Wrong attachment at final review 0 Secret in ordinary logs 0 Local deletion completion 100% in qualification
+  160.3 Hosted relay objectives
+  When introduced:
+- availability target defined separately;
+- message durability;
+- command-delivery latency;
+- ciphertext deletion;
+- device-revocation latency;
+- no plaintext content access.
+  Hosted SLOs must not create pressure to weaken end-to-end encryption.
+  160.4 Error budgets
+  Error budgets apply only to noncritical reliability measures.
+  There is no acceptable error budget for:
+- unapproved submission;
+- credential leakage;
+- unsupported factual claim accepted by critical verification;
+- raw government-ID retention;
+- unauthorized sensitive disclosure.
+
+---
+
 161. Release-1.0 definition of production readiness
-release-1.0 is production ready only when:
- 1. Windows and Linux installation paths work.
- 2. CLI and GUI support the primary workflow.
- 3. The system works without an LLM for core operations.
- 4. Gemini integration is available and policy-controlled.
- 5. Profile schema covers India and USA use cases.
- 6. Multiple personas work without fact divergence.
- 7. Documents import and render in required formats.
- 8. At least ten résumé templates pass validation.
- 9. Duplicate resolution works across source portals.
- 10. Eligibility and score explanations are inspectable.
- 11. The application reaches verified pre-submission state on declared supported adapters.
- 12. Submission remains human-controlled.
- 13. Gmail status ingestion works under narrow OAuth scopes.
- 14. Calendar proposals require approval.
- 15. Assessments remain human-completed and human-submitted.
- 16. Encryption, vault, backup, restore, export, and deletion pass.
- 17. Security and privacy assessments are complete.
- 18. No unresolved critical or high security findings remain.
- 19. Accessibility gate passes.
- 20. Signed artifacts, SBOM, checksums, and provenance are published.
- 21. Support matrix and known limitations are accurate.
- 22. Incident response and adapter kill switches are operational.
- 23. Seven-day soak passes.
- 24. Upgrade and rollback are tested.
- 25. Every release claim has evidence.
-----------------------------------------
+     release-1.0 is production ready only when:
+1. Windows and Linux installation paths work.
+1. CLI and GUI support the primary workflow.
+1. The system works without an LLM for core operations.
+1. Gemini integration is available and policy-controlled.
+1. Profile schema covers India and USA use cases.
+1. Multiple personas work without fact divergence.
+1. Documents import and render in required formats.
+1. At least ten résumé templates pass validation.
+1. Duplicate resolution works across source portals.
+1. Eligibility and score explanations are inspectable.
+1. The application reaches verified pre-submission state on declared supported adapters.
+1. Submission remains human-controlled.
+1. Gmail status ingestion works under narrow OAuth scopes.
+1. Calendar proposals require approval.
+1. Assessments remain human-completed and human-submitted.
+1. Encryption, vault, backup, restore, export, and deletion pass.
+1. Security and privacy assessments are complete.
+1. No unresolved critical or high security findings remain.
+1. Accessibility gate passes.
+1. Signed artifacts, SBOM, checksums, and provenance are published.
+1. Support matrix and known limitations are accurate.
+1. Incident response and adapter kill switches are operational.
+1. Seven-day soak passes.
+1. Upgrade and rollback are tested.
+1. Every release claim has evidence.
+
+---
+
 162. Detailed roadmap conventions
-162.1 Roadmap hierarchy
-Each version contains:
-version
-→ phase
-→ subphase
-→ work package
-→ task
-→ acceptance criterion
-→ evidence
-162.2 Work-package contract
-id: WP-0.1-001
-version: dev-0.1
-phase: foundation
-title: "Initialize encrypted local state"
-dependencies: []
-deliverables: []
-risks: []
-verification: []
-definition_of_done: []
-estimated_complexity: medium
-162.3 Priority
- * P0: blocks milestone or invariant;
- * P1: required for version exit;
- * P2: important but deferrable;
- * P3: optional experiment.
-162.4 Risk
- * low;
- * medium;
- * high;
- * critical.
-Any critical-risk package requires explicit security or privacy review.
-162.5 Evidence
-Acceptable evidence:
- * test output;
- * qualification report;
- * generated artifact;
- * screenshot;
- * benchmark;
- * signed release;
- * reviewed decision record;
- * source-ledger entry;
- * completed threat-model update.
-162.6 Version exit
-A version exits only when:
- * all P0 and P1 work is complete;
- * acceptance criteria pass;
- * blockers are resolved or formally deferred;
- * documentation is updated;
- * migration path exists;
- * next version backlog is defined;
- * one compounding improvement is produced.
----------------------------------------------
+     162.1 Roadmap hierarchy
+     Each version contains:
+     version
+     → phase
+     → subphase
+     → work package
+     → task
+     → acceptance criterion
+     → evidence
+     162.2 Work-package contract
+     id: WP-0.1-001
+     version: dev-0.1
+     phase: foundation
+     title: "Initialize encrypted local state"
+     dependencies: []
+     deliverables: []
+     risks: []
+     verification: []
+     definition_of_done: []
+     estimated_complexity: medium
+     162.3 Priority
+
+- P0: blocks milestone or invariant;
+- P1: required for version exit;
+- P2: important but deferrable;
+- P3: optional experiment.
+  162.4 Risk
+- low;
+- medium;
+- high;
+- critical.
+  Any critical-risk package requires explicit security or privacy review.
+  162.5 Evidence
+  Acceptable evidence:
+- test output;
+- qualification report;
+- generated artifact;
+- screenshot;
+- benchmark;
+- signed release;
+- reviewed decision record;
+- source-ledger entry;
+- completed threat-model update.
+  162.6 Version exit
+  A version exits only when:
+- all P0 and P1 work is complete;
+- acceptance criteria pass;
+- blockers are resolved or formally deferred;
+- documentation is updated;
+- migration path exists;
+- next version backlog is defined;
+- one compounding improvement is produced.
+
+---
+
 163. dev-0.1 roadmap — Basic architecture
-163.1 Version objective
-Prove the complete application-assistance loop without touching a real portal. Establish the durable project substrate, domain model, task engine, mock application harness, and first closed-loop milestone.
-163.2 Phase 0.1.0: Research and implementation contract
-Work packages
-WP-0.1.001 — Source-ledger methodology
- * Define source-quality rubric.
- * Define claim-confidence and volatility rubrics.
- * Create research-ledger schema.
- * Create research-ledger directory.
- * Add ledger entry for every external claim used in the plan.
-WP-0.1.002 — Portal-policy baseline
- * Research LinkedIn, Naukri, Indeed, Workday, Greenhouse, Lever current policies.
- * Record in ledger.
- * Classify permitted operating modes.
- * Identify immediate prohibitions.
-WP-0.1.003 — Comparable-project survey
- * Research the supplied MadsLorentzen/ai-job-search repository.
- * Research at least five additional comparable projects.
- * Record architecture, license, maintenance, and reusable patterns.
- * Identify unsafe or brittle patterns to avoid.
-WP-0.1.004 — Implementation contract
- * Write REQUIREMENTS.md.
- * Write SECURITY.md baseline.
- * Write PRIVACY.md baseline.
- * Write CONTRIBUTING.md baseline.
- * Write architecture decision records for every confirmed decision.
- * Record rejected alternatives.
-WP-0.1.005 — Threat model baseline
- * Identify trust boundaries.
- * Identify critical assets.
- * Identify threat actors.
- * Document high-priority abuse cases.
- * Map initial controls.
-Phase exit
- * Source ledger contains entries for all external claims used in the plan.
- * Portal-policy research is recorded and dated.
- * Comparable-project survey is recorded.
- * Implementation contract is written.
- * Threat model baseline is documented.
- * No unsupported external claim is treated as fact.
-163.3 Phase 0.1.1: Repository and durable state
-WP-0.1.101 — Repository scaffold
- * Create canonical directory structure.
- * Add .gitignore.
- * Add .env.example.
- * Add private/profile.example.yaml.
- * Add private/README.md.
- * Add config/app.example.toml.
- * Add config/model-providers.example.toml.
- * Add config/portal-policies.example.toml.
- * Add AGENTS.md.
- * Add README.md.
- * Add LICENSE (AGPL-3.0-only).
- * Add CODE_OF_CONDUCT.md.
- * Add pyproject.toml with project metadata.
- * Add dependency lock files.
-WP-0.1.102 — Secret scanner and PII scanner
- * Integrate secret scanner.
- * Integrate PII scanner.
- * Add synthetic positive and negative fixtures.
- * Configure CI to run both scanners.
- * Add allowlist process.
-WP-0.1.103 — Encrypted SQLite baseline
- * Select and validate encrypted SQLite library.
- * Create database initialization.
- * Create migration framework.
- * Create integrity check.
- * Create backup and restore primitives.
- * Test encryption, corruption, and wrong-key behavior.
-WP-0.1.104 — Artifact store
- * Create content-addressed encrypted artifact store.
- * Support metadata, hashes, MIME types, sensitivity, retention.
- * Create store, retrieve, delete, and sweep operations.
- * Test deduplication and corruption.
-WP-0.1.105 — OS vault integration
- * Integrate with Windows credential manager.
- * Integrate with Linux secret service.
- * Create fallback encrypted file store.
- * Create store, retrieve, rotate, and delete operations.
- * Test missing vault, locked vault, and headless fallback.
-WP-0.1.106 — Audit event log
- * Create append-only event schema.
- * Create event store.
- * Create event query.
- * Create retention sweep.
- * Test event integrity and redaction.
-Phase exit
- * Repository scaffold is complete.
- * Secret and PII scanners run in CI.
- * Encrypted SQLite is operational.
- * Artifact store is operational.
- * OS vault integration is operational.
- * Audit event log is operational.
- * No secrets or personal data exist in repository fixtures.
-163.4 Phase 0.1.2: Domain model
-WP-0.1.201 — Candidate profile
- * Implement identity, contact, online presence.
- * Implement education with India and USA support.
- * Implement employment with categories.
- * Implement projects, skills, certifications, achievements, publications.
- * Implement preferences, compensation, authorization.
- * Implement sensitive and demographic fields.
- * Implement fact provenance, status, sensitivity, and expiration.
- * Implement persona model.
- * Implement profile validation.
- * Implement contradiction detection.
- * Implement import from YAML and JSON Resume.
-WP-0.1.202 — Job and employer model
- * Implement job record.
- * Implement employer record.
- * Implement requisition identity.
- * Implement duplicate classification.
- * Implement source normalization.
- * Implement location normalization.
- * Implement compensation normalization.
- * Implement requirement extraction and classification.
- * Implement freshness and scam-risk signals.
-WP-0.1.203 — Application model
- * Implement application record.
- * Implement application state machine.
- * Implement question and answer model.
- * Implement answer scope, sensitivity, and expiration.
- * Implement document attachment model.
- * Implement approval model.
- * Implement effect model.
- * Implement verification model.
-WP-0.1.204 — Policy model
- * Implement policy rule.
- * Implement risk level.
- * Implement autonomy level.
- * Implement per-domain trust.
- * Implement approval rule.
- * Implement budget rule.
- * Implement data-class rule.
- * Implement portal-mode rule.
-WP-0.1.205 — Workflow and task model
- * Implement goal.
- * Implement task with dependencies, skills, budget, verification plan.
- * Implement task statuses.
- * Implement worker claim.
- * Implement checkpoint.
- * Implement waitpoint.
- * Implement retry policy.
- * Implement circuit breaker.
- * Implement dead-letter queue.
-Phase exit
- * All domain models are implemented with typed schemas.
- * Profile validation passes for India and USA synthetic candidates.
- * Duplicate classification passes for exact, strong, probable, and distinct cases.
- * Application state machine passes legal and illegal transition tests.
- * Policy model passes allow, deny, and require-approval tests.
- * Task model passes claim, execute, checkpoint, and recovery tests.
-163.5 Phase 0.1.3: Task engine and worker
-WP-0.1.301 — Task graph engine
- * Implement goal decomposition.
- * Implement dependency resolution.
- * Implement pull-based claiming.
- * Implement atomic locks.
- * Implement heartbeat.
- * Implement timeout.
- * Implement retry with variation.
- * Implement circuit breaker.
- * Implement dead-letter queue.
- * Implement cancellation.
-WP-0.1.302 — Core worker
- * Implement worker process.
- * Implement task claiming.
- * Implement task execution loop.
- * Implement checkpointing.
- * Implement waitpoint handling.
- * Implement evidence recording.
- * Implement graceful shutdown.
- * Implement crash recovery.
-WP-0.1.303 — Scheduler
- * Implement persistent scheduler.
- * Implement cron-like schedule.
- * Implement missed-run policy.
- * Implement concurrency control.
- * Implement cancellation.
- * Implement time-zone handling.
-Phase exit
- * Task engine passes dependency, retry, circuit-breaker, and cancellation tests.
- * Worker passes claim, execute, checkpoint, and recovery tests.
- * Scheduler passes schedule, missed-run, and cancellation tests.
- * No task can complete without verification evidence.
-163.6 Phase 0.1.4: Mock ATS and browser simulation
-WP-0.1.401 — Local mock ATS
- * Implement login page.
- * Implement session expiration.
- * Implement multi-page application form.
- * Implement standard text, select, radio, checkbox, address, education, and employment fields.
- * Implement document upload.
- * Implement sensitive demographic questions.
- * Implement ambiguous free-text question.
- * Implement unknown required question.
- * Implement validation error.
- * Implement final review page.
- * Implement simulated submission receipt.
-WP-0.1.402 — Browser worker skeleton
- * Implement browser worker process.
- * Implement persistent context.
- * Implement observe-before-act protocol.
- * Implement named actions.
- * Implement locator hierarchy.
- * Implement page stability detection.
- * Implement evidence capture.
- * Implement user takeover bridge.
- * Implement crash recovery.
-WP-0.1.403 — Mock adapter
- * Implement adapter contract.
- * Implement mock adapter for local ATS.
- * Implement capability declaration.
- * Implement fingerprint.
- * Implement form-schema extraction.
- * Implement field mapping.
- * Implement action planning.
- * Implement verification.
- * Implement final-review detection.
- * Implement receipt detection.
-Phase exit
- * Mock ATS supports all required form types.
- * Browser worker can navigate mock ATS, fill fields, upload documents, and reach final review.
- * Mock adapter passes contract tests.
- * Unknown questions create durable waitpoints.
- * Sensitive questions require confirmation.
- * Final review is detected and verified.
-163.7 Phase 0.1.5: First closed-loop milestone
-WP-0.1.501 — Goal-to-task-graph integration
- * Accept a goal to prepare an application for a mock job.
- * Decompose into task graph.
- * Route tasks to workers.
- * Execute tasks.
- * Verify results.
- * Record memory.
- * Show activity to human.
- * Learn one thing from the run.
-WP-0.1.502 — CLI baseline
- * Implement ajos init.
- * Implement ajos doctor.
- * Implement ajos status.
- * Implement ajos profile import.
- * Implement ajos profile validate.
- * Implement ajos jobs add.
- * Implement ajos applications prepare.
- * Implement ajos applications review.
- * Implement ajos applications run.
- * Implement ajos applications status.
- * Implement ajos sessions list.
- * Implement ajos sessions show.
-WP-0.1.503 — GUI baseline
- * Implement local web UI.
- * Implement onboarding.
- * Implement home.
- * Implement job list.
- * Implement application workspace.
- * Implement final review.
- * Implement approval.
- * Implement settings.
-WP-0.1.504 — First eval
- * Create happy-path fixture.
- * Create unknown-question fixture.
- * Create contradictory-profile fixture.
- * Create duplicate-application fixture.
- * Create interrupted-login fixture.
- * Create simulated portal-change fixture.
- * Run all fixtures.
- * Record pass/fail and evidence.
-WP-0.1.505 — First learning record
- * Record outcome.
- * Classify failures.
- * Create one regression test from a failure.
- * Update episodic memory.
-Phase exit
- * Complete closed loop: goal → task graph → execution → verification → memory update → visibility → learning.
- * CLI and GUI both operate the same workflow.
- * Mock application reaches verified pre-submission state.
- * Unknown information blocks progression.
- * Duplicate applications block.
- * Restart preserves checkpoint.
- * One failure produces a regression test.
- * All fixtures pass.
-163.8 dev-0.1 exit criteria
- 1. Repository scaffold is complete.
- 2. Secret and PII scanners are operational.
- 3. Encrypted SQLite and artifact store are operational.
- 4. OS vault integration is operational.
- 5. Domain models cover profile, job, employer, application, policy, and task.
- 6. Task engine passes dependency, retry, circuit-breaker, and cancellation tests.
- 7. Worker passes claim, execute, checkpoint, and recovery tests.
- 8. Mock ATS supports all required form types.
- 9. Browser worker can navigate mock ATS and reach final review.
- 10. Mock adapter passes contract tests.
- 11. Complete closed loop is proven.
- 12. CLI and GUI both operate the same workflow.
- 13. Unknown questions block.
- 14. Duplicate applications block.
- 15. Restart preserves checkpoint.
- 16. One failure produces a regression test.
- 17. All fixtures pass.
- 18. Implementation contract is written.
- 19. Threat model baseline is documented.
- 20. Source ledger contains entries for all external claims.
-----------------------------------------
+     163.1 Version objective
+     Prove the complete application-assistance loop without touching a real portal. Establish the durable project substrate, domain model, task engine, mock application harness, and first closed-loop milestone.
+     163.2 Phase 0.1.0: Research and implementation contract
+     Work packages
+     WP-0.1.001 — Source-ledger methodology
+
+- Define source-quality rubric.
+- Define claim-confidence and volatility rubrics.
+- Create research-ledger schema.
+- Create research-ledger directory.
+- Add ledger entry for every external claim used in the plan.
+  WP-0.1.002 — Portal-policy baseline
+- Research LinkedIn, Naukri, Indeed, Workday, Greenhouse, Lever current policies.
+- Record in ledger.
+- Classify permitted operating modes.
+- Identify immediate prohibitions.
+  WP-0.1.003 — Comparable-project survey
+- Research the supplied MadsLorentzen/ai-job-search repository.
+- Research at least five additional comparable projects.
+- Record architecture, license, maintenance, and reusable patterns.
+- Identify unsafe or brittle patterns to avoid.
+  WP-0.1.004 — Implementation contract
+- Write REQUIREMENTS.md.
+- Write SECURITY.md baseline.
+- Write PRIVACY.md baseline.
+- Write CONTRIBUTING.md baseline.
+- Write architecture decision records for every confirmed decision.
+- Record rejected alternatives.
+  WP-0.1.005 — Threat model baseline
+- Identify trust boundaries.
+- Identify critical assets.
+- Identify threat actors.
+- Document high-priority abuse cases.
+- Map initial controls.
+  Phase exit
+- Source ledger contains entries for all external claims used in the plan.
+- Portal-policy research is recorded and dated.
+- Comparable-project survey is recorded.
+- Implementation contract is written.
+- Threat model baseline is documented.
+- No unsupported external claim is treated as fact.
+  163.3 Phase 0.1.1: Repository and durable state
+  WP-0.1.101 — Repository scaffold
+- Create canonical directory structure.
+- Add .gitignore.
+- Add .env.example.
+- Add private/profile.example.yaml.
+- Add private/README.md.
+- Add config/app.example.toml.
+- Add config/model-providers.example.toml.
+- Add config/portal-policies.example.toml.
+- Add AGENTS.md.
+- Add README.md.
+- Add LICENSE (AGPL-3.0-only).
+- Add CODE_OF_CONDUCT.md.
+- Add pyproject.toml with project metadata.
+- Add dependency lock files.
+  WP-0.1.102 — Secret scanner and PII scanner
+- Integrate secret scanner.
+- Integrate PII scanner.
+- Add synthetic positive and negative fixtures.
+- Configure CI to run both scanners.
+- Add allowlist process.
+  WP-0.1.103 — Encrypted SQLite baseline
+- Select and validate encrypted SQLite library.
+- Create database initialization.
+- Create migration framework.
+- Create integrity check.
+- Create backup and restore primitives.
+- Test encryption, corruption, and wrong-key behavior.
+  WP-0.1.104 — Artifact store
+- Create content-addressed encrypted artifact store.
+- Support metadata, hashes, MIME types, sensitivity, retention.
+- Create store, retrieve, delete, and sweep operations.
+- Test deduplication and corruption.
+  WP-0.1.105 — OS vault integration
+- Integrate with Windows credential manager.
+- Integrate with Linux secret service.
+- Create fallback encrypted file store.
+- Create store, retrieve, rotate, and delete operations.
+- Test missing vault, locked vault, and headless fallback.
+  WP-0.1.106 — Audit event log
+- Create append-only event schema.
+- Create event store.
+- Create event query.
+- Create retention sweep.
+- Test event integrity and redaction.
+  Phase exit
+- Repository scaffold is complete.
+- Secret and PII scanners run in CI.
+- Encrypted SQLite is operational.
+- Artifact store is operational.
+- OS vault integration is operational.
+- Audit event log is operational.
+- No secrets or personal data exist in repository fixtures.
+  163.4 Phase 0.1.2: Domain model
+  WP-0.1.201 — Candidate profile
+- Implement identity, contact, online presence.
+- Implement education with India and USA support.
+- Implement employment with categories.
+- Implement projects, skills, certifications, achievements, publications.
+- Implement preferences, compensation, authorization.
+- Implement sensitive and demographic fields.
+- Implement fact provenance, status, sensitivity, and expiration.
+- Implement persona model.
+- Implement profile validation.
+- Implement contradiction detection.
+- Implement import from YAML and JSON Resume.
+  WP-0.1.202 — Job and employer model
+- Implement job record.
+- Implement employer record.
+- Implement requisition identity.
+- Implement duplicate classification.
+- Implement source normalization.
+- Implement location normalization.
+- Implement compensation normalization.
+- Implement requirement extraction and classification.
+- Implement freshness and scam-risk signals.
+  WP-0.1.203 — Application model
+- Implement application record.
+- Implement application state machine.
+- Implement question and answer model.
+- Implement answer scope, sensitivity, and expiration.
+- Implement document attachment model.
+- Implement approval model.
+- Implement effect model.
+- Implement verification model.
+  WP-0.1.204 — Policy model
+- Implement policy rule.
+- Implement risk level.
+- Implement autonomy level.
+- Implement per-domain trust.
+- Implement approval rule.
+- Implement budget rule.
+- Implement data-class rule.
+- Implement portal-mode rule.
+  WP-0.1.205 — Workflow and task model
+- Implement goal.
+- Implement task with dependencies, skills, budget, verification plan.
+- Implement task statuses.
+- Implement worker claim.
+- Implement checkpoint.
+- Implement waitpoint.
+- Implement retry policy.
+- Implement circuit breaker.
+- Implement dead-letter queue.
+  Phase exit
+- All domain models are implemented with typed schemas.
+- Profile validation passes for India and USA synthetic candidates.
+- Duplicate classification passes for exact, strong, probable, and distinct cases.
+- Application state machine passes legal and illegal transition tests.
+- Policy model passes allow, deny, and require-approval tests.
+- Task model passes claim, execute, checkpoint, and recovery tests.
+  163.5 Phase 0.1.3: Task engine and worker
+  WP-0.1.301 — Task graph engine
+- Implement goal decomposition.
+- Implement dependency resolution.
+- Implement pull-based claiming.
+- Implement atomic locks.
+- Implement heartbeat.
+- Implement timeout.
+- Implement retry with variation.
+- Implement circuit breaker.
+- Implement dead-letter queue.
+- Implement cancellation.
+  WP-0.1.302 — Core worker
+- Implement worker process.
+- Implement task claiming.
+- Implement task execution loop.
+- Implement checkpointing.
+- Implement waitpoint handling.
+- Implement evidence recording.
+- Implement graceful shutdown.
+- Implement crash recovery.
+  WP-0.1.303 — Scheduler
+- Implement persistent scheduler.
+- Implement cron-like schedule.
+- Implement missed-run policy.
+- Implement concurrency control.
+- Implement cancellation.
+- Implement time-zone handling.
+  Phase exit
+- Task engine passes dependency, retry, circuit-breaker, and cancellation tests.
+- Worker passes claim, execute, checkpoint, and recovery tests.
+- Scheduler passes schedule, missed-run, and cancellation tests.
+- No task can complete without verification evidence.
+  163.6 Phase 0.1.4: Mock ATS and browser simulation
+  WP-0.1.401 — Local mock ATS
+- Implement login page.
+- Implement session expiration.
+- Implement multi-page application form.
+- Implement standard text, select, radio, checkbox, address, education, and employment fields.
+- Implement document upload.
+- Implement sensitive demographic questions.
+- Implement ambiguous free-text question.
+- Implement unknown required question.
+- Implement validation error.
+- Implement final review page.
+- Implement simulated submission receipt.
+  WP-0.1.402 — Browser worker skeleton
+- Implement browser worker process.
+- Implement persistent context.
+- Implement observe-before-act protocol.
+- Implement named actions.
+- Implement locator hierarchy.
+- Implement page stability detection.
+- Implement evidence capture.
+- Implement user takeover bridge.
+- Implement crash recovery.
+  WP-0.1.403 — Mock adapter
+- Implement adapter contract.
+- Implement mock adapter for local ATS.
+- Implement capability declaration.
+- Implement fingerprint.
+- Implement form-schema extraction.
+- Implement field mapping.
+- Implement action planning.
+- Implement verification.
+- Implement final-review detection.
+- Implement receipt detection.
+  Phase exit
+- Mock ATS supports all required form types.
+- Browser worker can navigate mock ATS, fill fields, upload documents, and reach final review.
+- Mock adapter passes contract tests.
+- Unknown questions create durable waitpoints.
+- Sensitive questions require confirmation.
+- Final review is detected and verified.
+  163.7 Phase 0.1.5: First closed-loop milestone
+  WP-0.1.501 — Goal-to-task-graph integration
+- Accept a goal to prepare an application for a mock job.
+- Decompose into task graph.
+- Route tasks to workers.
+- Execute tasks.
+- Verify results.
+- Record memory.
+- Show activity to human.
+- Learn one thing from the run.
+  WP-0.1.502 — CLI baseline
+- Implement ajos init.
+- Implement ajos doctor.
+- Implement ajos status.
+- Implement ajos profile import.
+- Implement ajos profile validate.
+- Implement ajos jobs add.
+- Implement ajos applications prepare.
+- Implement ajos applications review.
+- Implement ajos applications run.
+- Implement ajos applications status.
+- Implement ajos sessions list.
+- Implement ajos sessions show.
+  WP-0.1.503 — GUI baseline
+- Implement local web UI.
+- Implement onboarding.
+- Implement home.
+- Implement job list.
+- Implement application workspace.
+- Implement final review.
+- Implement approval.
+- Implement settings.
+  WP-0.1.504 — First eval
+- Create happy-path fixture.
+- Create unknown-question fixture.
+- Create contradictory-profile fixture.
+- Create duplicate-application fixture.
+- Create interrupted-login fixture.
+- Create simulated portal-change fixture.
+- Run all fixtures.
+- Record pass/fail and evidence.
+  WP-0.1.505 — First learning record
+- Record outcome.
+- Classify failures.
+- Create one regression test from a failure.
+- Update episodic memory.
+  Phase exit
+- Complete closed loop: goal → task graph → execution → verification → memory update → visibility → learning.
+- CLI and GUI both operate the same workflow.
+- Mock application reaches verified pre-submission state.
+- Unknown information blocks progression.
+- Duplicate applications block.
+- Restart preserves checkpoint.
+- One failure produces a regression test.
+- All fixtures pass.
+  163.8 dev-0.1 exit criteria
+
+1.  Repository scaffold is complete.
+2.  Secret and PII scanners are operational.
+3.  Encrypted SQLite and artifact store are operational.
+4.  OS vault integration is operational.
+5.  Domain models cover profile, job, employer, application, policy, and task.
+6.  Task engine passes dependency, retry, circuit-breaker, and cancellation tests.
+7.  Worker passes claim, execute, checkpoint, and recovery tests.
+8.  Mock ATS supports all required form types.
+9.  Browser worker can navigate mock ATS and reach final review.
+10. Mock adapter passes contract tests.
+11. Complete closed loop is proven.
+12. CLI and GUI both operate the same workflow.
+13. Unknown questions block.
+14. Duplicate applications block.
+15. Restart preserves checkpoint.
+16. One failure produces a regression test.
+17. All fixtures pass.
+18. Implementation contract is written.
+19. Threat model baseline is documented.
+20. Source ledger contains entries for all external claims.
+
+---
+
 164. dev-0.5 roadmap — Essential features
-164.1 Version objective
-Build the complete profile and document system, job discovery and normalization, matching and ranking, CLI and GUI parity, and initial portal adapters for LinkedIn, Naukri, Indeed, Workday, Greenhouse, and Lever.
-164.2 Phase 0.5.1: Complete profile manager
-WP-0.5.101 — Profile importers
- * Implement PDF résumé import.
- * Implement DOCX résumé import.
- * Implement Markdown résumé import.
- * Implement plain-text import.
- * Implement JSON Resume import.
- * Implement LinkedIn data export import where supported.
- * Implement structured YAML and JSON import.
- * Implement contradiction resolution UI.
- * Implement fact confirmation workflow.
-WP-0.5.102 — Profile completeness and freshness
- * Implement completeness dashboard by workflow.
- * Implement stale-fact detection.
- * Implement review reminders.
- * Implement expiration propagation.
- * Implement persona completeness.
-WP-0.5.103 — Profile export
- * Implement structured JSON export.
- * Implement YAML export.
- * Implement human-readable archive.
- * Implement encrypted full backup.
- * Implement selective export.
-WP-0.5.104 — Profile deletion
- * Implement single-fact deletion.
- * Implement category deletion.
- * Implement full profile deletion.
- * Implement cryptographic erasure.
- * Implement deletion verification.
-Phase exit
- * All import formats are supported.
- * Contradiction resolution works.
- * Completeness dashboard is accurate.
- * Stale-fact detection works.
- * Export produces complete, structured output.
- * Deletion removes all targeted data.
-164.3 Phase 0.5.2: Document system
-WP-0.5.201 — Document model
- * Implement canonical document model.
- * Implement section and block types.
- * Implement fact grounding.
- * Implement versioning.
- * Implement approval scope.
-WP-0.5.202 — Résumé templates
- * Implement ten initial templates.
- * Implement ATS compatibility checks.
- * Implement visual regression.
- * Implement text extraction checks.
- * Implement metadata scan.
-WP-0.5.203 — Document generation
- * Implement structured mode generation.
- * Implement free-form mode support.
- * Implement persona-based selection.
- * Implement job-specific tailoring.
- * Implement cover-letter generation.
- * Implement attachment selection.
- * Implement wrong-document prevention.
-WP-0.5.204 — Document rendering
- * Implement PDF renderer.
- * Implement DOCX renderer.
- * Implement Markdown renderer.
- * Implement plain-text renderer.
- * Implement HTML preview.
- * Implement format validation.
- * Implement content-leak detection.
-WP-0.5.205 — Document import
- * Implement PDF import.
- * Implement DOCX import.
- * Implement Markdown import.
- * Implement plain-text import.
- * Implement JSON Resume import.
- * Implement extraction validation.
-Phase exit
- * Ten templates pass ATS compatibility and visual regression.
- * Document generation produces grounded, validated output.
- * Cover-letter generation is grounded and employer-specific.
- * Wrong-document prevention blocks all test cases.
- * PDF and DOCX renderers produce valid, selectable output.
- * Content-leak detection blocks government IDs and unrelated employer names.
-164.4 Phase 0.5.3: Job discovery and normalization
-WP-0.5.301 — URL ingestion
- * Implement URL normalization.
- * Implement source classification.
- * Implement employer resolution.
- * Implement requisition extraction.
- * Implement duplicate detection.
- * Implement scam-risk analysis.
- * Implement freshness analysis.
-WP-0.5.302 — Email ingestion
- * Implement Gmail OAuth.
- * Implement message discovery.
- * Implement job-alert classification.
- * Implement application-association.
- * Implement raw-body retention and expiration.
-WP-0.5.303 — Employer registry
- * Implement employer record.
- * Implement domain verification.
- * Implement ATS detection.
- * Implement subsidiary resolution.
- * Implement blocklist.
- * Implement scam-domain detection.
-WP-0.5.304 — Discovery sources
- * Implement LinkedIn job discovery where permitted.
- * Implement Naukri job discovery where permitted.
- * Implement Indeed job discovery where permitted.
- * Implement employer careers-page discovery.
- * Implement saved-search automation.
-Phase exit
- * URL ingestion normalizes jobs from all supported sources.
- * Duplicate detection works across portals.
- * Scam-risk analysis blocks high-risk listings.
- * Gmail ingestion classifies job alerts and associates them with applications.
- * Employer registry resolves canonical identities.
- * Discovery sources operate within policy.
-164.5 Phase 0.5.4: Matching and ranking
-WP-0.5.401 — Eligibility engine
- * Implement hard constraint evaluation.
- * Implement authorization, experience, education, license, clearance, location, and deadline checks.
- * Implement unknown handling.
- * Implement user override.
- * Implement rule versioning.
-WP-0.5.402 — Match scoring
- * Implement weighted scoring.
- * Implement skill coverage.
- * Implement experience alignment.
- * Implement education alignment.
- * Implement location and compensation alignment.
- * Implement user preference alignment.
- * Implement listing quality adjustment.
- * Implement explainability.
-WP-0.5.403 — Preference learning
- * Implement feedback collection.
- * Implement bounded weight adjustment.
- * Implement learning safeguards.
- * Implement preference drift detection.
- * Implement reset.
-WP-0.5.404 — Local embeddings
- * Implement optional embedding model installation.
- * Implement vector index.
- * Implement hybrid retrieval.
- * Implement lexical fallback.
- * Implement re-indexing.
- * Implement model digest tracking.
-Phase exit
- * Eligibility engine passes all hard-constraint tests.
- * Match scoring produces explainable results.
- * Preference learning adjusts weights within bounds.
- * Local embeddings improve retrieval quality.
- * Lexical fallback works without embeddings.
- * No sensitive data influences scoring.
-164.6 Phase 0.5.5: CLI and GUI parity
-WP-0.5.501 — CLI profile commands
- * Implement ajos profile show.
- * Implement ajos profile import.
- * Implement ajos profile export.
- * Implement ajos profile validate.
- * Implement ajos profile review.
- * Implement ajos profile edit.
- * Implement ajos profile history.
- * Implement ajos profile confirm.
- * Implement ajos profile delete.
- * Implement ajos profile conflicts.
-WP-0.5.502 — CLI persona commands
- * Implement ajos persona list.
- * Implement ajos persona create.
- * Implement ajos persona show.
- * Implement ajos persona edit.
- * Implement ajos persona validate.
- * Implement ajos persona clone.
- * Implement ajos persona delete.
-WP-0.5.503 — CLI job commands
- * Implement ajos jobs add.
- * Implement ajos jobs import.
- * Implement ajos jobs discover.
- * Implement ajos jobs list.
- * Implement ajos jobs show.
- * Implement ajos jobs rank.
- * Implement ajos jobs refresh.
- * Implement ajos jobs reject.
- * Implement ajos jobs mark-duplicate.
- * Implement ajos jobs inspect-risk.
-WP-0.5.504 — CLI application commands
- * Implement ajos applications prepare.
- * Implement ajos applications list.
- * Implement ajos applications show.
- * Implement ajos applications run.
- * Implement ajos applications pause.
- * Implement ajos applications resume.
- * Implement ajos applications cancel.
- * Implement ajos applications questions.
- * Implement ajos applications review.
- * Implement ajos applications confirm-submitted.
- * Implement ajos applications status.
-WP-0.5.505 — CLI document commands
- * Implement ajos documents list.
- * Implement ajos documents generate.
- * Implement ajos documents validate.
- * Implement ajos documents diff.
- * Implement ajos documents render.
- * Implement ajos documents approve.
- * Implement ajos documents export.
- * Implement ajos documents delete.
-WP-0.5.506 — CLI portal commands
- * Implement ajos portals list.
- * Implement ajos portals show.
- * Implement ajos portals doctor.
- * Implement ajos portals login.
- * Implement ajos portals logout.
- * Implement ajos portals compatibility.
- * Implement ajos portals disable.
- * Implement ajos portals clear-session.
-WP-0.5.507 — CLI provider commands
- * Implement ajos providers list.
- * Implement ajos providers configure.
- * Implement ajos providers test.
- * Implement ajos providers models.
- * Implement ajos providers budget.
- * Implement ajos providers disable.
- * Implement ajos providers delete-credential.
-WP-0.5.508 — CLI security and privacy commands
- * Implement ajos security audit.
- * Implement ajos security sessions.
- * Implement ajos security rotate-keys.
- * Implement ajos security incidents.
- * Implement ajos privacy report.
- * Implement ajos privacy disclosures.
- * Implement ajos privacy export.
- * Implement ajos privacy delete.
- * Implement ajos privacy retention.
-WP-0.5.509 — CLI session and diagnostic commands
- * Implement ajos sessions list.
- * Implement ajos sessions show.
- * Implement ajos sessions events.
- * Implement ajos sessions artifacts.
- * Implement ajos diagnostics doctor.
- * Implement ajos diagnostics bundle.
- * Implement ajos diagnostics verify-redaction.
-WP-0.5.510 — GUI parity
- * Implement profile editor.
- * Implement persona editor.
- * Implement job list and details.
- * Implement match explanation.
- * Implement application workspace.
- * Implement question review.
- * Implement document preview and approval.
- * Implement final review.
- * Implement settings.
- * Implement security and privacy dashboards.
- * Implement novice and expert modes.
-Phase exit
- * Every consequential CLI command has a corresponding GUI operation.
- * Every GUI operation has a documented CLI or API equivalent.
- * CLI supports JSON and YAML output for read-only commands.
- * CLI supports noninteractive mode.
- * GUI supports novice and expert modes.
- * GUI is keyboard-accessible.
-164.7 Phase 0.5.6: Initial portal adapters
-WP-0.5.601 — LinkedIn adapter
- * Implement URL recognition.
- * Implement job extraction.
- * Implement employer resolution.
- * Implement Easy Apply detection.
- * Implement external ATS detection.
- * Implement authentication detection.
- * Implement assisted navigation.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-0.5.602 — Naukri adapter
- * Implement URL recognition.
- * Implement job extraction.
- * Implement employer resolution.
- * Implement profile synchronization.
- * Implement India-specific fields.
- * Implement authentication detection.
- * Implement assisted navigation.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-0.5.603 — Indeed adapter
- * Implement URL recognition.
- * Implement job extraction.
- * Implement employer resolution.
- * Implement hosted versus external detection.
- * Implement screener questions.
- * Implement authentication detection.
- * Implement assisted navigation.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-0.5.604 — Workday adapter
- * Implement tenant resolution.
- * Implement requisition extraction.
- * Implement authentication detection.
- * Implement candidate-home detection.
- * Implement form-schema extraction.
- * Implement repeatable education and employment.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-0.5.605 — Greenhouse adapter
- * Implement employer-board ingestion.
- * Implement requisition extraction.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-0.5.606 — Lever adapter
- * Implement employer-board ingestion.
- * Implement requisition extraction.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-Phase exit
- * Each adapter passes contract tests.
- * Each adapter has a current policy review.
- * Each adapter has a qualification suite.
- * Each adapter has a compatibility matrix entry.
- * Each adapter has a kill switch.
- * Each adapter operates in assisted or verified pre-submission mode.
- * No adapter submits autonomously.
- * No adapter bypasses approval or sensitive-data controls.
-164.8 dev-0.5 exit criteria
- 1. Complete profile manager supports all required fields.
- 2. Profile importers support all required formats.
- 3. Profile completeness and freshness are tracked.
- 4. Profile export and deletion work.
- 5. Ten résumé templates pass ATS compatibility and visual regression.
- 6. Document generation produces grounded, validated output.
- 7. Cover-letter generation is grounded and employer-specific.
- 8. Wrong-document prevention blocks all test cases.
- 9. PDF and DOCX renderers produce valid output.
- 10. Content-leak detection works.
- 11. Job discovery and normalization work for all supported sources.
- 12. Duplicate detection works across portals.
- 13. Scam-risk analysis blocks high-risk listings.
- 14. Gmail ingestion works under narrow OAuth scopes.
- 15. Employer registry resolves canonical identities.
- 16. Eligibility engine passes all hard-constraint tests.
- 17. Match scoring produces explainable results.
- 18. Preference learning works within bounds.
- 19. Local embeddings are optional and functional.
- 20. CLI and GUI have parity for all consequential operations.
- 21. CLI supports JSON and YAML output.
- 22. GUI supports novice and expert modes.
- 23. GUI is keyboard-accessible.
- 24. LinkedIn, Naukri, Indeed, Workday, Greenhouse, and Lever adapters pass contract tests.
- 25. Each adapter has a current policy review and qualification suite.
- 26. No adapter submits autonomously.
- 27. No adapter bypasses approval or sensitive-data controls.
-----------------------------------------
+     164.1 Version objective
+     Build the complete profile and document system, job discovery and normalization, matching and ranking, CLI and GUI parity, and initial portal adapters for LinkedIn, Naukri, Indeed, Workday, Greenhouse, and Lever.
+     164.2 Phase 0.5.1: Complete profile manager
+     WP-0.5.101 — Profile importers
+
+- Implement PDF résumé import.
+- Implement DOCX résumé import.
+- Implement Markdown résumé import.
+- Implement plain-text import.
+- Implement JSON Resume import.
+- Implement LinkedIn data export import where supported.
+- Implement structured YAML and JSON import.
+- Implement contradiction resolution UI.
+- Implement fact confirmation workflow.
+  WP-0.5.102 — Profile completeness and freshness
+- Implement completeness dashboard by workflow.
+- Implement stale-fact detection.
+- Implement review reminders.
+- Implement expiration propagation.
+- Implement persona completeness.
+  WP-0.5.103 — Profile export
+- Implement structured JSON export.
+- Implement YAML export.
+- Implement human-readable archive.
+- Implement encrypted full backup.
+- Implement selective export.
+  WP-0.5.104 — Profile deletion
+- Implement single-fact deletion.
+- Implement category deletion.
+- Implement full profile deletion.
+- Implement cryptographic erasure.
+- Implement deletion verification.
+  Phase exit
+- All import formats are supported.
+- Contradiction resolution works.
+- Completeness dashboard is accurate.
+- Stale-fact detection works.
+- Export produces complete, structured output.
+- Deletion removes all targeted data.
+  164.3 Phase 0.5.2: Document system
+  WP-0.5.201 — Document model
+- Implement canonical document model.
+- Implement section and block types.
+- Implement fact grounding.
+- Implement versioning.
+- Implement approval scope.
+  WP-0.5.202 — Résumé templates
+- Implement ten initial templates.
+- Implement ATS compatibility checks.
+- Implement visual regression.
+- Implement text extraction checks.
+- Implement metadata scan.
+  WP-0.5.203 — Document generation
+- Implement structured mode generation.
+- Implement free-form mode support.
+- Implement persona-based selection.
+- Implement job-specific tailoring.
+- Implement cover-letter generation.
+- Implement attachment selection.
+- Implement wrong-document prevention.
+  WP-0.5.204 — Document rendering
+- Implement PDF renderer.
+- Implement DOCX renderer.
+- Implement Markdown renderer.
+- Implement plain-text renderer.
+- Implement HTML preview.
+- Implement format validation.
+- Implement content-leak detection.
+  WP-0.5.205 — Document import
+- Implement PDF import.
+- Implement DOCX import.
+- Implement Markdown import.
+- Implement plain-text import.
+- Implement JSON Resume import.
+- Implement extraction validation.
+  Phase exit
+- Ten templates pass ATS compatibility and visual regression.
+- Document generation produces grounded, validated output.
+- Cover-letter generation is grounded and employer-specific.
+- Wrong-document prevention blocks all test cases.
+- PDF and DOCX renderers produce valid, selectable output.
+- Content-leak detection blocks government IDs and unrelated employer names.
+  164.4 Phase 0.5.3: Job discovery and normalization
+  WP-0.5.301 — URL ingestion
+- Implement URL normalization.
+- Implement source classification.
+- Implement employer resolution.
+- Implement requisition extraction.
+- Implement duplicate detection.
+- Implement scam-risk analysis.
+- Implement freshness analysis.
+  WP-0.5.302 — Email ingestion
+- Implement Gmail OAuth.
+- Implement message discovery.
+- Implement job-alert classification.
+- Implement application-association.
+- Implement raw-body retention and expiration.
+  WP-0.5.303 — Employer registry
+- Implement employer record.
+- Implement domain verification.
+- Implement ATS detection.
+- Implement subsidiary resolution.
+- Implement blocklist.
+- Implement scam-domain detection.
+  WP-0.5.304 — Discovery sources
+- Implement LinkedIn job discovery where permitted.
+- Implement Naukri job discovery where permitted.
+- Implement Indeed job discovery where permitted.
+- Implement employer careers-page discovery.
+- Implement saved-search automation.
+  Phase exit
+- URL ingestion normalizes jobs from all supported sources.
+- Duplicate detection works across portals.
+- Scam-risk analysis blocks high-risk listings.
+- Gmail ingestion classifies job alerts and associates them with applications.
+- Employer registry resolves canonical identities.
+- Discovery sources operate within policy.
+  164.5 Phase 0.5.4: Matching and ranking
+  WP-0.5.401 — Eligibility engine
+- Implement hard constraint evaluation.
+- Implement authorization, experience, education, license, clearance, location, and deadline checks.
+- Implement unknown handling.
+- Implement user override.
+- Implement rule versioning.
+  WP-0.5.402 — Match scoring
+- Implement weighted scoring.
+- Implement skill coverage.
+- Implement experience alignment.
+- Implement education alignment.
+- Implement location and compensation alignment.
+- Implement user preference alignment.
+- Implement listing quality adjustment.
+- Implement explainability.
+  WP-0.5.403 — Preference learning
+- Implement feedback collection.
+- Implement bounded weight adjustment.
+- Implement learning safeguards.
+- Implement preference drift detection.
+- Implement reset.
+  WP-0.5.404 — Local embeddings
+- Implement optional embedding model installation.
+- Implement vector index.
+- Implement hybrid retrieval.
+- Implement lexical fallback.
+- Implement re-indexing.
+- Implement model digest tracking.
+  Phase exit
+- Eligibility engine passes all hard-constraint tests.
+- Match scoring produces explainable results.
+- Preference learning adjusts weights within bounds.
+- Local embeddings improve retrieval quality.
+- Lexical fallback works without embeddings.
+- No sensitive data influences scoring.
+  164.6 Phase 0.5.5: CLI and GUI parity
+  WP-0.5.501 — CLI profile commands
+- Implement ajos profile show.
+- Implement ajos profile import.
+- Implement ajos profile export.
+- Implement ajos profile validate.
+- Implement ajos profile review.
+- Implement ajos profile edit.
+- Implement ajos profile history.
+- Implement ajos profile confirm.
+- Implement ajos profile delete.
+- Implement ajos profile conflicts.
+  WP-0.5.502 — CLI persona commands
+- Implement ajos persona list.
+- Implement ajos persona create.
+- Implement ajos persona show.
+- Implement ajos persona edit.
+- Implement ajos persona validate.
+- Implement ajos persona clone.
+- Implement ajos persona delete.
+  WP-0.5.503 — CLI job commands
+- Implement ajos jobs add.
+- Implement ajos jobs import.
+- Implement ajos jobs discover.
+- Implement ajos jobs list.
+- Implement ajos jobs show.
+- Implement ajos jobs rank.
+- Implement ajos jobs refresh.
+- Implement ajos jobs reject.
+- Implement ajos jobs mark-duplicate.
+- Implement ajos jobs inspect-risk.
+  WP-0.5.504 — CLI application commands
+- Implement ajos applications prepare.
+- Implement ajos applications list.
+- Implement ajos applications show.
+- Implement ajos applications run.
+- Implement ajos applications pause.
+- Implement ajos applications resume.
+- Implement ajos applications cancel.
+- Implement ajos applications questions.
+- Implement ajos applications review.
+- Implement ajos applications confirm-submitted.
+- Implement ajos applications status.
+  WP-0.5.505 — CLI document commands
+- Implement ajos documents list.
+- Implement ajos documents generate.
+- Implement ajos documents validate.
+- Implement ajos documents diff.
+- Implement ajos documents render.
+- Implement ajos documents approve.
+- Implement ajos documents export.
+- Implement ajos documents delete.
+  WP-0.5.506 — CLI portal commands
+- Implement ajos portals list.
+- Implement ajos portals show.
+- Implement ajos portals doctor.
+- Implement ajos portals login.
+- Implement ajos portals logout.
+- Implement ajos portals compatibility.
+- Implement ajos portals disable.
+- Implement ajos portals clear-session.
+  WP-0.5.507 — CLI provider commands
+- Implement ajos providers list.
+- Implement ajos providers configure.
+- Implement ajos providers test.
+- Implement ajos providers models.
+- Implement ajos providers budget.
+- Implement ajos providers disable.
+- Implement ajos providers delete-credential.
+  WP-0.5.508 — CLI security and privacy commands
+- Implement ajos security audit.
+- Implement ajos security sessions.
+- Implement ajos security rotate-keys.
+- Implement ajos security incidents.
+- Implement ajos privacy report.
+- Implement ajos privacy disclosures.
+- Implement ajos privacy export.
+- Implement ajos privacy delete.
+- Implement ajos privacy retention.
+  WP-0.5.509 — CLI session and diagnostic commands
+- Implement ajos sessions list.
+- Implement ajos sessions show.
+- Implement ajos sessions events.
+- Implement ajos sessions artifacts.
+- Implement ajos diagnostics doctor.
+- Implement ajos diagnostics bundle.
+- Implement ajos diagnostics verify-redaction.
+  WP-0.5.510 — GUI parity
+- Implement profile editor.
+- Implement persona editor.
+- Implement job list and details.
+- Implement match explanation.
+- Implement application workspace.
+- Implement question review.
+- Implement document preview and approval.
+- Implement final review.
+- Implement settings.
+- Implement security and privacy dashboards.
+- Implement novice and expert modes.
+  Phase exit
+- Every consequential CLI command has a corresponding GUI operation.
+- Every GUI operation has a documented CLI or API equivalent.
+- CLI supports JSON and YAML output for read-only commands.
+- CLI supports noninteractive mode.
+- GUI supports novice and expert modes.
+- GUI is keyboard-accessible.
+  164.7 Phase 0.5.6: Initial portal adapters
+  WP-0.5.601 — LinkedIn adapter
+- Implement URL recognition.
+- Implement job extraction.
+- Implement employer resolution.
+- Implement Easy Apply detection.
+- Implement external ATS detection.
+- Implement authentication detection.
+- Implement assisted navigation.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-0.5.602 — Naukri adapter
+- Implement URL recognition.
+- Implement job extraction.
+- Implement employer resolution.
+- Implement profile synchronization.
+- Implement India-specific fields.
+- Implement authentication detection.
+- Implement assisted navigation.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-0.5.603 — Indeed adapter
+- Implement URL recognition.
+- Implement job extraction.
+- Implement employer resolution.
+- Implement hosted versus external detection.
+- Implement screener questions.
+- Implement authentication detection.
+- Implement assisted navigation.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-0.5.604 — Workday adapter
+- Implement tenant resolution.
+- Implement requisition extraction.
+- Implement authentication detection.
+- Implement candidate-home detection.
+- Implement form-schema extraction.
+- Implement repeatable education and employment.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-0.5.605 — Greenhouse adapter
+- Implement employer-board ingestion.
+- Implement requisition extraction.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-0.5.606 — Lever adapter
+- Implement employer-board ingestion.
+- Implement requisition extraction.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  Phase exit
+- Each adapter passes contract tests.
+- Each adapter has a current policy review.
+- Each adapter has a qualification suite.
+- Each adapter has a compatibility matrix entry.
+- Each adapter has a kill switch.
+- Each adapter operates in assisted or verified pre-submission mode.
+- No adapter submits autonomously.
+- No adapter bypasses approval or sensitive-data controls.
+  164.8 dev-0.5 exit criteria
+
+1.  Complete profile manager supports all required fields.
+2.  Profile importers support all required formats.
+3.  Profile completeness and freshness are tracked.
+4.  Profile export and deletion work.
+5.  Ten résumé templates pass ATS compatibility and visual regression.
+6.  Document generation produces grounded, validated output.
+7.  Cover-letter generation is grounded and employer-specific.
+8.  Wrong-document prevention blocks all test cases.
+9.  PDF and DOCX renderers produce valid output.
+10. Content-leak detection works.
+11. Job discovery and normalization work for all supported sources.
+12. Duplicate detection works across portals.
+13. Scam-risk analysis blocks high-risk listings.
+14. Gmail ingestion works under narrow OAuth scopes.
+15. Employer registry resolves canonical identities.
+16. Eligibility engine passes all hard-constraint tests.
+17. Match scoring produces explainable results.
+18. Preference learning works within bounds.
+19. Local embeddings are optional and functional.
+20. CLI and GUI have parity for all consequential operations.
+21. CLI supports JSON and YAML output.
+22. GUI supports novice and expert modes.
+23. GUI is keyboard-accessible.
+24. LinkedIn, Naukri, Indeed, Workday, Greenhouse, and Lever adapters pass contract tests.
+25. Each adapter has a current policy review and qualification suite.
+26. No adapter submits autonomously.
+27. No adapter bypasses approval or sensitive-data controls.
+
+---
+
 165. dev-1.0 roadmap — Testing
-165.1 Version objective
-Build the comprehensive testing program, CI infrastructure, reliability qualification, security and privacy gates, and release engineering baseline. No new broad features.
-165.2 Phase 1.0.1: Test infrastructure
-WP-1.0.101 — Unit test expansion
- * Achieve core domain branch coverage targets.
- * Add property-based tests for dates, compensation, duplicates, approvals, encryption, and workflows.
- * Add schema tests for every schema.
- * Add migration tests for every supported version path.
-WP-1.0.102 — Integration test expansion
- * Add component integration tests for profile-to-document, job-to-matching, question-to-browser, email-to-application, and calendar integration.
- * Add vault integration tests.
- * Add artifact integration tests.
- * Add scheduler integration tests.
-WP-1.0.103 — Contract test expansion
- * Add adapter contract tests.
- * Add model-provider contract tests.
- * Add secret-store contract tests.
- * Add document-renderer contract tests.
- * Add notification contract tests.
- * Add hosted-relay contract tests.
-WP-1.0.104 — Browser fixture expansion
- * Add local synthetic ATS fixtures.
- * Add sanitized static snapshot fixtures.
- * Add dynamic replay fixtures.
- * Add browser matrix tests.
- * Add viewport matrix tests.
- * Add selector resilience tests.
- * Add dynamic form tests.
- * Add upload tests.
- * Add authentication tests.
- * Add final-review tests.
- * Add browser evidence tests.
-WP-1.0.105 — Document test expansion
- * Add import tests for all formats.
- * Add extraction tests.
- * Add generation tests for all templates.
- * Add ATS text extraction tests.
- * Add visual regression tests.
- * Add metadata tests.
- * Add wrong-document tests.
- * Add content-grounding tests.
-WP-1.0.106 — Security test expansion
- * Add local API attack tests.
- * Add authorization tests.
- * Add secret-leakage tests.
- * Add encryption tests.
- * Add file-path traversal tests.
- * Add browser security tests.
- * Add extension security tests.
- * Add hosted-relay security tests.
- * Add update security tests.
- * Add dependency and supply-chain tests.
-WP-1.0.107 — Privacy test expansion
- * Add data-flow verification tests.
- * Add cloud minimization tests.
- * Add retention tests.
- * Add export tests.
- * Add full deletion tests.
- * Add consent tests.
- * Add telemetry tests.
- * Add cross-application leakage tests.
- * Add sensitive-attribute separation tests.
-WP-1.0.108 — Accessibility test expansion
- * Add automated accessibility scans.
- * Add keyboard scenario tests.
- * Add screen-reader scenario tests.
- * Add zoom and reflow tests.
- * Add color and contrast tests.
- * Add reduced-motion tests.
-WP-1.0.109 — Performance test expansion
- * Add benchmark tests.
- * Add dataset scale tests.
- * Add memory-leak tests.
- * Add browser endurance tests.
- * Add database endurance tests.
- * Add low-end reference tests.
- * Add package-size regression tests.
-WP-1.0.110 — Failure-injection tests
- * Add injection at every phase.
- * Add process termination tests.
- * Add network failure tests.
- * Add disk exhaustion tests.
- * Add clock error tests.
- * Add corrupted file tests.
- * Add provider outage tests.
- * Add portal redirect tests.
- * Add stale session tests.
-WP-1.0.111 — Mutation tests
- * Add mutation tests for source precedence.
- * Add mutation tests for unknown-answer handling.
- * Add mutation tests for duplicate blocking.
- * Add mutation tests for match threshold.
- * Add mutation tests for hard eligibility gates.
- * Add mutation tests for approval invalidation.
- * Add mutation tests for sensitive-field policy.
- * Add mutation tests for submission disablement.
- * Add mutation tests for effect reconciliation.
- * Add mutation tests for retention and deletion.
- * Add mutation tests for adapter permission checks.
-Phase exit
- * All test categories have representative coverage.
- * Mutation score for critical policy modules meets target.
- * Failure-injection tests pass for all phases.
- * Performance benchmarks are recorded.
- * Accessibility scans pass for all primary workflows.
-165.3 Phase 1.0.2: GitHub Actions
-WP-1.0.201 — Pull-request workflows
- * Implement pr-policy.yml.
- * Implement lint-and-types.yml.
- * Implement unit.yml.
- * Implement integration.yml.
- * Implement browser-fixtures.yml.
- * Implement documents.yml.
- * Implement accessibility.yml.
- * Implement security.yml.
- * Implement privacy.yml.
- * Implement mutation.yml.
-WP-1.0.202 — Scheduled workflows
- * Implement scheduled-dependencies.yml.
- * Implement scheduled-model-drift.yml.
- * Implement scheduled-browser-compatibility.yml.
- * Implement scheduled-portal-compatibility.yml.
- * Implement scheduled-soak.yml.
-WP-1.0.203 — Release workflows
- * Implement release-candidate.yml.
- * Implement release.yml.
- * Implement post-release.yml.
-WP-1.0.204 — Packaging workflows
- * Implement package-windows.yml.
- * Implement package-linux.yml.
- * Implement package-extension.yml.
-WP-1.0.205 — Workflow hardening
- * Pin all third-party actions to immutable hashes.
- * Implement concurrency controls.
- * Implement timeouts.
- * Implement cache policy.
- * Implement artifact retention.
- * Implement secret minimization.
- * Implement environment protection.
- * Implement fork safety.
-Phase exit
- * All workflows are operational.
- * Pull-request CI completes within 15 minutes for ordinary changes.
- * Scheduled workflows run on the defined cadence.
- * Release workflows produce signed artifacts.
- * Workflow permissions are minimized.
- * Fork safety is verified.
-165.4 Phase 1.0.3: Reliability qualification
-WP-1.0.301 — Repeated-run qualification
- * Run each supported adapter fixture 100 times.
- * Record success rate, retries, time, and resource growth.
- * Meet 99% target for supported fixtures.
- * Meet 100% for critical safety invariants.
-WP-1.0.302 — Crash recovery qualification
- * Test forced termination at every phase.
- * Test browser crash.
- * Test database corruption.
- * Test disk exhaustion.
- * Test network loss.
- * Test clock jump.
- * Test provider outage.
- * Test portal redirect.
- * Test stale session.
-WP-1.0.303 — Soak qualification
- * Run 72-hour soak for release candidate.
- * Run 7-day soak for production release.
- * Monitor memory, CPU, disk, scheduler, event queue, browser resources, database WAL, artifact retention, provider retry, notification duplication, stale locks, worker recovery, clock and sleep behavior.
-WP-1.0.304 — Upgrade and rollback qualification
- * Test upgrade from every supported previous version.
- * Test rollback.
- * Test migration integrity.
- * Test data preservation.
- * Test approval invalidation.
- * Test adapter compatibility.
-Phase exit
- * Repeated-run qualification meets targets.
- * Crash recovery qualification passes all scenarios.
- * Soak qualification passes.
- * Upgrade and rollback qualification passes.
-165.5 Phase 1.0.4: Security and privacy gates
-WP-1.0.401 — Security assessment
- * Complete independent security architecture review.
- * Complete penetration test of local API, browser, extension, and hosted relay boundaries.
- * Complete credential-storage review.
- * Complete cryptographic implementation review.
- * Complete browser-profile and session-isolation assessment.
- * Complete plugin and adapter boundary assessment.
- * Remediate all critical and high findings.
- * Retest remediated findings.
-WP-1.0.402 — Privacy assessment
- * Complete privacy impact assessment.
- * Complete data-flow mapping.
- * Complete retention and deletion verification.
- * Complete cross-application leakage verification.
- * Complete sensitive-attribute separation verification.
- * Complete telemetry verification.
- * Complete provider privacy-policy review.
- * Complete jurisdictional requirements mapping.
-WP-1.0.403 — Security regression suite
- * Create regression tests for every vulnerability and near miss.
- * Add to CI.
- * Verify detection.
-Phase exit
- * No unresolved critical or high security findings.
- * Privacy impact assessment is complete.
- * Security regression suite is operational.
- * Remediation and retest are complete.
-165.6 dev-1.0 exit criteria
- 1. All test categories have representative coverage.
- 2. Mutation score for critical policy modules meets target.
- 3. Failure-injection tests pass for all phases.
- 4. Performance benchmarks are recorded.
- 5. Accessibility scans pass for all primary workflows.
- 6. All GitHub Actions workflows are operational.
- 7. Pull-request CI completes within 15 minutes for ordinary changes.
- 8. Repeated-run qualification meets targets.
- 9. Crash recovery qualification passes all scenarios.
- 10. Soak qualification passes.
- 11. Upgrade and rollback qualification passes.
- 12. No unresolved critical or high security findings.
- 13. Privacy impact assessment is complete.
- 14. Security regression suite is operational.
- 15. Release engineering baseline is complete.
-----------------------------------------
+     165.1 Version objective
+     Build the comprehensive testing program, CI infrastructure, reliability qualification, security and privacy gates, and release engineering baseline. No new broad features.
+     165.2 Phase 1.0.1: Test infrastructure
+     WP-1.0.101 — Unit test expansion
+
+- Achieve core domain branch coverage targets.
+- Add property-based tests for dates, compensation, duplicates, approvals, encryption, and workflows.
+- Add schema tests for every schema.
+- Add migration tests for every supported version path.
+  WP-1.0.102 — Integration test expansion
+- Add component integration tests for profile-to-document, job-to-matching, question-to-browser, email-to-application, and calendar integration.
+- Add vault integration tests.
+- Add artifact integration tests.
+- Add scheduler integration tests.
+  WP-1.0.103 — Contract test expansion
+- Add adapter contract tests.
+- Add model-provider contract tests.
+- Add secret-store contract tests.
+- Add document-renderer contract tests.
+- Add notification contract tests.
+- Add hosted-relay contract tests.
+  WP-1.0.104 — Browser fixture expansion
+- Add local synthetic ATS fixtures.
+- Add sanitized static snapshot fixtures.
+- Add dynamic replay fixtures.
+- Add browser matrix tests.
+- Add viewport matrix tests.
+- Add selector resilience tests.
+- Add dynamic form tests.
+- Add upload tests.
+- Add authentication tests.
+- Add final-review tests.
+- Add browser evidence tests.
+  WP-1.0.105 — Document test expansion
+- Add import tests for all formats.
+- Add extraction tests.
+- Add generation tests for all templates.
+- Add ATS text extraction tests.
+- Add visual regression tests.
+- Add metadata tests.
+- Add wrong-document tests.
+- Add content-grounding tests.
+  WP-1.0.106 — Security test expansion
+- Add local API attack tests.
+- Add authorization tests.
+- Add secret-leakage tests.
+- Add encryption tests.
+- Add file-path traversal tests.
+- Add browser security tests.
+- Add extension security tests.
+- Add hosted-relay security tests.
+- Add update security tests.
+- Add dependency and supply-chain tests.
+  WP-1.0.107 — Privacy test expansion
+- Add data-flow verification tests.
+- Add cloud minimization tests.
+- Add retention tests.
+- Add export tests.
+- Add full deletion tests.
+- Add consent tests.
+- Add telemetry tests.
+- Add cross-application leakage tests.
+- Add sensitive-attribute separation tests.
+  WP-1.0.108 — Accessibility test expansion
+- Add automated accessibility scans.
+- Add keyboard scenario tests.
+- Add screen-reader scenario tests.
+- Add zoom and reflow tests.
+- Add color and contrast tests.
+- Add reduced-motion tests.
+  WP-1.0.109 — Performance test expansion
+- Add benchmark tests.
+- Add dataset scale tests.
+- Add memory-leak tests.
+- Add browser endurance tests.
+- Add database endurance tests.
+- Add low-end reference tests.
+- Add package-size regression tests.
+  WP-1.0.110 — Failure-injection tests
+- Add injection at every phase.
+- Add process termination tests.
+- Add network failure tests.
+- Add disk exhaustion tests.
+- Add clock error tests.
+- Add corrupted file tests.
+- Add provider outage tests.
+- Add portal redirect tests.
+- Add stale session tests.
+  WP-1.0.111 — Mutation tests
+- Add mutation tests for source precedence.
+- Add mutation tests for unknown-answer handling.
+- Add mutation tests for duplicate blocking.
+- Add mutation tests for match threshold.
+- Add mutation tests for hard eligibility gates.
+- Add mutation tests for approval invalidation.
+- Add mutation tests for sensitive-field policy.
+- Add mutation tests for submission disablement.
+- Add mutation tests for effect reconciliation.
+- Add mutation tests for retention and deletion.
+- Add mutation tests for adapter permission checks.
+  Phase exit
+- All test categories have representative coverage.
+- Mutation score for critical policy modules meets target.
+- Failure-injection tests pass for all phases.
+- Performance benchmarks are recorded.
+- Accessibility scans pass for all primary workflows.
+  165.3 Phase 1.0.2: GitHub Actions
+  WP-1.0.201 — Pull-request workflows
+- Implement pr-policy.yml.
+- Implement lint-and-types.yml.
+- Implement unit.yml.
+- Implement integration.yml.
+- Implement browser-fixtures.yml.
+- Implement documents.yml.
+- Implement accessibility.yml.
+- Implement security.yml.
+- Implement privacy.yml.
+- Implement mutation.yml.
+  WP-1.0.202 — Scheduled workflows
+- Implement scheduled-dependencies.yml.
+- Implement scheduled-model-drift.yml.
+- Implement scheduled-browser-compatibility.yml.
+- Implement scheduled-portal-compatibility.yml.
+- Implement scheduled-soak.yml.
+  WP-1.0.203 — Release workflows
+- Implement release-candidate.yml.
+- Implement release.yml.
+- Implement post-release.yml.
+  WP-1.0.204 — Packaging workflows
+- Implement package-windows.yml.
+- Implement package-linux.yml.
+- Implement package-extension.yml.
+  WP-1.0.205 — Workflow hardening
+- Pin all third-party actions to immutable hashes.
+- Implement concurrency controls.
+- Implement timeouts.
+- Implement cache policy.
+- Implement artifact retention.
+- Implement secret minimization.
+- Implement environment protection.
+- Implement fork safety.
+  Phase exit
+- All workflows are operational.
+- Pull-request CI completes within 15 minutes for ordinary changes.
+- Scheduled workflows run on the defined cadence.
+- Release workflows produce signed artifacts.
+- Workflow permissions are minimized.
+- Fork safety is verified.
+  165.4 Phase 1.0.3: Reliability qualification
+  WP-1.0.301 — Repeated-run qualification
+- Run each supported adapter fixture 100 times.
+- Record success rate, retries, time, and resource growth.
+- Meet 99% target for supported fixtures.
+- Meet 100% for critical safety invariants.
+  WP-1.0.302 — Crash recovery qualification
+- Test forced termination at every phase.
+- Test browser crash.
+- Test database corruption.
+- Test disk exhaustion.
+- Test network loss.
+- Test clock jump.
+- Test provider outage.
+- Test portal redirect.
+- Test stale session.
+  WP-1.0.303 — Soak qualification
+- Run 72-hour soak for release candidate.
+- Run 7-day soak for production release.
+- Monitor memory, CPU, disk, scheduler, event queue, browser resources, database WAL, artifact retention, provider retry, notification duplication, stale locks, worker recovery, clock and sleep behavior.
+  WP-1.0.304 — Upgrade and rollback qualification
+- Test upgrade from every supported previous version.
+- Test rollback.
+- Test migration integrity.
+- Test data preservation.
+- Test approval invalidation.
+- Test adapter compatibility.
+  Phase exit
+- Repeated-run qualification meets targets.
+- Crash recovery qualification passes all scenarios.
+- Soak qualification passes.
+- Upgrade and rollback qualification passes.
+  165.5 Phase 1.0.4: Security and privacy gates
+  WP-1.0.401 — Security assessment
+- Complete independent security architecture review.
+- Complete penetration test of local API, browser, extension, and hosted relay boundaries.
+- Complete credential-storage review.
+- Complete cryptographic implementation review.
+- Complete browser-profile and session-isolation assessment.
+- Complete plugin and adapter boundary assessment.
+- Remediate all critical and high findings.
+- Retest remediated findings.
+  WP-1.0.402 — Privacy assessment
+- Complete privacy impact assessment.
+- Complete data-flow mapping.
+- Complete retention and deletion verification.
+- Complete cross-application leakage verification.
+- Complete sensitive-attribute separation verification.
+- Complete telemetry verification.
+- Complete provider privacy-policy review.
+- Complete jurisdictional requirements mapping.
+  WP-1.0.403 — Security regression suite
+- Create regression tests for every vulnerability and near miss.
+- Add to CI.
+- Verify detection.
+  Phase exit
+- No unresolved critical or high security findings.
+- Privacy impact assessment is complete.
+- Security regression suite is operational.
+- Remediation and retest are complete.
+  165.6 dev-1.0 exit criteria
+
+1.  All test categories have representative coverage.
+2.  Mutation score for critical policy modules meets target.
+3.  Failure-injection tests pass for all phases.
+4.  Performance benchmarks are recorded.
+5.  Accessibility scans pass for all primary workflows.
+6.  All GitHub Actions workflows are operational.
+7.  Pull-request CI completes within 15 minutes for ordinary changes.
+8.  Repeated-run qualification meets targets.
+9.  Crash recovery qualification passes all scenarios.
+10. Soak qualification passes.
+11. Upgrade and rollback qualification passes.
+12. No unresolved critical or high security findings.
+13. Privacy impact assessment is complete.
+14. Security regression suite is operational.
+15. Release engineering baseline is complete.
+
+---
+
 166. dev-2.0 roadmap — Debug and stabilization
-166.1 Version objective
-Debug, stabilize, harden portal compatibility, improve recovery, and build operational tooling. No new broad features.
-166.2 Phase 2.0.1: Trajectory diagnostics
-WP-2.0.101 — Structured spans
- * Implement spans for every phase.
- * Implement span metadata.
- * Implement span query.
- * Implement span export.
-WP-2.0.102 — Browser trajectory viewer
- * Implement session timeline.
- * Implement action list.
- * Implement evidence viewer.
- * Implement page-state comparison.
- * Implement error highlighting.
-WP-2.0.103 — Adapter failure taxonomy
- * Implement adapter-specific failure classification.
- * Implement failure aggregation.
- * Implement failure trend.
- * Implement failure alert.
-WP-2.0.104 — Diagnostic bundle
- * Implement bundle generation.
- * Implement automatic redaction.
- * Implement user review.
- * Implement encrypted export.
- * Implement expiration.
-Phase exit
- * Trajectory diagnostics are available for every run.
- * Browser trajectory viewer is operational.
- * Adapter failure taxonomy is populated.
- * Diagnostic bundle generation and redaction work.
-166.3 Phase 2.0.2: Recovery hardening
-WP-2.0.201 — Step-level checkpoint verification
- * Verify checkpoint integrity after every phase.
- * Implement checkpoint repair.
- * Implement checkpoint rollback.
-WP-2.0.202 — Durable waitpoint hardening
- * Implement waitpoint expiration.
- * Implement waitpoint notification.
- * Implement waitpoint recovery after restart.
- * Implement waitpoint cancellation.
-WP-2.0.203 — Idempotency verification
- * Verify idempotency key uniqueness.
- * Verify idempotency key persistence.
- * Verify idempotency key replay prevention.
- * Verify idempotency key expiration.
-WP-2.0.204 — Pre-submit verification gate
- * Implement final verification before submission handoff.
- * Implement field-level comparison.
- * Implement attachment comparison.
- * Implement destination comparison.
- * Implement duplicate recheck.
-WP-2.0.205 — Receipt reconciliation
- * Implement receipt detection.
- * Implement receipt verification.
- * Implement receipt persistence.
- * Implement receipt mismatch handling.
-WP-2.0.206 — Retry policy hardening
- * Implement retry with strategy change.
- * Implement retry budget.
- * Implement retry circuit breaker.
- * Implement retry quarantine.
-Phase exit
- * Checkpoint verification passes for all phases.
- * Durable waitpoints survive restart and expiration.
- * Idempotency verification passes.
- * Pre-submit verification gate passes.
- * Receipt reconciliation works.
- * Retry policy hardening passes.
-166.4 Phase 2.0.3: Compatibility hardening
-WP-2.0.301 — Portal change detection
- * Implement fingerprint comparison.
- * Implement change classification.
- * Implement change alert.
- * Implement adapter downgrade.
-WP-2.0.302 — Canary fixture tests
- * Implement canary fixture for each supported adapter.
- * Implement canary schedule.
- * Implement canary alert.
- * Implement canary rollback.
-WP-2.0.303 — Adapter kill switch
- * Implement local disable.
- * Implement version disable.
- * Implement action-specific disable.
- * Implement region-specific disable.
- * Implement remote signed advisory.
- * Implement downgrade to assisted mode.
- * Implement user-visible reason.
- * Implement expiration and re-evaluation.
-WP-2.0.304 — Compatibility matrix
- * Implement compatibility matrix.
- * Implement matrix update.
- * Implement matrix query.
- * Implement matrix export.
-WP-2.0.305 — Last-known-good adapter versions
- * Implement version tracking.
- * Implement version rollback.
- * Implement version comparison.
- * Implement version fixture.
-Phase exit
- * Portal change detection works.
- * Canary fixture tests run on schedule.
- * Adapter kill switch is operational.
- * Compatibility matrix is populated.
- * Last-known-good adapter versions are tracked.
-166.5 dev-2.0 exit criteria
- 1. Trajectory diagnostics are available for every run.
- 2. Browser trajectory viewer is operational.
- 3. Adapter failure taxonomy is populated.
- 4. Diagnostic bundle generation and redaction work.
- 5. Checkpoint verification passes for all phases.
- 6. Durable waitpoints survive restart and expiration.
- 7. Idempotency verification passes.
- 8. Pre-submit verification gate passes.
- 9. Receipt reconciliation works.
- 10. Retry policy hardening passes.
- 11. Portal change detection works.
- 12. Canary fixture tests run on schedule.
- 13. Adapter kill switch is operational.
- 14. Compatibility matrix is populated.
- 15. Last-known-good adapter versions are tracked.
-----------------------------------------
+     166.1 Version objective
+     Debug, stabilize, harden portal compatibility, improve recovery, and build operational tooling. No new broad features.
+     166.2 Phase 2.0.1: Trajectory diagnostics
+     WP-2.0.101 — Structured spans
+
+- Implement spans for every phase.
+- Implement span metadata.
+- Implement span query.
+- Implement span export.
+  WP-2.0.102 — Browser trajectory viewer
+- Implement session timeline.
+- Implement action list.
+- Implement evidence viewer.
+- Implement page-state comparison.
+- Implement error highlighting.
+  WP-2.0.103 — Adapter failure taxonomy
+- Implement adapter-specific failure classification.
+- Implement failure aggregation.
+- Implement failure trend.
+- Implement failure alert.
+  WP-2.0.104 — Diagnostic bundle
+- Implement bundle generation.
+- Implement automatic redaction.
+- Implement user review.
+- Implement encrypted export.
+- Implement expiration.
+  Phase exit
+- Trajectory diagnostics are available for every run.
+- Browser trajectory viewer is operational.
+- Adapter failure taxonomy is populated.
+- Diagnostic bundle generation and redaction work.
+  166.3 Phase 2.0.2: Recovery hardening
+  WP-2.0.201 — Step-level checkpoint verification
+- Verify checkpoint integrity after every phase.
+- Implement checkpoint repair.
+- Implement checkpoint rollback.
+  WP-2.0.202 — Durable waitpoint hardening
+- Implement waitpoint expiration.
+- Implement waitpoint notification.
+- Implement waitpoint recovery after restart.
+- Implement waitpoint cancellation.
+  WP-2.0.203 — Idempotency verification
+- Verify idempotency key uniqueness.
+- Verify idempotency key persistence.
+- Verify idempotency key replay prevention.
+- Verify idempotency key expiration.
+  WP-2.0.204 — Pre-submit verification gate
+- Implement final verification before submission handoff.
+- Implement field-level comparison.
+- Implement attachment comparison.
+- Implement destination comparison.
+- Implement duplicate recheck.
+  WP-2.0.205 — Receipt reconciliation
+- Implement receipt detection.
+- Implement receipt verification.
+- Implement receipt persistence.
+- Implement receipt mismatch handling.
+  WP-2.0.206 — Retry policy hardening
+- Implement retry with strategy change.
+- Implement retry budget.
+- Implement retry circuit breaker.
+- Implement retry quarantine.
+  Phase exit
+- Checkpoint verification passes for all phases.
+- Durable waitpoints survive restart and expiration.
+- Idempotency verification passes.
+- Pre-submit verification gate passes.
+- Receipt reconciliation works.
+- Retry policy hardening passes.
+  166.4 Phase 2.0.3: Compatibility hardening
+  WP-2.0.301 — Portal change detection
+- Implement fingerprint comparison.
+- Implement change classification.
+- Implement change alert.
+- Implement adapter downgrade.
+  WP-2.0.302 — Canary fixture tests
+- Implement canary fixture for each supported adapter.
+- Implement canary schedule.
+- Implement canary alert.
+- Implement canary rollback.
+  WP-2.0.303 — Adapter kill switch
+- Implement local disable.
+- Implement version disable.
+- Implement action-specific disable.
+- Implement region-specific disable.
+- Implement remote signed advisory.
+- Implement downgrade to assisted mode.
+- Implement user-visible reason.
+- Implement expiration and re-evaluation.
+  WP-2.0.304 — Compatibility matrix
+- Implement compatibility matrix.
+- Implement matrix update.
+- Implement matrix query.
+- Implement matrix export.
+  WP-2.0.305 — Last-known-good adapter versions
+- Implement version tracking.
+- Implement version rollback.
+- Implement version comparison.
+- Implement version fixture.
+  Phase exit
+- Portal change detection works.
+- Canary fixture tests run on schedule.
+- Adapter kill switch is operational.
+- Compatibility matrix is populated.
+- Last-known-good adapter versions are tracked.
+  166.5 dev-2.0 exit criteria
+
+1.  Trajectory diagnostics are available for every run.
+2.  Browser trajectory viewer is operational.
+3.  Adapter failure taxonomy is populated.
+4.  Diagnostic bundle generation and redaction work.
+5.  Checkpoint verification passes for all phases.
+6.  Durable waitpoints survive restart and expiration.
+7.  Idempotency verification passes.
+8.  Pre-submit verification gate passes.
+9.  Receipt reconciliation works.
+10. Retry policy hardening passes.
+11. Portal change detection works.
+12. Canary fixture tests run on schedule.
+13. Adapter kill switch is operational.
+14. Compatibility matrix is populated.
+15. Last-known-good adapter versions are tracked.
+
+---
+
 167. dev-3.0 roadmap — Improvement and new features
-167.1 Version objective
-Add broader portal and ATS support, Gmail status ingestion, calendar integration, recruiter-message drafting, approved follow-up scheduling, application funnel analytics, local model operation, local embeddings, cross-portal employer intelligence, user preference learning, shadow-mode proactive recommendations, privacy-preserving hosted synchronization, and optional remote workers.
-167.2 Phase 3.0.1: Additional portal and ATS support
-WP-3.0.101 — Ashby adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.102 — SmartRecruiters adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.103 — iCIMS adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.104 — Oracle Recruiting and Taleo adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.105 — SAP SuccessFactors adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.106 — Jobvite adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.107 — BambooHR adapter
- * Implement job ingestion.
- * Implement form-schema extraction.
- * Implement custom questions.
- * Implement document upload.
- * Implement final-review detection.
- * Implement receipt detection.
- * Implement policy review.
- * Implement qualification suite.
-WP-3.0.108 — India portal expansion
- * Implement Foundit adapter.
- * Implement Instahyre adapter.
- * Implement Cutshort adapter.
- * Implement Wellfound adapter.
- * Implement iimjobs adapter.
- * Implement Hirist adapter.
- * Implement Shine adapter.
- * Implement TimesJobs adapter.
- * Implement apna adapter.
- * Implement Freshersworld adapter.
- * Implement Internshala adapter.
- * Implement National Career Service adapter.
-WP-3.0.109 — US and global portal expansion
- * Implement Glassdoor adapter.
- * Implement ZipRecruiter adapter.
- * Implement Monster adapter.
- * Implement Dice adapter.
- * Implement Built In adapter.
- * Implement USAJOBS adapter where eligibility permits.
- * Implement SEEK adapter.
- * Implement Reed adapter.
- * Implement Totaljobs adapter.
- * Implement StepStone adapter.
- * Implement Xing adapter.
- * Implement Bayt adapter.
-Phase exit
- * Each new adapter passes contract tests.
- * Each new adapter has a current policy review.
- * Each new adapter has a qualification suite.
- * Each new adapter has a compatibility matrix entry.
- * Each new adapter has a kill switch.
- * Each new adapter operates in assisted or verified pre-submission mode.
-167.3 Phase 3.0.2: Communication and tracking
-WP-3.0.201 — Gmail status ingestion
- * Implement application-status classification.
- * Implement interview-invitation detection.
- * Implement assessment-invitation detection.
- * Implement rejection detection.
- * Implement offer detection.
- * Implement status proposal.
- * Implement user confirmation.
- * Implement timeline update.
-WP-3.0.202 — Calendar integration
- * Implement Google Calendar OAuth.
- * Implement event proposal.
- * Implement time-zone handling.
- * Implement conflict detection.
- * Implement event creation.
- * Implement event update.
- * Implement event cancellation.
- * Implement reminder.
-WP-3.0.203 — Recruiter-message drafting
- * Implement message draft generation.
- * Implement recipient verification.
- * Implement tone selection.
- * Implement grounding verification.
- * Implement approval.
- * Implement send.
- * Implement reconciliation.
-WP-3.0.204 — Follow-up scheduling
- * Implement follow-up recommendation.
- * Implement follow-up draft.
- * Implement follow-up schedule.
- * Implement follow-up approval.
- * Implement follow-up send.
- * Implement follow-up suppression after rejection.
-WP-3.0.205 — Application funnel analytics
- * Implement funnel model.
- * Implement funnel visualization.
- * Implement source analysis.
- * Implement persona analysis.
- * Implement portal analysis.
- * Implement match-score calibration.
- * Implement skill-gap analysis.
- * Implement small-sample warnings.
-Phase exit
- * Gmail status ingestion classifies application status.
- * Calendar integration proposes and creates events with approval.
- * Recruiter-message drafting produces grounded, approved messages.
- * Follow-up scheduling works within policy.
- * Application funnel analytics are available locally.
-167.4 Phase 3.0.3: Local AI and privacy
-WP-3.0.301 — Local model support
- * Implement Ollama integration.
- * Implement llama.cpp integration.
- * Implement vLLM integration.
- * Implement LM Studio integration.
- * Implement model installation.
- * Implement model selection.
- * Implement model routing.
- * Implement model health.
- * Implement model removal.
-WP-3.0.302 — Local embeddings
- * Implement local embedding model installation.
- * Implement local embedding generation.
- * Implement local vector index.
- * Implement hybrid retrieval.
- * Implement re-indexing.
- * Implement model digest tracking.
-WP-3.0.303 — Data-class-aware model routing
- * Implement data-class classification.
- * Implement provider policy.
- * Implement routing decision.
- * Implement fallback.
- * Implement audit.
-WP-3.0.304 — Redaction before cloud requests
- * Implement field-level redaction.
- * Implement context minimization.
- * Implement provider policy check.
- * Implement redaction verification.
-WP-3.0.305 — Provider privacy posture display
- * Implement provider privacy record.
- * Implement provider privacy dashboard.
- * Implement provider comparison.
- * Implement provider selection guidance.
-WP-3.0.306 — User-configurable never-leaves-device fields
- * Implement field classification.
- * Implement policy enforcement.
- * Implement routing enforcement.
- * Implement audit.
-Phase exit
- * Local model support is operational.
- * Local embeddings are operational.
- * Data-class-aware model routing works.
- * Redaction before cloud requests works.
- * Provider privacy posture is displayed.
- * Never-leaves-device fields are enforced.
-167.5 Phase 3.0.4: Cross-portal intelligence and learning
-WP-3.0.401 — Cross-portal employer intelligence
- * Implement employer identity resolution across portals.
- * Implement application history aggregation.
- * Implement duplicate detection across portals.
- * Implement employer-specific preference learning.
-WP-3.0.402 — User preference learning
- * Implement preference learning from feedback.
- * Implement preference learning from corrections.
- * Implement preference learning from application outcomes.
- * Implement preference drift detection.
- * Implement preference reset.
-WP-3.0.403 — Shadow-mode proactive recommendations
- * Implement proactive goal generation.
- * Implement proactive recommendation.
- * Implement proactive notification.
- * Implement proactive dismissal.
- * Implement proactive learning.
-WP-3.0.404 — Privacy-preserving hosted synchronization
-------------------------------------------------------
+     167.1 Version objective
+     Add broader portal and ATS support, Gmail status ingestion, calendar integration, recruiter-message drafting, approved follow-up scheduling, application funnel analytics, local model operation, local embeddings, cross-portal employer intelligence, user preference learning, shadow-mode proactive recommendations, privacy-preserving hosted synchronization, and optional remote workers.
+     167.2 Phase 3.0.1: Additional portal and ATS support
+     WP-3.0.101 — Ashby adapter
+
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.102 — SmartRecruiters adapter
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.103 — iCIMS adapter
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.104 — Oracle Recruiting and Taleo adapter
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.105 — SAP SuccessFactors adapter
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.106 — Jobvite adapter
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.107 — BambooHR adapter
+- Implement job ingestion.
+- Implement form-schema extraction.
+- Implement custom questions.
+- Implement document upload.
+- Implement final-review detection.
+- Implement receipt detection.
+- Implement policy review.
+- Implement qualification suite.
+  WP-3.0.108 — India portal expansion
+- Implement Foundit adapter.
+- Implement Instahyre adapter.
+- Implement Cutshort adapter.
+- Implement Wellfound adapter.
+- Implement iimjobs adapter.
+- Implement Hirist adapter.
+- Implement Shine adapter.
+- Implement TimesJobs adapter.
+- Implement apna adapter.
+- Implement Freshersworld adapter.
+- Implement Internshala adapter.
+- Implement National Career Service adapter.
+  WP-3.0.109 — US and global portal expansion
+- Implement Glassdoor adapter.
+- Implement ZipRecruiter adapter.
+- Implement Monster adapter.
+- Implement Dice adapter.
+- Implement Built In adapter.
+- Implement USAJOBS adapter where eligibility permits.
+- Implement SEEK adapter.
+- Implement Reed adapter.
+- Implement Totaljobs adapter.
+- Implement StepStone adapter.
+- Implement Xing adapter.
+- Implement Bayt adapter.
+  Phase exit
+- Each new adapter passes contract tests.
+- Each new adapter has a current policy review.
+- Each new adapter has a qualification suite.
+- Each new adapter has a compatibility matrix entry.
+- Each new adapter has a kill switch.
+- Each new adapter operates in assisted or verified pre-submission mode.
+  167.3 Phase 3.0.2: Communication and tracking
+  WP-3.0.201 — Gmail status ingestion
+- Implement application-status classification.
+- Implement interview-invitation detection.
+- Implement assessment-invitation detection.
+- Implement rejection detection.
+- Implement offer detection.
+- Implement status proposal.
+- Implement user confirmation.
+- Implement timeline update.
+  WP-3.0.202 — Calendar integration
+- Implement Google Calendar OAuth.
+- Implement event proposal.
+- Implement time-zone handling.
+- Implement conflict detection.
+- Implement event creation.
+- Implement event update.
+- Implement event cancellation.
+- Implement reminder.
+  WP-3.0.203 — Recruiter-message drafting
+- Implement message draft generation.
+- Implement recipient verification.
+- Implement tone selection.
+- Implement grounding verification.
+- Implement approval.
+- Implement send.
+- Implement reconciliation.
+  WP-3.0.204 — Follow-up scheduling
+- Implement follow-up recommendation.
+- Implement follow-up draft.
+- Implement follow-up schedule.
+- Implement follow-up approval.
+- Implement follow-up send.
+- Implement follow-up suppression after rejection.
+  WP-3.0.205 — Application funnel analytics
+- Implement funnel model.
+- Implement funnel visualization.
+- Implement source analysis.
+- Implement persona analysis.
+- Implement portal analysis.
+- Implement match-score calibration.
+- Implement skill-gap analysis.
+- Implement small-sample warnings.
+  Phase exit
+- Gmail status ingestion classifies application status.
+- Calendar integration proposes and creates events with approval.
+- Recruiter-message drafting produces grounded, approved messages.
+- Follow-up scheduling works within policy.
+- Application funnel analytics are available locally.
+  167.4 Phase 3.0.3: Local AI and privacy
+  WP-3.0.301 — Local model support
+- Implement Ollama integration.
+- Implement llama.cpp integration.
+- Implement vLLM integration.
+- Implement LM Studio integration.
+- Implement model installation.
+- Implement model selection.
+- Implement model routing.
+- Implement model health.
+- Implement model removal.
+  WP-3.0.302 — Local embeddings
+- Implement local embedding model installation.
+- Implement local embedding generation.
+- Implement local vector index.
+- Implement hybrid retrieval.
+- Implement re-indexing.
+- Implement model digest tracking.
+  WP-3.0.303 — Data-class-aware model routing
+- Implement data-class classification.
+- Implement provider policy.
+- Implement routing decision.
+- Implement fallback.
+- Implement audit.
+  WP-3.0.304 — Redaction before cloud requests
+- Implement field-level redaction.
+- Implement context minimization.
+- Implement provider policy check.
+- Implement redaction verification.
+  WP-3.0.305 — Provider privacy posture display
+- Implement provider privacy record.
+- Implement provider privacy dashboard.
+- Implement provider comparison.
+- Implement provider selection guidance.
+  WP-3.0.306 — User-configurable never-leaves-device fields
+- Implement field classification.
+- Implement policy enforcement.
+- Implement routing enforcement.
+- Implement audit.
+  Phase exit
+- Local model support is operational.
+- Local embeddings are operational.
+- Data-class-aware model routing works.
+- Redaction before cloud requests works.
+- Provider privacy posture is displayed.
+- Never-leaves-device fields are enforced.
+  167.5 Phase 3.0.4: Cross-portal intelligence and learning
+  WP-3.0.401 — Cross-portal employer intelligence
+- Implement employer identity resolution across portals.
+- Implement application history aggregation.
+- Implement duplicate detection across portals.
+- Implement employer-specific preference learning.
+  WP-3.0.402 — User preference learning
+- Implement preference learning from feedback.
+- Implement preference learning from corrections.
+- Implement preference learning from application outcomes.
+- Implement preference drift detection.
+- Implement preference reset.
+  WP-3.0.403 — Shadow-mode proactive recommendations
+- Implement proactive goal generation.
+- Implement proactive recommendation.
+- Implement proactive notification.
+- Implement proactive dismissal.
+- Implement proactive learning.
+  WP-3.0.404 — Privacy-preserving hosted synchronization
+
+---
+
 167. dev-3.0 roadmap — Improvement and new features
-167.5 Phase 3.0.4: Cross-portal intelligence and learning
-WP-3.0.404 — Privacy-preserving hosted synchronization
- * Implement end-to-end encrypted device registration.
- * Implement encrypted command delivery.
- * Implement encrypted event synchronization.
- * Implement encrypted backup transport.
- * Implement remote notification.
- * Implement device revocation.
- * Implement multi-device conflict handling.
- * Implement hosted account recovery without plaintext access.
- * Implement hosted deletion verification.
-WP-3.0.405 — Optional remote workers
- * Implement remote worker registration.
- * Implement remote worker capability declaration.
- * Implement remote worker task routing.
- * Implement remote worker authentication.
- * Implement remote worker session isolation.
- * Implement remote worker revocation.
- * Implement remote worker audit.
-WP-3.0.406 — Learning loop
- * Implement inline learning after every task.
- * Implement background improvement loop.
- * Implement one-change rule.
- * Implement improvement record.
- * Implement complexity penalty.
- * Implement automatic rollback.
- * Implement no recursive autonomy escalation.
-Phase exit
- * Cross-portal employer intelligence resolves identities across portals.
- * User preference learning adjusts weights within bounds.
- * Shadow-mode proactive recommendations are available.
- * Privacy-preserving hosted synchronization is operational.
- * Optional remote workers are operational.
- * Learning loop produces measurable improvements.
-167.6 dev-3.0 exit criteria
- 1. All new portal and ATS adapters pass contract tests.
- 2. Each new adapter has a current policy review and qualification suite.
- 3. Gmail status ingestion classifies application status.
- 4. Calendar integration proposes and creates events with approval.
- 5. Recruiter-message drafting produces grounded, approved messages.
- 6. Follow-up scheduling works within policy.
- 7. Application funnel analytics are available locally.
- 8. Local model support is operational.
- 9. Local embeddings are operational.
- 10. Data-class-aware model routing works.
- 11. Redaction before cloud requests works.
- 12. Provider privacy posture is displayed.
- 13. Never-leaves-device fields are enforced.
- 14. Cross-portal employer intelligence resolves identities across portals.
- 15. User preference learning adjusts weights within bounds.
- 16. Shadow-mode proactive recommendations are available.
- 17. Privacy-preserving hosted synchronization is operational.
- 18. Optional remote workers are operational.
- 19. Learning loop produces measurable improvements.
-----------------------------------------
+     167.5 Phase 3.0.4: Cross-portal intelligence and learning
+     WP-3.0.404 — Privacy-preserving hosted synchronization
+
+- Implement end-to-end encrypted device registration.
+- Implement encrypted command delivery.
+- Implement encrypted event synchronization.
+- Implement encrypted backup transport.
+- Implement remote notification.
+- Implement device revocation.
+- Implement multi-device conflict handling.
+- Implement hosted account recovery without plaintext access.
+- Implement hosted deletion verification.
+  WP-3.0.405 — Optional remote workers
+- Implement remote worker registration.
+- Implement remote worker capability declaration.
+- Implement remote worker task routing.
+- Implement remote worker authentication.
+- Implement remote worker session isolation.
+- Implement remote worker revocation.
+- Implement remote worker audit.
+  WP-3.0.406 — Learning loop
+- Implement inline learning after every task.
+- Implement background improvement loop.
+- Implement one-change rule.
+- Implement improvement record.
+- Implement complexity penalty.
+- Implement automatic rollback.
+- Implement no recursive autonomy escalation.
+  Phase exit
+- Cross-portal employer intelligence resolves identities across portals.
+- User preference learning adjusts weights within bounds.
+- Shadow-mode proactive recommendations are available.
+- Privacy-preserving hosted synchronization is operational.
+- Optional remote workers are operational.
+- Learning loop produces measurable improvements.
+  167.6 dev-3.0 exit criteria
+
+1.  All new portal and ATS adapters pass contract tests.
+2.  Each new adapter has a current policy review and qualification suite.
+3.  Gmail status ingestion classifies application status.
+4.  Calendar integration proposes and creates events with approval.
+5.  Recruiter-message drafting produces grounded, approved messages.
+6.  Follow-up scheduling works within policy.
+7.  Application funnel analytics are available locally.
+8.  Local model support is operational.
+9.  Local embeddings are operational.
+10. Data-class-aware model routing works.
+11. Redaction before cloud requests works.
+12. Provider privacy posture is displayed.
+13. Never-leaves-device fields are enforced.
+14. Cross-portal employer intelligence resolves identities across portals.
+15. User preference learning adjusts weights within bounds.
+16. Shadow-mode proactive recommendations are available.
+17. Privacy-preserving hosted synchronization is operational.
+18. Optional remote workers are operational.
+19. Learning loop produces measurable improvements.
+
+---
+
 168. dev-4.0 roadmap — Comprehensive refactor and debug
-168.1 Version objective
-Comprehensive refactor, hardening, performance optimization, privacy and security review, accessibility audit, and release freeze. No new broad features.
-168.2 Phase 4.0.1: Architecture review
-WP-4.0.101 — Module boundary audit
- * Audit core versus adapter boundaries.
- * Audit worker boundaries.
- * Audit API boundaries.
- * Audit data-flow boundaries.
- * Audit secret boundaries.
- * Audit effect boundaries.
- * Remove portal logic from core orchestration.
- * Consolidate duplicated schemas.
- * Version all contracts.
-WP-4.0.102 — Dependency audit
- * Audit every dependency for purpose, license, maintenance, and vulnerability.
- * Remove unnecessary dependencies.
- * Replace heavy dependencies with lighter alternatives where feasible.
- * Document dependency decisions.
-WP-4.0.103 — Prompt and policy artifact audit
- * Audit every prompt template.
- * Version all prompts.
- * Add eval coverage for every prompt.
- * Audit policy rules.
- * Version all policies.
- * Add test coverage for every policy rule.
-WP-4.0.104 — Schema audit
- * Audit every schema for completeness, consistency, and forward compatibility.
- * Add schema versioning where missing.
- * Add schema migration tests.
- * Add schema documentation.
-WP-4.0.105 — Configuration audit
- * Audit every configuration option.
- * Remove unused options.
- * Document all options.
- * Add configuration validation.
- * Add configuration migration.
-Phase exit
- * Module boundaries are clean.
- * Dependencies are audited and minimized.
- * Prompts and policies are versioned and tested.
- * Schemas are versioned and documented.
- * Configuration is audited and validated.
-168.3 Phase 4.0.2: Performance optimization
-WP-4.0.201 — Startup optimization
- * Profile startup.
- * Reduce import time.
- * Lazy-load optional components.
- * Cache initialization results.
- * Parallelize independent initialization.
-WP-4.0.202 — Memory optimization
- * Profile memory usage.
- * Reduce object allocations.
- * Stream large artifacts.
- * Release browser resources promptly.
- * Implement memory pressure handling.
-WP-4.0.203 — Database optimization
- * Profile database queries.
- * Add missing indexes.
- * Optimize WAL checkpointing.
- * Archive old events.
- * Implement query timeouts.
-WP-4.0.204 — Browser optimization
- * Reduce page load time.
- * Minimize evidence capture overhead.
- * Close completed pages.
- * Monitor browser memory.
- * Restart workers at safe boundaries.
-WP-4.0.205 — Package-size optimization
- * Profile package size.
- * Remove unused dependencies.
- * Optimize asset bundling.
- * Implement optional asset downloads.
- * Document size budget.
-Phase exit
- * Startup time meets budget.
- * Memory usage meets budget.
- * Database query performance meets budget.
- * Browser performance meets budget.
- * Package size meets budget.
-168.4 Phase 4.0.3: Security and privacy hardening
-WP-4.0.301 — Threat model refresh
- * Update threat model.
- * Review trust boundaries.
- * Review critical assets.
- * Review threat actors.
- * Review high-priority abuse cases.
- * Update controls.
-WP-4.0.302 — Credential boundary audit
- * Audit every credential access.
- * Audit every credential storage.
- * Audit every credential transmission.
- * Audit every credential log.
- * Audit every credential export.
-WP-4.0.303 — PII flow mapping
- * Map every PII flow.
- * Identify unnecessary PII transmission.
- * Identify unnecessary PII storage.
- * Identify unnecessary PII retention.
- * Implement PII minimization.
-WP-4.0.304 — Plugin and adapter sandbox review
- * Review adapter permissions.
- * Review adapter data access.
- * Review adapter network access.
- * Review adapter filesystem access.
- * Review adapter secret access.
- * Implement sandbox restrictions where feasible.
-WP-4.0.305 — Dependency and supply-chain audit
- * Audit every dependency.
- * Audit every transitive dependency.
- * Audit every build tool.
- * Audit every CI action.
- * Audit every release artifact.
- * Implement supply-chain security controls.
-WP-4.0.306 — External penetration test
- * Conduct external penetration test.
- * Remediate findings.
- * Retest remediated findings.
-WP-4.0.307 — Privacy impact assessment
- * Conduct privacy impact assessment.
- * Remediate findings.
- * Update privacy documentation.
-WP-4.0.308 — Incident response exercise
- * Conduct incident response exercise.
- * Update incident response plan.
- * Test incident response tools.
- * Train incident responders.
-Phase exit
- * Threat model is current.
- * Credential boundary audit is complete.
- * PII flow mapping is complete.
- * Plugin and adapter sandbox review is complete.
- * Dependency and supply-chain audit is complete.
- * External penetration test is complete with no unresolved critical or high findings.
- * Privacy impact assessment is complete.
- * Incident response exercise is complete.
-168.5 Phase 4.0.4: Accessibility audit
-WP-4.0.401 — Automated accessibility audit
- * Run automated accessibility scans on all primary workflows.
- * Fix all critical and high violations.
- * Document remaining violations.
-WP-4.0.402 — Manual accessibility audit
- * Conduct manual keyboard audit.
- * Conduct manual screen-reader audit.
- * Conduct manual zoom and reflow audit.
- * Conduct manual contrast audit.
- * Conduct manual reduced-motion audit.
- * Fix all critical and high violations.
- * Document remaining violations.
-WP-4.0.403 — Accessibility regression suite
- * Add accessibility regression tests.
- * Add accessibility CI checks.
- * Add accessibility documentation.
-Phase exit
- * Automated accessibility audit passes.
- * Manual accessibility audit passes.
- * Accessibility regression suite is operational.
- * No critical or high accessibility violations remain.
-168.6 Phase 4.0.5: Release freeze
-WP-4.0.501 — Feature freeze
- * Freeze all new features.
- * Only defects, documentation, compatibility, and release work.
- * Schema changes require exceptional review.
- * Dependency upgrades limited to required fixes.
- * Prompts and policies frozen except verified corrections.
-WP-4.0.502 — Documentation freeze
- * Freeze all documentation.
- * Review all documentation for accuracy.
- * Review all documentation for completeness.
- * Review all documentation for consistency.
- * Fix all documentation issues.
-WP-4.0.503 — Compatibility freeze
- * Freeze all adapter compatibility.
- * Review all adapter compatibility.
- * Fix all adapter compatibility issues.
- * Document all known limitations.
-WP-4.0.504 — Release candidate preparation
- * Create release candidate.
- * Run full qualification suite.
- * Run 7-day soak.
- * Fix all release blockers.
- * Create release notes.
- * Create support matrix.
- * Create known limitations document.
-Phase exit
- * Feature freeze is in effect.
- * Documentation freeze is in effect.
- * Compatibility freeze is in effect.
- * Release candidate passes full qualification.
- * Release candidate passes 7-day soak.
- * Release notes, support matrix, and known limitations are complete.
-168.7 dev-4.0 exit criteria
- 1. Module boundaries are clean.
- 2. Dependencies are audited and minimized.
- 3. Prompts and policies are versioned and tested.
- 4. Schemas are versioned and documented.
- 5. Configuration is audited and validated.
- 6. Startup time meets budget.
- 7. Memory usage meets budget.
- 8. Database query performance meets budget.
- 9. Browser performance meets budget.
- 10. Package size meets budget.
- 11. Threat model is current.
- 12. Credential boundary audit is complete.
- 13. PII flow mapping is complete.
- 14. Plugin and adapter sandbox review is complete.
- 15. Dependency and supply-chain audit is complete.
- 16. External penetration test is complete with no unresolved critical or high findings.
- 17. Privacy impact assessment is complete.
- 18. Incident response exercise is complete.
- 19. Automated accessibility audit passes.
- 20. Manual accessibility audit passes.
- 21. Accessibility regression suite is operational.
- 22. No critical or high accessibility violations remain.
- 23. Feature freeze is in effect.
- 24. Documentation freeze is in effect.
- 25. Compatibility freeze is in effect.
- 26. Release candidate passes full qualification.
- 27. Release candidate passes 7-day soak.
- 28. Release notes, support matrix, and known limitations are complete.
-----------------------------------------
+     168.1 Version objective
+     Comprehensive refactor, hardening, performance optimization, privacy and security review, accessibility audit, and release freeze. No new broad features.
+     168.2 Phase 4.0.1: Architecture review
+     WP-4.0.101 — Module boundary audit
+
+- Audit core versus adapter boundaries.
+- Audit worker boundaries.
+- Audit API boundaries.
+- Audit data-flow boundaries.
+- Audit secret boundaries.
+- Audit effect boundaries.
+- Remove portal logic from core orchestration.
+- Consolidate duplicated schemas.
+- Version all contracts.
+  WP-4.0.102 — Dependency audit
+- Audit every dependency for purpose, license, maintenance, and vulnerability.
+- Remove unnecessary dependencies.
+- Replace heavy dependencies with lighter alternatives where feasible.
+- Document dependency decisions.
+  WP-4.0.103 — Prompt and policy artifact audit
+- Audit every prompt template.
+- Version all prompts.
+- Add eval coverage for every prompt.
+- Audit policy rules.
+- Version all policies.
+- Add test coverage for every policy rule.
+  WP-4.0.104 — Schema audit
+- Audit every schema for completeness, consistency, and forward compatibility.
+- Add schema versioning where missing.
+- Add schema migration tests.
+- Add schema documentation.
+  WP-4.0.105 — Configuration audit
+- Audit every configuration option.
+- Remove unused options.
+- Document all options.
+- Add configuration validation.
+- Add configuration migration.
+  Phase exit
+- Module boundaries are clean.
+- Dependencies are audited and minimized.
+- Prompts and policies are versioned and tested.
+- Schemas are versioned and documented.
+- Configuration is audited and validated.
+  168.3 Phase 4.0.2: Performance optimization
+  WP-4.0.201 — Startup optimization
+- Profile startup.
+- Reduce import time.
+- Lazy-load optional components.
+- Cache initialization results.
+- Parallelize independent initialization.
+  WP-4.0.202 — Memory optimization
+- Profile memory usage.
+- Reduce object allocations.
+- Stream large artifacts.
+- Release browser resources promptly.
+- Implement memory pressure handling.
+  WP-4.0.203 — Database optimization
+- Profile database queries.
+- Add missing indexes.
+- Optimize WAL checkpointing.
+- Archive old events.
+- Implement query timeouts.
+  WP-4.0.204 — Browser optimization
+- Reduce page load time.
+- Minimize evidence capture overhead.
+- Close completed pages.
+- Monitor browser memory.
+- Restart workers at safe boundaries.
+  WP-4.0.205 — Package-size optimization
+- Profile package size.
+- Remove unused dependencies.
+- Optimize asset bundling.
+- Implement optional asset downloads.
+- Document size budget.
+  Phase exit
+- Startup time meets budget.
+- Memory usage meets budget.
+- Database query performance meets budget.
+- Browser performance meets budget.
+- Package size meets budget.
+  168.4 Phase 4.0.3: Security and privacy hardening
+  WP-4.0.301 — Threat model refresh
+- Update threat model.
+- Review trust boundaries.
+- Review critical assets.
+- Review threat actors.
+- Review high-priority abuse cases.
+- Update controls.
+  WP-4.0.302 — Credential boundary audit
+- Audit every credential access.
+- Audit every credential storage.
+- Audit every credential transmission.
+- Audit every credential log.
+- Audit every credential export.
+  WP-4.0.303 — PII flow mapping
+- Map every PII flow.
+- Identify unnecessary PII transmission.
+- Identify unnecessary PII storage.
+- Identify unnecessary PII retention.
+- Implement PII minimization.
+  WP-4.0.304 — Plugin and adapter sandbox review
+- Review adapter permissions.
+- Review adapter data access.
+- Review adapter network access.
+- Review adapter filesystem access.
+- Review adapter secret access.
+- Implement sandbox restrictions where feasible.
+  WP-4.0.305 — Dependency and supply-chain audit
+- Audit every dependency.
+- Audit every transitive dependency.
+- Audit every build tool.
+- Audit every CI action.
+- Audit every release artifact.
+- Implement supply-chain security controls.
+  WP-4.0.306 — External penetration test
+- Conduct external penetration test.
+- Remediate findings.
+- Retest remediated findings.
+  WP-4.0.307 — Privacy impact assessment
+- Conduct privacy impact assessment.
+- Remediate findings.
+- Update privacy documentation.
+  WP-4.0.308 — Incident response exercise
+- Conduct incident response exercise.
+- Update incident response plan.
+- Test incident response tools.
+- Train incident responders.
+  Phase exit
+- Threat model is current.
+- Credential boundary audit is complete.
+- PII flow mapping is complete.
+- Plugin and adapter sandbox review is complete.
+- Dependency and supply-chain audit is complete.
+- External penetration test is complete with no unresolved critical or high findings.
+- Privacy impact assessment is complete.
+- Incident response exercise is complete.
+  168.5 Phase 4.0.4: Accessibility audit
+  WP-4.0.401 — Automated accessibility audit
+- Run automated accessibility scans on all primary workflows.
+- Fix all critical and high violations.
+- Document remaining violations.
+  WP-4.0.402 — Manual accessibility audit
+- Conduct manual keyboard audit.
+- Conduct manual screen-reader audit.
+- Conduct manual zoom and reflow audit.
+- Conduct manual contrast audit.
+- Conduct manual reduced-motion audit.
+- Fix all critical and high violations.
+- Document remaining violations.
+  WP-4.0.403 — Accessibility regression suite
+- Add accessibility regression tests.
+- Add accessibility CI checks.
+- Add accessibility documentation.
+  Phase exit
+- Automated accessibility audit passes.
+- Manual accessibility audit passes.
+- Accessibility regression suite is operational.
+- No critical or high accessibility violations remain.
+  168.6 Phase 4.0.5: Release freeze
+  WP-4.0.501 — Feature freeze
+- Freeze all new features.
+- Only defects, documentation, compatibility, and release work.
+- Schema changes require exceptional review.
+- Dependency upgrades limited to required fixes.
+- Prompts and policies frozen except verified corrections.
+  WP-4.0.502 — Documentation freeze
+- Freeze all documentation.
+- Review all documentation for accuracy.
+- Review all documentation for completeness.
+- Review all documentation for consistency.
+- Fix all documentation issues.
+  WP-4.0.503 — Compatibility freeze
+- Freeze all adapter compatibility.
+- Review all adapter compatibility.
+- Fix all adapter compatibility issues.
+- Document all known limitations.
+  WP-4.0.504 — Release candidate preparation
+- Create release candidate.
+- Run full qualification suite.
+- Run 7-day soak.
+- Fix all release blockers.
+- Create release notes.
+- Create support matrix.
+- Create known limitations document.
+  Phase exit
+- Feature freeze is in effect.
+- Documentation freeze is in effect.
+- Compatibility freeze is in effect.
+- Release candidate passes full qualification.
+- Release candidate passes 7-day soak.
+- Release notes, support matrix, and known limitations are complete.
+  168.7 dev-4.0 exit criteria
+
+1.  Module boundaries are clean.
+2.  Dependencies are audited and minimized.
+3.  Prompts and policies are versioned and tested.
+4.  Schemas are versioned and documented.
+5.  Configuration is audited and validated.
+6.  Startup time meets budget.
+7.  Memory usage meets budget.
+8.  Database query performance meets budget.
+9.  Browser performance meets budget.
+10. Package size meets budget.
+11. Threat model is current.
+12. Credential boundary audit is complete.
+13. PII flow mapping is complete.
+14. Plugin and adapter sandbox review is complete.
+15. Dependency and supply-chain audit is complete.
+16. External penetration test is complete with no unresolved critical or high findings.
+17. Privacy impact assessment is complete.
+18. Incident response exercise is complete.
+19. Automated accessibility audit passes.
+20. Manual accessibility audit passes.
+21. Accessibility regression suite is operational.
+22. No critical or high accessibility violations remain.
+23. Feature freeze is in effect.
+24. Documentation freeze is in effect.
+25. Compatibility freeze is in effect.
+26. Release candidate passes full qualification.
+27. Release candidate passes 7-day soak.
+28. Release notes, support matrix, and known limitations are complete.
+
+---
+
 169. release-1.0 roadmap — Production-ready release
-169.1 Version objective
-Production-ready signed release for Windows and Linux. One-command setup, portable mode, optional Docker, CLI/GUI parity, import/export/delete, documented supported portals, clear assisted-mode fallback, zero known high-severity defects, complete threat model, complete privacy documentation, SBOM and provenance, incident response, compatibility and support policy, release rollback.
-169.2 Phase 1.0.0: Release qualification
-WP-1.0.001 — Final qualification
- * Run full qualification suite.
- * Run 7-day soak.
- * Verify all release gates.
- * Verify all exit criteria.
- * Document any waivers.
-WP-1.0.002 — Release signing
- * Sign Git tag.
- * Sign Windows installer.
- * Sign Linux packages.
- * Sign update manifests.
- * Sign adapter packages.
- * Sign browser extension.
- * Generate SBOM.
- * Generate provenance.
- * Generate checksums.
-WP-1.0.003 — Release publication
- * Publish release artifacts.
- * Publish release notes.
- * Publish support matrix.
- * Publish known limitations.
- * Publish SBOM.
- * Publish provenance.
- * Publish security advisory if applicable.
- * Publish privacy documentation.
-WP-1.0.004 — Post-release verification
- * Verify downloadable artifacts.
- * Verify checksums.
- * Verify signatures.
- * Verify installer launch.
- * Verify update channel.
- * Verify package metadata.
- * Verify release notes.
- * Verify SBOM links.
- * Verify no accidental draft or debug configuration.
-WP-1.0.005 — Rollback verification
- * Verify rollback from release-1.0 to previous supported version.
- * Verify data preservation.
- * Verify approval invalidation.
- * Verify adapter compatibility.
-Phase exit
- * Release qualification passes.
- * Release artifacts are signed.
- * Release artifacts are published.
- * Post-release verification passes.
- * Rollback verification passes.
-169.3 release-1.0 exit criteria
- 1. Windows and Linux installation paths work.
- 2. CLI and GUI support the primary workflow.
- 3. The system works without an LLM for core operations.
- 4. Gemini integration is available and policy-controlled.
- 5. Profile schema covers India and USA use cases.
- 6. Multiple personas work without fact divergence.
- 7. Documents import and render in required formats.
- 8. At least ten résumé templates pass validation.
- 9. Duplicate resolution works across source portals.
- 10. Eligibility and score explanations are inspectable.
- 11. The application reaches verified pre-submission state on declared supported adapters.
- 12. Submission remains human-controlled.
- 13. Gmail status ingestion works under narrow OAuth scopes.
- 14. Calendar proposals require approval.
- 15. Assessments remain human-completed and human-submitted.
- 16. Encryption, vault, backup, restore, export, and deletion pass.
- 17. Security and privacy assessments are complete.
- 18. No unresolved critical or high security findings remain.
- 19. Accessibility gate passes.
- 20. Signed artifacts, SBOM, checksums, and provenance are published.
- 21. Support matrix and known limitations are accurate.
- 22. Incident response and adapter kill switches are operational.
- 23. Seven-day soak passes.
- 24. Upgrade and rollback are tested.
- 25. Every release claim has evidence.
-----------------------------------------
+     169.1 Version objective
+     Production-ready signed release for Windows and Linux. One-command setup, portable mode, optional Docker, CLI/GUI parity, import/export/delete, documented supported portals, clear assisted-mode fallback, zero known high-severity defects, complete threat model, complete privacy documentation, SBOM and provenance, incident response, compatibility and support policy, release rollback.
+     169.2 Phase 1.0.0: Release qualification
+     WP-1.0.001 — Final qualification
+
+- Run full qualification suite.
+- Run 7-day soak.
+- Verify all release gates.
+- Verify all exit criteria.
+- Document any waivers.
+  WP-1.0.002 — Release signing
+- Sign Git tag.
+- Sign Windows installer.
+- Sign Linux packages.
+- Sign update manifests.
+- Sign adapter packages.
+- Sign browser extension.
+- Generate SBOM.
+- Generate provenance.
+- Generate checksums.
+  WP-1.0.003 — Release publication
+- Publish release artifacts.
+- Publish release notes.
+- Publish support matrix.
+- Publish known limitations.
+- Publish SBOM.
+- Publish provenance.
+- Publish security advisory if applicable.
+- Publish privacy documentation.
+  WP-1.0.004 — Post-release verification
+- Verify downloadable artifacts.
+- Verify checksums.
+- Verify signatures.
+- Verify installer launch.
+- Verify update channel.
+- Verify package metadata.
+- Verify release notes.
+- Verify SBOM links.
+- Verify no accidental draft or debug configuration.
+  WP-1.0.005 — Rollback verification
+- Verify rollback from release-1.0 to previous supported version.
+- Verify data preservation.
+- Verify approval invalidation.
+- Verify adapter compatibility.
+  Phase exit
+- Release qualification passes.
+- Release artifacts are signed.
+- Release artifacts are published.
+- Post-release verification passes.
+- Rollback verification passes.
+  169.3 release-1.0 exit criteria
+
+1.  Windows and Linux installation paths work.
+2.  CLI and GUI support the primary workflow.
+3.  The system works without an LLM for core operations.
+4.  Gemini integration is available and policy-controlled.
+5.  Profile schema covers India and USA use cases.
+6.  Multiple personas work without fact divergence.
+7.  Documents import and render in required formats.
+8.  At least ten résumé templates pass validation.
+9.  Duplicate resolution works across source portals.
+10. Eligibility and score explanations are inspectable.
+11. The application reaches verified pre-submission state on declared supported adapters.
+12. Submission remains human-controlled.
+13. Gmail status ingestion works under narrow OAuth scopes.
+14. Calendar proposals require approval.
+15. Assessments remain human-completed and human-submitted.
+16. Encryption, vault, backup, restore, export, and deletion pass.
+17. Security and privacy assessments are complete.
+18. No unresolved critical or high security findings remain.
+19. Accessibility gate passes.
+20. Signed artifacts, SBOM, checksums, and provenance are published.
+21. Support matrix and known limitations are accurate.
+22. Incident response and adapter kill switches are operational.
+23. Seven-day soak passes.
+24. Upgrade and rollback are tested.
+25. Every release claim has evidence.
+
+---
+
 170. Appendices
-170.1 Appendix A: Schema registry
-The schema registry documents every versioned schema used in the system.
-Each schema entry includes:
- * identifier;
- * version;
- * description;
- * fields;
- * required fields;
- * enum values;
- * constraints;
- * example;
- * migration history;
- * compatibility policy.
-Schemas to document:
- * candidate profile;
- * fact;
- * job;
- * employer;
- * requisition;
- * application;
- * question;
- * answer;
- * document;
- * approval;
- * effect;
- * task;
- * goal;
- * worker;
- * session;
- * event;
- * incident;
- * policy;
- * adapter;
- * provider;
- * automation;
- * integration;
- * memory;
- * research source;
- * eval case;
- * qualification report.
-170.2 Appendix B: Architecture decision records
-Every consequential architecture decision is recorded.
-Each ADR includes:
- * title;
- * status;
- * context;
- * decision;
- * consequences;
- * alternatives;
- * evidence;
- * security and privacy impact;
- * operational impact;
- * migration;
- * reversal cost;
- * review date.
-Initial ADRs to create:
- * ADR-001: Local-first personal product architecture.
- * ADR-002: One user per installation.
- * ADR-003: India-first, USA-second market focus.
- * ADR-004: Windows first-class, Linux release support.
- * ADR-005: AGPL-3.0-only license.
- * ADR-006: Python core language.
- * ADR-007: Tauri GUI (experimental).
- * ADR-008: SQLite WAL with encrypted storage.
- * ADR-009: Playwright browser layer.
- * ADR-010: Gemini initial cloud provider.
- * ADR-011: Provider-neutral model interface.
- * ADR-012: Local model support (future feature).
- * ADR-013: Human review before submission.
- * ADR-014: No assessment automation.
- * ADR-015: No stealth or control bypass.
- * ADR-016: Local-sovereign hosted design.
- * ADR-017: Exact duplicate blocked.
- * ADR-018: Match threshold of 50.
- * ADR-019: Independent pre-release assessment.
- * ADR-020: Fact provenance and source precedence.
- * ADR-021: Encrypted artifact store.
- * ADR-022: OS vault integration.
- * ADR-023: Pull-based task claiming.
- * ADR-024: Step-level checkpointing.
- * ADR-025: Durable waitpoints.
- * ADR-026: Idempotent effect layer.
- * ADR-027: Circuit breaker pattern.
- * ADR-028: Adapter contract and capability declaration.
- * ADR-029: Browser observe-before-act protocol.
- * ADR-030: Named browser actions.
- * ADR-031: Locator hierarchy.
- * ADR-032: Prompt and policy artifact management.
- * ADR-033: Structured generation and validation.
- * ADR-034: Grounding verification.
- * ADR-035: Data-class-aware model routing.
- * ADR-036: Local embeddings (optional).
- * ADR-037: Self-improvement engine.
- * ADR-038: External intelligence loop.
- * ADR-039: Telemetry disabled by default.
- * ADR-040: End-to-end encrypted hosted relay.
-170.3 Appendix C: Runbooks
-C.1 Installation runbook
- 1. Download signed installer or portable archive.
- 2. Verify checksum and signature.
- 3. Run installer or extract archive.
- 4. Launch application.
- 5. Complete onboarding.
- 6. Configure encryption and recovery.
- 7. Import or create profile.
- 8. Configure browser.
- 9. Optionally configure Gemini.
- 10. Run system doctor.
- 11. Add first job.
-C.2 Browser setup runbook
- 1. Open settings.
- 2. Navigate to browser section.
- 3. Choose dedicated managed context or existing user context.
- 4. If dedicated: create new profile directory.
- 5. If existing: follow explicit consent and isolation instructions.
- 6. Launch browser worker.
- 7. Log into portals interactively.
- 8. Verify session persistence.
- 9. Test with a mock or read-only job.
-C.3 Provider setup runbook
- 1. Open settings.
- 2. Navigate to providers section.
- 3. Select provider.
- 4. Enter API key through secure input or vault reference.
- 5. Configure model aliases.
- 6. Configure data-class permissions.
- 7. Configure budget.
- 8. Test connection.
- 9. Verify health.
-C.4 Adapter failure runbook
- 1. Check compatibility matrix.
- 2. Check adapter version.
- 3. Check portal policy review date.
- 4. Run adapter doctor.
- 5. Inspect session trace.
- 6. Check circuit breaker state.
- 7. Check kill switch state.
- 8. If fingerprint mismatch: downgrade to assisted mode.
- 9. If policy expired: review and update.
- 10. If account warning: suspend adapter and notify user.
- 11. If unrecoverable: create incident and escalate.
-C.5 Data recovery runbook
- 1. Stop all workflows.
- 2. Verify backup exists.
- 3. Verify backup integrity.
- 4. Restore backup to temporary location.
- 5. Verify restored data.
- 6. If successful: replace active database.
- 7. If unsuccessful: attempt repair.
- 8. If repair fails: contact maintainers with diagnostic bundle.
- 9. Restart workflows.
- 10. Verify application state.
-C.6 Security incident runbook
- 1. Identify incident type and severity.
- 2. Stop affected workflows.
- 3. Activate kill switch if applicable.
- 4. Revoke affected credentials.
- 5. Preserve evidence.
- 6. Contain local or hosted impact.
- 7. Inform user clearly.
- 8. Assess external effects.
- 9. Reconcile portal state.
- 10. Create remediation tasks.
- 11. Add regression coverage.
- 12. Conduct postmortem.
- 13. Update threat model and controls.
-C.7 Full deletion runbook
- 1. Authenticate user.
- 2. Show deletion scope.
- 3. Confirm user intent.
- 4. Stop active tasks.
- 5. Revoke tokens where possible.
- 6. Delete local database records.
- 7. Delete artifacts.
- 8. Delete embeddings and indexes.
- 9. Delete browser profiles if selected.
- 10. Destroy relevant keys.
- 11. Request hosted ciphertext deletion.
- 12. Remove backups according to selected policy.
- 13. Generate non-sensitive deletion receipt.
- 14. Shut down or reinitialize installation.
-170.4 Appendix D: Checklists
-D.1 Release checklist
- * Feature freeze in effect.
- * Documentation freeze in effect.
- * Compatibility freeze in effect.
- * All required tests pass.
- * Mutation score meets target.
- * Repeated-run qualification meets target.
- * Crash recovery qualification passes.
- * Soak qualification passes.
- * Upgrade and rollback qualification passes.
- * Security assessment complete.
- * Privacy assessment complete.
- * Accessibility audit complete.
- * No unresolved critical or high security findings.
- * No unresolved critical or high accessibility violations.
- * Release candidate signed.
- * SBOM generated.
- * Provenance generated.
- * Checksums generated.
- * Release notes written.
- * Support matrix updated.
- * Known limitations documented.
- * Rollback plan documented.
- * Incident response plan current.
- * Adapter kill switches operational.
- * Post-release verification scheduled.
-D.2 Adapter graduation checklist
- * Policy review current.
- * Contract tests pass.
- * Fixture suite passes.
- * Repeated-run target met.
- * Live qualification passes.
- * No unresolved high-risk warning.
- * Final-review verification passes.
- * Authentication waitpoints work.
- * Recovery after restart works.
- * Known limitations published.
- * Maintainer owns compatibility.
- * Kill switch operational.
- * Compatibility matrix entry current.
-D.3 Security review checklist
- * Threat model updated.
- * Trust boundaries identified.
- * Critical assets identified.
- * Threat actors identified.
- * High-priority abuse cases documented.
- * Controls mapped.
- * Residual risk accepted.
- * Credential boundary audited.
- * PII flow mapped.
- * Data minimization verified.
- * Encryption verified.
- * Secret storage verified.
- * Log redaction verified.
- * Diagnostic redaction verified.
- * API security verified.
- * Browser security verified.
- * Extension security verified.
- * Hosted relay security verified.
- * Update security verified.
- * Dependency security verified.
- * Supply-chain security verified.
- * Incident response plan current.
-D.4 Privacy review checklist
- * Data-flow map current.
- * Purpose limitation verified.
- * Data minimization verified.
- * Local processing verified.
- * Transparency verified.
- * User control verified.
- * Limited retention verified.
- * Field-level disclosure verified.
- * Secure deletion verified.
- * Provider choice verified.
- * Telemetry disabled by default.
- * No secondary use without consent.
- * Cross-application leakage prevented.
- * Sensitive-attribute separation verified.
- * Consent records verified.
- * Export verified.
- * Deletion verified.
- * Jurisdictional requirements mapped.
-170.5 Appendix E: Document build system
-E.1 Master plan build
-The master plan is maintained as modular Markdown source files in:
-docs/master_plan/
-├── 00-executive/
-├── 01-research/
-├── 02-product/
-├── 03-profile-and-documents/
-├── 04-architecture/
-├── 05-browser-and-portals/
-├── 06-ai/
-├── 07-security-and-privacy/
-├── 08-testing-and-release/
-├── 09-roadmap/
-├── 10-operations/
-└── 11-appendices/
-E.2 Build script
-A build script should:
- 1. Concatenate source files in order.
- 2. Resolve cross-references.
- 3. Generate table of contents.
- 4. Render Mermaid diagrams to SVG.
- 5. Generate PDF using Pandoc and WeasyPrint or equivalent.
- 6. Verify output:
- * successful generation;
- * table of contents and internal links;
- * readable tables and code blocks;
- * embedded Mermaid diagrams rendered as SVG;
- * page count;
- * missing assets;
- * no secrets or personal information;
- * matching source revision and PDF metadata.
-E.3 Build command
-./scripts/build-master-plan.sh
-or on Windows:
-.\scripts\build-master-plan.ps1
-E.4 Dependencies
- * Pandoc;
- * WeasyPrint or equivalent PDF engine;
- * Mermaid CLI or equivalent renderer;
- * Python for preprocessing and validation.
-E.5 CI integration
-The build script should run in CI on every push to the master plan source directory.
-CI should:
- * verify successful generation;
- * verify page count;
- * verify no broken links;
- * verify no secrets;
- * publish PDF as artifact;
- * fail on build errors.
-----------------------------------------
+     170.1 Appendix A: Schema registry
+     The schema registry documents every versioned schema used in the system.
+     Each schema entry includes:
+
+- identifier;
+- version;
+- description;
+- fields;
+- required fields;
+- enum values;
+- constraints;
+- example;
+- migration history;
+- compatibility policy.
+  Schemas to document:
+- candidate profile;
+- fact;
+- job;
+- employer;
+- requisition;
+- application;
+- question;
+- answer;
+- document;
+- approval;
+- effect;
+- task;
+- goal;
+- worker;
+- session;
+- event;
+- incident;
+- policy;
+- adapter;
+- provider;
+- automation;
+- integration;
+- memory;
+- research source;
+- eval case;
+- qualification report.
+  170.2 Appendix B: Architecture decision records
+  Every consequential architecture decision is recorded.
+  Each ADR includes:
+- title;
+- status;
+- context;
+- decision;
+- consequences;
+- alternatives;
+- evidence;
+- security and privacy impact;
+- operational impact;
+- migration;
+- reversal cost;
+- review date.
+  Initial ADRs to create:
+- ADR-001: Local-first personal product architecture.
+- ADR-002: One user per installation.
+- ADR-003: India-first, USA-second market focus.
+- ADR-004: Windows first-class, Linux release support.
+- ADR-005: AGPL-3.0-only license.
+- ADR-006: Python core language.
+- ADR-007: Tauri GUI (experimental).
+- ADR-008: SQLite WAL with encrypted storage.
+- ADR-009: Playwright browser layer.
+- ADR-010: Gemini initial cloud provider.
+- ADR-011: Provider-neutral model interface.
+- ADR-012: Local model support (future feature).
+- ADR-013: Human review before submission.
+- ADR-014: No assessment automation.
+- ADR-015: No stealth or control bypass.
+- ADR-016: Local-sovereign hosted design.
+- ADR-017: Exact duplicate blocked.
+- ADR-018: Match threshold of 50.
+- ADR-019: Independent pre-release assessment.
+- ADR-020: Fact provenance and source precedence.
+- ADR-021: Encrypted artifact store.
+- ADR-022: OS vault integration.
+- ADR-023: Pull-based task claiming.
+- ADR-024: Step-level checkpointing.
+- ADR-025: Durable waitpoints.
+- ADR-026: Idempotent effect layer.
+- ADR-027: Circuit breaker pattern.
+- ADR-028: Adapter contract and capability declaration.
+- ADR-029: Browser observe-before-act protocol.
+- ADR-030: Named browser actions.
+- ADR-031: Locator hierarchy.
+- ADR-032: Prompt and policy artifact management.
+- ADR-033: Structured generation and validation.
+- ADR-034: Grounding verification.
+- ADR-035: Data-class-aware model routing.
+- ADR-036: Local embeddings (optional).
+- ADR-037: Self-improvement engine.
+- ADR-038: External intelligence loop.
+- ADR-039: Telemetry disabled by default.
+- ADR-040: End-to-end encrypted hosted relay.
+  170.3 Appendix C: Runbooks
+  C.1 Installation runbook
+
+1.  Download signed installer or portable archive.
+2.  Verify checksum and signature.
+3.  Run installer or extract archive.
+4.  Launch application.
+5.  Complete onboarding.
+6.  Configure encryption and recovery.
+7.  Import or create profile.
+8.  Configure browser.
+9.  Optionally configure Gemini.
+10. Run system doctor.
+11. Add first job.
+    C.2 Browser setup runbook
+12. Open settings.
+13. Navigate to browser section.
+14. Choose dedicated managed context or existing user context.
+15. If dedicated: create new profile directory.
+16. If existing: follow explicit consent and isolation instructions.
+17. Launch browser worker.
+18. Log into portals interactively.
+19. Verify session persistence.
+20. Test with a mock or read-only job.
+    C.3 Provider setup runbook
+21. Open settings.
+22. Navigate to providers section.
+23. Select provider.
+24. Enter API key through secure input or vault reference.
+25. Configure model aliases.
+26. Configure data-class permissions.
+27. Configure budget.
+28. Test connection.
+29. Verify health.
+    C.4 Adapter failure runbook
+30. Check compatibility matrix.
+31. Check adapter version.
+32. Check portal policy review date.
+33. Run adapter doctor.
+34. Inspect session trace.
+35. Check circuit breaker state.
+36. Check kill switch state.
+37. If fingerprint mismatch: downgrade to assisted mode.
+38. If policy expired: review and update.
+39. If account warning: suspend adapter and notify user.
+40. If unrecoverable: create incident and escalate.
+    C.5 Data recovery runbook
+41. Stop all workflows.
+42. Verify backup exists.
+43. Verify backup integrity.
+44. Restore backup to temporary location.
+45. Verify restored data.
+46. If successful: replace active database.
+47. If unsuccessful: attempt repair.
+48. If repair fails: contact maintainers with diagnostic bundle.
+49. Restart workflows.
+50. Verify application state.
+    C.6 Security incident runbook
+51. Identify incident type and severity.
+52. Stop affected workflows.
+53. Activate kill switch if applicable.
+54. Revoke affected credentials.
+55. Preserve evidence.
+56. Contain local or hosted impact.
+57. Inform user clearly.
+58. Assess external effects.
+59. Reconcile portal state.
+60. Create remediation tasks.
+61. Add regression coverage.
+62. Conduct postmortem.
+63. Update threat model and controls.
+    C.7 Full deletion runbook
+64. Authenticate user.
+65. Show deletion scope.
+66. Confirm user intent.
+67. Stop active tasks.
+68. Revoke tokens where possible.
+69. Delete local database records.
+70. Delete artifacts.
+71. Delete embeddings and indexes.
+72. Delete browser profiles if selected.
+73. Destroy relevant keys.
+74. Request hosted ciphertext deletion.
+75. Remove backups according to selected policy.
+76. Generate non-sensitive deletion receipt.
+77. Shut down or reinitialize installation.
+    170.4 Appendix D: Checklists
+    D.1 Release checklist
+
+- Feature freeze in effect.
+- Documentation freeze in effect.
+- Compatibility freeze in effect.
+- All required tests pass.
+- Mutation score meets target.
+- Repeated-run qualification meets target.
+- Crash recovery qualification passes.
+- Soak qualification passes.
+- Upgrade and rollback qualification passes.
+- Security assessment complete.
+- Privacy assessment complete.
+- Accessibility audit complete.
+- No unresolved critical or high security findings.
+- No unresolved critical or high accessibility violations.
+- Release candidate signed.
+- SBOM generated.
+- Provenance generated.
+- Checksums generated.
+- Release notes written.
+- Support matrix updated.
+- Known limitations documented.
+- Rollback plan documented.
+- Incident response plan current.
+- Adapter kill switches operational.
+- Post-release verification scheduled.
+  D.2 Adapter graduation checklist
+- Policy review current.
+- Contract tests pass.
+- Fixture suite passes.
+- Repeated-run target met.
+- Live qualification passes.
+- No unresolved high-risk warning.
+- Final-review verification passes.
+- Authentication waitpoints work.
+- Recovery after restart works.
+- Known limitations published.
+- Maintainer owns compatibility.
+- Kill switch operational.
+- Compatibility matrix entry current.
+  D.3 Security review checklist
+- Threat model updated.
+- Trust boundaries identified.
+- Critical assets identified.
+- Threat actors identified.
+- High-priority abuse cases documented.
+- Controls mapped.
+- Residual risk accepted.
+- Credential boundary audited.
+- PII flow mapped.
+- Data minimization verified.
+- Encryption verified.
+- Secret storage verified.
+- Log redaction verified.
+- Diagnostic redaction verified.
+- API security verified.
+- Browser security verified.
+- Extension security verified.
+- Hosted relay security verified.
+- Update security verified.
+- Dependency security verified.
+- Supply-chain security verified.
+- Incident response plan current.
+  D.4 Privacy review checklist
+- Data-flow map current.
+- Purpose limitation verified.
+- Data minimization verified.
+- Local processing verified.
+- Transparency verified.
+- User control verified.
+- Limited retention verified.
+- Field-level disclosure verified.
+- Secure deletion verified.
+- Provider choice verified.
+- Telemetry disabled by default.
+- No secondary use without consent.
+- Cross-application leakage prevented.
+- Sensitive-attribute separation verified.
+- Consent records verified.
+- Export verified.
+- Deletion verified.
+- Jurisdictional requirements mapped.
+  170.5 Appendix E: Document build system
+  E.1 Master plan build
+  The master plan is maintained as modular Markdown source files in:
+  docs/master_plan/
+  ├── 00-executive/
+  ├── 01-research/
+  ├── 02-product/
+  ├── 03-profile-and-documents/
+  ├── 04-architecture/
+  ├── 05-browser-and-portals/
+  ├── 06-ai/
+  ├── 07-security-and-privacy/
+  ├── 08-testing-and-release/
+  ├── 09-roadmap/
+  ├── 10-operations/
+  └── 11-appendices/
+  E.2 Build script
+  A build script should:
+
+1.  Concatenate source files in order.
+2.  Resolve cross-references.
+3.  Generate table of contents.
+4.  Render Mermaid diagrams to SVG.
+5.  Generate PDF using Pandoc and WeasyPrint or equivalent.
+6.  Verify output:
+
+- successful generation;
+- table of contents and internal links;
+- readable tables and code blocks;
+- embedded Mermaid diagrams rendered as SVG;
+- page count;
+- missing assets;
+- no secrets or personal information;
+- matching source revision and PDF metadata.
+  E.3 Build command
+  ./scripts/build-master-plan.sh
+  or on Windows:
+  .\scripts\build-master-plan.ps1
+  E.4 Dependencies
+- Pandoc;
+- WeasyPrint or equivalent PDF engine;
+- Mermaid CLI or equivalent renderer;
+- Python for preprocessing and validation.
+  E.5 CI integration
+  The build script should run in CI on every push to the master plan source directory.
+  CI should:
+- verify successful generation;
+- verify page count;
+- verify no broken links;
+- verify no secrets;
+- publish PDF as artifact;
+- fail on build errors.
+
+---
+
 171. Final notes
-171.1 Plan status
-This master plan is a living document. It records confirmed product decisions, establishes provisional technical choices, and defines the versioned roadmap.
-The plan is not a substitute for:
- * current primary-source research;
- * implementation experiments;
- * security and privacy assessments;
- * user testing;
- * legal review.
-Every external claim in this plan must be validated before implementation.
-171.2 Plan maintenance
-The master plan should be updated when:
- * a confirmed requirement changes;
- * an architecture decision is made;
- * a research finding invalidates a provisional choice;
- * a version exits;
- * a new version is defined;
- * a security or privacy assessment produces material findings;
- * a portal policy changes materially;
- * a model provider changes materially;
- * a comparable project produces a reusable pattern.
-171.3 Plan ownership
-The master plan is owned by the project maintainers.
-Changes to the plan require:
- * pull request;
- * review;
- * updated decision record where applicable;
- * updated roadmap where applicable;
- * updated appendices where applicable.
-171.4 Acknowledgments
-This plan was developed with reference to:
- * the supplied agent.md system prompt and guiding principles;
- * the user’s detailed product requirements and policy decisions;
- * established software engineering, security, privacy, and AI best practices;
- * architecture patterns from comparable open-source projects;
- * the project’s confirmed non-negotiable invariants.
-171.5 Next steps
- 1. Resolve the six remaining policy and security decisions documented in the executive summary.
- 2. Begin the research program: validate portal policies, comparable projects, provider terms, and dependency maturity.
- 3. Write the implementation contract.
- 4. Create the source ledger.
- 5. Scaffold the repository.
- 6. Begin dev-0.1 implementation.
-----------------------------------------
+     171.1 Plan status
+     This master plan is a living document. It records confirmed product decisions, establishes provisional technical choices, and defines the versioned roadmap.
+     The plan is not a substitute for:
+
+- current primary-source research;
+- implementation experiments;
+- security and privacy assessments;
+- user testing;
+- legal review.
+  Every external claim in this plan must be validated before implementation.
+  171.2 Plan maintenance
+  The master plan should be updated when:
+- a confirmed requirement changes;
+- an architecture decision is made;
+- a research finding invalidates a provisional choice;
+- a version exits;
+- a new version is defined;
+- a security or privacy assessment produces material findings;
+- a portal policy changes materially;
+- a model provider changes materially;
+- a comparable project produces a reusable pattern.
+  171.3 Plan ownership
+  The master plan is owned by the project maintainers.
+  Changes to the plan require:
+- pull request;
+- review;
+- updated decision record where applicable;
+- updated roadmap where applicable;
+- updated appendices where applicable.
+  171.4 Acknowledgments
+  This plan was developed with reference to:
+- the supplied agent.md system prompt and guiding principles;
+- the user’s detailed product requirements and policy decisions;
+- established software engineering, security, privacy, and AI best practices;
+- architecture patterns from comparable open-source projects;
+- the project’s confirmed non-negotiable invariants.
+  171.5 Next steps
+
+1.  Resolve the six remaining policy and security decisions documented in the executive summary.
+2.  Begin the research program: validate portal policies, comparable projects, provider terms, and dependency maturity.
+3.  Write the implementation contract.
+4.  Create the source ledger.
+5.  Scaffold the repository.
+6.  Begin dev-0.1 implementation.
+
+---
+
 End of Master Plan
 ----------------------------------------
+
 Document version: 0.1-draft Date: 2026-07-22 Classification: Public planning document; contains no user secrets License: AGPL-3.0-only
 ----------------------------------------
+
 This master plan is approximately 52% complete by subject coverage. The remaining sections include detailed API schemas, complete test case catalogs, full GitHub Actions workflow definitions, operational runbooks, and the document build system. These will be added in subsequent revisions as implementation progresses.
 ------------------------------------------
+
 172. Implementation contract template
-172.1 Purpose
-Before beginning each version, the project must produce an implementation contract that records the agreed scope, constraints, and acceptance criteria. This prevents scope creep and ensures that every participant shares the same understanding of what the version must deliver.
-172.2 Contract structure
-contract_id: "AJOS-IMPL-CONTRACT-dev-0.1"
-version: "0.1-draft"
-status: "approved"
-date: "2026-07-22"
-mission: >
- Prove the complete application-assistance loop without touching a real portal.
- Establish the durable project substrate, domain model, task engine,
- mock application harness, and first closed-loop milestone.
-runtime_profile:
- type: local_desktop
- os:
- - windows
- - linux
- architecture: x86_64
- deployment: single_user_single_machine
- browser: chromium
- database: encrypted_sqlite
- secret_store: os_vault
- model_providers: []
- hosted_relay: false
-first_milestone:
- id: M0
- description: "Complete closed loop on mock ATS"
- definition_of_done:
- - "Goal accepted and decomposed into task graph"
- - "Task claimed and executed by worker"
- - "Mock application filled and verified"
- - "Unknown information creates durable waitpoint"
- - "Duplicate applications blocked"
- - "Final review produced"
- - "System stops before submission"
- - "Human submission confirmation reconciled"
- - "Application appears in tracking"
- - "Run produces artifacts and audit trail"
- - "One learning record or regression test created"
- - "CLI and GUI both operate the same workflow"
- - "Restart preserves checkpoint"
-non_goals_for_v1:
- - "Real LinkedIn automation"
- - "Real Naukri automation"
- - "Real Indeed automation"
- - "Cloud synchronization"
- - "Multiple machines"
- - "Automatic submission"
- - "Recruiter-message sending"
- - "Gmail ingestion"
- - "Local model installation"
- - "Broad ATS support"
- - "Plugin marketplace"
- - "Mobile client"
-constraints:
- - "No real personal data in repository fixtures"
- - "No secrets in logs"
- - "No raw government identifiers stored"
- - "No bypass of CAPTCHA, MFA, or security controls"
- - "No autonomous submission"
- - "No assessment automation"
- - "No stealth or fingerprint spoofing"
- - "No plaintext cloud custody by default"
- - "Telemetry disabled by default"
- - "AGPL-3.0-only license"
-safety_posture:
- default_autonomy: guided
- submission_enabled: false
- assessment_automation: false
- messaging_automation: false
- human_review_required: true
- sensitive_field_policy: confirm_by_default
- duplicate_policy: block_exact
- rate_limiting: conservative
- circuit_breakers: enabled
-proof_of_progress_metrics:
- - "Tasks completed"
- - "Tasks verified complete"
- - "Median time to completion"
- - "Intervention rate"
- - "Retry rate"
- - "Regression rate"
- - "Eval pass rate"
- - "Repeat-run stability"
- - "Memory reuse rate"
-verification_strategy:
- - "Unit tests for domain models"
- - "Property-based tests for dates, compensation, duplicates"
- - "Schema tests for every schema"
- - "Contract tests for adapters"
- - "Integration tests for component boundaries"
- - "Browser fixture tests for mock ATS"
- - "Failure-injection tests for every phase"
- - "Mutation tests for critical policy modules"
- - "Security tests for local API, encryption, secrets"
- - "Privacy tests for data minimization, retention, deletion"
- - "Accessibility tests for keyboard, screen reader, contrast"
- - "Repeated-run qualification for supported fixtures"
- - "Crash recovery qualification"
- - "Upgrade and rollback qualification"
-172.3 Contract usage
-The implementation contract must be:
- * reviewed and approved before version work begins;
- * visible to all contributors;
- * updated only through explicit amendment;
- * referenced in pull requests and release notes;
- * archived after version completion.
-----------------------------------------
+     172.1 Purpose
+     Before beginning each version, the project must produce an implementation contract that records the agreed scope, constraints, and acceptance criteria. This prevents scope creep and ensures that every participant shares the same understanding of what the version must deliver.
+     172.2 Contract structure
+     contract_id: "AJOS-IMPL-CONTRACT-dev-0.1"
+     version: "0.1-draft"
+     status: "approved"
+     date: "2026-07-22"
+     mission: >
+     Prove the complete application-assistance loop without touching a real portal.
+     Establish the durable project substrate, domain model, task engine,
+     mock application harness, and first closed-loop milestone.
+     runtime_profile:
+     type: local_desktop
+     os:
+
+- windows
+- linux
+  architecture: x86_64
+  deployment: single_user_single_machine
+  browser: chromium
+  database: encrypted_sqlite
+  secret_store: os_vault
+  model_providers: []
+  hosted_relay: false
+  first_milestone:
+  id: M0
+  description: "Complete closed loop on mock ATS"
+  definition_of_done:
+- "Goal accepted and decomposed into task graph"
+- "Task claimed and executed by worker"
+- "Mock application filled and verified"
+- "Unknown information creates durable waitpoint"
+- "Duplicate applications blocked"
+- "Final review produced"
+- "System stops before submission"
+- "Human submission confirmation reconciled"
+- "Application appears in tracking"
+- "Run produces artifacts and audit trail"
+- "One learning record or regression test created"
+- "CLI and GUI both operate the same workflow"
+- "Restart preserves checkpoint"
+  non_goals_for_v1:
+- "Real LinkedIn automation"
+- "Real Naukri automation"
+- "Real Indeed automation"
+- "Cloud synchronization"
+- "Multiple machines"
+- "Automatic submission"
+- "Recruiter-message sending"
+- "Gmail ingestion"
+- "Local model installation"
+- "Broad ATS support"
+- "Plugin marketplace"
+- "Mobile client"
+  constraints:
+- "No real personal data in repository fixtures"
+- "No secrets in logs"
+- "No raw government identifiers stored"
+- "No bypass of CAPTCHA, MFA, or security controls"
+- "No autonomous submission"
+- "No assessment automation"
+- "No stealth or fingerprint spoofing"
+- "No plaintext cloud custody by default"
+- "Telemetry disabled by default"
+- "AGPL-3.0-only license"
+  safety_posture:
+  default_autonomy: guided
+  submission_enabled: false
+  assessment_automation: false
+  messaging_automation: false
+  human_review_required: true
+  sensitive_field_policy: confirm_by_default
+  duplicate_policy: block_exact
+  rate_limiting: conservative
+  circuit_breakers: enabled
+  proof_of_progress_metrics:
+- "Tasks completed"
+- "Tasks verified complete"
+- "Median time to completion"
+- "Intervention rate"
+- "Retry rate"
+- "Regression rate"
+- "Eval pass rate"
+- "Repeat-run stability"
+- "Memory reuse rate"
+  verification_strategy:
+- "Unit tests for domain models"
+- "Property-based tests for dates, compensation, duplicates"
+- "Schema tests for every schema"
+- "Contract tests for adapters"
+- "Integration tests for component boundaries"
+- "Browser fixture tests for mock ATS"
+- "Failure-injection tests for every phase"
+- "Mutation tests for critical policy modules"
+- "Security tests for local API, encryption, secrets"
+- "Privacy tests for data minimization, retention, deletion"
+- "Accessibility tests for keyboard, screen reader, contrast"
+- "Repeated-run qualification for supported fixtures"
+- "Crash recovery qualification"
+- "Upgrade and rollback qualification"
+  172.3 Contract usage
+  The implementation contract must be:
+
+* reviewed and approved before version work begins;
+* visible to all contributors;
+* updated only through explicit amendment;
+* referenced in pull requests and release notes;
+* archived after version completion.
+
+---
+
 173. Project file pack
-173.1 Purpose
-Every meaningful project should be continuable from its folder alone. The project folder is the durable operating substrate. Chat history is optional. Files are required.
-173.2 Required files
-projects/autonomous-job-application/
-├── project.md # Charter, mission, scope, constraints
-├── plan.md # Current version plan and task graph
-├── tasks.md # Active task list
-├── tasks/ # One file per task when useful
-├── knowledge.md # Accumulated project knowledge
-├── decisions.md # Architecture decision records
-├── status.md # Current status, blockers, next actions
-├── handoff.md # Explicit handoff for session continuity
-├── FAILURE.md # Record of significant failures and lessons
-├── artifacts/ # Generated documents, screenshots, evidence
-├── evals/ # Evaluation fixtures and results
-└── runs/ # Session logs and traces
-173.3 File conventions
- * Use Markdown for human-readable files.
- * Use YAML or JSON for machine-readable data.
- * Use absolute paths for file references.
- * Use relative paths within the project directory.
- * Include timestamps and ownership.
- * Update during execution, not only at the end.
- * Record decisions when direction changes.
- * Record failures when important attempts fail.
- * Leave an explicit handoff with next actions, blockers, and open questions.
-173.4 Agent rules for file pack
- 1. Read before acting.
- 2. Update during execution, not only at the end.
- 3. Write evidence and artifacts as they are produced.
- 4. Record decisions when direction changes.
- 5. Record failures when important attempts fail.
- 6. Leave an explicit handoff with next actions, blockers, and open questions.
- 7. Never end a run without updating at least one file.
-----------------------------------------
+     173.1 Purpose
+     Every meaningful project should be continuable from its folder alone. The project folder is the durable operating substrate. Chat history is optional. Files are required.
+     173.2 Required files
+     projects/autonomous-job-application/
+     ├── project.md # Charter, mission, scope, constraints
+     ├── plan.md # Current version plan and task graph
+     ├── tasks.md # Active task list
+     ├── tasks/ # One file per task when useful
+     ├── knowledge.md # Accumulated project knowledge
+     ├── decisions.md # Architecture decision records
+     ├── status.md # Current status, blockers, next actions
+     ├── handoff.md # Explicit handoff for session continuity
+     ├── FAILURE.md # Record of significant failures and lessons
+     ├── artifacts/ # Generated documents, screenshots, evidence
+     ├── evals/ # Evaluation fixtures and results
+     └── runs/ # Session logs and traces
+     173.3 File conventions
+
+- Use Markdown for human-readable files.
+- Use YAML or JSON for machine-readable data.
+- Use absolute paths for file references.
+- Use relative paths within the project directory.
+- Include timestamps and ownership.
+- Update during execution, not only at the end.
+- Record decisions when direction changes.
+- Record failures when important attempts fail.
+- Leave an explicit handoff with next actions, blockers, and open questions.
+  173.4 Agent rules for file pack
+
+1.  Read before acting.
+2.  Update during execution, not only at the end.
+3.  Write evidence and artifacts as they are produced.
+4.  Record decisions when direction changes.
+5.  Record failures when important attempts fail.
+6.  Leave an explicit handoff with next actions, blockers, and open questions.
+7.  Never end a run without updating at least one file.
+
+---
+
 174. Risk register
-174.1 Purpose
-The risk register records identified risks, their likelihood, impact, mitigation, and owner. It is reviewed and updated throughout the project lifecycle.
-174.2 Risk categories
- * technical;
- * security;
- * privacy;
- * legal;
- * operational;
- * dependency;
- * market;
- * resource;
- * schedule.
-174.3 Risk record
-id: RISK-001
-category: technical
-title: "Portal changes break adapter compatibility"
-likelihood: high
-impact: high
-mitigation:
- - "Fingerprint-based change detection"
- - "Canary fixture tests"
- - "Adapter kill switch"
- - "Assisted-mode fallback"
- - "Compatibility matrix"
- - "Last-known-good adapter versions"
-contingency: "Downgrade to assisted mode; repair and requalify"
-owner: adapter_maintainer
-status: active
-review_date: "2026-08-22"
-174.4 Initial risk register
-ID Risk Likelihood Impact Mitigation RISK-001 Portal changes break adapter compatibility High High Fingerprint detection, canary tests, kill switch, assisted fallback RISK-002 Model provider changes API or terms Moderate High Provider-neutral interface, local model option, policy review RISK-003 Secret exposure through log or diagnostic Low Critical Structured redaction, secret scanning, vault integration, audit RISK-004 User accidentally submits incorrect information Moderate High Final review, field-level diff, approval gate, no autonomous submission RISK-005 Duplicate application across portals Moderate Moderate Cross-portal identity resolution, duplicate classification, hard limit RISK-006 Browser automation triggers portal warning Moderate Moderate Conservative pacing, no stealth, circuit breaker, user notification RISK-007 Encrypted database corruption Low High Backup, integrity check, repair tool, recovery runbook RISK-008 Dependency supply-chain compromise Low Critical Lock files, SBOM, provenance, dependency audit, vulnerability scanning RISK-009 LLM generates unsupported factual claim Moderate High Grounding verification, unsupported-claim detector, abstention policy RISK-010 Cross-application data leakage Low Critical Application isolation, context namespace, model-context minimization RISK-011 Accessibility barrier blocks primary workflow Moderate High Automated and manual accessibility audit, keyboard and screen-reader testing RISK-012 Installation fails on low-end hardware Moderate Moderate Low-end reference testing, optional dependencies, performance budgets RISK-013 User loses encryption key or recovery passphrase Moderate High Recovery key, password-manager storage, multiple-device recovery, clear documentation RISK-014 Hosted relay compromise exposes metadata Low Moderate End-to-end encryption, metadata minimization, independent review RISK-015 Regulatory change affects data handling Moderate Moderate Jurisdictional requirements mapping, privacy impact assessment, legal review
-----------------------------------------
+     174.1 Purpose
+     The risk register records identified risks, their likelihood, impact, mitigation, and owner. It is reviewed and updated throughout the project lifecycle.
+     174.2 Risk categories
+
+- technical;
+- security;
+- privacy;
+- legal;
+- operational;
+- dependency;
+- market;
+- resource;
+- schedule.
+  174.3 Risk record
+  id: RISK-001
+  category: technical
+  title: "Portal changes break adapter compatibility"
+  likelihood: high
+  impact: high
+  mitigation:
+
+* "Fingerprint-based change detection"
+* "Canary fixture tests"
+* "Adapter kill switch"
+* "Assisted-mode fallback"
+* "Compatibility matrix"
+* "Last-known-good adapter versions"
+  contingency: "Downgrade to assisted mode; repair and requalify"
+  owner: adapter_maintainer
+  status: active
+  review_date: "2026-08-22"
+  174.4 Initial risk register
+  ID Risk Likelihood Impact Mitigation RISK-001 Portal changes break adapter compatibility High High Fingerprint detection, canary tests, kill switch, assisted fallback RISK-002 Model provider changes API or terms Moderate High Provider-neutral interface, local model option, policy review RISK-003 Secret exposure through log or diagnostic Low Critical Structured redaction, secret scanning, vault integration, audit RISK-004 User accidentally submits incorrect information Moderate High Final review, field-level diff, approval gate, no autonomous submission RISK-005 Duplicate application across portals Moderate Moderate Cross-portal identity resolution, duplicate classification, hard limit RISK-006 Browser automation triggers portal warning Moderate Moderate Conservative pacing, no stealth, circuit breaker, user notification RISK-007 Encrypted database corruption Low High Backup, integrity check, repair tool, recovery runbook RISK-008 Dependency supply-chain compromise Low Critical Lock files, SBOM, provenance, dependency audit, vulnerability scanning RISK-009 LLM generates unsupported factual claim Moderate High Grounding verification, unsupported-claim detector, abstention policy RISK-010 Cross-application data leakage Low Critical Application isolation, context namespace, model-context minimization RISK-011 Accessibility barrier blocks primary workflow Moderate High Automated and manual accessibility audit, keyboard and screen-reader testing RISK-012 Installation fails on low-end hardware Moderate Moderate Low-end reference testing, optional dependencies, performance budgets RISK-013 User loses encryption key or recovery passphrase Moderate High Recovery key, password-manager storage, multiple-device recovery, clear documentation RISK-014 Hosted relay compromise exposes metadata Low Moderate End-to-end encryption, metadata minimization, independent review RISK-015 Regulatory change affects data handling Moderate Moderate Jurisdictional requirements mapping, privacy impact assessment, legal review
+
+---
+
 175. Dependency-selection process
-175.1 Purpose
-Every dependency must justify its inclusion. This process prevents unnecessary bloat, security surface, and maintenance burden.
-175.2 Selection criteria
-A dependency should be added only when:
- 1. it provides essential functionality that would be disproportionately expensive to implement correctly in-house;
- 2. it is actively maintained or stable enough that maintenance cessation is acceptable;
- 3. its license is compatible with AGPL-3.0-only;
- 4. its security posture is acceptable;
- 5. its transitive dependencies are acceptable;
- 6. its size is acceptable;
- 7. its API is stable or versioned;
- 8. it has a clear upgrade path;
- 9. it has a documented fallback or removal plan.
-175.3 Evaluation record
-dependency_id: "DEP-001"
-name: "cryptography"
-version: "41.0.0"
-purpose: "Encryption, key derivation, signing"
-license: "Apache-2.0 OR BSD-3-Clause"
-compatible_with_agpl: true
-maintenance_status: active
-security_advisories: none_current
-transitive_dependencies: []
-size_estimate: "~5 MB installed"
-api_stability: stable
-fallback: "Use Python standard library hashlib and hmac for limited subset"
-decision: approved
-review_date: "2026-07-22"
-175.4 Prohibited dependency classes
- * GPL-licensed libraries that would force the entire project to GPL (AGPL compatibility must be verified case by case);
- * libraries with known unpatched critical vulnerabilities;
- * libraries that require administrator privileges to install;
- * libraries that phone home without configuration;
- * libraries that bundle unrelated executables;
- * libraries with unclear or abandoned maintenance;
- * libraries that require a proprietary runtime.
-175.5 Dependency review cadence
- * every pull request adding a dependency;
- * every scheduled dependency scan;
- * before every release;
- * immediately after a security advisory affecting a dependency.
-----------------------------------------
+     175.1 Purpose
+     Every dependency must justify its inclusion. This process prevents unnecessary bloat, security surface, and maintenance burden.
+     175.2 Selection criteria
+     A dependency should be added only when:
+1. it provides essential functionality that would be disproportionately expensive to implement correctly in-house;
+1. it is actively maintained or stable enough that maintenance cessation is acceptable;
+1. its license is compatible with AGPL-3.0-only;
+1. its security posture is acceptable;
+1. its transitive dependencies are acceptable;
+1. its size is acceptable;
+1. its API is stable or versioned;
+1. it has a clear upgrade path;
+1. it has a documented fallback or removal plan.
+   175.3 Evaluation record
+   dependency_id: "DEP-001"
+   name: "cryptography"
+   version: "41.0.0"
+   purpose: "Encryption, key derivation, signing"
+   license: "Apache-2.0 OR BSD-3-Clause"
+   compatible_with_agpl: true
+   maintenance_status: active
+   security_advisories: none_current
+   transitive_dependencies: []
+   size_estimate: "~5 MB installed"
+   api_stability: stable
+   fallback: "Use Python standard library hashlib and hmac for limited subset"
+   decision: approved
+   review_date: "2026-07-22"
+   175.4 Prohibited dependency classes
+
+- GPL-licensed libraries that would force the entire project to GPL (AGPL compatibility must be verified case by case);
+- libraries with known unpatched critical vulnerabilities;
+- libraries that require administrator privileges to install;
+- libraries that phone home without configuration;
+- libraries that bundle unrelated executables;
+- libraries with unclear or abandoned maintenance;
+- libraries that require a proprietary runtime.
+  175.5 Dependency review cadence
+- every pull request adding a dependency;
+- every scheduled dependency scan;
+- before every release;
+- immediately after a security advisory affecting a dependency.
+
+---
+
 176. Final implementation sequence
-176.1 Immediate next actions
- 1. Resolve the six remaining policy and security decisions documented in the executive summary.
- 2. Begin the research program:
- * validate LinkedIn, Naukri, Indeed, Workday, Greenhouse, Lever current policies;
- * validate the supplied MadsLorentzen/ai-job-search repository;
- * validate at least five additional comparable projects;
- * validate Gemini API and Vertex AI current terms and privacy posture;
- * validate Playwright current browser support;
- * validate encrypted SQLite library options;
- * validate OS vault integration options;
- * validate PDF and DOCX rendering options;
- * validate Tauri current capabilities and packaging complexity.
- 3. Write the implementation contract for dev-0.1.
- 4. Create the source ledger.
- 5. Create the research-ledger directory.
- 6. Scaffold the repository.
- 7. Begin dev-0.1 Phase 0.1.0: Research and implementation contract.
-176.2 Version sequence
-dev-0.1 → Basic architecture and closed-loop proof
-dev-0.5 → Essential features and initial adapters
-dev-1.0 → Comprehensive testing and CI
-dev-2.0 → Debug, stabilization, portal compatibility
-dev-3.0 → Improvement, broader integrations, local AI
-dev-4.0 → Refactor, hardening, security, privacy, release freeze
-release-1.0 → Production-ready signed release
-176.3 Parallel workstreams
-The following workstreams can proceed in parallel once the foundation is established:
- * core domain model and task engine;
- * profile and document system;
- * CLI and GUI;
- * browser worker and adapter contracts;
- * model routing and AI subsystem;
- * security and privacy architecture;
- * testing and CI infrastructure;
- * portal-specific adapters;
- * hosted relay and remote workers.
-176.4 Critical path
-The critical path to release-1.0 is:
-research → repository scaffold → domain model → task engine
-→ mock ATS → browser worker → adapter contract → first adapter
-→ testing → CI → security assessment → privacy assessment
-→ accessibility audit → release qualification → signing → publication
-176.5 Compounding improvements
-Every version must produce at least one compounding improvement:
- * a new skill;
- * a stronger workflow;
- * a specialized harness;
- * a new eval;
- * a new template;
- * a new dashboard;
- * a new monitor;
- * a new policy;
- * a new memory artifact.
-If a version succeeds but leaves no reusable ratchet behind, some of the value is being lost.
-----------------------------------------
+     176.1 Immediate next actions
+1. Resolve the six remaining policy and security decisions documented in the executive summary.
+1. Begin the research program:
+
+- validate LinkedIn, Naukri, Indeed, Workday, Greenhouse, Lever current policies;
+- validate the supplied MadsLorentzen/ai-job-search repository;
+- validate at least five additional comparable projects;
+- validate Gemini API and Vertex AI current terms and privacy posture;
+- validate Playwright current browser support;
+- validate encrypted SQLite library options;
+- validate OS vault integration options;
+- validate PDF and DOCX rendering options;
+- validate Tauri current capabilities and packaging complexity.
+
+3.  Write the implementation contract for dev-0.1.
+4.  Create the source ledger.
+5.  Create the research-ledger directory.
+6.  Scaffold the repository.
+7.  Begin dev-0.1 Phase 0.1.0: Research and implementation contract.
+    176.2 Version sequence
+    dev-0.1 → Basic architecture and closed-loop proof
+    dev-0.5 → Essential features and initial adapters
+    dev-1.0 → Comprehensive testing and CI
+    dev-2.0 → Debug, stabilization, portal compatibility
+    dev-3.0 → Improvement, broader integrations, local AI
+    dev-4.0 → Refactor, hardening, security, privacy, release freeze
+    release-1.0 → Production-ready signed release
+    176.3 Parallel workstreams
+    The following workstreams can proceed in parallel once the foundation is established:
+
+- core domain model and task engine;
+- profile and document system;
+- CLI and GUI;
+- browser worker and adapter contracts;
+- model routing and AI subsystem;
+- security and privacy architecture;
+- testing and CI infrastructure;
+- portal-specific adapters;
+- hosted relay and remote workers.
+  176.4 Critical path
+  The critical path to release-1.0 is:
+  research → repository scaffold → domain model → task engine
+  → mock ATS → browser worker → adapter contract → first adapter
+  → testing → CI → security assessment → privacy assessment
+  → accessibility audit → release qualification → signing → publication
+  176.5 Compounding improvements
+  Every version must produce at least one compounding improvement:
+- a new skill;
+- a stronger workflow;
+- a specialized harness;
+- a new eval;
+- a new template;
+- a new dashboard;
+- a new monitor;
+- a new policy;
+- a new memory artifact.
+  If a version succeeds but leaves no reusable ratchet behind, some of the value is being lost.
+
+---
+
 177. Document sign-off
-177.1 Plan approval
-This master plan is approved for:
- * guiding the research program;
- * establishing the architecture baseline;
- * defining the versioned roadmap;
- * recording confirmed product decisions;
- * documenting provisional technical choices.
-177.2 Plan limitations
-This plan does not:
- * replace current primary-source research;
- * guarantee that every provisional choice will survive implementation experiments;
- * constitute legal advice;
- * constitute security certification;
- * constitute accessibility certification;
- * guarantee portal compatibility;
- * guarantee model-provider availability;
- * guarantee employer or recruiter behavior.
-177.3 Plan maintenance
-The plan will be maintained as a living document throughout the project lifecycle.
-Updates will be recorded in the project file pack and architecture decision records.
-177.4 Acknowledgments
-This plan was developed with reference to:
- * the supplied agent.md system prompt and guiding principles;
- * the user’s detailed product requirements and policy decisions;
- * established software engineering, security, privacy, and AI best practices;
- * architecture patterns from comparable open-source projects;
- * the project’s confirmed non-negotiable invariants.
-----------------------------------------
+     177.1 Plan approval
+     This master plan is approved for:
+
+- guiding the research program;
+- establishing the architecture baseline;
+- defining the versioned roadmap;
+- recording confirmed product decisions;
+- documenting provisional technical choices.
+  177.2 Plan limitations
+  This plan does not:
+- replace current primary-source research;
+- guarantee that every provisional choice will survive implementation experiments;
+- constitute legal advice;
+- constitute security certification;
+- constitute accessibility certification;
+- guarantee portal compatibility;
+- guarantee model-provider availability;
+- guarantee employer or recruiter behavior.
+  177.3 Plan maintenance
+  The plan will be maintained as a living document throughout the project lifecycle.
+  Updates will be recorded in the project file pack and architecture decision records.
+  177.4 Acknowledgments
+  This plan was developed with reference to:
+- the supplied agent.md system prompt and guiding principles;
+- the user’s detailed product requirements and policy decisions;
+- established software engineering, security, privacy, and AI best practices;
+- architecture patterns from comparable open-source projects;
+- the project’s confirmed non-negotiable invariants.
+
+---
+
 End of Master Plan — Final Chunk
 ----------------------------------------
+
 Document version: 0.1-draft Date: 2026-07-22 Classification: Public planning document; contains no user secrets License: AGPL-3.0-only
 ----------------------------------------
+
 Total document structure:
 Section Content Chunks 1–13 Complete master plan text ~177 sections Architecture, security, privacy, testing, roadmap, appendices ~500+ equivalent pages When rendered through the defined build system
 Next action: Transfer this document to the repository as modular Markdown source files, build the PDF, and begin the research program.
 ---------------------------------------
+
 178. Implementation sequence checklist
-178.1 Pre-implementation
- * Resolve remaining policy and security decisions.
- * Begin research program.
- * Create source ledger.
- * Create research-ledger directory.
- * Write implementation contract for dev-0.1.
- * Review and approve implementation contract.
- * Create project file pack.
- * Initialize repository.
- * Configure CI baseline.
- * Configure secret scanning.
- * Configure PII scanning.
- * Configure dependency scanning.
- * Configure license scanning.
- * Configure documentation checks.
-178.2 dev-0.1 implementation
-Phase 0.1.0: Research and implementation contract
- * Complete portal-policy research for LinkedIn, Naukri, Indeed, Workday, Greenhouse, Lever.
- * Complete comparable-project survey.
- * Complete dependency evaluation.
- * Complete threat model baseline.
- * Write REQUIREMENTS.md.
- * Write SECURITY.md baseline.
- * Write PRIVACY.md baseline.
- * Write CONTRIBUTING.md baseline.
- * Write architecture decision records for confirmed decisions.
- * Record rejected alternatives.
- * Approve implementation contract.
-Phase 0.1.1: Repository and durable state
- * Create canonical directory structure.
- * Add .gitignore.
- * Add .env.example.
- * Add private/profile.example.yaml.
- * Add private/README.md.
- * Add config/app.example.toml.
- * Add config/model-providers.example.toml.
- * Add config/portal-policies.example.toml.
- * Add AGENTS.md.
- * Add README.md.
- * Add LICENSE (AGPL-3.0-only).
- * Add CODE_OF_CONDUCT.md.
- * Add pyproject.toml with project metadata.
- * Add dependency lock files.
- * Integrate secret scanner.
- * Integrate PII scanner.
- * Add synthetic positive and negative fixtures.
- * Configure CI to run both scanners.
- * Add allowlist process.
- * Select and validate encrypted SQLite library.
- * Create database initialization.
- * Create migration framework.
- * Create integrity check.
- * Create backup and restore primitives.
- * Test encryption, corruption, and wrong-key behavior.
- * Create content-addressed encrypted artifact store.
- * Support metadata, hashes, MIME types, sensitivity, retention.
- * Create store, retrieve, delete, and sweep operations.
- * Test deduplication and corruption.
- * Integrate with Windows credential manager.
- * Integrate with Linux secret service.
- * Create fallback encrypted file store.
- * Create store, retrieve, rotate, and delete operations.
- * Test missing vault, locked vault, and headless fallback.
- * Create append-only event schema.
- * Create event store.
- * Create event query.
- * Create retention sweep.
- * Test event integrity and redaction.
-Phase 0.1.2: Domain model
- * Implement identity, contact, online presence.
- * Implement education with India and USA support.
- * Implement employment with categories.
- * Implement projects, skills, certifications, achievements, publications.
- * Implement preferences, compensation, authorization.
- * Implement sensitive and demographic fields.
- * Implement fact provenance, status, sensitivity, and expiration.
- * Implement persona model.
- * Implement profile validation.
- * Implement contradiction detection.
- * Implement import from YAML and JSON Resume.
- * Implement job record.
- * Implement employer record.
- * Implement requisition identity.
- * Implement duplicate classification.
- * Implement source normalization.
- * Implement location normalization.
- * Implement compensation normalization.
- * Implement requirement extraction and classification.
- * Implement freshness and scam-risk signals.
- * Implement application record.
- * Implement application state machine.
- * Implement question and answer model.
- * Implement answer scope, sensitivity, and expiration.
- * Implement document attachment model.
- * Implement approval model.
- * Implement effect model.
- * Implement verification model.
- * Implement policy rule.
- * Implement risk level.
- * Implement autonomy level.
- * Implement per-domain trust.
- * Implement approval rule.
- * Implement budget rule.
- * Implement data-class rule.
- * Implement portal-mode rule.
- * Implement goal.
- * Implement task with dependencies, skills, budget, verification plan.
- * Implement task statuses.
- * Implement worker claim.
- * Implement checkpoint.
- * Implement waitpoint.
- * Implement retry policy.
- * Implement circuit breaker.
- * Implement dead-letter queue.
-Phase 0.1.3: Task engine and worker
- * Implement goal decomposition.
- * Implement dependency resolution.
- * Implement pull-based claiming.
- * Implement atomic locks.
- * Implement heartbeat.
- * Implement timeout.
- * Implement retry with variation.
- * Implement circuit breaker.
- * Implement dead-letter queue.
- * Implement cancellation.
- * Implement worker process.
- * Implement task claiming.
- * Implement task execution loop.
- * Implement checkpointing.
- * Implement waitpoint handling.
- * Implement evidence recording.
- * Implement graceful shutdown.
- * Implement crash recovery.
- * Implement persistent scheduler.
- * Implement cron-like schedule.
- * Implement missed-run policy.
- * Implement concurrency control.
- * Implement cancellation.
- * Implement time-zone handling.
-Phase 0.1.4: Mock ATS and browser simulation
- * Implement login page.
- * Implement session expiration.
- * Implement multi-page application form.
- * Implement standard text, select, radio, checkbox, address, education, and employment fields.
- * Implement document upload.
- * Implement sensitive demographic questions.
- * Implement ambiguous free-text question.
- * Implement unknown required question.
- * Implement validation error.
- * Implement final review page.
- * Implement simulated submission receipt.
- * Implement browser worker process.
- * Implement persistent context.
- * Implement observe-before-act protocol.
- * Implement named actions.
- * Implement locator hierarchy.
- * Implement page stability detection.
- * Implement evidence capture.
- * Implement user takeover bridge.
- * Implement crash recovery.
- * Implement adapter contract.
- * Implement mock adapter for local ATS.
- * Implement capability declaration.
- * Implement fingerprint.
- * Implement form-schema extraction.
- * Implement field mapping.
- * Implement action planning.
- * Implement verification.
- * Implement final-review detection.
- * Implement receipt detection.
-Phase 0.1.5: First closed-loop milestone
- * Accept a goal to prepare an application for a mock job.
- * Decompose into task graph.
- * Route tasks to workers.
- * Execute tasks.
- * Verify results.
- * Record memory.
- * Show activity to human.
- * Learn one thing from the run.
- * Implement ajos init.
- * Implement ajos doctor.
- * Implement ajos status.
- * Implement ajos profile import.
- * Implement ajos profile validate.
- * Implement ajos jobs add.
- * Implement ajos applications prepare.
- * Implement ajos applications review.
- * Implement ajos applications run.
- * Implement ajos applications status.
- * Implement ajos sessions list.
- * Implement ajos sessions show.
- * Implement local web UI.
- * Implement onboarding.
- * Implement home.
- * Implement job list.
- * Implement application workspace.
- * Implement final review.
- * Implement approval.
- * Implement settings.
- * Create happy-path fixture.
- * Create unknown-question fixture.
- * Create contradictory-profile fixture.
- * Create duplicate-application fixture.
- * Create interrupted-login fixture.
- * Create simulated portal-change fixture.
- * Run all fixtures.
- * Record pass/fail and evidence.
- * Record outcome.
- * Classify failures.
- * Create one regression test from a failure.
- * Update episodic memory.
-dev-0.1 exit verification
- * Repository scaffold is complete.
- * Secret and PII scanners are operational.
- * Encrypted SQLite and artifact store are operational.
- * OS vault integration is operational.
- * Domain models cover profile, job, employer, application, policy, and task.
- * Task engine passes dependency, retry, circuit-breaker, and cancellation tests.
- * Worker passes claim, execute, checkpoint, and recovery tests.
- * Mock ATS supports all required form types.
- * Browser worker can navigate mock ATS and reach final review.
- * Mock adapter passes contract tests.
- * Complete closed loop is proven.
- * CLI and GUI both operate the same workflow.
- * Unknown questions block.
- * Duplicate applications block.
- * Restart preserves checkpoint.
- * One failure produces a regression test.
- * All fixtures pass.
- * Implementation contract is written.
- * Threat model baseline is documented.
- * Source ledger contains entries for all external claims.
-----------------------------------------
+     178.1 Pre-implementation
+
+- Resolve remaining policy and security decisions.
+- Begin research program.
+- Create source ledger.
+- Create research-ledger directory.
+- Write implementation contract for dev-0.1.
+- Review and approve implementation contract.
+- Create project file pack.
+- Initialize repository.
+- Configure CI baseline.
+- Configure secret scanning.
+- Configure PII scanning.
+- Configure dependency scanning.
+- Configure license scanning.
+- Configure documentation checks.
+  178.2 dev-0.1 implementation
+  Phase 0.1.0: Research and implementation contract
+- Complete portal-policy research for LinkedIn, Naukri, Indeed, Workday, Greenhouse, Lever.
+- Complete comparable-project survey.
+- Complete dependency evaluation.
+- Complete threat model baseline.
+- Write REQUIREMENTS.md.
+- Write SECURITY.md baseline.
+- Write PRIVACY.md baseline.
+- Write CONTRIBUTING.md baseline.
+- Write architecture decision records for confirmed decisions.
+- Record rejected alternatives.
+- Approve implementation contract.
+  Phase 0.1.1: Repository and durable state
+- Create canonical directory structure.
+- Add .gitignore.
+- Add .env.example.
+- Add private/profile.example.yaml.
+- Add private/README.md.
+- Add config/app.example.toml.
+- Add config/model-providers.example.toml.
+- Add config/portal-policies.example.toml.
+- Add AGENTS.md.
+- Add README.md.
+- Add LICENSE (AGPL-3.0-only).
+- Add CODE_OF_CONDUCT.md.
+- Add pyproject.toml with project metadata.
+- Add dependency lock files.
+- Integrate secret scanner.
+- Integrate PII scanner.
+- Add synthetic positive and negative fixtures.
+- Configure CI to run both scanners.
+- Add allowlist process.
+- Select and validate encrypted SQLite library.
+- Create database initialization.
+- Create migration framework.
+- Create integrity check.
+- Create backup and restore primitives.
+- Test encryption, corruption, and wrong-key behavior.
+- Create content-addressed encrypted artifact store.
+- Support metadata, hashes, MIME types, sensitivity, retention.
+- Create store, retrieve, delete, and sweep operations.
+- Test deduplication and corruption.
+- Integrate with Windows credential manager.
+- Integrate with Linux secret service.
+- Create fallback encrypted file store.
+- Create store, retrieve, rotate, and delete operations.
+- Test missing vault, locked vault, and headless fallback.
+- Create append-only event schema.
+- Create event store.
+- Create event query.
+- Create retention sweep.
+- Test event integrity and redaction.
+  Phase 0.1.2: Domain model
+- Implement identity, contact, online presence.
+- Implement education with India and USA support.
+- Implement employment with categories.
+- Implement projects, skills, certifications, achievements, publications.
+- Implement preferences, compensation, authorization.
+- Implement sensitive and demographic fields.
+- Implement fact provenance, status, sensitivity, and expiration.
+- Implement persona model.
+- Implement profile validation.
+- Implement contradiction detection.
+- Implement import from YAML and JSON Resume.
+- Implement job record.
+- Implement employer record.
+- Implement requisition identity.
+- Implement duplicate classification.
+- Implement source normalization.
+- Implement location normalization.
+- Implement compensation normalization.
+- Implement requirement extraction and classification.
+- Implement freshness and scam-risk signals.
+- Implement application record.
+- Implement application state machine.
+- Implement question and answer model.
+- Implement answer scope, sensitivity, and expiration.
+- Implement document attachment model.
+- Implement approval model.
+- Implement effect model.
+- Implement verification model.
+- Implement policy rule.
+- Implement risk level.
+- Implement autonomy level.
+- Implement per-domain trust.
+- Implement approval rule.
+- Implement budget rule.
+- Implement data-class rule.
+- Implement portal-mode rule.
+- Implement goal.
+- Implement task with dependencies, skills, budget, verification plan.
+- Implement task statuses.
+- Implement worker claim.
+- Implement checkpoint.
+- Implement waitpoint.
+- Implement retry policy.
+- Implement circuit breaker.
+- Implement dead-letter queue.
+  Phase 0.1.3: Task engine and worker
+- Implement goal decomposition.
+- Implement dependency resolution.
+- Implement pull-based claiming.
+- Implement atomic locks.
+- Implement heartbeat.
+- Implement timeout.
+- Implement retry with variation.
+- Implement circuit breaker.
+- Implement dead-letter queue.
+- Implement cancellation.
+- Implement worker process.
+- Implement task claiming.
+- Implement task execution loop.
+- Implement checkpointing.
+- Implement waitpoint handling.
+- Implement evidence recording.
+- Implement graceful shutdown.
+- Implement crash recovery.
+- Implement persistent scheduler.
+- Implement cron-like schedule.
+- Implement missed-run policy.
+- Implement concurrency control.
+- Implement cancellation.
+- Implement time-zone handling.
+  Phase 0.1.4: Mock ATS and browser simulation
+- Implement login page.
+- Implement session expiration.
+- Implement multi-page application form.
+- Implement standard text, select, radio, checkbox, address, education, and employment fields.
+- Implement document upload.
+- Implement sensitive demographic questions.
+- Implement ambiguous free-text question.
+- Implement unknown required question.
+- Implement validation error.
+- Implement final review page.
+- Implement simulated submission receipt.
+- Implement browser worker process.
+- Implement persistent context.
+- Implement observe-before-act protocol.
+- Implement named actions.
+- Implement locator hierarchy.
+- Implement page stability detection.
+- Implement evidence capture.
+- Implement user takeover bridge.
+- Implement crash recovery.
+- Implement adapter contract.
+- Implement mock adapter for local ATS.
+- Implement capability declaration.
+- Implement fingerprint.
+- Implement form-schema extraction.
+- Implement field mapping.
+- Implement action planning.
+- Implement verification.
+- Implement final-review detection.
+- Implement receipt detection.
+  Phase 0.1.5: First closed-loop milestone
+- Accept a goal to prepare an application for a mock job.
+- Decompose into task graph.
+- Route tasks to workers.
+- Execute tasks.
+- Verify results.
+- Record memory.
+- Show activity to human.
+- Learn one thing from the run.
+- Implement ajos init.
+- Implement ajos doctor.
+- Implement ajos status.
+- Implement ajos profile import.
+- Implement ajos profile validate.
+- Implement ajos jobs add.
+- Implement ajos applications prepare.
+- Implement ajos applications review.
+- Implement ajos applications run.
+- Implement ajos applications status.
+- Implement ajos sessions list.
+- Implement ajos sessions show.
+- Implement local web UI.
+- Implement onboarding.
+- Implement home.
+- Implement job list.
+- Implement application workspace.
+- Implement final review.
+- Implement approval.
+- Implement settings.
+- Create happy-path fixture.
+- Create unknown-question fixture.
+- Create contradictory-profile fixture.
+- Create duplicate-application fixture.
+- Create interrupted-login fixture.
+- Create simulated portal-change fixture.
+- Run all fixtures.
+- Record pass/fail and evidence.
+- Record outcome.
+- Classify failures.
+- Create one regression test from a failure.
+- Update episodic memory.
+  dev-0.1 exit verification
+- Repository scaffold is complete.
+- Secret and PII scanners are operational.
+- Encrypted SQLite and artifact store are operational.
+- OS vault integration is operational.
+- Domain models cover profile, job, employer, application, policy, and task.
+- Task engine passes dependency, retry, circuit-breaker, and cancellation tests.
+- Worker passes claim, execute, checkpoint, and recovery tests.
+- Mock ATS supports all required form types.
+- Browser worker can navigate mock ATS and reach final review.
+- Mock adapter passes contract tests.
+- Complete closed loop is proven.
+- CLI and GUI both operate the same workflow.
+- Unknown questions block.
+- Duplicate applications block.
+- Restart preserves checkpoint.
+- One failure produces a regression test.
+- All fixtures pass.
+- Implementation contract is written.
+- Threat model baseline is documented.
+- Source ledger contains entries for all external claims.
+
+---
+
 179. Project initialization commands
-179.1 Repository initialization
-mkdir autonomous-job-application
-cd autonomous-job-application
-git init
-git checkout -b main
-179.2 Python environment
-python -m venv .venv
-source .venv/bin/activate # Windows: .venv\Scripts\activate
-pip install --upgrade pip
-pip install -e ".[dev]"
-179.3 Pre-commit hooks
-pre-commit install
-pre-commit run --all-files
-179.4 First build
-./scripts/bootstrap
-179.5 First test
-pytest
-179.6 First commit
-git add .
-git commit -m "Initial scaffold: repository structure, configuration, and CI baseline"
-----------------------------------------
+     179.1 Repository initialization
+     mkdir autonomous-job-application
+     cd autonomous-job-application
+     git init
+     git checkout -b main
+     179.2 Python environment
+     python -m venv .venv
+     source .venv/bin/activate # Windows: .venv\Scripts\activate
+     pip install --upgrade pip
+     pip install -e ".[dev]"
+     179.3 Pre-commit hooks
+     pre-commit install
+     pre-commit run --all-files
+     179.4 First build
+     ./scripts/bootstrap
+     179.5 First test
+     pytest
+     179.6 First commit
+     git add .
+     git commit -m "Initial scaffold: repository structure, configuration, and CI baseline"
+
+---
+
 180. First-session protocol
-180.1 Session objective
-The first implementation session should:
- 1. create the repository scaffold;
- 2. initialize the project file pack;
- 3. write the implementation contract;
- 4. create the source ledger;
- 5. create the research-ledger directory;
- 6. configure CI baseline;
- 7. configure secret and PII scanning;
- 8. create the first architecture decision records;
- 9. create the first momentum queues;
- 10. end with explicit next actions.
-180.2 Session structure
-Phase 1: Repository scaffold
-Phase 2: Project file pack
-Phase 3: Implementation contract
-Phase 4: Source ledger
-Phase 5: Research-ledger directory
-Phase 6: CI baseline
-Phase 7: Secret and PII scanning
-Phase 8: Architecture decision records
-Phase 9: Momentum queues
-Phase 10: Handoff and next actions
-180.3 Session output
-The session must leave behind:
- * updated repository;
- * updated project file pack;
- * implementation contract;
- * source ledger with initial entries;
- * research-ledger directory;
- * CI configuration;
- * secret and PII scanning configuration;
- * architecture decision records;
- * momentum queues;
- * explicit handoff with next actions, blockers, and open questions.
-----------------------------------------
+     180.1 Session objective
+     The first implementation session should:
+1. create the repository scaffold;
+1. initialize the project file pack;
+1. write the implementation contract;
+1. create the source ledger;
+1. create the research-ledger directory;
+1. configure CI baseline;
+1. configure secret and PII scanning;
+1. create the first architecture decision records;
+1. create the first momentum queues;
+1. end with explicit next actions.
+   180.2 Session structure
+   Phase 1: Repository scaffold
+   Phase 2: Project file pack
+   Phase 3: Implementation contract
+   Phase 4: Source ledger
+   Phase 5: Research-ledger directory
+   Phase 6: CI baseline
+   Phase 7: Secret and PII scanning
+   Phase 8: Architecture decision records
+   Phase 9: Momentum queues
+   Phase 10: Handoff and next actions
+   180.3 Session output
+   The session must leave behind:
+
+- updated repository;
+- updated project file pack;
+- implementation contract;
+- source ledger with initial entries;
+- research-ledger directory;
+- CI configuration;
+- secret and PII scanning configuration;
+- architecture decision records;
+- momentum queues;
+- explicit handoff with next actions, blockers, and open questions.
+
+---
+
 181. Contribution quick-start guide
-181.1 Prerequisites
- * Python 3.12 or later.
- * Git.
- * A supported browser for testing.
- * Optional: Gemini API key for AI features.
-181.2 Setup
-git clone <repository-url>
-cd autonomous-job-application
-python -m venv .venv
-source .venv/bin/activate # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-pre-commit install
-./scripts/bootstrap
-181.3 First contribution
- 1. Find an issue labeled good-first-issue or help-wanted.
- 2. Comment to express interest.
- 3. Fork the repository.
- 4. Create a feature branch.
- 5. Make changes.
- 6. Run tests: pytest.
- 7. Run linters: ruff check .
- 8. Run type checker: mypy src
- 9. Commit with DCO sign-off: git commit -s
- 10. Push and create a pull request.
- 11. Fill out the pull request template.
- 12. Respond to review feedback.
-181.4 Contribution guidelines
- * Follow the coding style defined in the project configuration.
- * Write tests for new functionality.
- * Update documentation for changed behavior.
- * Sign off commits with the Developer Certificate of Origin.
- * Respect the code of conduct.
- * Do not submit real personal data in any form.
- * Do not submit portal credentials or session data.
- * Do not submit proprietary employer information.
-----------------------------------------
+     181.1 Prerequisites
+
+- Python 3.12 or later.
+- Git.
+- A supported browser for testing.
+- Optional: Gemini API key for AI features.
+  181.2 Setup
+  git clone <repository-url>
+  cd autonomous-job-application
+  python -m venv .venv
+  source .venv/bin/activate # Windows: .venv\Scripts\activate
+  pip install -e ".[dev]"
+  pre-commit install
+  ./scripts/bootstrap
+  181.3 First contribution
+
+1.  Find an issue labeled good-first-issue or help-wanted.
+2.  Comment to express interest.
+3.  Fork the repository.
+4.  Create a feature branch.
+5.  Make changes.
+6.  Run tests: pytest.
+7.  Run linters: ruff check .
+8.  Run type checker: mypy src
+9.  Commit with DCO sign-off: git commit -s
+10. Push and create a pull request.
+11. Fill out the pull request template.
+12. Respond to review feedback.
+    181.4 Contribution guidelines
+
+- Follow the coding style defined in the project configuration.
+- Write tests for new functionality.
+- Update documentation for changed behavior.
+- Sign off commits with the Developer Certificate of Origin.
+- Respect the code of conduct.
+- Do not submit real personal data in any form.
+- Do not submit portal credentials or session data.
+- Do not submit proprietary employer information.
+
+---
+
 182. Document colophon
-182.1 Document identification
-title: "Master Plan: Autonomous Job Application Operating System"
-subtitle: "Local-First, Privacy-Preserving, Human-Governed Job Discovery and Application Assistance"
-document_id: "AJOS-MASTER-PLAN"
-version: "0.1-draft"
-status: "Planning Baseline"
-date_created: "2026-07-22"
-primary_market: "India"
-secondary_market: "United States"
-initial_language: "English"
-license: "AGPL-3.0-only"
-classification: "Public planning document; contains no user secrets"
-182.2 Document source
-The master plan is maintained as modular Markdown source files in:
-docs/master_plan/
-├── 00-executive/
-├── 01-research/
-├── 02-product/
-├── 03-profile-and-documents/
-├── 04-architecture/
-├── 05-browser-and-portals/
-├── 06-ai/
-├── 07-security-and-privacy/
-├── 08-testing-and-release/
-├── 09-roadmap/
-├── 10-operations/
-└── 11-appendices/
-182.3 Document build
-The PDF is generated using:
-./scripts/build-master-plan.sh
-Dependencies:
- * Pandoc;
- * WeasyPrint or equivalent PDF engine;
- * Mermaid CLI or equivalent renderer;
- * Python for preprocessing and validation.
-182.4 Document verification
-Every build verifies:
- * successful generation;
- * table of contents and internal links;
- * readable tables and code blocks;
- * embedded Mermaid diagrams rendered as SVG;
- * page count;
- * missing assets;
- * no secrets or personal information;
- * matching source revision and PDF metadata.
-182.5 Document history
-Version Date Author Changes 0.1-draft 2026-07-22 Project planning Initial complete draft
-182.6 Document license
-This document is licensed under the GNU Affero General Public License v3.0 only.
-SPDX-License-Identifier: AGPL-3.0-only
-----------------------------------------
+     182.1 Document identification
+     title: "Master Plan: Autonomous Job Application Operating System"
+     subtitle: "Local-First, Privacy-Preserving, Human-Governed Job Discovery and Application Assistance"
+     document_id: "AJOS-MASTER-PLAN"
+     version: "0.1-draft"
+     status: "Planning Baseline"
+     date_created: "2026-07-22"
+     primary_market: "India"
+     secondary_market: "United States"
+     initial_language: "English"
+     license: "AGPL-3.0-only"
+     classification: "Public planning document; contains no user secrets"
+     182.2 Document source
+     The master plan is maintained as modular Markdown source files in:
+     docs/master_plan/
+     ├── 00-executive/
+     ├── 01-research/
+     ├── 02-product/
+     ├── 03-profile-and-documents/
+     ├── 04-architecture/
+     ├── 05-browser-and-portals/
+     ├── 06-ai/
+     ├── 07-security-and-privacy/
+     ├── 08-testing-and-release/
+     ├── 09-roadmap/
+     ├── 10-operations/
+     └── 11-appendices/
+     182.3 Document build
+     The PDF is generated using:
+     ./scripts/build-master-plan.sh
+     Dependencies:
+
+- Pandoc;
+- WeasyPrint or equivalent PDF engine;
+- Mermaid CLI or equivalent renderer;
+- Python for preprocessing and validation.
+  182.4 Document verification
+  Every build verifies:
+- successful generation;
+- table of contents and internal links;
+- readable tables and code blocks;
+- embedded Mermaid diagrams rendered as SVG;
+- page count;
+- missing assets;
+- no secrets or personal information;
+- matching source revision and PDF metadata.
+  182.5 Document history
+  Version Date Author Changes 0.1-draft 2026-07-22 Project planning Initial complete draft
+  182.6 Document license
+  This document is licensed under the GNU Affero General Public License v3.0 only.
+  SPDX-License-Identifier: AGPL-3.0-only
+
+---
+
 End of Master Plan
 ----------------------------------------
+
 Total document structure:
 Component Content Chunks 1–14 Complete master plan text ~182 sections Architecture, security, privacy, testing, roadmap, appendices, checklists, runbooks ~500+ equivalent pages When rendered through the defined build system ~175,000+ words Estimated total word count
 Next action: Transfer this document to the repository as modular Markdown source files, build the PDF, and begin the research program. The first implementation session should follow the first-session protocol defined in Section 180.

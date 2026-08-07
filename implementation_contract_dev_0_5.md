@@ -3,14 +3,16 @@
 **Document ID**: CONTRACT-DEV-0.5  
 **Version**: 1.0  
 **Status**: Implemented & Verified  
-**Target Completion**: Milestone dev-0.5  
+**Target Completion**: Milestone dev-0.5
 
 ---
 
 ## 1. Objective
+
 Add 5 portal adapters (Naukri, LinkedIn, Indeed, Greenhouse, Lever), provider-neutral LLM `ModelRouter` (Gemini, OpenAI, Anthropic, Ollama), Form Q&A Engine with grounding checks and prompt-injection defense, `PolicyEngine` with 9 default security policies, and CLI scheduling functionality.
 
 ## 2. Completed Scope
+
 1. **LLM & Q&A Engine** (`src/jobot/ai/`):
    - `ModelRouter`: Gemini 2.5/3.0 primary integration (`google-genai`), OpenAI/Anthropic/Ollama fallbacks, daily budget tracking & cost logging.
    - `QAEngine`: Question classification (`PROFILE_DIRECT`, `BEHAVIORAL`, `SENSITIVE`, `UNANSWERABLE`), candidate profile direct retrieval, profile grounding verification gate, and prompt-injection sanitization.
@@ -27,6 +29,7 @@ Add 5 portal adapters (Naukri, LinkedIn, Indeed, Greenhouse, Lever), provider-ne
    - `jobot schedule`: Automated background apply scheduling
 
 ## 3. Exit Criteria Verification
+
 - [x] 5 Site Adapters operational with rate-limiting and jitter
 - [x] `ModelRouter` provider abstraction with budget tracking
 - [x] `QAEngine` with profile grounding verification and prompt injection defense

@@ -3,14 +3,16 @@
 **Document ID**: CONTRACT-RELEASE-1.0  
 **Version**: 0.1.0-refactor  
 **Status**: Refactor In Progress per `JoBot_Refactor_Plan.md`  
-**Target Completion**: Release 1.0  
+**Target Completion**: Release 1.0
 
 ---
 
 ## 1. Executive Summary
+
 This document records the baseline trajectory for **`release-1.0`** of JoBot. The initial release candidate contained stubbed adapters and unwired subsystems. This document tracks the active refactor to build production-grade, release-ready software.
 
 ## 2. Milestone Trajectory Status
+
 1. **`dev-0.1` Basic Architecture**:
    - [x] Pydantic v2 domain schemas (`UserProfile`, `JobPosting`, `Application`, `Task`, `Goal`, `EvidenceItem`).
    - [x] SQLite WAL control plane database (`~/.jobot/jobot.db`).
@@ -38,6 +40,7 @@ This document records the baseline trajectory for **`release-1.0`** of JoBot. Th
    - [ ] 100% contract & integration test suite passing against Mock ATS [ACTUAL STATE: integration suite in progress]
 
 ## 3. Qualification Sign-Off Checklist
+
 - [ ] All version milestones (`dev-0.1` through `release-1.0`) implemented [ACTUAL STATE: stub skeleton being refactored]
 - [ ] Real Site Adapters operational (Naukri & Greenhouse) [ACTUAL STATE: stub adapters]
 - [ ] 100% integration test suite passing against Mock ATS [ACTUAL STATE: in progress]

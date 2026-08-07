@@ -30,23 +30,23 @@ The **core dishonesty pattern** identified in the original review — stub adapt
 
 ### The Five Log Symptoms — Current Status
 
-| # | Symptom | Status | Evidence |
-|---|---------|--------|----------|
-| 1 | 296 "VERIFIED" applications to fake companies | ❌ **NOT FIXED** | 13 of 16 adapters still return hardcoded fake company names; Naukri submit/verify are 5-line stubs returning True; Greenhouse submit has a URL-parser bug that silently fakes success |
-| 2 | 5 repeating job titles | ❌ **NOT FIXED** | All hardcoded title strings still present in adapter source |
-| 3 | Match scores locked at 33/50/66% | ❌ **NOT FIXED** | `SkillExtractor` implemented but wired as fallback only; never invoked because stub adapters return non-empty hardcoded `parsed_skills` |
-| 4 | ~10s infinite loop cadence | ⚠️ **PARTIALLY FIXED** | Runner now checks status before incrementing; dedup is real; but stub adapters still fabricate jobs synchronously so cadence is still synthetic |
-| 5 | Zero FAILED/REJECTED entries | ✅ **MOSTLY FIXED** | `ApplicationStatus` enum extended; pipeline produces FAILED/CIRCUIT_OPEN/DUPLICATE_SKIPPED/PENDING_APPROVAL; but stub adapters still always return True so FAILED only fires on DoD violations, not real ATS rejections |
+| #   | Symptom                                       | Status                 | Evidence                                                                                                                                                                                                                |
+| --- | --------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 296 "VERIFIED" applications to fake companies | ❌ **NOT FIXED**       | 13 of 16 adapters still return hardcoded fake company names; Naukri submit/verify are 5-line stubs returning True; Greenhouse submit has a URL-parser bug that silently fakes success                                   |
+| 2   | 5 repeating job titles                        | ❌ **NOT FIXED**       | All hardcoded title strings still present in adapter source                                                                                                                                                             |
+| 3   | Match scores locked at 33/50/66%              | ❌ **NOT FIXED**       | `SkillExtractor` implemented but wired as fallback only; never invoked because stub adapters return non-empty hardcoded `parsed_skills`                                                                                 |
+| 4   | ~10s infinite loop cadence                    | ⚠️ **PARTIALLY FIXED** | Runner now checks status before incrementing; dedup is real; but stub adapters still fabricate jobs synchronously so cadence is still synthetic                                                                         |
+| 5   | Zero FAILED/REJECTED entries                  | ✅ **MOSTLY FIXED**    | `ApplicationStatus` enum extended; pipeline produces FAILED/CIRCUIT_OPEN/DUPLICATE_SKIPPED/PENDING_APPROVAL; but stub adapters still always return True so FAILED only fires on DoD violations, not real ATS rejections |
 
 ### Net Progress Assessment
 
-| Phase | Plan Target | Actual Completion | Confidence |
-|-------|-------------|-------------------|------------|
-| Phase 1 (Wiring + Test Harness) | T1.1-T1.28 | **~70%** — wiring done, but Dict bug breaks all tests; some tautological tests remain | high |
-| Phase 2 (Naukri via Patchright) | T2.1-T2.11 | **~20%** — BrowserSession + login flow real; discovery/submit/verify are stubs | high |
-| Phase 3 (Greenhouse + release-1.0) | T3.1-T3.14 | **~40%** — parse/discover real; submit has critical bug; verify is stub; CLI commands crash | high |
-| Phase 4 (Tauri GUI) | T4.1-T4.10 | **0%** — not started | high |
-| Phase 5 (Relay + Extension + r2.0) | T5.1-T5.12 | **0%** — not started | high |
+| Phase                              | Plan Target | Actual Completion                                                                           | Confidence |
+| ---------------------------------- | ----------- | ------------------------------------------------------------------------------------------- | ---------- |
+| Phase 1 (Wiring + Test Harness)    | T1.1-T1.28  | **~70%** — wiring done, but Dict bug breaks all tests; some tautological tests remain       | high       |
+| Phase 2 (Naukri via Patchright)    | T2.1-T2.11  | **~20%** — BrowserSession + login flow real; discovery/submit/verify are stubs              | high       |
+| Phase 3 (Greenhouse + release-1.0) | T3.1-T3.14  | **~40%** — parse/discover real; submit has critical bug; verify is stub; CLI commands crash | high       |
+| Phase 4 (Tauri GUI)                | T4.1-T4.10  | **0%** — not started                                                                        | high       |
+| Phase 5 (Relay + Extension + r2.0) | T5.1-T5.12  | **0%** — not started                                                                        | high       |
 
 ### Bottom Line
 
@@ -60,27 +60,27 @@ This section catalogs every fix that was correctly applied. Credit where credit 
 
 ### 2.1 Immediate Fixes (5 of 5 attempted, 4 of 5 correctly applied)
 
-| Fix | Task | Status | Evidence |
-|-----|------|--------|----------|
-| CredentialVault mkdir bug | T1.7 | ✅ Correct | `storage/vault.py:26` — `key_dir.mkdir(parents=True, exist_ok=True)` now unconditional; `test_credential_vault_encryption` passes |
-| `INSERT OR REPLACE` → explicit dedup | T1.8 | ✅ Correct | `storage/db.py:11-13` defines `DuplicateApplicationError`; `save_application()` checks existing, then INSERT with IntegrityError catch; `idempotency_key TEXT UNIQUE NOT NULL` enforced |
-| Remove "Rahul Sharma" defaults | T1.9 | ✅ Correct | `cli/main.py:57-60` defaults changed to `""`; auto-create blocks replaced with hard exits; zero `Rahul`/`Sharma` in `src/` |
-| Mock ATS Flask server | T1.26 | ✅ Correct | `tests/mock_ats/server.py` (101 LOC) with `/reset`, `/jobs`, `/apply`, `/verify`; `conftest.py` session fixture; `MockATSAdapter` makes real HTTP calls |
-| Update docs to reflect reality | T1.1 | ⚠️ Reverted | `implementation_contract_release_1_0.md` updated at T1.1 but never re-updated as fixes landed; `queues/now.md` now falsely claims "Release 1.0 Complete" |
+| Fix                                  | Task  | Status      | Evidence                                                                                                                                                                                |
+| ------------------------------------ | ----- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CredentialVault mkdir bug            | T1.7  | ✅ Correct  | `storage/vault.py:26` — `key_dir.mkdir(parents=True, exist_ok=True)` now unconditional; `test_credential_vault_encryption` passes                                                       |
+| `INSERT OR REPLACE` → explicit dedup | T1.8  | ✅ Correct  | `storage/db.py:11-13` defines `DuplicateApplicationError`; `save_application()` checks existing, then INSERT with IntegrityError catch; `idempotency_key TEXT UNIQUE NOT NULL` enforced |
+| Remove "Rahul Sharma" defaults       | T1.9  | ✅ Correct  | `cli/main.py:57-60` defaults changed to `""`; auto-create blocks replaced with hard exits; zero `Rahul`/`Sharma` in `src/`                                                              |
+| Mock ATS Flask server                | T1.26 | ✅ Correct  | `tests/mock_ats/server.py` (101 LOC) with `/reset`, `/jobs`, `/apply`, `/verify`; `conftest.py` session fixture; `MockATSAdapter` makes real HTTP calls                                 |
+| Update docs to reflect reality       | T1.1  | ⚠️ Reverted | `implementation_contract_release_1_0.md` updated at T1.1 but never re-updated as fixes landed; `queues/now.md` now falsely claims "Release 1.0 Complete"                                |
 
 ### 2.2 Dead Subsystem Wiring (5 of 9 fully wired)
 
-| Subsystem | Task | Status | Evidence |
-|-----------|------|--------|----------|
-| QAEngine | T1.3 | ✅ Wired | `asp/pipeline.py:51,201-211` — Phase 4 calls `extract_form_questions`, Phase 5 iterates calling `qa_engine.answer_question` |
-| PolicyEngine | T1.4 | ✅ Wired | `runner.py:34,98-100` — `check_application_policy()` called per submission; daily cap enforced |
-| CircuitBreaker | T1.5 | ✅ Wired | `asp/pipeline.py:53,255-263` — Phase 11 checks `get_state()`, calls `execute_with_retry()`; trips after N failures |
-| TraceLogger | T1.6 | ✅ Wired | `asp/pipeline.py:54,125,150,155` — `start_span`/`end_span` per phase; persisted to `~/.jobot/traces/<run_id>.jsonl` |
-| AlertDispatcher | T1.13 | ✅ Wired (but see Bug #1) | `asp/pipeline.py:55,140-144` dispatches on phase failure; `policy/engine.py:22,66-70` on cap violation; `circuit_breaker.py:65-69` on OPEN |
-| EightTierMemorySystem | — | ❌ Still dead | Zero call sites in `src/jobot/` |
-| BehavioralMimicry | T1.14 | ⚠️ Instantiated, never called | `naukri/form_fill.py:18` and `naukri/submit.py:16` instantiate but never invoke Bezier methods |
-| ProxyManager | — | ❌ Still dead | `BrowserSession` accepts `proxy_config` dict but never calls `ProxyManager.get_proxy_for_site()` |
-| CaptchaSolver | T2.8 | ❌ Still dead (impl improved) | `stealth/captcha.py:48` now uses `router.generate_text(prompt + image size)` but zero call sites in adapters |
+| Subsystem             | Task  | Status                        | Evidence                                                                                                                                   |
+| --------------------- | ----- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| QAEngine              | T1.3  | ✅ Wired                      | `asp/pipeline.py:51,201-211` — Phase 4 calls `extract_form_questions`, Phase 5 iterates calling `qa_engine.answer_question`                |
+| PolicyEngine          | T1.4  | ✅ Wired                      | `runner.py:34,98-100` — `check_application_policy()` called per submission; daily cap enforced                                             |
+| CircuitBreaker        | T1.5  | ✅ Wired                      | `asp/pipeline.py:53,255-263` — Phase 11 checks `get_state()`, calls `execute_with_retry()`; trips after N failures                         |
+| TraceLogger           | T1.6  | ✅ Wired                      | `asp/pipeline.py:54,125,150,155` — `start_span`/`end_span` per phase; persisted to `~/.jobot/traces/<run_id>.jsonl`                        |
+| AlertDispatcher       | T1.13 | ✅ Wired (but see Bug #1)     | `asp/pipeline.py:55,140-144` dispatches on phase failure; `policy/engine.py:22,66-70` on cap violation; `circuit_breaker.py:65-69` on OPEN |
+| EightTierMemorySystem | —     | ❌ Still dead                 | Zero call sites in `src/jobot/`                                                                                                            |
+| BehavioralMimicry     | T1.14 | ⚠️ Instantiated, never called | `naukri/form_fill.py:18` and `naukri/submit.py:16` instantiate but never invoke Bezier methods                                             |
+| ProxyManager          | —     | ❌ Still dead                 | `BrowserSession` accepts `proxy_config` dict but never calls `ProxyManager.get_proxy_for_site()`                                           |
+| CaptchaSolver         | T2.8  | ❌ Still dead (impl improved) | `stealth/captcha.py:48` now uses `router.generate_text(prompt + image size)` but zero call sites in adapters                               |
 
 ### 2.3 Architectural Improvements
 
@@ -99,12 +99,12 @@ This section catalogs every fix that was correctly applied. Credit where credit 
 
 `pyproject.toml` was cleaned (commit `db96746`). `fastapi`, `uvicorn`, `pyyaml`, `htbuilder` removed. All remaining dependencies are actually imported:
 
-| Dependency | Declared | Imported | Notes |
-|------------|----------|----------|-------|
-| `pydantic`, `typer`, `rich`, `cryptography`, `keyring` | ✅ | ✅ | Core |
-| `patchright` | ✅ | ✅ | `stealth/browser.py:5` — real BrowserSession |
-| `google-genai` | ✅ | ✅ | `ai/router.py:103` — lazy import |
-| `flask` | ✅ (dev) | ✅ | `tests/mock_ats/server.py` |
+| Dependency                                             | Declared | Imported | Notes                                        |
+| ------------------------------------------------------ | -------- | -------- | -------------------------------------------- |
+| `pydantic`, `typer`, `rich`, `cryptography`, `keyring` | ✅       | ✅       | Core                                         |
+| `patchright`                                           | ✅       | ✅       | `stealth/browser.py:5` — real BrowserSession |
+| `google-genai`                                         | ✅       | ✅       | `ai/router.py:103` — lazy import             |
+| `flask`                                                | ✅ (dev) | ✅       | `tests/mock_ats/server.py`                   |
 
 The previous "declared but never imported" problem is fully resolved. (high)
 
@@ -135,6 +135,7 @@ class AlertDispatcher:
 **Impact:** `NameError: name 'Dict' is not defined` at class-body evaluation time. The import chain is: `obs/alerts.py` → `stealth/circuit_breaker.py:16` → `asp/pipeline.py:23` → `runner.py:6`, `cli/main.py:18`, and 14 test files. **23 test modules fail at collection time. 0 of 78 tests can run.** (high)
 
 **Verification:**
+
 ```bash
 $ pytest tests/ --collect-only
 ...
@@ -161,6 +162,7 @@ src/jobot/obs/alerts.py:66: in AlertDispatcher
 **The bug:** `pause_cmd` (line 295-301), `resume_cmd` (line 304-310), and `export_cmd` (line 316-340) all use `json.dumps(...)` and `datetime.now().isoformat()`. Neither `json` nor `datetime` is imported at the top of `cli/main.py`.
 
 **Evidence — runtime verification:**
+
 ```bash
 $ jobot pause
 Traceback (most recent call last):
@@ -227,6 +229,7 @@ async def submit_application(self, application: Application) -> bool:
 **The bug:** `evals/harness.py:48` calls `self.scenarios_dir.mkdir(parents=True, exist_ok=True)` unconditionally in `__init__`. If a caller passes a path like `Path("/nonexistent")` (intentionally, to test the harness with no built-in scenarios), the mkdir raises `PermissionError`.
 
 **Evidence — runtime:**
+
 ```bash
 $ pytest tests/test_evals.py::test_eval_harness_detects_scenario_failure
 FAILED
@@ -272,6 +275,7 @@ PermissionError: [Errno 13] Permission denied: '/nonexistent'
 **Task that introduced it:** T1.11 (unified AdapterRegistry)
 
 **The bug:** `adapters/registry.py:52-53` still has the silent fallback pattern:
+
 ```python
 if adapter_cls is None:
     return NaukriAdapter()
@@ -299,30 +303,30 @@ These are issues identified in the original plan that were NOT fixed.
 
 13 of 16 adapters still return hardcoded fake company names from `parse_job_posting()`. Verified by grep: (high)
 
-| File:Line | Hardcoded Company |
-|-----------|-------------------|
-| `naukri/adapter.py:46` | `"Naukri Hiring Partner"` |
-| `naukri/discovery.py:44` | `"Top Tech Partner"` |
-| `linkedin.py:34` | `"LinkedIn Partner Enterprise"` |
-| `indeed.py:32` | `"Indeed Employer"` |
-| `greenhouse.py:59,73,97` | Real API data ✅ (but `parsed_skills` still hardcoded) |
-| `lever.py:28` | `"Lever Customer Org"` |
-| `workday.py:27` | `"Enterprise Workday Employer"` |
-| `more_adapters.py:23` | `f"{site_name.capitalize()} Hiring Partner"` (9 portals) |
+| File:Line                | Hardcoded Company                                        |
+| ------------------------ | -------------------------------------------------------- |
+| `naukri/adapter.py:46`   | `"Naukri Hiring Partner"`                                |
+| `naukri/discovery.py:44` | `"Top Tech Partner"`                                     |
+| `linkedin.py:34`         | `"LinkedIn Partner Enterprise"`                          |
+| `indeed.py:32`           | `"Indeed Employer"`                                      |
+| `greenhouse.py:59,73,97` | Real API data ✅ (but `parsed_skills` still hardcoded)   |
+| `lever.py:28`            | `"Lever Customer Org"`                                   |
+| `workday.py:27`          | `"Enterprise Workday Employer"`                          |
+| `more_adapters.py:23`    | `f"{site_name.capitalize()} Hiring Partner"` (9 portals) |
 
 **Only `MockATSAdapter` and `GreenhouseAdapter.parse_job_posting` actually fetch real data.** (high)
 
 ### 4.2 Symptom 2 — Hardcoded Job Titles (NOT FIXED)
 
-| File:Line | Hardcoded Title |
-|-----------|-----------------|
-| `naukri/adapter.py:45` | `"Senior Backend Engineer"` |
-| `linkedin.py:33` | `"Lead Software Engineer"` |
-| `indeed.py:31` | `"Senior Python Developer"` |
-| `greenhouse.py` | Real API data ✅ |
-| `lever.py:27` | `"Full Stack Engineer"` |
-| `workday.py:26` | `"Senior Software Engineer"` |
-| `more_adapters.py:22` | `f"Engineer on {site_name.capitalize()}"` |
+| File:Line              | Hardcoded Title                           |
+| ---------------------- | ----------------------------------------- |
+| `naukri/adapter.py:45` | `"Senior Backend Engineer"`               |
+| `linkedin.py:33`       | `"Lead Software Engineer"`                |
+| `indeed.py:31`         | `"Senior Python Developer"`               |
+| `greenhouse.py`        | Real API data ✅                          |
+| `lever.py:27`          | `"Full Stack Engineer"`                   |
+| `workday.py:26`        | `"Senior Software Engineer"`              |
+| `more_adapters.py:22`  | `f"Engineer on {site_name.capitalize()}"` |
 
 ### 4.3 Symptom 3 — Match Scores Locked at 33/50/66% (NOT FIXED)
 
@@ -342,6 +346,7 @@ Since every stub adapter returns non-empty hardcoded `parsed_skills`, `SkillExtr
 Despite the "Phase 2 Complete" claim, `naukri/submit.py` and `naukri/verify.py` are stubs: (high)
 
 **`src/jobot/adapters/naukri/submit.py` (full content):**
+
 ```python
 async def submit(application):
     application.status = ApplicationStatus.SUBMITTED
@@ -349,6 +354,7 @@ async def submit(application):
 ```
 
 **`src/jobot/adapters/naukri/verify.py` (full content):**
+
 ```python
 async def verify(application):
     application.status = ApplicationStatus.VERIFIED
@@ -373,14 +379,14 @@ No browser interaction. No button click. No navigation. No DOM check. No screens
 
 ### 4.8 Tautological Tests Remaining
 
-| Test | Issue |
-|------|-------|
-| `test_release.py::test_security_auditor_and_release_manager` | `ReleaseManager.check_for_updates()` still returns hardcoded `is_latest=True`; `rollback()` returns `True`. Test asserts hardcoded values. |
-| `test_release.py::test_document_tailoring` | `DocumentTailor.verify_fact_truthfulness()` still returns `True` unconditionally. Test asserts `is_truthful is True`. |
-| `test_greenhouse_adapter.py::test_greenhouse_adapter_form_fill_and_submit` | Asserts `submitted is True` after `submit_application` — but submit always returns True due to Bug #3 (URL-parser). |
-| `test_naukri_fixture.py` | Asserts `fixture_html.exists()` but never parses the fixture. Pipeline runs through Naukri's stubbed methods. |
-| `test_runner_status_check.py::test_runner_does_not_increment_on_failed_submit` | Does NOT run the runner. Manually replicates the increment logic in the test itself. Tests the test's own logic. |
-| `test_adapters_extra.py::test_site_adapters_inherit_base_class` | Only asserts `hasattr(adapter, "submit_application")`. Doesn't verify behavior. |
+| Test                                                                           | Issue                                                                                                                                      |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `test_release.py::test_security_auditor_and_release_manager`                   | `ReleaseManager.check_for_updates()` still returns hardcoded `is_latest=True`; `rollback()` returns `True`. Test asserts hardcoded values. |
+| `test_release.py::test_document_tailoring`                                     | `DocumentTailor.verify_fact_truthfulness()` still returns `True` unconditionally. Test asserts `is_truthful is True`.                      |
+| `test_greenhouse_adapter.py::test_greenhouse_adapter_form_fill_and_submit`     | Asserts `submitted is True` after `submit_application` — but submit always returns True due to Bug #3 (URL-parser).                        |
+| `test_naukri_fixture.py`                                                       | Asserts `fixture_html.exists()` but never parses the fixture. Pipeline runs through Naukri's stubbed methods.                              |
+| `test_runner_status_check.py::test_runner_does_not_increment_on_failed_submit` | Does NOT run the runner. Manually replicates the increment logic in the test itself. Tests the test's own logic.                           |
+| `test_adapters_extra.py::test_site_adapters_inherit_base_class`                | Only asserts `hasattr(adapter, "submit_application")`. Doesn't verify behavior.                                                            |
 
 ### 4.9 CLI Commands Still Missing Tests
 
@@ -440,6 +446,7 @@ Claims `pytest tests/test_asp_12_phase.py passed 12/12`, `pytest tests/test_aler
 ### 6.1 Phase 1 (T1.1-T1.28): ~70% Complete
 
 **Genuinely complete:**
+
 - T1.7 CredentialVault mkdir fix ✅
 - T1.8 INSERT OR REPLACE → DuplicateApplicationError ✅
 - T1.9 Remove Rahul Sharma defaults ✅
@@ -463,17 +470,20 @@ Claims `pytest tests/test_asp_12_phase.py passed 12/12`, `pytest tests/test_aler
 - T1.28 Tag release-1.0-alpha ⚠️ (tagged but broken)
 
 **Incomplete or broken:**
+
 - T1.1 Update docs to reflect reality ⚠️ (applied, then reverted at cf3d28d)
 - T1.21 Replace test_asp tautological test ⚠️ (still has fixture duplication — Bug #6)
 
 ### 6.2 Phase 2 (T2.1-T2.11): ~20% Complete
 
 **Genuinely complete:**
+
 - T2.1 Patchright BrowserSession ✅
 - T2.2 Naukri login flow ✅
 - T2.10 SkillExtractor ✅ (but wired as fallback only — never invoked)
 
 **Stubs or missing:**
+
 - T2.3 Naukri discovery ❌ (fabricates jobs)
 - T2.4 Naukri form fill ❌ (builds dict, doesn't drive browser)
 - T2.5 Naukri submit ❌ (5-line stub returning True)
@@ -486,12 +496,14 @@ Claims `pytest tests/test_asp_12_phase.py passed 12/12`, `pytest tests/test_aler
 ### 6.3 Phase 3 (T3.1-T3.14): ~40% Complete
 
 **Genuinely complete:**
+
 - T3.1 Greenhouse parse_job_posting via API ✅
 - T3.3 Match score upgrade ❌ (SkillExtractor not invoked)
 - T3.4 Runner stop condition ✅
 - T3.5 Per-portal daily cap ✅
 
 **Stubs or broken:**
+
 - T3.2 Greenhouse submit_application ❌ (URL-parser bug — Bug #3)
 - T3.7 pause/resume ❌ (crashes — Bug #2)
 - T3.8 export ❌ (crashes on JSON — Bug #2)
@@ -513,41 +525,41 @@ Zero files. (high)
 
 ### 7.1 P0 — Blockers (Fix Today, ~4 hours total)
 
-| # | Fix | Effort | Impact |
-|---|-----|--------|--------|
-| P0.1 | Add `Dict` to `obs/alerts.py:4` import | 1 min | Unblocks all 78 tests |
-| P0.2 | Add `import json` and `from datetime import datetime` to `cli/main.py` | 1 min | Unblocks `pause`/`resume`/`export` |
-| P0.3 | Fix Greenhouse `submit_application` to pass `application.job_url` not `application.site`; remove silent `except Exception: pass` | 30 min | Greenhouse submissions actually work |
-| P0.4 | Retract false claims in `queues/now.md`, `queues/blocked.md`, `queues/next.md`; update `implementation_contract_release_1_0.md` to reflect actual wiring state | 1 hr | Honesty restored |
-| P0.5 | Run full test suite, fix the 1 remaining failure (`test_eval_harness_detects_scenario_failure` — Bug #5), document actual pass/fail in worklog | 2 hr | Test suite is honest |
+| #    | Fix                                                                                                                                                            | Effort | Impact                               |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| P0.1 | Add `Dict` to `obs/alerts.py:4` import                                                                                                                         | 1 min  | Unblocks all 78 tests                |
+| P0.2 | Add `import json` and `from datetime import datetime` to `cli/main.py`                                                                                         | 1 min  | Unblocks `pause`/`resume`/`export`   |
+| P0.3 | Fix Greenhouse `submit_application` to pass `application.job_url` not `application.site`; remove silent `except Exception: pass`                               | 30 min | Greenhouse submissions actually work |
+| P0.4 | Retract false claims in `queues/now.md`, `queues/blocked.md`, `queues/next.md`; update `implementation_contract_release_1_0.md` to reflect actual wiring state | 1 hr   | Honesty restored                     |
+| P0.5 | Run full test suite, fix the 1 remaining failure (`test_eval_harness_detects_scenario_failure` — Bug #5), document actual pass/fail in worklog                 | 2 hr   | Test suite is honest                 |
 
 ### 7.2 P1 — Critical (Fix This Week, ~20 hours total)
 
-| # | Fix | Effort | Impact |
-|---|-----|--------|--------|
-| P1.1 | Implement real Naukri `submit_application` via Patchright button click + navigation wait + screenshot | L (16h) | Symptom 1 fixed for Naukri |
-| P1.2 | Implement real Naukri `verify_submission` via re-navigation to applications page + DOM check | L (16h) | Independent verification for Naukri |
-| P1.3 | Implement real Naukri `discover_jobs` via search URL scraping | L (16h) | Symptom 2 fixed for Naukri |
-| P1.4 | Wire `SkillExtractor.extract_skills()` into adapter `parse_job_posting` when description is non-empty | M (4h) | Symptom 3 fixed |
-| P1.5 | Remove hardcoded `parsed_skills` from all stub adapters; force them to call SkillExtractor or return empty | M (4h) | Symptom 3 fixed |
-| P1.6 | Remove silent `except Exception: pass` from all adapters; failed submissions must return False and set FAILED | M (4h) | Symptom 1 root cause eliminated |
-| P1.7 | Fix `AdapterRegistry` silent Naukri fallback → raise `ValueError` | S (1h) | Bug #9 fixed |
-| P1.8 | Delete duplicate `schedule_cmd` in `cli/main.py` | S (1h) | Bug #4 fixed |
-| P1.9 | Delete duplicate Flask fixtures in `test_asp.py` and `test_qa_engine_wired.py` | S (1h) | Bug #6 fixed |
-| P1.10 | Delete dead `CircuitBreaker` in `failure/catalog.py` | S (1h) | Bug #7 fixed |
+| #     | Fix                                                                                                           | Effort  | Impact                              |
+| ----- | ------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------- |
+| P1.1  | Implement real Naukri `submit_application` via Patchright button click + navigation wait + screenshot         | L (16h) | Symptom 1 fixed for Naukri          |
+| P1.2  | Implement real Naukri `verify_submission` via re-navigation to applications page + DOM check                  | L (16h) | Independent verification for Naukri |
+| P1.3  | Implement real Naukri `discover_jobs` via search URL scraping                                                 | L (16h) | Symptom 2 fixed for Naukri          |
+| P1.4  | Wire `SkillExtractor.extract_skills()` into adapter `parse_job_posting` when description is non-empty         | M (4h)  | Symptom 3 fixed                     |
+| P1.5  | Remove hardcoded `parsed_skills` from all stub adapters; force them to call SkillExtractor or return empty    | M (4h)  | Symptom 3 fixed                     |
+| P1.6  | Remove silent `except Exception: pass` from all adapters; failed submissions must return False and set FAILED | M (4h)  | Symptom 1 root cause eliminated     |
+| P1.7  | Fix `AdapterRegistry` silent Naukri fallback → raise `ValueError`                                             | S (1h)  | Bug #9 fixed                        |
+| P1.8  | Delete duplicate `schedule_cmd` in `cli/main.py`                                                              | S (1h)  | Bug #4 fixed                        |
+| P1.9  | Delete duplicate Flask fixtures in `test_asp.py` and `test_qa_engine_wired.py`                                | S (1h)  | Bug #6 fixed                        |
+| P1.10 | Delete dead `CircuitBreaker` in `failure/catalog.py`                                                          | S (1h)  | Bug #7 fixed                        |
 
 ### 7.3 P2 — Important (Fix This Month, ~40 hours total)
 
-| # | Fix | Effort | Impact |
-|---|-----|--------|--------|
-| P2.1 | Wire `BehavioralMimicry` into Naukri form fill (call Bezier methods between actions) | M (8h) | Bug #8 fixed; stealth actually works |
-| P2.2 | Wire `CaptchaSolver` into Naukri login (detect CAPTCHA image, invoke solver) | M (8h) | CAPTCHAs handled |
-| P2.3 | Wire `EightTierMemorySystem` into pipeline (cache form field mappings) | M (8h) | Cross-run learning |
-| P2.4 | Wire `ProxyManager` into `BrowserSession` | S (4h) | Proxy rotation |
-| P2.5 | Replace tautological tests (Section 4.8) with real behavior tests | L (16h) | Test suite is honest |
-| P2.6 | Add tests for `continuous_campaign_cmd`, `pause`, `resume`, `export`, `schedule` | L (16h) | CLI coverage |
-| P2.7 | Sync `docs/user/cli-reference.md` with actual CLI | S (4h) | Docs honest |
-| P2.8 | Fix `save_job_posting` to use INSERT + IntegrityError | S (1h) | Bug #10 fixed |
+| #    | Fix                                                                                  | Effort  | Impact                               |
+| ---- | ------------------------------------------------------------------------------------ | ------- | ------------------------------------ |
+| P2.1 | Wire `BehavioralMimicry` into Naukri form fill (call Bezier methods between actions) | M (8h)  | Bug #8 fixed; stealth actually works |
+| P2.2 | Wire `CaptchaSolver` into Naukri login (detect CAPTCHA image, invoke solver)         | M (8h)  | CAPTCHAs handled                     |
+| P2.3 | Wire `EightTierMemorySystem` into pipeline (cache form field mappings)               | M (8h)  | Cross-run learning                   |
+| P2.4 | Wire `ProxyManager` into `BrowserSession`                                            | S (4h)  | Proxy rotation                       |
+| P2.5 | Replace tautological tests (Section 4.8) with real behavior tests                    | L (16h) | Test suite is honest                 |
+| P2.6 | Add tests for `continuous_campaign_cmd`, `pause`, `resume`, `export`, `schedule`     | L (16h) | CLI coverage                         |
+| P2.7 | Sync `docs/user/cli-reference.md` with actual CLI                                    | S (4h)  | Docs honest                          |
+| P2.8 | Fix `save_job_posting` to use INSERT + IntegrityError                                | S (1h)  | Bug #10 fixed                        |
 
 ### 7.4 P3 — Release-1.0 Completion (~80 hours total)
 
