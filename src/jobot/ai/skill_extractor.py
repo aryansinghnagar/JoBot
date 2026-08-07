@@ -11,13 +11,57 @@ class SkillExtractor:
     """
 
     COMMON_TECH_KEYWORDS = [
-        "python", "java", "c++", "c#", "golang", "go", "rust", "typescript", "javascript",
-        "react", "angular", "vue", "node.js", "express", "fastapi", "flask", "django",
-        "sql", "postgresql", "mysql", "mongodb", "redis", "elasticsearch", "dynamodb",
-        "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "ansible",
-        "git", "ci/cd", "jenkins", "github actions", "spark", "hadoop", "airflow",
-        "machine learning", "deep learning", "nlp", "llm", "pytorch", "tensorflow",
-        "scikit-learn", "pandas", "numpy", "system design", "microservices", "rest api", "graphql"
+        "python",
+        "java",
+        "c++",
+        "c#",
+        "golang",
+        "go",
+        "rust",
+        "typescript",
+        "javascript",
+        "react",
+        "angular",
+        "vue",
+        "node.js",
+        "express",
+        "fastapi",
+        "flask",
+        "django",
+        "sql",
+        "postgresql",
+        "mysql",
+        "mongodb",
+        "redis",
+        "elasticsearch",
+        "dynamodb",
+        "aws",
+        "azure",
+        "gcp",
+        "docker",
+        "kubernetes",
+        "terraform",
+        "ansible",
+        "git",
+        "ci/cd",
+        "jenkins",
+        "github actions",
+        "spark",
+        "hadoop",
+        "airflow",
+        "machine learning",
+        "deep learning",
+        "nlp",
+        "llm",
+        "pytorch",
+        "tensorflow",
+        "scikit-learn",
+        "pandas",
+        "numpy",
+        "system design",
+        "microservices",
+        "rest api",
+        "graphql",
     ]
 
     def __init__(self, router: Optional[ModelRouter] = None):
@@ -32,7 +76,7 @@ class SkillExtractor:
         try:
             prompt = (
                 f"Extract technical skills, tools, and languages from the job description below.\n"
-                f"Return ONLY a JSON array of strings, e.g. [\"Python\", \"FastAPI\", \"PostgreSQL\"]. No explanation.\n\n"
+                f'Return ONLY a JSON array of strings, e.g. ["Python", "FastAPI", "PostgreSQL"]. No explanation.\n\n'
                 f"Job Description:\n{description[:2000]}"
             )
             raw_response = await self.router.generate_text(prompt)
@@ -74,7 +118,7 @@ class SkillExtractor:
         lower_desc = description.lower()
 
         for kw in self.COMMON_TECH_KEYWORDS:
-            pattern = r'\b' + re.escape(kw) + r'\b'
+            pattern = r"\b" + re.escape(kw) + r"\b"
             if re.search(pattern, lower_desc):
                 extracted.append(kw.title() if len(kw) <= 4 else kw.capitalize())
 

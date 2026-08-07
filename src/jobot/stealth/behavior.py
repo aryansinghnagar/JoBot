@@ -29,8 +29,18 @@ class BehavioralMimicry:
         for i in range(steps + 1):
             t = i / steps
             # True 4-point Cubic Bezier interpolation
-            x = (1 - t) ** 3 * x1 + 3 * (1 - t) ** 2 * t * ctrl1_x + 3 * (1 - t) * (t ** 2) * ctrl2_x + (t ** 3) * x2
-            y = (1 - t) ** 3 * y1 + 3 * (1 - t) ** 2 * t * ctrl1_y + 3 * (1 - t) * (t ** 2) * ctrl2_y + (t ** 3) * y2
+            x = (
+                (1 - t) ** 3 * x1
+                + 3 * (1 - t) ** 2 * t * ctrl1_x
+                + 3 * (1 - t) * (t**2) * ctrl2_x
+                + (t**3) * x2
+            )
+            y = (
+                (1 - t) ** 3 * y1
+                + 3 * (1 - t) ** 2 * t * ctrl1_y
+                + 3 * (1 - t) * (t**2) * ctrl2_y
+                + (t**3) * y2
+            )
             # Add sub-pixel jitter to intermediate path points only
             if 0 < i < steps:
                 x += random.uniform(-1.5, 1.5)

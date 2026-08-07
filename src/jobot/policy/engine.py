@@ -68,7 +68,9 @@ class PolicyEngine:
             )
 
         # Policy 2: Grounding Check
-        if application.status.value == "failed" and "Grounding" in (application.error_message or ""):
+        if application.status.value == "failed" and "Grounding" in (
+            application.error_message or ""
+        ):
             violations.append(
                 PolicyViolation(
                     policy_name="POLICY_GROUNDING_CHECK",
@@ -77,7 +79,9 @@ class PolicyEngine:
             )
 
         # Policy 3: Sensitive Data Exclusion
-        if any(w in job.description.lower() for w in ["aadhaar number", "ssn number", "bank password"]):
+        if any(
+            w in job.description.lower() for w in ["aadhaar number", "ssn number", "bank password"]
+        ):
             violations.append(
                 PolicyViolation(
                     policy_name="POLICY_SENSITIVE_DATA_EXCLUSION",
@@ -86,7 +90,9 @@ class PolicyEngine:
             )
 
         # Policy 4: Supervised Trust Default
-        if application.trust_level == TrustLevel.SUPERVISED and not application.form_values.get("approved_by_user"):
+        if application.trust_level == TrustLevel.SUPERVISED and not application.form_values.get(
+            "approved_by_user"
+        ):
             violations.append(
                 PolicyViolation(
                     policy_name="POLICY_SUPERVISED_START",
@@ -104,12 +110,16 @@ class PolicyEngine:
         application: Application,
         daily_submitted_count: int,
     ) -> PolicyEvaluationResult:
-        violations = self.evaluate_application_policy(job, profile, application, daily_submitted_count)
+        violations = self.evaluate_application_policy(
+            job, profile, application, daily_submitted_count
+        )
         blocking_violations = [v for v in violations if v.is_blocking]
         non_blocking_violations = [v for v in violations if not v.is_blocking]
 
         allowed = len(blocking_violations) == 0
-        requires_approval = any(v.policy_name == "POLICY_SUPERVISED_START" for v in non_blocking_violations)
+        requires_approval = any(
+            v.policy_name == "POLICY_SUPERVISED_START" for v in non_blocking_violations
+        )
         blocking_reason = blocking_violations[0].reason if blocking_violations else None
 
         return PolicyEvaluationResult(

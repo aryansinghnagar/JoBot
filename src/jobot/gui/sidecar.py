@@ -30,9 +30,12 @@ class StdioSidecarServer:
         request_dict.get("params", {})
 
         if method == "ping":
-            return JsonRpcResponse(id=req_id, result={"status": "pong", "version": "1.0.0"}).model_dump()
+            return JsonRpcResponse(
+                id=req_id, result={"status": "pong", "version": "1.0.0"}
+            ).model_dump()
         elif method == "status":
             from jobot.storage.db import DatabaseManager
+
             db = DatabaseManager()
             apps = db.list_applications(limit=10)
             return JsonRpcResponse(
@@ -42,12 +45,15 @@ class StdioSidecarServer:
         elif method == "profile_info":
             from pathlib import Path
             from jobot.storage.vault import CredentialVault
+
             vault = CredentialVault()
             profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
             if profile_path.exists():
                 p = vault.load_encrypted_profile(profile_path)
                 return JsonRpcResponse(id=req_id, result=p.model_dump()).model_dump()
-            return JsonRpcResponse(id=req_id, error={"code": -32602, "message": "Profile not found"}).model_dump()
+            return JsonRpcResponse(
+                id=req_id, error={"code": -32602, "message": "Profile not found"}
+            ).model_dump()
         else:
             return JsonRpcResponse(
                 id=req_id,
@@ -65,6 +71,8 @@ class StdioSidecarServer:
                     sys.stdout.write(json.dumps(res) + "\n")
                     sys.stdout.flush()
                 except Exception as e:
-                    err_res = JsonRpcResponse(id=None, error={"code": -32700, "message": f"Parse error: {e}"}).model_dump()
+                    err_res = JsonRpcResponse(
+                        id=None, error={"code": -32700, "message": f"Parse error: {e}"}
+                    ).model_dump()
                     sys.stdout.write(json.dumps(err_res) + "\n")
                     sys.stdout.flush()

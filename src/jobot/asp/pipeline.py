@@ -97,11 +97,13 @@ class ApplicationSubmissionPipeline:
         if not auto_approve and app.trust_level == TrustLevel.SUPERVISED:
             phases.append(PipelinePhase.PHASE_10_APPROVAL)
         else:
-            phases.extend([
-                PipelinePhase.PHASE_10_APPROVAL,
-                PipelinePhase.PHASE_11_SUBMIT,
-                PipelinePhase.PHASE_12_VERIFY,
-            ])
+            phases.extend(
+                [
+                    PipelinePhase.PHASE_10_APPROVAL,
+                    PipelinePhase.PHASE_11_SUBMIT,
+                    PipelinePhase.PHASE_12_VERIFY,
+                ]
+            )
 
         for phase in phases:
             success = await self._execute_phase(phase, app, profile, job_url, auto_approve)
@@ -138,7 +140,9 @@ class ApplicationSubmissionPipeline:
                 self.alert_dispatcher.dispatch_alert(
                     title=f"ASP Phase Status ({phase.value})",
                     message=f"Application {app.application_id[:8]}: {dod_result.reason}",
-                    level=AlertLevel.HIGH if app.status == ApplicationStatus.FAILED else AlertLevel.INFO,
+                    level=AlertLevel.HIGH
+                    if app.status == ApplicationStatus.FAILED
+                    else AlertLevel.INFO,
                 )
                 self.trace_logger.end_span(span, status=f"{app.status.value}: {dod_result.reason}")
                 if app.job_id and self.db.get_job_posting(app.job_id):
@@ -155,7 +159,9 @@ class ApplicationSubmissionPipeline:
                 self.db.save_application(app)
             return False
 
-    async def _handle_phase_1_intent(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_1_intent(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Profile must have first name or last name, and email."""
         if not profile.personal_info.first_name and not profile.personal_info.last_name:
             return DoDResult(passed=False, reason="Profile missing name")
@@ -164,7 +170,9 @@ class ApplicationSubmissionPipeline:
         app.status = ApplicationStatus.INTENT
         return DoDResult(passed=True)
 
-    async def _handle_phase_2_parse(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_2_parse(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Job posting parsed with title, site, and job_id."""
         job_url = args[0]
         app.status = ApplicationStatus.PARSING
@@ -178,7 +186,9 @@ class ApplicationSubmissionPipeline:
         app.status = ApplicationStatus.PARSED
         return DoDResult(passed=True)
 
-    async def _handle_phase_3_match(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_3_match(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Evaluate match score against candidate profile."""
         app.status = ApplicationStatus.MATCHING
         job = self.db.get_job_posting(app.job_id)
@@ -187,7 +197,9 @@ class ApplicationSubmissionPipeline:
         app.status = ApplicationStatus.MATCHED
         return DoDResult(passed=True)
 
-    async def _handle_phase_4_extract_questions(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_4_extract_questions(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Form questions extracted from target ATS."""
         job = self.db.get_job_posting(app.job_id)
         form_questions = await self.adapter.extract_form_questions(job)
@@ -196,7 +208,9 @@ class ApplicationSubmissionPipeline:
         app.form_values["_extracted_questions"] = form_questions
         return DoDResult(passed=True)
 
-    async def _handle_phase_5_answer_questions(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_5_answer_questions(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Q&A Engine answers profile-grounded questions; pauses on sensitive fields."""
         form_questions = app.form_values.get("_extracted_questions", [])
         qa_answers: Dict[str, Any] = {}
@@ -208,7 +222,9 @@ class ApplicationSubmissionPipeline:
         app.form_values.update(qa_answers)
         return DoDResult(passed=True)
 
-    async def _handle_phase_6_fill_form(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_6_fill_form(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Fill form data using adapter layer."""
         app.status = ApplicationStatus.FILLING
         job = self.db.get_job_posting(app.job_id)
@@ -219,28 +235,43 @@ class ApplicationSubmissionPipeline:
         app.status = ApplicationStatus.FILLED
         return DoDResult(passed=True)
 
-    async def _handle_phase_7_validate_fill(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_7_validate_fill(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Required fields (email, name) populated in form_values."""
         if not app.form_values.get("email"):
             return DoDResult(passed=False, reason="Required field 'email' missing from form values")
-        if not (app.form_values.get("name") or app.form_values.get("first_name") or app.form_values.get("full_name")):
+        if not (
+            app.form_values.get("name")
+            or app.form_values.get("first_name")
+            or app.form_values.get("full_name")
+        ):
             return DoDResult(passed=False, reason="Required field 'name' missing from form values")
         return DoDResult(passed=True)
 
-    async def _handle_phase_8_grounding_check(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_8_grounding_check(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Grounding verification — populated email matches profile email."""
         app.status = ApplicationStatus.REVIEWING
         filled_email = app.form_values.get("email")
         if filled_email and filled_email != profile.personal_info.email:
-            return DoDResult(passed=False, reason=f"Grounding failure: Filled email '{filled_email}' != '{profile.personal_info.email}'")
+            return DoDResult(
+                passed=False,
+                reason=f"Grounding failure: Filled email '{filled_email}' != '{profile.personal_info.email}'",
+            )
         return DoDResult(passed=True)
 
-    async def _handle_phase_9_review(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_9_review(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Policy governance & final review check."""
         app.status = ApplicationStatus.REVIEWED
         return DoDResult(passed=True)
 
-    async def _handle_phase_10_approval(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_10_approval(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Human approval gate — pause if supervised and not auto_approve."""
         auto_approve = args[1] if len(args) > 1 else False
         if app.trust_level == TrustLevel.SUPERVISED and not auto_approve:
@@ -248,7 +279,9 @@ class ApplicationSubmissionPipeline:
             return DoDResult(passed=True)
         return DoDResult(passed=True)
 
-    async def _handle_phase_11_submit(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_11_submit(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: CircuitBreaker protected submission with evidence screenshot logging."""
         if self.circuit_breaker.get_state(app.site) == "OPEN":
             app.status = ApplicationStatus.CIRCUIT_OPEN
@@ -275,7 +308,9 @@ class ApplicationSubmissionPipeline:
         app.status = ApplicationStatus.SUBMITTED
         return DoDResult(passed=True)
 
-    async def _handle_phase_12_verify(self, app: Application, profile: UserProfile, *args) -> DoDResult:
+    async def _handle_phase_12_verify(
+        self, app: Application, profile: UserProfile, *args
+    ) -> DoDResult:
         """DoD: Verify submission receipt with ATS server."""
         try:
             verified_ok = await self.circuit_breaker.execute_with_retry(

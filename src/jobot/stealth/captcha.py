@@ -33,7 +33,9 @@ class CaptchaSolver:
         self.router = router or ModelRouter()
 
     async def solve_image_captcha(
-        self, image_bytes: bytes, prompt_text: str = "Extract the text code from this CAPTCHA image exactly as shown."
+        self,
+        image_bytes: bytes,
+        prompt_text: str = "Extract the text code from this CAPTCHA image exactly as shown.",
     ) -> CaptchaResult:
         """Solve text image CAPTCHA using AI vision model."""
         if not image_bytes:
@@ -45,7 +47,9 @@ class CaptchaSolver:
             )
 
         try:
-            solution = await self.router.generate_text(f"{prompt_text} Image size: {len(image_bytes)} bytes")
+            solution = await self.router.generate_text(
+                f"{prompt_text} Image size: {len(image_bytes)} bytes"
+            )
             if not solution or solution.startswith("[LLM_UNAVAILABLE]"):
                 return CaptchaResult(
                     captcha_type=CaptchaType.IMAGE_TEXT,

@@ -45,9 +45,15 @@ class QAEngine:
 
     def classify_question(self, question: str) -> QuestionType:
         q_lower = question.lower()
-        if any(k in q_lower for k in ["name", "email", "phone", "notice period", "ctc", "salary", "experience"]):
+        if any(
+            k in q_lower
+            for k in ["name", "email", "phone", "notice period", "ctc", "salary", "experience"]
+        ):
             return QuestionType.PROFILE_DIRECT
-        if any(k in q_lower for k in ["why", "describe", "project", "challenge", "accomplishment", "joining"]):
+        if any(
+            k in q_lower
+            for k in ["why", "describe", "project", "challenge", "accomplishment", "joining"]
+        ):
             return QuestionType.BEHAVIORAL
         if any(k in q_lower for k in ["passport", "ssn", "aadhaar", "pan card", "bank account"]):
             return QuestionType.SENSITIVE
@@ -58,7 +64,10 @@ class QAEngine:
         Grounding Gate: Check that generated answer does not invent ungrounded facts.
         """
         # If candidate email or phone appears in answer, verify exact match with profile
-        if profile.personal_info.email and profile.personal_info.email.lower() not in answer.lower():
+        if (
+            profile.personal_info.email
+            and profile.personal_info.email.lower() not in answer.lower()
+        ):
             if "@" in answer:
                 return False
         return True

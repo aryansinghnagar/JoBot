@@ -34,7 +34,9 @@ class DocumentTailor:
     async def generate_tailored_materials(
         self, job: JobPosting, profile: UserProfile
     ) -> TailoredDocumentResult:
-        skills_match = [s for s in job.parsed_skills if s.lower() in [ps.lower() for ps in profile.skills]]
+        skills_match = [
+            s for s in job.parsed_skills if s.lower() in [ps.lower() for ps in profile.skills]
+        ]
 
         prompt = (
             f"Write a concise, professional cover letter for {profile.personal_info.first_name} {profile.personal_info.last_name}.\n"

@@ -57,7 +57,9 @@ class ModelRouter:
                 except Exception as e:
                     logger.debug(f"Failed to read .env at {p}: {e}")
 
-    def _estimate_cost(self, provider: ModelProvider, prompt_tokens: int, completion_tokens: int) -> float:
+    def _estimate_cost(
+        self, provider: ModelProvider, prompt_tokens: int, completion_tokens: int
+    ) -> float:
         # Approximate pricing per 1K tokens (Gemini 2.0/3.0 Flash tier defaults)
         if provider == ModelProvider.GEMINI:
             return (prompt_tokens * 0.000075 + completion_tokens * 0.00030) / 1000.0
@@ -68,11 +70,19 @@ class ModelRouter:
         return 0.0  # Ollama local
 
     async def generate_text(
-        self, prompt: str, system_prompt: Optional[str] = None, fallback_chain: Optional[List[ModelProvider]] = None
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        fallback_chain: Optional[List[ModelProvider]] = None,
     ) -> str:
         """Generate text response using primary provider with fallback chain."""
         if fallback_chain is None:
-            fallback_chain = [ModelProvider.GEMINI, ModelProvider.OPENAI, ModelProvider.ANTHROPIC, ModelProvider.OLLAMA]
+            fallback_chain = [
+                ModelProvider.GEMINI,
+                ModelProvider.OPENAI,
+                ModelProvider.ANTHROPIC,
+                ModelProvider.OLLAMA,
+            ]
 
         for provider in fallback_chain:
             try:
@@ -83,12 +93,18 @@ class ModelRouter:
                 logger.warning(f"Model provider {provider} failed: {e}. Trying next fallback...")
 
         # Graceful degradation fallback if all LLM API calls fail
-        return "[LLM_UNAVAILABLE] Information from profile facts: Please refer to candidate profile."
+        return (
+            "[LLM_UNAVAILABLE] Information from profile facts: Please refer to candidate profile."
+        )
 
-    async def _call_provider(self, provider: ModelProvider, prompt: str, system_prompt: Optional[str]) -> Optional[str]:
+    async def _call_provider(
+        self, provider: ModelProvider, prompt: str, system_prompt: Optional[str]
+    ) -> Optional[str]:
         # Check budget limit
         if self.current_spent_usd >= self.daily_budget_usd and provider != ModelProvider.OLLAMA:
-            logger.warning("Daily LLM budget reached. Falling back to local Ollama or profile lookup.")
+            logger.warning(
+                "Daily LLM budget reached. Falling back to local Ollama or profile lookup."
+            )
             return None
 
         api_key = os.getenv(f"{provider.value.upper()}_API_KEY")
@@ -99,12 +115,15 @@ class ModelRouter:
         if provider == ModelProvider.GEMINI:
             try:
                 from google import genai
+
                 client = genai.Client(api_key=api_key)
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=prompt,
                 )
-                cost = self._estimate_cost(provider, len(prompt.split()), len(response.text.split()))
+                cost = self._estimate_cost(
+                    provider, len(prompt.split()), len(response.text.split())
+                )
                 self.current_spent_usd += cost
                 return response.text
             except Exception as ex:
@@ -124,10 +143,12 @@ class ModelRouter:
                         "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json",
                     },
-                    data=json.dumps({
-                        "model": "gpt-4o-mini",
-                        "messages": messages,
-                    }).encode("utf-8"),
+                    data=json.dumps(
+                        {
+                            "model": "gpt-4o-mini",
+                            "messages": messages,
+                        }
+                    ).encode("utf-8"),
                     method="POST",
                 )
                 with urllib.request.urlopen(req, timeout=15) as resp:
@@ -176,11 +197,13 @@ class ModelRouter:
                 req = urllib.request.Request(
                     "http://localhost:11434/api/generate",
                     headers={"Content-Type": "application/json"},
-                    data=json.dumps({
-                        "model": "llama3",
-                        "prompt": full_prompt,
-                        "stream": False,
-                    }).encode("utf-8"),
+                    data=json.dumps(
+                        {
+                            "model": "llama3",
+                            "prompt": full_prompt,
+                            "stream": False,
+                        }
+                    ).encode("utf-8"),
                     method="POST",
                 )
                 with urllib.request.urlopen(req, timeout=10) as resp:

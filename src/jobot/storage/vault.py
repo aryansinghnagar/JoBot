@@ -68,7 +68,9 @@ class CredentialVault:
     # Profile Storage Operations
     # -------------------------------------------------------------------
 
-    def save_encrypted_profile(self, profile: UserProfile, profile_path: Optional[Path] = None) -> Path:
+    def save_encrypted_profile(
+        self, profile: UserProfile, profile_path: Optional[Path] = None
+    ) -> Path:
         if profile_path is None:
             profile_dir = Path.home() / ".jobot" / "profiles"
             profile_dir.mkdir(parents=True, exist_ok=True)

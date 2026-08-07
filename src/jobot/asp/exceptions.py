@@ -12,4 +12,5 @@ class PipelinePhaseFailure(Exception):
 
 class DoDViolation(Exception):
     """Raised when a specific Definition of Done gate rule is violated."""
+
     pass

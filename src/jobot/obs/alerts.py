@@ -39,7 +39,9 @@ class AlertDispatcher:
         self.alert_file.parent.mkdir(parents=True, exist_ok=True)
         self.alert_history: List[AlertMessage] = []
 
-    def dispatch_alert(self, title: str, message: str, level: AlertLevel = AlertLevel.INFO) -> AlertMessage:
+    def dispatch_alert(
+        self, title: str, message: str, level: AlertLevel = AlertLevel.INFO
+    ) -> AlertMessage:
         alert = AlertMessage(
             alert_id=f"ALT-{uuid.uuid4().hex[:8].upper()}",
             level=level,
@@ -50,14 +52,19 @@ class AlertDispatcher:
         logger.info(f"[AlertDispatcher] [{level.value}] {title}: {message}")
 
         with open(self.alert_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "alert_id": alert.alert_id,
-                "level": alert.level.value,
-                "title": alert.title,
-                "message": alert.message,
-                "timestamp": alert.timestamp.isoformat(),
-                "acknowledged": alert.acknowledged,
-            }) + "\n")
+            f.write(
+                json.dumps(
+                    {
+                        "alert_id": alert.alert_id,
+                        "level": alert.level.value,
+                        "title": alert.title,
+                        "message": alert.message,
+                        "timestamp": alert.timestamp.isoformat(),
+                        "acknowledged": alert.acknowledged,
+                    }
+                )
+                + "\n"
+            )
 
         return alert
 

@@ -10,6 +10,7 @@ from jobot.models.domain import Application, ApplicationStatus, JobPosting, Trus
 
 class DuplicateApplicationError(Exception):
     """Raised when an application with the same idempotency_key already exists."""
+
     pass
 
 
@@ -144,7 +145,9 @@ class DatabaseManager:
 
     def get_application_by_idempotency_key(self, idempotency_key: str) -> Optional[Application]:
         with self._get_connection() as conn:
-            row = conn.execute("SELECT * FROM applications WHERE idempotency_key = ?", (idempotency_key,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM applications WHERE idempotency_key = ?", (idempotency_key,)
+            ).fetchone()
             if not row:
                 return None
             return Application(
@@ -217,7 +220,9 @@ class DatabaseManager:
 
     def get_application(self, application_id: str) -> Optional[Application]:
         with self._get_connection() as conn:
-            row = conn.execute("SELECT * FROM applications WHERE application_id = ?", (application_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM applications WHERE application_id = ?", (application_id,)
+            ).fetchone()
             if not row:
                 return None
             return Application(
@@ -236,7 +241,9 @@ class DatabaseManager:
 
     def list_applications(self, limit: int = 50) -> List[Application]:
         with self._get_connection() as conn:
-            rows = conn.execute("SELECT * FROM applications ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+            rows = conn.execute(
+                "SELECT * FROM applications ORDER BY created_at DESC LIMIT ?", (limit,)
+            ).fetchall()
             apps = []
             for row in rows:
                 apps.append(

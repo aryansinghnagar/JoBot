@@ -59,6 +59,7 @@ class DoDResult(BaseModel):
 # Candidate Profile Domain Models
 # -------------------------------------------------------------------
 
+
 class PersonalInfo(BaseModel):
     first_name: str = ""
     last_name: str = ""
@@ -116,6 +117,7 @@ class UserProfile(BaseModel):
 # Job Posting & Application Domain Models
 # -------------------------------------------------------------------
 
+
 class JobPosting(BaseModel):
     job_id: str
     site: str  # e.g., 'naukri', 'mock_ats'
@@ -158,6 +160,7 @@ class Application(BaseModel):
 # -------------------------------------------------------------------
 # Task Graph & Goal Domain Models
 # -------------------------------------------------------------------
+
 
 class TaskStatus(str, Enum):
     PENDING = "pending"

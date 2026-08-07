@@ -57,15 +57,29 @@ class ContinuousCampaignRunner:
         ]
 
         portals = [
-            "naukri", "linkedin", "indeed", "greenhouse", "lever",
-            "workday", "glassdoor", "instahyre", "cutshort", "wellfound",
-            "shine", "foundit", "hirist", "ziprecruiter", "smartrecruiters"
+            "naukri",
+            "linkedin",
+            "indeed",
+            "greenhouse",
+            "lever",
+            "workday",
+            "glassdoor",
+            "instahyre",
+            "cutshort",
+            "wellfound",
+            "shine",
+            "foundit",
+            "hirist",
+            "ziprecruiter",
+            "smartrecruiters",
         ]
 
         total_submitted = 0
         portal_index = 0
 
-        print(f"=== Starting JoBot High-Throughput Campaign (Goal: {goal_count}+ Apps | Min Match: {int(min_match*100)}%) ===")
+        print(
+            f"=== Starting JoBot High-Throughput Campaign (Goal: {goal_count}+ Apps | Min Match: {int(min_match * 100)}%) ==="
+        )
 
         while total_submitted < goal_count:
             # Round-Robin Portal Selection
@@ -76,7 +90,9 @@ class ContinuousCampaignRunner:
             title = target_titles[total_submitted % len(target_titles)]
 
             discovery = JobDiscoveryEngine(active_portals=[selected_portal])
-            matches = await discovery.discover_matching_jobs(p, target_title=title, limit_per_portal=1, min_match_threshold=min_match)
+            matches = await discovery.discover_matching_jobs(
+                p, target_title=title, limit_per_portal=1, min_match_threshold=min_match
+            )
 
             for match in matches:
                 if total_submitted >= goal_count:
@@ -96,24 +112,33 @@ class ContinuousCampaignRunner:
                     status=ApplicationStatus.INTENT,
                     idempotency_key=f"intent_{job.job_id}",
                 )
-                policy_res = self.policy_engine.check_application_policy(
-                    job, p, intent_app, daily_submitted_count=daily_count
-                ) if hasattr(self.policy_engine, "check_application_policy") else None
+                policy_res = (
+                    self.policy_engine.check_application_policy(
+                        job, p, intent_app, daily_submitted_count=daily_count
+                    )
+                    if hasattr(self.policy_engine, "check_application_policy")
+                    else None
+                )
 
                 if policy_res and not policy_res.allowed:
-                    logger.warning(f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}")
+                    logger.warning(
+                        f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}"
+                    )
                     continue
 
                 auto_approve = auto_submit
                 app_res = await pipeline.execute(job.url, p, auto_approve=auto_approve)
-                if app_res.status == ApplicationStatus.VERIFIED or app_res.status == ApplicationStatus.SUBMITTED:
+                if (
+                    app_res.status == ApplicationStatus.VERIFIED
+                    or app_res.status == ApplicationStatus.SUBMITTED
+                ):
                     total_submitted += 1
 
                 # Maintain log.md at project root
                 self.md_logger.log_submission(app_res, job, match_score=match.match_score)
 
                 print(
-                    f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score*100)}% -> {app_res.status.value.upper()}"
+                    f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score * 100)}% -> {app_res.status.value.upper()}"
                 )
 
                 await asyncio.sleep(0.05)  # Fast continuous loop throughput

@@ -43,7 +43,9 @@ def setup() -> None:
     vault = CredentialVault()
     console.print(f"[green][OK] Database initialized at:[blue] {db.db_path}[/blue][/green]")
     console.print(f"[green][OK] Master vault initialized at:[blue] {vault.key_dir}[/blue][/green]")
-    console.print("[bold blue][OK] Setup complete! Add your profile with 'jobot profile init'[/bold blue]")
+    console.print(
+        "[bold blue][OK] Setup complete! Add your profile with 'jobot profile init'[/bold blue]"
+    )
 
 
 @app.command("sidecar")
@@ -86,7 +88,9 @@ def profile_cmd(
             skills=["Python", "FastAPI", "SQLite", "Playwright"],
         )
         saved_path = vault.save_encrypted_profile(p, profile_path)
-        console.print(f"[bold green][OK] Profile encrypted & saved to:[blue] {saved_path}[/blue][/bold green]")
+        console.print(
+            f"[bold green][OK] Profile encrypted & saved to:[blue] {saved_path}[/blue][/bold green]"
+        )
     else:
         if not profile_path.exists():
             console.print("[yellow]No profile found. Run 'jobot profile init' first.[/yellow]")
@@ -103,43 +107,71 @@ def profile_cmd(
 @app.command("continuous-campaign")
 def continuous_campaign_cmd(
     goal: int = typer.Option(1000, "--goal", help="Target total applications goal (default: 1000)"),
-    min_match: float = typer.Option(0.20, "--min-match", help="Minimum match score threshold (default: 0.20 for 20%)"),
-    auto_submit: bool = typer.Option(True, "--auto-submit/--supervised", help="Run in autonomous submit mode or supervised approval mode"),
+    min_match: float = typer.Option(
+        0.20, "--min-match", help="Minimum match score threshold (default: 0.20 for 20%)"
+    ),
+    auto_submit: bool = typer.Option(
+        True,
+        "--auto-submit/--supervised",
+        help="Run in autonomous submit mode or supervised approval mode",
+    ),
 ) -> None:
     """Run continuous round-robin campaign across 15 portals maintaining log.md at project root."""
     runner = ContinuousCampaignRunner()
-    asyncio.run(runner.run_continuous_campaign(goal_count=goal, min_match=min_match, auto_submit=auto_submit))
+    asyncio.run(
+        runner.run_continuous_campaign(
+            goal_count=goal, min_match=min_match, auto_submit=auto_submit
+        )
+    )
 
 
 @app.command("auto-apply")
 def auto_apply_cmd(
-    target_title: str = typer.Option("Python Developer", "--title", help="Target job title to discover"),
-    portals: str = typer.Option("naukri,linkedin,indeed,greenhouse,lever", "--portals", help="Comma-separated portal list"),
-    auto_submit: bool = typer.Option(False, "--auto-submit", help="Bypass human final OK gate (Full Autonomous mode)"),
+    target_title: str = typer.Option(
+        "Python Developer", "--title", help="Target job title to discover"
+    ),
+    portals: str = typer.Option(
+        "naukri,linkedin,indeed,greenhouse,lever", "--portals", help="Comma-separated portal list"
+    ),
+    auto_submit: bool = typer.Option(
+        False, "--auto-submit", help="Bypass human final OK gate (Full Autonomous mode)"
+    ),
 ) -> None:
     """Automatically discover matching jobs across portals and prompt for final submission approval."""
-    console.print(f"[bold cyan]jobot Discovery Engine: Searching for '{target_title}' across portals [{portals}]...[/bold cyan]")
+    console.print(
+        f"[bold cyan]jobot Discovery Engine: Searching for '{target_title}' across portals [{portals}]...[/bold cyan]"
+    )
     vault = CredentialVault()
     db = DatabaseManager()
     profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
 
     if not profile_path.exists():
         console.print("[bold red][ERROR] Candidate profile missing.[/bold red]")
-        console.print("[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]")
+        console.print(
+            "[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]"
+        )
         raise typer.Exit(code=1)
     p = vault.load_encrypted_profile(profile_path)
 
     portal_list = [pt.strip() for pt in portals.split(",") if pt.strip()]
     discovery = JobDiscoveryEngine(active_portals=portal_list)
 
-    matched_results = asyncio.run(discovery.discover_matching_jobs(p, target_title=target_title, limit_per_portal=1))
+    matched_results = asyncio.run(
+        discovery.discover_matching_jobs(p, target_title=target_title, limit_per_portal=1)
+    )
 
-    console.print(f"[bold green]Discovered {len(matched_results)} matching positions![/bold green]\n")
+    console.print(
+        f"[bold green]Discovered {len(matched_results)} matching positions![/bold green]\n"
+    )
 
     for idx, match in enumerate(matched_results, start=1):
         job = match.posting
-        console.print(f"[bold yellow]Job {idx}/{len(matched_results)}: {job.title} at {job.company} ({job.site.upper()})[/bold yellow]")
-        console.print(f"Match Score: [green]{int(match.match_score * 100)}% ({match.recommendation})[/green]")
+        console.print(
+            f"[bold yellow]Job {idx}/{len(matched_results)}: {job.title} at {job.company} ({job.site.upper()})[/bold yellow]"
+        )
+        console.print(
+            f"Match Score: [green]{int(match.match_score * 100)}% ({match.recommendation})[/green]"
+        )
         console.print(f"Matching Skills: {', '.join(match.matching_skills)}")
         console.print(f"URL: {job.url}")
 
@@ -156,21 +188,31 @@ def auto_apply_cmd(
             app_res = asyncio.run(pipeline.execute(job.url, p, auto_approve=False))
 
             if app_res.status == ApplicationStatus.PENDING_APPROVAL:
-                console.print("\n[bold magenta]=== PRE-SUBMISSION VERIFICATION SUMMARY ===[/bold magenta]")
-                console.print(f"Applicant: {p.personal_info.first_name} {p.personal_info.last_name} ({p.personal_info.email})")
+                console.print(
+                    "\n[bold magenta]=== PRE-SUBMISSION VERIFICATION SUMMARY ===[/bold magenta]"
+                )
+                console.print(
+                    f"Applicant: {p.personal_info.first_name} {p.personal_info.last_name} ({p.personal_info.email})"
+                )
                 console.print(f"Target: {job.title} at {job.company}")
                 if app_res.form_values:
                     console.print("Form Values to be submitted:")
                     for k, v in app_res.form_values.items():
                         console.print(f"  - {k}: {v}")
 
-                user_approved = Confirm.ask(f"[bold green]Proceed with final submission to {job.company}?[/bold green]")
+                user_approved = Confirm.ask(
+                    f"[bold green]Proceed with final submission to {job.company}?[/bold green]"
+                )
                 if user_approved:
                     asyncio.run(pipeline.submit_and_verify(app_res))
                     if app_res.status == ApplicationStatus.VERIFIED:
-                        console.print(f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n")
+                        console.print(
+                            f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n"
+                        )
                     else:
-                        console.print(f"[bold red][ERROR] Submission failed: {app_res.error_message}[/bold red]\n")
+                        console.print(
+                            f"[bold red][ERROR] Submission failed: {app_res.error_message}[/bold red]\n"
+                        )
                 else:
                     app_res.status = ApplicationStatus.CANCELLED
                     db.save_application(app_res)
@@ -180,18 +222,28 @@ def auto_apply_cmd(
 @app.command("run")
 def run_cmd(
     job_url: str = typer.Argument(..., help="Job posting URL"),
-    site: str = typer.Option("naukri", "--site", help="Site adapter: naukri, linkedin, indeed, greenhouse, lever, mock_ats"),
-    approve: bool = typer.Option(False, "--approve", help="Auto-approve submission (autonomous mode)"),
+    site: str = typer.Option(
+        "naukri",
+        "--site",
+        help="Site adapter: naukri, linkedin, indeed, greenhouse, lever, mock_ats",
+    ),
+    approve: bool = typer.Option(
+        False, "--approve", help="Auto-approve submission (autonomous mode)"
+    ),
 ) -> None:
     """Run application submission pipeline for a single job posting URL."""
-    console.print(f"[bold cyan]jobot: Applying to job posting at {job_url} on site '{site}'[/bold cyan]")
+    console.print(
+        f"[bold cyan]jobot: Applying to job posting at {job_url} on site '{site}'[/bold cyan]"
+    )
     vault = CredentialVault()
     db = DatabaseManager()
     profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
 
     if not profile_path.exists():
         console.print("[bold red][ERROR] Candidate profile missing.[/bold red]")
-        console.print("[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]")
+        console.print(
+            "[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]"
+        )
         raise typer.Exit(code=1)
     p = vault.load_encrypted_profile(profile_path)
 
@@ -200,7 +252,9 @@ def run_cmd(
         pipeline = ApplicationSubmissionPipeline(adapter, db)
         app_result = asyncio.run(pipeline.execute(job_url, p, auto_approve=approve))
 
-        console.print(f"[bold green]Pipeline Status:[blue] {app_result.status.value.upper()}[/blue][/bold green]")
+        console.print(
+            f"[bold green]Pipeline Status:[blue] {app_result.status.value.upper()}[/blue][/bold green]"
+        )
         if app_result.form_values:
             console.print("[cyan]Filled Form Values:[/cyan]")
             for k, v in app_result.form_values.items():
@@ -220,7 +274,9 @@ def run_cmd(
 @app.command("report-issue")
 def report_issue_cmd(
     summary: str = typer.Argument(..., help="Brief summary of issue or vulnerability observed"),
-    issue_type: str = typer.Option("USER_REPORT", "--type", help="Type: USER_REPORT, VULNERABILITY, DOM_DRIFT, ERROR"),
+    issue_type: str = typer.Option(
+        "USER_REPORT", "--type", help="Type: USER_REPORT, VULNERABILITY, DOM_DRIFT, ERROR"
+    ),
     site: Optional[str] = typer.Option(None, "--site", help="Target site (e.g. linkedin, naukri)"),
     details: str = typer.Option("", "--details", help="Additional details or repro notes"),
 ) -> None:
@@ -231,7 +287,9 @@ def report_issue_cmd(
         details=details,
         site=site,
     )
-    console.print(f"[bold green][OK] Manual test issue logged: [blue]{issue.issue_id}[/blue][/bold green]")
+    console.print(
+        f"[bold green][OK] Manual test issue logged: [blue]{issue.issue_id}[/blue][/bold green]"
+    )
     console.print(f"Logged to: {test_logger.markdown_report}")
 
 
@@ -291,8 +349,12 @@ def pause_cmd() -> None:
     """Pause active background operations and save execution state."""
     state_path = Path.home() / ".jobot" / "runner_state.json"
     state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(json.dumps({"status": "PAUSED", "paused_at": datetime.now().isoformat()}), encoding="utf-8")
-    console.print("[bold yellow][OK] All active automation loops paused. State saved to ~/.jobot/runner_state.json[/bold yellow]")
+    state_path.write_text(
+        json.dumps({"status": "PAUSED", "paused_at": datetime.now().isoformat()}), encoding="utf-8"
+    )
+    console.print(
+        "[bold yellow][OK] All active automation loops paused. State saved to ~/.jobot/runner_state.json[/bold yellow]"
+    )
 
 
 @app.command("resume")
@@ -300,10 +362,11 @@ def resume_cmd() -> None:
     """Resume paused background operations."""
     state_path = Path.home() / ".jobot" / "runner_state.json"
     if state_path.exists():
-        state_path.write_text(json.dumps({"status": "RUNNING", "resumed_at": datetime.now().isoformat()}), encoding="utf-8")
+        state_path.write_text(
+            json.dumps({"status": "RUNNING", "resumed_at": datetime.now().isoformat()}),
+            encoding="utf-8",
+        )
     console.print("[bold green][OK] Automation loops resumed.[/bold green]")
-
-
 
 
 @app.command("export")
@@ -326,11 +389,24 @@ def export_cmd(
     else:
         with open(out_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["application_id", "site", "job_id", "status", "trust_level", "created_at"])
+            writer.writerow(
+                ["application_id", "site", "job_id", "status", "trust_level", "created_at"]
+            )
             for a in apps:
-                writer.writerow([a.application_id, a.site, a.job_id, a.status.value, a.trust_level.value, a.created_at])
+                writer.writerow(
+                    [
+                        a.application_id,
+                        a.site,
+                        a.job_id,
+                        a.status.value,
+                        a.trust_level.value,
+                        a.created_at,
+                    ]
+                )
 
-    console.print(f"[bold green][OK] Exported {len(apps)} applications to {out_path.resolve()}[/bold green]")
+    console.print(
+        f"[bold green][OK] Exported {len(apps)} applications to {out_path.resolve()}[/bold green]"
+    )
 
 
 @app.command("schedule")
@@ -345,10 +421,14 @@ def schedule_cmd(
 
     if action == "add":
         if not cron or not command:
-            console.print("[bold red]Please specify --cron and --command for add action.[/bold red]")
+            console.print(
+                "[bold red]Please specify --cron and --command for add action.[/bold red]"
+            )
             return
         entry = sm.add_schedule(cron, command)
-        console.print(f"[bold green][OK] Schedule added: {entry['schedule_id']} ({cron}) -> {command}[/bold green]")
+        console.print(
+            f"[bold green][OK] Schedule added: {entry['schedule_id']} ({cron}) -> {command}[/bold green]"
+        )
     elif action == "remove":
         if not schedule_id:
             console.print("[bold red]Please specify --id to remove.[/bold red]")
@@ -392,7 +472,9 @@ def traces_cmd(
         console.print(table)
     elif action == "show":
         if not run_id:
-            console.print("[bold red]Please provide run_id to show (e.g. jobot traces show <run_id>)[/bold red]")
+            console.print(
+                "[bold red]Please provide run_id to show (e.g. jobot traces show <run_id>)[/bold red]"
+            )
             return
         spans = tl.get_trace_spans(run_id)
         if not spans:
@@ -467,7 +549,9 @@ def evals_cmd(
     console.print("\n[bold cyan]=== JoBot Continuous Evaluation Results ===[/bold cyan]")
     console.print(f"Scenarios Evaluated: [bold]{res['total']}[/bold]")
     console.print(f"Scenarios Passed:    [bold green]{res['passed']}[/bold green]")
-    console.print(f"Overall Pass Rate:   [bold yellow]{int(res['pass_rate']*100)}%[/bold yellow]\n")
+    console.print(
+        f"Overall Pass Rate:   [bold yellow]{int(res['pass_rate'] * 100)}%[/bold yellow]\n"
+    )
 
     table = Table(title="Category Breakdown")
     table.add_column("Category", style="cyan")
@@ -481,9 +565,13 @@ def evals_cmd(
 
 @app.command("login")
 def login_cmd(
-    portal: Optional[str] = typer.Argument(None, help="Target portal: naukri, linkedin, indeed, etc."),
+    portal: Optional[str] = typer.Argument(
+        None, help="Target portal: naukri, linkedin, indeed, etc."
+    ),
     status: bool = typer.Option(False, "--status", help="Show active portal login sessions"),
-    logout: Optional[str] = typer.Option(None, "--logout", help="Clear session for specified portal"),
+    logout: Optional[str] = typer.Option(
+        None, "--logout", help="Clear session for specified portal"
+    ),
 ) -> None:
     """Manage interactive portal login sessions and cookie persistence."""
     sessions_base = Path.home() / ".jobot" / "sessions"
@@ -515,7 +603,9 @@ def login_cmd(
         return
 
     if not portal:
-        console.print("[bold red][ERROR] Please specify portal name, --status, or --logout <portal>[/bold red]")
+        console.print(
+            "[bold red][ERROR] Please specify portal name, --status, or --logout <portal>[/bold red]"
+        )
         console.print("[yellow]Usage: jobot login naukri[/yellow]")
         raise typer.Exit(code=1)
 
@@ -526,11 +616,15 @@ def login_cmd(
         flow = NaukriLoginFlow(headless=False)
         success = asyncio.run(flow.execute_login())
         if success:
-            console.print(f"[bold green][OK] Naukri session successfully saved to {sessions_base / 'naukri'}[/bold green]")
+            console.print(
+                f"[bold green][OK] Naukri session successfully saved to {sessions_base / 'naukri'}[/bold green]"
+            )
     else:
         session = BrowserSession(portal=portal_clean, headless=False)
         asyncio.run(session.start())
-        console.print("[bold green][OK] Browser launched. Complete login in browser window.[/bold green]")
+        console.print(
+            "[bold green][OK] Browser launched. Complete login in browser window.[/bold green]"
+        )
 
 
 @app.command("reset-db")
@@ -539,14 +633,18 @@ def reset_db_cmd(
 ) -> None:
     """Clear synthetic and test application history from SQLite database."""
     if not confirm:
-        user_ok = Confirm.ask("[bold red]Are you sure you want to clear all stored application history in SQLite?[/bold red]")
+        user_ok = Confirm.ask(
+            "[bold red]Are you sure you want to clear all stored application history in SQLite?[/bold red]"
+        )
         if not user_ok:
             console.print("[yellow]Database reset cancelled.[/yellow]")
             return
 
     db = DatabaseManager()
     deleted_count = db.clear_all_applications()
-    console.print(f"[bold green][OK] Cleared {deleted_count} application records from database.[/bold green]")
+    console.print(
+        f"[bold green][OK] Cleared {deleted_count} application records from database.[/bold green]"
+    )
 
 
 if __name__ == "__main__":

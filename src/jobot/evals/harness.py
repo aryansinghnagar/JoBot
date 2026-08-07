@@ -94,9 +94,10 @@ class EvalHarness:
             # 2. Sensitive question scenario
             if "question_type" in exp and exp["question_type"] == "sensitive":
                 from jobot.ai.qa_engine import QAEngine, QuestionType
+
                 qa = QAEngine()
                 q_type = qa.classify_question(inp.get("question", ""))
-                passed = (q_type == QuestionType.SENSITIVE)
+                passed = q_type == QuestionType.SENSITIVE
                 return EvalResult(
                     scenario_id=sc.scenario_id,
                     category=sc.category,
@@ -119,9 +120,10 @@ class EvalHarness:
             # 4. Profile direct Q&A scenario
             if exp.get("question_type") == "profile_direct":
                 from jobot.ai.qa_engine import QAEngine, QuestionType
+
                 qa = QAEngine()
                 q_type = qa.classify_question(inp.get("question", ""))
-                passed = (q_type == QuestionType.PROFILE_DIRECT)
+                passed = q_type == QuestionType.PROFILE_DIRECT
                 return EvalResult(
                     scenario_id=sc.scenario_id,
                     category=sc.category,
@@ -132,10 +134,11 @@ class EvalHarness:
             # 5. Circuit breaker scenario
             if "circuit_state" in exp:
                 from jobot.stealth.circuit_breaker import CircuitBreaker
+
                 cb = CircuitBreaker(failure_threshold=inp.get("failure_threshold", 5))
                 for _ in range(inp.get("consecutive_failures", 5)):
                     cb.record_failure("test_site")
-                passed = (cb.get_state("test_site") == exp["circuit_state"])
+                passed = cb.get_state("test_site") == exp["circuit_state"]
                 return EvalResult(
                     scenario_id=sc.scenario_id,
                     category=sc.category,

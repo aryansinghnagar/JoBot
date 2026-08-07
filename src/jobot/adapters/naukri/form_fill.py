@@ -18,7 +18,11 @@ class NaukriFormFiller:
         self.mimicry = BehavioralMimicry()
 
     async def fill_application_form(
-        self, job: JobPosting, profile: UserProfile, application: Application, page: Optional[Any] = None
+        self,
+        job: JobPosting,
+        profile: UserProfile,
+        application: Application,
+        page: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Detect form inputs and populate profile values using QAEngine and BehavioralMimicry."""
         full_name = f"{profile.personal_info.first_name} {profile.personal_info.last_name}".strip()
@@ -48,9 +52,13 @@ class NaukriFormFiller:
                 if val and hasattr(page, "type"):
                     delays = self.mimicry.get_keystroke_delays(str(val))
                     curve = self.mimicry.generate_bezier_curve((0, 0), (100, 100))
-                    logger.debug(f"[NAUKRI STEALTH FILL] Typing {field} with {len(delays)} delays & {len(curve)} Bezier curve points")
+                    logger.debug(
+                        f"[NAUKRI STEALTH FILL] Typing {field} with {len(delays)} delays & {len(curve)} Bezier curve points"
+                    )
 
         application.form_values = filled_data
         application.status = ApplicationStatus.FILLED
-        logger.info(f"[NAUKRI FORM FILLER] Form fields successfully filled for app {application.application_id[:8]}")
+        logger.info(
+            f"[NAUKRI FORM FILLER] Form fields successfully filled for app {application.application_id[:8]}"
+        )
         return filled_data
