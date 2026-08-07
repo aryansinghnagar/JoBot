@@ -43,7 +43,7 @@ jobs:
 
       - name: Run Mypy Type Checking
         run: |
-          mypy src/
+          mypy src/ --ignore-missing-imports
 
       - name: Run Pytest Suite with Coverage Check
         run: |

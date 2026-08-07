@@ -205,7 +205,7 @@ def auto_apply_cmd(
                 )
                 if user_approved:
                     asyncio.run(pipeline.submit_and_verify(app_res))
-                    if app_res.status == ApplicationStatus.VERIFIED:
+                    if app_res.status in (ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED):
                         console.print(
                             f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n"
                         )

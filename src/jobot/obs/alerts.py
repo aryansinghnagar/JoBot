@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class AlertDispatcher:
 
         return alert
 
-    def list_alerts(self, unack_only: bool = False) -> List[Dict]:
+    def list_alerts(self, unack_only: bool = False) -> List[Dict[str, Any]]:
         if not self.alert_file.exists():
             return []
         alerts = []

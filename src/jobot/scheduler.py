@@ -20,7 +20,10 @@ class SchedulerManager:
         if not self.schedule_file.exists():
             return []
         try:
-            return json.loads(self.schedule_file.read_text(encoding="utf-8"))
+            data = json.loads(self.schedule_file.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                return data
+            return []
         except Exception:
             return []
 

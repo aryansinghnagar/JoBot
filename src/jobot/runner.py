@@ -11,10 +11,12 @@ from jobot.storage.vault import CredentialVault
 from jobot.policy.engine import PolicyEngine
 from jobot.models.domain import Application, ApplicationStatus
 
+from jobot.adapters import AdapterRegistry, SiteAdapter
+
 logger = logging.getLogger(__name__)
 
 
-def get_adapter(site: str):
+def get_adapter(site: str) -> SiteAdapter:
     return AdapterRegistry.get_adapter(site)
 
 

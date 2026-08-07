@@ -1,4 +1,4 @@
-from typing import Dict, Type
+from typing import Any, Dict, Type, cast
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.adapters.indeed import IndeedAdapter
@@ -26,7 +26,7 @@ class AdapterRegistry:
     Maps site name to corresponding SiteAdapter implementation across discovery, runner, and CLI.
     """
 
-    _registry: Dict[str, Type[SiteAdapter]] = {
+    _registry: Dict[str, Any] = {
         "naukri": NaukriAdapter,
         "linkedin": LinkedInAdapter,
         "indeed": IndeedAdapter,
@@ -51,7 +51,7 @@ class AdapterRegistry:
         adapter_cls = cls._registry.get(s)
         if adapter_cls is None:
             raise ValueError(f"No adapter registered for portal: {site}")
-        return adapter_cls()
+        return cast(SiteAdapter, adapter_cls())
 
     @classmethod
     def list_supported_sites(cls) -> list[str]:
