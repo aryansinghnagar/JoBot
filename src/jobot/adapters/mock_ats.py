@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import json
-from typing import Any, Dict, Optional
+import logging
+from typing import Any, Dict, List, Optional
 import urllib.error
 import urllib.request
 from jobot.adapters.base import SiteAdapter
@@ -11,6 +12,8 @@ from jobot.models.domain import (
     UserProfile,
     VerificationResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class MockATSAdapter(SiteAdapter):
@@ -24,6 +27,41 @@ class MockATSAdapter(SiteAdapter):
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         return True
+
+    async def discover_jobs(
+        self,
+        company: str = "",
+        limit: int = 50,
+        keywords: str = "",
+        location: str = "",
+    ) -> List[JobPosting]:
+        """Fetch postings from the local mock ATS job feed."""
+        postings: List[JobPosting] = []
+        try:
+            req = urllib.request.Request(f"{self.base_url}/jobs")
+            with urllib.request.urlopen(req) as resp:
+                data = json.loads(resp.read().decode())
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[MOCK ATS] discover_jobs failed: %s", exc)
+            return postings
+        for item in (data.get("jobs") or [])[:limit]:
+            job_id = str(item.get("id", ""))
+            if not job_id:
+                continue
+            postings.append(
+                JobPosting(
+                    job_id=job_id,
+                    site="mock_ats",
+                    url=item.get("url") or f"{self.base_url}/jobs/{job_id}",
+                    title=item.get("title", ""),
+                    company=item.get("company", ""),
+                    location=item.get("location", ""),
+                    description=item.get("description", ""),
+                    parsed_skills=item.get("parsed_skills") or [],
+                    discovered_at=datetime.now(timezone.utc),
+                )
+            )
+        return postings
 
     async def parse_job_posting(self, url: str) -> JobPosting:
         job_id = url.split("/")[-1]

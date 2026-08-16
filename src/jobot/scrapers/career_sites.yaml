@@ -1,0 +1,34 @@
+# CareerPageScanner config (plan.md Phase 2).
+#
+# Schema: `ats_families` documents the marker each ATS vendor leaves on a
+# company careers page; `companies` is a starter set of VERIFIED companies
+# (each fingerprint + slug checked live on 2026-08-13). Unknown vendors are
+# skipped — no fabricated postings.
+#
+# Workable is listed for fingerprinting only: its public posting API now
+# requires per-account keys, so there is no anonymous feed to scrape.
+
+ats_families:
+  greenhouse:
+    marker: "boards.greenhouse.io"
+    api: "https://boards-api.greenhouse.io/v1/boards/{company}/jobs"
+  lever:
+    marker: "jobs.lever.co"
+    api: "https://api.lever.co/v0/postings/{company}"
+  ashby:
+    marker: "jobs.ashbyhq.com"
+    api: "https://api.ashbyhq.com/posting-api/job-board/{company}"
+  workable:
+    marker: "apply.workable.com"
+    api: null
+    note: "requires per-account API key; no anonymous public feed"
+  smartrecruiters:
+    marker: "smartrecruiters.com"
+    api: "https://api.smartrecruiters.com/v1/companies/{company}/postings"
+
+companies:
+  - webflow
+  - figma
+  - vercel
+  - notion
+  - benchling

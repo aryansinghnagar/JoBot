@@ -49,43 +49,36 @@ class GreenhouseAdapter(SiteAdapter):
         board, job_id = self._extract_board_and_job_id(url)
         api_url = f"{self.BASE_API_URL}/{board}/jobs/{job_id}"
 
-        try:
-            req = urllib.request.Request(api_url, headers={"User-Agent": "JoBot/1.0"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                return JobPosting(
-                    job_id=str(data.get("id", job_id)),
-                    site="greenhouse",
-                    url=url,
-                    title=data.get("title", "Software Engineer"),
-                    company=board.capitalize(),
-                    location=data.get("location", {}).get("name", "Remote"),
-                    description=data.get("content", "Job posting description from Greenhouse."),
-                    parsed_skills=["Python", "System Design", "REST API"],
-                    discovered_at=datetime.now(timezone.utc),
-                )
-        except Exception as e:
-            logger.debug(
-                f"[GREENHOUSE API] Could not fetch {api_url}: {e}. Returning parsed metadata."
+        req = urllib.request.Request(api_url, headers={"User-Agent": "JoBot/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return JobPosting(
+                job_id=str(data.get("id", job_id)),
+                site="greenhouse",
+                url=url,
+                title=data.get("title", "Software Engineer"),
+                company=board.capitalize(),
+                location=data.get("location", {}).get("name", "Remote"),
+                description=data.get("content", ""),
+                parsed_skills=[],
+                discovered_at=datetime.now(timezone.utc),
             )
-
-        return JobPosting(
-            job_id=job_id,
-            site="greenhouse",
-            url=url,
-            title="Software Engineer",
-            company=board.capitalize() if board != "default" else "Greenhouse Partner",
-            location="Remote",
-            description="Require Python, system architecture, and API design experience.",
-            parsed_skills=["Python", "System Design", "REST API"],
-            discovered_at=datetime.now(timezone.utc),
-        )
 
     async def discover_matching_jobs(
         self, board_token: str = "greenhouse", limit: int = 5
     ) -> List[JobPosting]:
         """Fetch job postings for a specific Greenhouse board token via API."""
-        api_url = f"{self.BASE_API_URL}/{board_token}/jobs?content=true"
+        return await self.discover_jobs(company=board_token, limit=limit)
+
+    async def discover_jobs(
+        self,
+        company: str,
+        limit: int = 25,
+        keywords: str = "",
+        location: str = "",
+    ) -> List[JobPosting]:
+        """Fetch real postings for a Greenhouse board; empty on failure (no fabrication)."""
+        api_url = f"{self.BASE_API_URL}/{company}/jobs?content=true"
         postings: List[JobPosting] = []
 
         try:
@@ -100,36 +93,21 @@ class GreenhouseAdapter(SiteAdapter):
                             site="greenhouse",
                             url=item.get(
                                 "absolute_url",
-                                f"https://boards.greenhouse.io/{board_token}/jobs/{item.get('id')}",
+                                f"https://boards.greenhouse.io/{company}/jobs/{item.get('id')}",
                             ),
-                            title=item.get("title", "Software Engineer"),
-                            company=board_token.capitalize(),
-                            location=item.get("location", {}).get("name", "Remote"),
+                            title=item.get("title", ""),
+                            company=company.capitalize(),
+                            location=item.get("location", {}).get("name", ""),
                             description=item.get("content", ""),
-                            parsed_skills=["Python", "API", "System Design"],
+                            parsed_skills=[],
                             discovered_at=datetime.now(timezone.utc),
                         )
                     )
-                if postings:
-                    return postings
-        except Exception as e:
-            logger.debug(f"[GREENHOUSE DISCOVERY API] Error: {e}")
+        except Exception as e:  # noqa: BLE001
+            logger.warning("[GREENHOUSE DISCOVERY API] Error for board %s: %s", company, e)
 
-        # Fallback list if API fails or rate limited
-        for i in range(1, limit + 1):
-            postings.append(
-                JobPosting(
-                    job_id=f"gh_{i}",
-                    site="greenhouse",
-                    url=f"https://boards.greenhouse.io/{board_token}/jobs/{i}",
-                    title=f"Software Engineer #{i}",
-                    company=board_token.capitalize(),
-                    location="Remote",
-                    description="Python and Cloud development role.",
-                    parsed_skills=["Python", "Cloud"],
-                    discovered_at=datetime.now(timezone.utc),
-                )
-            )
+        if not postings:
+            logger.warning("[GREENHOUSE DISCOVERY API] No real postings for board %s", company)
         return postings
 
     async def fill_form(

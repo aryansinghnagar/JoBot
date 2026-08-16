@@ -4,7 +4,7 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
 
 
@@ -86,15 +86,27 @@ class DatabaseManager:
                 application_id TEXT PRIMARY KEY,
                 job_id TEXT NOT NULL,
                 site TEXT NOT NULL,
-                profile_id TEXT NOT NULL,
+                profile_id TEXT NOT NULL DEFAULT 'default',
                 status TEXT NOT NULL,
                 idempotency_key TEXT UNIQUE NOT NULL,
-                trust_level TEXT NOT NULL,
-                form_values TEXT, -- JSON object
-                error_message TEXT,
+                trust_level TEXT NOT NULL DEFAULT 'SUPERVISED',
+                form_values TEXT,
+                unanswered_questions TEXT,
+                evidence TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
+                error_message TEXT,
                 FOREIGN KEY (job_id) REFERENCES job_postings (job_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS job_dedup_cache (
+                dedup_hash TEXT PRIMARY KEY,
+                job_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                company TEXT NOT NULL,
+                location TEXT NOT NULL,
+                embedding TEXT NOT NULL,
+                added_at TEXT NOT NULL
             );
             """)
 
@@ -278,3 +290,59 @@ class DatabaseManager:
         with self._get_connection() as conn:
             cursor = conn.execute("DELETE FROM applications")
             return cursor.rowcount
+
+    # -------------------------------------------------------------------
+    # Job Dedup Cache Operations (scraper two-tier dedup)
+    # -------------------------------------------------------------------
+
+    def save_dedup_entry(
+        self,
+        dedup_hash: str,
+        job_id: str,
+        title: str,
+        company: str,
+        location: str,
+        embedding: List[float],
+    ) -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO job_dedup_cache
+                (dedup_hash, job_id, title, company, location, embedding, added_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    dedup_hash,
+                    job_id,
+                    title,
+                    company,
+                    location,
+                    json.dumps(embedding),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+
+    def dedup_hash_exists(self, dedup_hash: str) -> bool:
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM job_dedup_cache WHERE dedup_hash = ?", (dedup_hash,)
+            ).fetchone()
+            return row is not None
+
+    def list_dedup_entries(self) -> List[Dict[str, Any]]:
+        """Return (dedup_hash, title, company, location, embedding) rows as dicts."""
+        entries: List[Dict[str, Any]] = []
+        with self._get_connection() as conn:
+            rows = conn.execute("SELECT * FROM job_dedup_cache").fetchall()
+            for row in rows:
+                entries.append(
+                    {
+                        "dedup_hash": row["dedup_hash"],
+                        "job_id": row["job_id"],
+                        "title": row["title"],
+                        "company": row["company"],
+                        "location": row["location"],
+                        "embedding": json.loads(row["embedding"] or "[]"),
+                    }
+                )
+        return entries

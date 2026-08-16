@@ -1,10 +1,35 @@
 import logging
 import math
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+_NON_ALNUM = re.compile(r"[^a-z0-9]+")
+
+
+def simple_embedding(text: str, dim: int = 16) -> List[float]:
+    """Generate a deterministic local pseudo-embedding for text.
+
+    Bag-of-character-bigrams over the lowercased, punctuation-normalized text.
+    Order- and punctuation-insensitive, so near-duplicate phrasing maps to
+    nearly identical vectors (used by memory retrieval and dedup tier 2).
+    """
+    norm = _NON_ALNUM.sub(" ", text.lower()).strip()
+    vec = [0.0] * dim
+    if not norm:
+        return vec
+    padded = f" {norm} "
+    grams = {padded[i : i + 2] for i in range(len(padded) - 1)}
+    grams.discard("  ")
+    for gram in grams:
+        val = sum(ord(c) for c in gram)
+        for k in (1, 3):
+            vec[(val * k) % dim] += math.sin(val) / 2
+    norm_len = math.sqrt(sum(x * x for x in vec)) or 1.0
+    return [x / norm_len for x in vec]
 
 
 class VectorPoint(BaseModel):
@@ -27,20 +52,14 @@ class VectorMemory:
 
     def _simple_embedding(self, text: str, dim: int = 16) -> List[float]:
         """Generate deterministic local pseudo-embedding vector for text."""
-        vec = [0.0] * dim
-        words = text.lower().split()
-        for i, word in enumerate(words):
-            val = sum(ord(c) for c in word)
-            vec[i % dim] += math.sin(val)
-        norm = math.sqrt(sum(x * x for x in vec)) or 1.0
-        return [x / norm for x in vec]
+        return simple_embedding(text, dim)
 
     def store_answer(
         self, point_id: str, question: str, answer: str, site: str = "general"
     ) -> None:
         """Store Q&A pair vector point."""
         text = f"Q: {question} A: {answer}"
-        vec = self._simple_embedding(text)
+        vec = simple_embedding(text)
         point = VectorPoint(
             id=point_id,
             vector=vec,
@@ -53,7 +72,7 @@ class VectorMemory:
         if not self._points:
             return []
 
-        query_vec = self._simple_embedding(query_text)
+        query_vec = simple_embedding(query_text)
         scored_points = []
         for p in self._points:
             # Cosine similarity
