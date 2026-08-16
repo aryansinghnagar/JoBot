@@ -51,6 +51,12 @@ class SkillExtractor:
         # Fallback: Keyword pattern matching
         return self._rule_based_extraction(description)
 
+    def extract_skills_sync(self, description: str) -> List[str]:
+        """Synchronous skill extraction using keyword pattern matching."""
+        if not description or len(description.strip()) < 10:
+            return []
+        return self._rule_based_extraction(description)
+
     def _normalize_skills(self, skills: List[str]) -> List[str]:
         """Normalize skills: strip whitespace, remove empty, deduplicate preserving order."""
         seen = set()

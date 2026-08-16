@@ -1,28 +1,26 @@
 import pytest
-from jobot.failure.catalog import CircuitBreaker, CircuitBreakerState, FailureMode
+from jobot.failure.catalog import FailureMode
+from jobot.stealth.circuit_breaker import CircuitBreaker
 from jobot.memory.system import EightTierMemorySystem
 from jobot.obs.tracing import IncidentSeverity, TraceLogger
 
 
 def test_circuit_breaker_transitions():
-    cb = CircuitBreaker(site="naukri", failure_threshold=2, cooldown_seconds=0.1)
+    cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.1)
 
-    assert cb.state == CircuitBreakerState.CLOSED
-    assert cb.can_execute() is True
+    assert cb.get_state("naukri") == "CLOSED"
 
     # Record 1st failure
-    cb.record_failure(FailureMode.NETWORK_TIMEOUT)
-    assert cb.state == CircuitBreakerState.CLOSED
+    cb.record_failure("naukri")
+    assert cb.get_state("naukri") == "CLOSED"
 
     # Record 2nd failure -> Reaches threshold, opens circuit breaker
-    cb.record_failure(FailureMode.NETWORK_TIMEOUT)
-    assert cb.state == CircuitBreakerState.OPEN
-    assert cb.can_execute() is False
+    cb.record_failure("naukri")
+    assert cb.get_state("naukri") == "OPEN"
 
     # Success resets state
-    cb.record_success()
-    assert cb.state == CircuitBreakerState.CLOSED
-    assert cb.can_execute() is True
+    cb.record_success("naukri")
+    assert cb.get_state("naukri") == "CLOSED"
 
 
 def test_trace_logger_and_incidents():

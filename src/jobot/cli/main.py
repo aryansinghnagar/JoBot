@@ -1,4 +1,7 @@
 import asyncio
+import csv
+from datetime import datetime
+import json
 from pathlib import Path
 from typing import List, Optional
 import typer
@@ -256,15 +259,6 @@ def test_logs_cmd() -> None:
             iss.timestamp.strftime("%Y-%m-%d %H:%M"),
         )
     console.print(table)
-
-
-@app.command("schedule")
-def schedule_cmd(
-    cron: str = typer.Option("daily", "--schedule", help="Schedule frequency: daily, hourly"),
-    max_apps: int = typer.Option(30, "--max-apps", help="Max applications per day"),
-) -> None:
-    """Configure automated background application schedule."""
-    console.print(f"[bold green][OK] Background apply loop scheduled ({cron}). Max applications: {max_apps}/day.[/bold green]")
 
 
 @app.command("status")

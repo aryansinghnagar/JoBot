@@ -136,7 +136,8 @@ class GreenhouseAdapter(SiteAdapter):
         return filled_data
 
     async def submit_application(self, application: Application) -> bool:
-        board, job_id = self._extract_board_and_job_id(application.site)
+        target_url = getattr(application, "job_url", "") or application.site
+        board, job_id = self._extract_board_and_job_id(target_url)
         api_url = f"{self.BASE_API_URL}/{board}/jobs/{job_id}/applications"
 
         payload = {
@@ -158,11 +159,15 @@ class GreenhouseAdapter(SiteAdapter):
                 if resp.status in [200, 201]:
                     application.status = ApplicationStatus.SUBMITTED
                     return True
+                else:
+                    application.status = ApplicationStatus.FAILED
+                    application.error_message = f"Greenhouse POST status {resp.status}"
+                    return False
         except Exception as e:
-            logger.debug(f"[GREENHOUSE SUBMIT API] Direct API POST fallback for {api_url}: {e}")
-
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+            logger.warning(f"[GREENHOUSE SUBMIT API ERROR] POST to {api_url} failed: {e}")
+            application.status = ApplicationStatus.FAILED
+            application.error_message = f"Greenhouse API error: {e}"
+            return False
 
     async def verify_submission(self, application: Application) -> bool:
         application.status = ApplicationStatus.VERIFIED

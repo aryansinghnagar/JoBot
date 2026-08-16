@@ -1,6 +1,6 @@
 # JoBot Refactor Worklog
 
-Authoritative record of all refactor tasks executed on JoBot per `JoBot_Refactor_Plan.md`.
+Authoritative record of all refactor tasks executed on JoBot per `JoBot_Refactor_Plan.md` and `JoBot_Refactor_Review_2.md`.
 
 | Timestamp (UTC) | Task ID | Title | Status | Files Touched | Verification Output |
 |-----------------|---------|-------|--------|---------------|---------------------|
@@ -38,10 +38,7 @@ Authoritative record of all refactor tasks executed on JoBot per `JoBot_Refactor
 | 2026-07-23 04:05 | T2.9 | Implement jobot login CLI Command | COMPLETED | `src/jobot/cli/main.py` | `jobot login <portal>`, `jobot login --status`, `jobot login --logout <portal>` CLI subcommands active. |
 | 2026-07-23 04:06 | T2.10 | Implement Real Skill Extraction from Job Description | COMPLETED | `src/jobot/ai/skill_extractor.py`, `tests/test_skill_extraction.py` | `pytest tests/test_skill_extraction.py` passed 2/2. LLM + keyword extraction fallback. |
 | 2026-07-23 04:07 | T2.8 | Implement Basic CAPTCHA Solving via LLM Vision | COMPLETED | `src/jobot/stealth/captcha.py`, `tests/test_captcha_solver.py` | `pytest tests/test_captcha_solver.py` passed 2/2. Vision solver with confidence scoring. |
-| 2026-07-23 04:09 | T2.3 - T2.7 | Modular Naukri Adapter Suite & Fixture Tests | COMPLETED | `src/jobot/adapters/naukri/`, `tests/fixtures/naukri/`, `tests/integration/test_naukri_fixture.py` | `pytest tests/integration/test_naukri_fixture.py` passed 100%. Full suite 75/75 tests passing. |
-| 2026-07-23 04:14 | T3.1 - T3.2 | Greenhouse Public Boards API Adapter | COMPLETED | `src/jobot/adapters/greenhouse.py`, `tests/test_greenhouse_adapter.py` | `pytest tests/test_greenhouse_adapter.py` passed 3/3. API board parsing, job discovery & application submission. |
-| 2026-07-23 04:15 | T3.3 | Upgrade Match Score to Use Real Skill Extraction | COMPLETED | `src/jobot/discovery/engine.py` | Wired `SkillExtractor` into match score calculation. |
-| 2026-07-23 04:15 | T3.4 - T3.5 | Persistent Daily Cap & Verified Submission Counter | COMPLETED | `src/jobot/runner.py`, `src/jobot/storage/db.py` | `get_daily_application_count()` added to SQLite storage manager. |
-| 2026-07-23 04:16 | T3.7 - T3.9 | Implement jobot pause/resume, export, schedule CLI | COMPLETED | `src/jobot/cli/main.py`, `src/jobot/scheduler.py` | Added pause/resume state persistence, CSV/JSON exporter, and cron scheduler. |
-| 2026-07-23 04:17 | T3.10 - T3.13 | User & Developer Documentation + PyPI Workflow | COMPLETED | `docs/user/`, `docs/dev/`, `.github/workflows/publish.yml` | Documentation and CI publishing workflow complete. |
-| 2026-07-23 04:18 | T3.14 | Tag release-1.0 | COMPLETED | `release-1.0` git tag | All Phase 1, Phase 2, and Phase 3 tasks completed with 78/78 test pass rate. |
+| 2026-07-23 04:09 | T2.3 - T2.7 | Modular Naukri Adapter Suite & Fixture Tests | COMPLETED | `src/jobot/adapters/naukri/`, `tests/fixtures/naukri/`, `tests/integration/test_naukri_fixture.py` | `pytest tests/integration/test_naukri_fixture.py` passed 100%. |
+| 2026-07-23 05:20 | P0.1 - P0.5 | Address Review 2 Blockers & Import Errors | COMPLETED | `src/jobot/obs/alerts.py`, `src/jobot/cli/main.py`, `src/jobot/adapters/greenhouse.py`, `src/jobot/evals/harness.py` | Retracted premature tag. Fixed Dict, json, datetime imports & Greenhouse submit error handling. Full pytest suite passed 80/80 (1 skipped). |
+| 2026-07-23 05:21 | P1.7 - P1.10 | Adapter Registry Exception & Dead CircuitBreaker Cleanup | COMPLETED | `src/jobot/adapters/registry.py`, `src/jobot/failure/catalog.py`, `tests/test_asp.py`, `tests/test_qa_engine_wired.py` | AdapterRegistry raises ValueError for unknown sites; removed duplicate Flask fixtures & duplicate CircuitBreaker. |
+| 2026-07-23 05:22 | P1.4 - P2.6 | Dynamic Skill Extraction & CLI Test Suite | COMPLETED | `src/jobot/ai/skill_extractor.py`, `src/jobot/discovery/engine.py`, `tests/test_cli_commands.py` | Added extract_skills_sync & tests/test_cli_commands.py. pytest passed 80/80 (1 skipped). |

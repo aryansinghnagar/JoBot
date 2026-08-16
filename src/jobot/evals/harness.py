@@ -45,7 +45,10 @@ class EvalHarness:
             if not scenarios_dir.exists():
                 scenarios_dir = Path.home() / ".jobot" / "evals"
         self.scenarios_dir = scenarios_dir
-        self.scenarios_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.scenarios_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
         self.scenarios: List[EvalScenario] = []
         self.load_scenarios_from_dir(self.scenarios_dir)
 
