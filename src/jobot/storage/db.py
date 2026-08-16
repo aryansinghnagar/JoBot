@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 import json
+import logging
 import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterator, List, Optional
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
+
+logger = logging.getLogger(__name__)
 
 
 class DuplicateApplicationError(Exception):
@@ -55,19 +58,6 @@ class DatabaseManager:
                 description TEXT,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS tasks (
-                task_id TEXT PRIMARY KEY,
-                goal_id TEXT NOT NULL,
-                title TEXT NOT NULL,
-                description TEXT,
-                dependencies TEXT, -- JSON array
-                status TEXT NOT NULL,
-                assigned_worker TEXT,
-                created_at TEXT NOT NULL,
-                completed_at TEXT,
-                FOREIGN KEY (goal_id) REFERENCES goals (goal_id)
             );
 
             CREATE TABLE IF NOT EXISTS job_postings (
@@ -129,26 +119,19 @@ class DatabaseManager:
                 PRIMARY KEY (saga_id, step_name)
              );
             """)
-        self.migrate()
+        # Versioned migrations (UC-07) own everything after the base tables:
+        # WS2 durable-execution schema, checksummed and replay-safe.
+        from jobot.storage.migrations import run_migrations
+
+        with self._get_connection() as conn:
+            applied = run_migrations(conn)
+            if applied:
+                logger.info("applied migrations: %s", applied)
 
     @contextmanager
     def _migrate_conn(self) -> Iterator[sqlite3.Connection]:
         with self._get_connection() as conn:
             yield conn
-
-    def migrate(self) -> None:
-        """Idempotent additive schema migrations for existing databases.
-
-        SQLite cannot bind identifiers as SQL parameters, so every statement
-        below is a fixed literal at the execute call site — never built from
-        interpolated values.
-        """
-        with self._get_connection() as conn:
-            existing = {row["name"] for row in conn.execute("PRAGMA table_info(applications)")}
-            if "responded_at" not in existing:
-                conn.execute("ALTER TABLE applications ADD COLUMN responded_at TEXT")
-            if "outcome" not in existing:
-                conn.execute("ALTER TABLE applications ADD COLUMN outcome TEXT")
 
     # -------------------------------------------------------------------
     # JobPosting Operations

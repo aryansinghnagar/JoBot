@@ -116,6 +116,97 @@ def setup() -> None:
     )
 
 
+db_app = typer.Typer(help="Database migration operations (UC-07).")
+task_app = typer.Typer(help="Durable task queue inspection (UC-01).")
+approval_app = typer.Typer(help="Approval request management (UC-05).")
+app.add_typer(db_app, name="db")
+app.add_typer(task_app, name="task")
+app.add_typer(approval_app, name="approval")
+
+
+@db_app.command("status")
+def db_status() -> None:
+    """Show applied and pending schema migrations."""
+    from jobot.storage.migrations import migration_status
+
+    db = DatabaseManager()
+    with db._get_connection() as conn:  # noqa: SLF001 - CLI is a trusted internal caller
+        status = migration_status(conn)
+    for mig in status["migrations"]:
+        state = "[green]applied[/green]" if mig["applied"] else "[yellow]pending[/yellow]"
+        console.print(f"  v{mig['version']} {mig['name']}: {state} ({mig['checksum']}…)")
+    if status["pending"]:
+        console.print("[yellow]Run `jobot db migrate` to apply pending migrations.[/yellow]")
+
+
+@db_app.command("migrate")
+def db_migrate() -> None:
+    """Apply pending schema migrations."""
+    from jobot.storage.migrations import run_migrations
+
+    db = DatabaseManager()  # __init__ runs migrations already; re-run for explicitness
+    with db._get_connection() as conn:  # noqa: SLF001 - CLI is a trusted internal caller
+        applied = run_migrations(conn)
+    if applied:
+        console.print(f"[green]Applied migrations: {applied}[/green]")
+    else:
+        console.print("[green]Database is up to date.[/green]")
+
+
+@task_app.command("list")
+def task_list(status: Optional[str] = None) -> None:
+    """List durable tasks, optionally filtered by status."""
+    from jobot.execution.engine import DurableTaskEngine, TaskStatus
+
+    engine = DurableTaskEngine(DatabaseManager())
+    wanted = TaskStatus(status.upper()) if status else None
+    tasks = engine.list_tasks(wanted)
+    if not tasks:
+        console.print("[yellow]No tasks.[/yellow]")
+        return
+    for t in tasks:
+        console.print(
+            f"  {t.id} [{t.status.value}] pri={t.priority} attempts={t.attempts}/"
+            f"{t.max_attempts} owner={t.owner or '-'} :: {t.description[:60]}"
+        )
+
+
+@approval_app.command("list")
+def approval_list(status: str = "PENDING") -> None:
+    """List approval requests (default: pending)."""
+    from jobot.execution.engine import ApprovalStatus, DurableTaskEngine
+
+    engine = DurableTaskEngine(DatabaseManager())
+    for a in engine.list_approvals(ApprovalStatus(status.upper())):
+        console.print(
+            f"  {a.id} [{a.status.value}] {a.action_type} risk=R{a.risk_level} "
+            f"task={a.task_id} requested_by={a.requested_by}"
+        )
+
+
+@approval_app.command("decide")
+def approval_decide(approval_id: str, decision: str, reason: str = "") -> None:
+    """Decide an approval: APPROVE | DENY | DEFER."""
+    from jobot.execution.engine import ApprovalStatus, DurableTaskEngine, EngineError
+
+    mapping = {
+        "APPROVE": ApprovalStatus.APPROVED,
+        "DENY": ApprovalStatus.DENIED,
+        "DEFER": ApprovalStatus.DEFERRED,
+    }
+    normalized = mapping.get(decision.upper())
+    if normalized is None:
+        console.print("[bold red]decision must be APPROVE, DENY, or DEFER[/bold red]")
+        raise typer.Exit(code=2)
+    engine = DurableTaskEngine(DatabaseManager())
+    try:
+        rec = engine.decide_approval(approval_id, normalized, decided_by="cli-user", reason=reason)
+    except EngineError as exc:
+        console.print(f"[bold red]{exc}[/bold red]")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]{rec.id} -> {rec.status.value}[/green]")
+
+
 @app.command("sidecar")
 def sidecar_cmd() -> None:
     """Run stdio JSON-RPC sidecar protocol server for desktop GUI (Tauri 2.x)."""

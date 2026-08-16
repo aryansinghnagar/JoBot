@@ -1,0 +1,55 @@
+{
+  "gate": "G2",
+  "timestamp": "2026-08-16T07:40:00Z",
+  "commit_sha": "pending-ws2-commit",
+  "status": "PASS_LOCAL",
+  "scope": "WS2 durable execution core (UC-01 task engine, UC-02 event ledger, UC-03 effect ledger, UC-05 approvals, UC-07 migrations)",
+  "checks": [
+    {
+      "id": "kill-anywhere-resume",
+      "status": "PASS",
+      "evidence": "tests/test_durable_engine.py::test_kill_anywhere_resume_without_replay[P4_POLICY_EVAL/P8_INDEPENDENT_REVIEW/P12_SUBMIT] — worker dies mid-flight, replacement worker reclaims expired lease, resumes from checkpoint, completes; approval created before death survives"
+    },
+    {
+      "id": "no-double-lease",
+      "status": "PASS",
+      "evidence": "tests/test_durable_engine.py::test_no_double_claim_across_engines — two engine instances over one SQLite file; BEGIN IMMEDIATE + guarded UPDATE; second claim returns None"
+    },
+    {
+      "id": "duplicate-effect-impossible",
+      "status": "PASS",
+      "evidence": "test_duplicate_effect_reservation_impossible + race test + kill-test replay assertions — UNIQUE idempotency_key; DuplicateEffect raised on second reservation; replacement worker reconciles COMMITTED effect instead of re-executing"
+    },
+    {
+      "id": "heartbeat-expiry-quarantine",
+      "status": "PASS",
+      "evidence": "test_heartbeat_extends_lease, test_expired_lease_reclaimed_then_quarantined — lease renewal prevents reclaim; exhausted tasks QUARANTINED, never re-leased"
+    },
+    {
+      "id": "guarded-transitions",
+      "status": "PASS",
+      "evidence": "test_illegal_transitions_rejected — §3.4 transition table enforced; terminal states frozen"
+    },
+    {
+      "id": "event-ledger-replay",
+      "status": "PASS",
+      "evidence": "test_event_ledger_replays_full_timeline — fresh engine instance reads complete ordered history with correlation ids"
+    },
+    {
+      "id": "approvals-survive-restart",
+      "status": "PASS",
+      "evidence": "test_approvals_survive_restart_and_decisions_guarded + test_approval_expiry — PENDING approvals visible to fresh instances; double-decision refused; TTL expiry enforced"
+    },
+    {
+      "id": "versioned-migrations",
+      "status": "PASS",
+      "evidence": "tests/test_migrations.py — fresh DB gets all 12 WS2 tables; idempotent re-run; tampered checksum refused (fail-closed); legacy DB upgrades (pre-WS2 tasks table replaced); formatting-independent digests (ruff format safe)"
+    }
+  ],
+  "suite_results": {
+    "pytest": "593 passed, 16 skipped (WS1 commit was 571; +22: 15 durable-engine incl. 3 parametrized kill-anywhere, 4 migrations, 3 engine fixups)",
+    "ruff": "clean",
+    "ruff_format": "clean"
+  },
+  "notes": "PASS_LOCAL: single-machine proof on SQLite WAL. Multi-process concurrency is serialization-based (BEGIN IMMEDIATE); a dedicated multi-worker soak (G2 extension) is queued for WS3+ when the worker loop lands."
+}

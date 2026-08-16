@@ -129,3 +129,20 @@ Stage Summary:
 - Full suite: 571 passed / 16 skipped; ruff check + format clean repo-wide; no F401 ignore.
 - Lows (insecure random in stealth/behavior+proxy, indeed/naukri jitter) left as-is deliberately: non-crypto randomness is semantically required for human-like pacing; documented here and in improve queue.
 - Next: retry commit (G1 evidence updated in artifacts/gates/G1.json).
+
+---
+Task ID: WS2 (durable execution core, gate G2)
+Agent: Zcode
+Task: UC-07 versioned migrations + UC-01 durable task engine + UC-02 event ledger + UC-03 effect ledger + UC-05 durable approvals + G2 kill-anywhere proof
+
+Work Log:
+- src/jobot/storage/migrations.py: schema_migrations runner; migration v1 (durable_execution_core) creates tasks/task_attempts/task_leases/task_events/task_artifacts/task_dependencies/external_effects/approval_requests/checkpoints/incidents/budget_reservations per MASTER_PLAN_EXPANDED §30.1; statements are fixed literals at execute sites; whitespace-normalized source digests (formatting-independent, tamper-detecting); legacy unused tasks table replaced; DatabaseManager._init_db wired to runner (migrate() removed).
+- src/jobot/execution/engine.py: DurableTaskEngine — legal-transition table (§3.4), promote_ready (json_each parameterized dep check), claim_next (BEGIN IMMEDIATE + guarded UPDATE + lease + attempt row), heartbeat, reclaim_expired (READY retry or QUARANTINED at max_attempts; events appended after write tx to avoid nested-writer deadlock), append-only task_events with correlation/causation, effect ledger (reserve_effect UNIQUE idempotency key -> DuplicateEffect; update_effect lifecycle incl. UNKNOWN for reconcile-never-replay), approvals (create/list/decide guarded; TTL expiry), checkpoints (save/latest with restore marker).
+- CLI: jobot db status|migrate, jobot task list, jobot approval list|decide (APPROVE|DENY|DEFER).
+- Fixed during verify: nested-writer deadlock in reclaim_expired; test-side claim-in-assert bug; checksum fragility vs ruff format (normalized digest; local dev DB checksum re-recorded).
+- tests: test_durable_engine.py (15) incl. parametrized kill-anywhere at P4/P8/P12 with checkpoint resume, approval survival, and no-effect-replay proof; test_migrations.py (4) incl. legacy upgrade + tamper refusal.
+
+Stage Summary:
+- G2 PASS_LOCAL (artifacts/gates/G2.json): kill-anywhere resume, no double lease, duplicate-effect impossible, approvals survive restart.
+- Full suite 593 passed / 16 skipped; ruff + format clean.
+- Next: WS3 application state machine + effect/approval wiring into the 12-phase ASP (timestamp split, SUBMISSION_UNKNOWN reconcile harness H7).
