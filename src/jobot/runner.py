@@ -86,7 +86,7 @@ class ContinuousCampaignRunner:
                 pipeline = ApplicationSubmissionPipeline(adapter, self.db)
 
                 # Policy Enforcement Check
-                daily_count = 0  # In-memory tracking per portal session
+                daily_count = self.db.get_daily_application_count(job.site)
                 policy_res = self.policy_engine.check_application_policy(
                     job, p, match.posting, daily_submitted_count=daily_count
                 ) if hasattr(self.policy_engine, "check_application_policy") else None

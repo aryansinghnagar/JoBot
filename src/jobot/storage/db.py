@@ -255,3 +255,12 @@ class DatabaseManager:
                     )
                 )
             return apps
+
+    def get_daily_application_count(self, site: str) -> int:
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) as count FROM applications WHERE site = ? AND created_at LIKE ?",
+                (site, f"{today_str}%"),
+            ).fetchone()
+            return row["count"] if row else 0
