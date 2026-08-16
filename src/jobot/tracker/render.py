@@ -21,7 +21,7 @@ class TrackerRenderer:
     def terminal_rows(self, limit: int = 20) -> List[Dict[str, Any]]:
         return self.analytics.recent(limit=limit)
 
-    def render_terminal(self, console, limit: int = 20) -> None:
+    def render_terminal(self, console: Any, limit: int = 20) -> None:
         from rich.table import Table
 
         rows = self.terminal_rows(limit=limit)

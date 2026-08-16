@@ -31,6 +31,7 @@ include-package-data = true
 [tool.setuptools.package-data]
 "jobot.documents" = ["templates/*.tex.j2"]
 "jobot.tracker" = ["templates/*.j2"]
+"jobot.digest" = ["templates/*.j2"]
 
 [project.optional-dependencies]
 providers = [

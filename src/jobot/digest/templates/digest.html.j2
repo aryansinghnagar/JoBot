@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>JoBot Weekly Digest</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 2rem; color:#1a1a1a; }
+    h1 { border-bottom:2px solid #e5e7eb; padding-bottom:.5rem; }
+    .muted { color:#9ca3af; font-size:.8rem; }
+    table { border-collapse:collapse; width:100%; margin-top:1rem; }
+    th, td { text-align:left; border-bottom:1px solid #e5e7eb; padding:.5rem; font-size:.85rem; }
+  </style>
+</head>
+<body>
+  <h1>JoBot Weekly Digest</h1>
+  <p class="muted">Period: last {{ period_days }} days · Generated {{ generated }}</p>
+
+  <p><strong>{{ total }}</strong> applications in the period.</p>
+
+  <h2>Funnel</h2>
+  <ul>
+    <li>Total: {{ funnel.total }}</li>
+    <li>Pending approval: {{ funnel.pending_approval }}</li>
+    <li>Submitted: {{ funnel.submitted }}</li>
+    <li>Verified: {{ funnel.verified }}</li>
+    <li>Rejected: {{ funnel.rejected }} / Failed: {{ funnel.failed }}</li>
+  </ul>
+
+  <h2>Response rate</h2>
+  <p>{{ "%.0f"|format(response_rate * 100) }}% (avg rejection latency {{ latency_avg_days }} days over {{ latency_count }} responses)</p>
+
+  <h2>By board</h2>
+  <table>
+    <tr><th>Board</th><th>Total</th><th>Verified</th><th>Rejected</th><th>Failed</th></tr>
+    {% for b in by_board %}
+    <tr><td>{{ b.site }}</td><td>{{ b.total }}</td><td>{{ b.verified or 0 }}</td><td>{{ b.rejected or 0 }}</td><td>{{ b.failed or 0 }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Recent applications</h2>
+  <table>
+    <tr><th>#</th><th>Site</th><th>Title</th><th>Company</th><th>Status</th><th>Created</th></tr>
+    {% for r in recent %}
+    <tr>
+      <td>{{ loop.index }}</td><td>{{ r.site }}</td><td>{{ r.title }}</td>
+      <td>{{ r.company }}</td><td>{{ r.status }}</td><td>{{ r.created_at[:16] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

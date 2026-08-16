@@ -2,6 +2,13 @@
 
 ## Phase 4 (per plan.md — pending plan review)
 
+- [x] WS1: Tracker analytics + dashboard HTML + responded_at/outcome cols
+- [x] WS2: Weekly digest + shared SMTP sender + 4-mode scheduler loop (`jobot loop`)
+- [ ] WS3: InterviewPrep module (mock session + STAR coach)
+- [ ] WS4: CareerAnalytics (salary + skill-gap)
+- [ ] WS5: Outreach module (URL gen + DM templates + SMTP)
+- [ ] WS6: PluginInstaller + PluginManifest schema + audit flow
+- [ ] WS7: Dockerfile (multi-stage) + docker-compose.yml + CI hardening (CodeQL, SBOM)
 - [ ] T4.x: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
 - [ ] T4.x: Naukri real submit/verify via Patchright (P1.1/P1.2 carryover)
 - [ ] T4.x: Live LinkedIn Easy Apply validation (needs `JOBOT_RUN_LIVE_BROWSER=1` + working LLM key)

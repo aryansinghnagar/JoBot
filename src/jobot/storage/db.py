@@ -4,7 +4,7 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, Iterator, List, Optional
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
 
 
@@ -132,15 +132,17 @@ class DatabaseManager:
         self.migrate()
 
     @contextmanager
-    def _migrate_conn(self):
+    def _migrate_conn(self) -> Iterator[sqlite3.Connection]:
         with self._get_connection() as conn:
             yield conn
 
     @staticmethod
-    def _columns(conn: sqlite3.Connection, table: str) -> set:
+    def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
         return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
 
-    def _ensure_column(self, conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    def _ensure_column(
+        self, conn: sqlite3.Connection, table: str, column: str, definition: str
+    ) -> None:
         if column not in self._columns(conn, table):
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 

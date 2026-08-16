@@ -45,6 +45,8 @@ from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 from jobot.tracker.analytics import TrackerAnalytics
 from jobot.tracker.render import TrackerRenderer
+from jobot.digest.generator import DigestGenerator
+from jobot.notify.email import EmailSender
 
 app = typer.Typer(name="jobot", help="Autonomous Job Application Operating System CLI")
 console = Console()
@@ -975,7 +977,9 @@ def tracker_cmd(
     action: str = typer.Argument(
         "list", help="Action: 'list', 'show', 'dashboard', 'dashboard-html'"
     ),
-    target: Optional[str] = typer.Argument(None, help="Application id ('show') or html path ('dashboard-html')"),
+    target: Optional[str] = typer.Argument(
+        None, help="Application id ('show') or html path ('dashboard-html')"
+    ),
 ) -> None:
     """Application Tracking System — list, inspect, and dashboard applications."""
     db = DatabaseManager()
@@ -1010,6 +1014,99 @@ def tracker_cmd(
 
     console.print(f"[bold red]Unknown tracker action '{action}'.[/bold red]")
     raise typer.Exit(code=1)
+
+
+@app.command("digest")
+def digest_cmd(
+    dry_run: bool = typer.Option(
+        True, "--dry-run/--send", help="Render + print only; do not email"
+    ),
+    period_days: int = typer.Option(7, "--period-days", help="Lookback window in days"),
+    output: Optional[str] = typer.Option(None, "--output", help="Write HTML digest to this path"),
+) -> None:
+    """Generate (and optionally email) the weekly activity digest."""
+    db = DatabaseManager()
+    generator = DigestGenerator(db, period_days=period_days)
+    digest = generator.generate()
+
+    if output:
+        out = Path(output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(digest.html, encoding="utf-8")
+        console.print(f"[bold green][OK] Digest HTML written to {out.resolve()}[/bold green]")
+
+    if dry_run:
+        console.print(f"[bold cyan]Subject:[/bold cyan] {digest.subject}")
+        console.print(digest.text)
+        console.print("[yellow](dry run; use --send to email via SMTP config)[/yellow]")
+        return
+
+    sender = EmailSender()
+    ok, msg = sender.send(digest.subject, digest.html, body_text=digest.text)
+    if ok:
+        console.print(f"[bold green][OK] Digest emailed: {msg}[/bold green]")
+    else:
+        console.print(f"[bold red][ERROR] Digest not sent: {msg}[/bold red]")
+        console.print(
+            "[yellow]Configure smtp.* keys (jobot config set smtp.host ...) for email delivery.[/yellow]"
+        )
+
+
+@app.command("loop")
+def loop_cmd(
+    mode: str = typer.Option(
+        "scan-only", "--mode", help="Loop mode: scan-only | apply-only | digest-only | full-loop"
+    ),
+    target_title: str = typer.Option(
+        "Python Developer", "--target-title", help="Job title search keywords"
+    ),
+    max_apply: int = typer.Option(10, "--max-apply", help="Max applications per loop iteration"),
+    approve: bool = typer.Option(False, "--approve", help="Auto-approve (autonomous trust level)"),
+    min_match: float = typer.Option(0.20, "--min-match", help="Minimum match score to consider"),
+    limit_per_portal: int = typer.Option(
+        5, "--limit-per-portal", help="Postings fetched per portal"
+    ),
+) -> None:
+    """Run one scheduler loop iteration (4 modes)."""
+    if mode not in ("scan-only", "apply-only", "digest-only", "full-loop"):
+        console.print(
+            f"[bold red][ERROR] Unknown loop mode '{mode}'. One of: scan-only, apply-only, digest-only, full-loop[/bold red]"
+        )
+        raise typer.Exit(code=1)
+
+    vault = CredentialVault()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print("[bold red][ERROR] Candidate profile missing.[/bold red]")
+        console.print(
+            "[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]"
+        )
+        raise typer.Exit(code=1)
+    p = vault.load_encrypted_profile(profile_path)
+
+    from jobot.scheduler.loop import LoopExecutor
+
+    executor = LoopExecutor()
+    result = asyncio.run(
+        executor.run(
+            mode,
+            p,
+            target_title=target_title,
+            max_apply=max_apply,
+            auto_approve=approve,
+            min_match=min_match,
+            limit_per_portal=limit_per_portal,
+        )
+    )
+
+    console.print(f"[bold cyan]Loop [{result.mode}] complete:[/bold cyan]")
+    console.print(f"  Discovered: [blue]{result.discovered}[/blue]")
+    console.print(
+        f"  Applied:    [blue]{result.applied}[/blue] (verified {result.verified}, rejected {result.rejected}, failed {result.failed}, blocked {result.blocked})"
+    )
+    console.print(f"  Digest sent: [blue]{result.digest_sent}[/blue]")
+    for note in result.notes:
+        console.print(f"  [dim]- {note}[/dim]")
 
 
 @app.command("traces")

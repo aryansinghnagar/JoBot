@@ -1,0 +1,20 @@
+JoBot Weekly Digest
+Period: last {{ period_days }} days | Generated {{ generated }}
+
+{{ total }} applications in the period.
+
+Funnel:
+  - Total: {{ funnel.total }}
+  - Pending approval: {{ funnel.pending_approval }}
+  - Submitted: {{ funnel.submitted }}
+  - Verified: {{ funnel.verified }}
+  - Rejected: {{ funnel.rejected }} / Failed: {{ funnel.failed }}
+
+Response rate: {{ "%.0f"|format(response_rate * 100) }}% (avg rejection latency {{ latency_avg_days }} days over {{ latency_count }} responses)
+
+By board:
+{% for b in by_board %}  - {{ b.site }}: {{ b.total }} total, {{ b.verified or 0 }} verified, {{ b.rejected or 0 }} rejected, {{ b.failed or 0 }} failed
+{% endfor %}
+Recent applications:
+{% for r in recent %}[{{ r.status }}] {{ r.title }} @ {{ r.company }} ({{ r.site }}) created {{ r.created_at[:16] }}
+{% endfor %}
