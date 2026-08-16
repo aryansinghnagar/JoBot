@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
-from jobot.models.domain import Application, JobPosting, UserProfile
+from jobot.models.domain import Application, JobPosting, UserProfile, VerificationResult
 
 
 class SiteAdapter(ABC):
@@ -34,7 +34,7 @@ class SiteAdapter(ABC):
         """Execute submission action (supervised or autonomous based on trust level)."""
 
     @abstractmethod
-    async def verify_submission(self, application: Application) -> bool:
+    async def verify_submission(self, application: Application) -> VerificationResult:
         """Verify that application was successfully received by external site/ATS."""
         pass
 

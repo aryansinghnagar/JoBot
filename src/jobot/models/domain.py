@@ -55,6 +55,15 @@ class DoDResult(BaseModel):
     evidence_required: Optional[List[str]] = None
 
 
+class VerificationResult(BaseModel):
+    success: bool
+    confidence: float = 1.0
+    confirmation_id: Optional[str] = None
+    evidence_snapshot_path: Optional[str] = None
+    reason: str = ""
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 # -------------------------------------------------------------------
 # Candidate Profile Domain Models
 # -------------------------------------------------------------------

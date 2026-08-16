@@ -320,10 +320,23 @@ class ApplicationSubmissionPipeline:
     ) -> DoDResult:
         """DoD: Verify submission receipt with ATS server."""
         try:
-            verified_ok = await self.circuit_breaker.execute_with_retry(
+            res = await self.circuit_breaker.execute_with_retry(
                 app.site, self.adapter.verify_submission, app
             )
-            if verified_ok:
+            if hasattr(res, "success"):
+                if res.success:
+                    app.status = ApplicationStatus.VERIFIED
+                    evidence_item = EvidenceItem(
+                        evidence_id=str(uuid.uuid4()),
+                        step_name="phase_12_verify",
+                        screenshot_path=getattr(res, "evidence_snapshot_path", None),
+                        form_data_snapshot={"confirmation_id": getattr(res, "confirmation_id", None) or ""},
+                    )
+                    app.evidence.append(evidence_item)
+                    return DoDResult(passed=True)
+                else:
+                    return DoDResult(passed=False, reason=getattr(res, "reason", "Verification failed"))
+            elif res:
                 app.status = ApplicationStatus.VERIFIED
                 evidence_item = EvidenceItem(
                     evidence_id=str(uuid.uuid4()),

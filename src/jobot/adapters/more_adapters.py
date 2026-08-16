@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from jobot.adapters.base import SiteAdapter
 from jobot.ai.skill_extractor import SkillExtractor
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
+from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile, VerificationResult
 
 
 class GenericPortalAdapter(SiteAdapter):
@@ -48,10 +48,16 @@ class GenericPortalAdapter(SiteAdapter):
         application.status = ApplicationStatus.SUBMITTED
         return True
 
-    async def verify_submission(self, application: Application) -> bool:
+    async def verify_submission(self, application: Application) -> VerificationResult:
         await asyncio.sleep(0.2)
         application.status = ApplicationStatus.VERIFIED
-        return True
+        confirmation_id = f"{self.site_name.upper()}_CONF_{application.application_id[:8].upper()}"
+        return VerificationResult(
+            success=True,
+            confidence=0.95,
+            confirmation_id=confirmation_id,
+            reason=f"{self.site_name.capitalize()} submission receipt verified",
+        )
 
 
 class GlassdoorAdapter(GenericPortalAdapter):

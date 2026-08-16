@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import urllib.error
 import urllib.request
 from jobot.adapters.base import SiteAdapter
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
+from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile, VerificationResult
 
 
 class MockATSAdapter(SiteAdapter):
@@ -87,23 +87,41 @@ class MockATSAdapter(SiteAdapter):
             return False
         return False
 
-    async def verify_submission(self, application: Application) -> bool:
+    async def verify_submission(self, application: Application) -> VerificationResult:
         submission_id = (
             application.form_values.get("submission_id") if application.form_values else None
         )
         if not submission_id:
             application.status = ApplicationStatus.FAILED
-            return False
+            return VerificationResult(
+                success=False,
+                confidence=0.0,
+                reason="Missing submission_id in application form values",
+            )
 
         req_url = f"{self.base_url}/verify/{submission_id}"
         try:
             req = urllib.request.Request(req_url)
             with urllib.request.urlopen(req) as resp:
                 if resp.status == 200:
+                    data = json.loads(resp.read().decode())
                     application.status = ApplicationStatus.VERIFIED
-                    return True
+                    return VerificationResult(
+                        success=True,
+                        confidence=1.0,
+                        confirmation_id=data.get("confirmation_id", f"CONF_{submission_id}"),
+                        reason="Mock ATS HTTP API verification confirmed submission receipt",
+                    )
         except Exception as exc:
             application.status = ApplicationStatus.FAILED
             application.error_message = str(exc)
-            return False
-        return False
+            return VerificationResult(
+                success=False,
+                confidence=0.0,
+                reason=f"Mock ATS verification HTTP request failed: {exc}",
+            )
+        return VerificationResult(
+            success=False,
+            confidence=0.0,
+            reason="Mock ATS verification returned non-200 status code",
+        )

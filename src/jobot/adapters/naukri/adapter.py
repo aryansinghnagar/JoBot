@@ -10,7 +10,7 @@ from jobot.adapters.naukri.form_fill import NaukriFormFiller
 from jobot.adapters.naukri.login import NaukriLoginFlow
 from jobot.adapters.naukri.submit import NaukriSubmitter
 from jobot.adapters.naukri.verify import NaukriVerifier
-from jobot.models.domain import Application, JobPosting, UserProfile
+from jobot.models.domain import Application, JobPosting, UserProfile, VerificationResult
 
 
 class NaukriAdapter(SiteAdapter):
@@ -61,6 +61,6 @@ class NaukriAdapter(SiteAdapter):
         await self._jitter_delay(0.5, 1.5)
         return await self.submitter.submit(application)
 
-    async def verify_submission(self, application: Application) -> bool:
+    async def verify_submission(self, application: Application) -> VerificationResult:
         await self._jitter_delay(0.2, 0.8)
         return await self.verifier.verify(application)
