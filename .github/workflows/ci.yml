@@ -47,7 +47,7 @@ jobs:
 
       - name: Run Pytest Suite with Coverage Check
         run: |
-          pytest -v --cov=jobot --cov-report=term-missing
+          python -m pytest -v --cov=jobot --cov-report=term-missing
 
   npm-quality:
     name: Node.js Quality & Test Suite (${{ matrix.os }}, Node ${{ matrix.node-version }})
