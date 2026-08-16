@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import logging
-from patchright.async_api import async_playwright, BrowserContext, Page, Playwright
+from patchright.async_api import async_playwright, BrowserContext, Locator, Page, Playwright
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +89,68 @@ class BrowserSession:
         if not self.context:
             raise RuntimeError("BrowserSession must be started before creating a page.")
         return await self.context.new_page()
+
+    # ------------------------------------------------------------------
+    # Page automation helpers (Phase 3, T3.6 — Easy Apply saga)
+    # ------------------------------------------------------------------
+
+    def _locator(self, selector: str, page: Optional[Page]) -> Locator:
+        target = page or (self.pages[0] if self.pages else None)
+        if target is None:
+            raise RuntimeError("No active page; call navigate() or new_page() first.")
+        return target.locator(selector)
+
+    async def navigate(self, url: str, page: Optional[Page] = None) -> Page:
+        """Open URL in a (new) page and wait for DOM content."""
+        target = page or (self.pages[0] if self.pages else None)
+        if target is None:
+            target = await self.new_page()
+        await target.goto(url, wait_until="domcontentloaded", timeout=60000)
+        return target
+
+    async def is_visible(
+        self, selector: str, page: Optional[Page] = None, timeout_ms: int = 3000
+    ) -> bool:
+        locator = self._locator(selector, page)
+        try:
+            await locator.first.wait_for(state="visible", timeout=timeout_ms)
+            return True
+        except Exception:  # noqa: BLE001
+            return False
+
+    async def wait_for(
+        self, selector: str, page: Optional[Page] = None, timeout_ms: int = 15000
+    ) -> None:
+        """Wait until the first matching element is visible."""
+        locator = self._locator(selector, page)
+        await locator.first.wait_for(state="visible", timeout=timeout_ms)
+
+    async def click(self, selector: str, page: Optional[Page] = None) -> None:
+        locator = self._locator(selector, page)
+        await locator.first.wait_for(state="visible", timeout=15000)
+        await locator.first.click()
+
+    async def fill(self, selector: str, value: str, page: Optional[Page] = None) -> None:
+        locator = self._locator(selector, page)
+        await locator.first.fill(str(value))
+
+    async def type_slow(self, selector: str, value: str, page: Optional[Page] = None) -> None:
+        """Type with human-like keystroke delays (behavioral mimicry)."""
+        locator = self._locator(selector, page)
+        await locator.first.click()
+        await locator.first.press_sequentially(str(value), delay=60)
+
+    async def text_of(self, selector: str, page: Optional[Page] = None) -> str:
+        locator = self._locator(selector, page)
+        return (await locator.first.inner_text()).strip()
+
+    async def screenshot(self, path: Path, page: Optional[Page] = None) -> Path:
+        target = page or (self.pages[0] if self.pages else None)
+        if target is None:
+            raise RuntimeError("No active page to screenshot")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        await target.screenshot(path=str(path))
+        return path
 
     @property
     def pages(self) -> List[Page]:
