@@ -1,7 +1,7 @@
 # NOW QUEUE — Active Focus
 
-Current Version: `release-1.0-dev` (JoBot Merge Plan — phased delivery)
-Current Status: Phase 4 COMPLETED (WS1–WS7 — 289/11). Phase 5 COMPLETE: T4.1, P1.1/P1.2, T4.2, release gates done — 318 passed / 13 skipped, ruff+mypy clean, tagged release-1.0.
+Current Version: `release-2.0-dev` (JoBot Merge Plan — phased delivery)
+Current Status: Release 2.0 COMPLETE (Workday honest adapter + Tauri 2/React GUI + sidecar JSON-RPC) — 359 passed / 13 skipped, ruff+mypy clean, vitest 18/18, prettier clean, tagged release-2.0.
 
 ## Milestone Trajectory
 
@@ -13,7 +13,14 @@ Current Status: Phase 4 COMPLETED (WS1–WS7 — 289/11). Phase 5 COMPLETE: T4.1
 - [x] **Phase 4 WS2**: Weekly digest + SMTP email + 4-mode scheduler loop (plan.md §345-348) [COMPLETED — `jobot digest`, `jobot loop`; pytest 245/11]
 - [x] **Phase 4 WS3+**: InterviewPrep, CareerAnalytics, Outreach, plugins, Docker+CI (plan.md §342-344, 349-353) [COMPLETED — `jobot interview/skill-gap/salary/outreach/plugin`; pytest 289/11; committed 38cc024]
 - [x] **Phase 5**: Release-1.0 hardening [COMPLETED — T4.1, P1.1/P1.2, T4.2, release gates; tagged release-1.0]
-- [ ] **dev-2.0**: Tauri 2 + React Desktop GUI [PLANNED FOR RELEASE 2.0]
+- [x] **dev-2.0**: Tauri 2 + React Desktop GUI + Workday honest adapter [COMPLETED — sidecar JSON-RPC, 5 React views, Tauri 2 shell, vitest 18/18; tagged release-2.0]
+
+## Release 2.0 Exit Notes
+
+- GUI JS deps live in the ROOT `package.json` (CI runs a single `npm ci`); `gui/package.json` is a thin wrapper.
+- Tauri/Rust build is local-only (not in CI gates). `cargo check` on this machine needs a Windows C toolchain (MinGW `dlltool` or MSVC `link.exe`) — install one before `npm run tauri:dev` / `tauri:build`.
+- Workday adapter is honest: cxs JSON API for discovery/parse, Patchright submit/verify gated on `JOBOT_RUN_LIVE_BROWSER=1`, no fabricated confirmation IDs.
+- Sidecar is the single GUI↔backend bridge: `jobot sidecar` (22 JSON-RPC methods); doctor logic shared via `src/jobot/doctor.py`.
 
 ## Phase 3 Exit Notes
 

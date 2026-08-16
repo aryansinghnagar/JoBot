@@ -13,7 +13,8 @@
 - [x] P1.1/P1.2: Naukri real submit/verify via Patchright (no fabrication; live opt-in)
 - [x] T4.2: LinkedIn Easy Apply saga wired into adapter (live opt-in; hermetic tests 10; live validation pending browser+LLM)
 - [x] Release gates: sync SETUP/docs/contracts, `jobot doctor`, tag `release-1.0`
-- [ ] Tauri 2 + React Desktop GUI [RELEASE 2.0]
+- [x] Tauri 2 + React Desktop GUI [RELEASE 2.0]
+- [x] Workday honest adapter (cxs API + live-browser submit/verify) [RELEASE 2.0]
 
 ## P0 & P1 Remedial Tasks (docs/history/JoBot_Refactor_Review_2.md)
 
@@ -35,7 +36,13 @@
 - [x] P1.3: Naukri real `discover_jobs` scraping search results
 - [x] P1.4: Dynamic `SkillExtractor` execution across all adapter job descriptions
 
-## Release 2.0 Roadmap (Planned)
+## Release 2.0 Roadmap (Completed)
 
-- [ ] T4.1: Tauri 2 + React Desktop GUI Integration
-- [ ] T4.2: Workday & Lever Native Adapters
+- [x] T4.1: Tauri 2 + React Desktop GUI Integration
+- [x] T4.2: Workday honest adapter (Lever already native)
+
+## Release 2.0 Follow-ups (blocked/optional)
+
+- [ ] `cargo check`/`tauri:dev` on this machine — needs MinGW (`dlltool`) or MSVC (`link.exe`) C toolchain installed
+- [ ] Live Workday submit/verify run — needs `JOBOT_RUN_LIVE_BROWSER=1` + a logged-in Workday session
+- [ ] Real app icon (`npm run tauri icon` replaces the placeholder)

@@ -48,3 +48,7 @@ applications_export.json
 # Node Modules & NPM Caches
 node_modules/
 .npm/
+
+# Tauri / Rust build artifacts
+gui/src-tauri/target/
+gui/src-tauri/gen/

@@ -13,8 +13,9 @@
 3. [Configuration & Secrets](#3-configuration--secrets)
 4. [AI Provider API Keys](#5-ai-provider-api-keys-all-6-supported-providers)
 5. [Docker Setup](#6-docker-setup)
-6. [CLI Reference](#7-cli-reference)
-7. [Troubleshooting & FAQ](#8-troubleshooting--faq)
+6. [Desktop GUI (Release 2.0)](#7-desktop-gui-release-20)
+7. [CLI Reference](#8-cli-reference)
+8. [Troubleshooting & FAQ](#9-troubleshooting--faq)
 
 ---
 
@@ -618,7 +619,47 @@ docker compose run --rm jobot config set llm.api_key.gemini AIzaSy...
 
 ---
 
-## 7. CLI Reference
+## 7. Desktop GUI (Release 2.0)
+
+JoBot ships a desktop GUI: a Tauri 2 + React 18 shell in `gui/` that talks to
+the backend over the `jobot sidecar` JSON-RPC bridge (line-delimited JSON-RPC
+2.0 on stdio). The Rust shell is intentionally thin — it only spawns the
+`jobot sidecar` process; all logic stays in the Python core.
+
+### 7.1 Prerequisites
+
+| Component | Version | Why needed |
+|---|---|---|
+| Node.js | 18+ | Vite build + vitest + prettier |
+| Rust toolchain | 1.77+ | Tauri 2 shell (only for `tauri:dev` / `tauri:build`) |
+| Windows C toolchain | MinGW (`dlltool`) or MSVC (`link.exe`) | Linking the Tauri shell on Windows |
+
+The JS gates (`npm run test`, `npm run lint`, `npm run build:gui`) run on
+Node only and are part of CI. The Rust/Tauri build is **local-only** and is
+not gated in CI.
+
+### 7.2 Install & Run
+
+```bash
+# JS deps live in the ROOT package.json (single npm ci for CI):
+npm ci
+
+# Headless verification (CI gates):
+npm run test        # vitest — tests/npm + gui/tests
+npm run lint        # prettier --check
+npm run build:gui   # vite build → gui/dist
+
+# Desktop app (dev — hot reload):
+npm run tauri:dev   # requires Rust toolchain + Windows C linker
+
+# Production bundle:
+npm run tauri:build
+```
+
+The GUI shows a sidecar-unavailable message instead of crashing when the
+`jobot` console script is not installed or the sidecar fails to spawn.
+
+## 8. CLI Reference
 
 All commands are subcommands of `jobot`. Common flags: `--profile <name>`, `--json`, `--dry-run`.
 
@@ -800,7 +841,7 @@ command completes. Avoid this with any of:
 
 ---
 
-## 8. Troubleshooting & FAQ
+## 9. Troubleshooting & FAQ
 
 ### Browser launches but LinkedIn login fails
 

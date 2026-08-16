@@ -225,25 +225,25 @@ breaking any frozen signature:
   dashboard-html|table}`.
 - **Digest/scheduler**: `src/jobot/digest/`, `src/jobot/notify/email.py`
   (SMTP via `smtp.*` config keys; digest dry-run by default, `--send` to
-  email), `src/jobot/scheduler/` — CLI `jobot digest`, `jobot loop` (4 modes:
+  email), `src/jobot/scheduler/` ï¿½ CLI `jobot digest`, `jobot loop` (4 modes:
   watch/apply/digest/status). `jobot status` also shows digest/loop state.
-- **Interview**: `src/jobot/interview/` — STARCoach + MockInterviewer,
+- **Interview**: `src/jobot/interview/` ï¿½ STARCoach + MockInterviewer,
   question banks in package-data (`jobot.interview = questions/*.json`);
   CLI `jobot interview`.
-- **Analytics**: `src/jobot/analytics/` — SkillGapAnalyzer +
+- **Analytics**: `src/jobot/analytics/` ï¿½ SkillGapAnalyzer +
   SalaryBenchmarker; CLI `jobot skill-gap`, `jobot salary`. Salary uses a
   shipped YAML default (`data/salaries.yaml`, package-data) plus live opt-in
   via `JOBOT_RUN_LIVE_SALARY=1` with 24h cache + circuit breaker + silent
   fallback to defaults (never fabricated figures).
-- **Outreach**: `src/jobot/outreach/` — LinkedInPeopleSearchURLBuilder,
+- **Outreach**: `src/jobot/outreach/` ï¿½ LinkedInPeopleSearchURLBuilder,
   DMGenerator, OutreachGate (daily DM cap from config); presets in
   package-data (`jobot.outreach = presets.yaml`); CLI `jobot outreach`.
-- **Plugins**: `src/jobot/plugins/` — PluginManifest (schema v1),
+- **Plugins**: `src/jobot/plugins/` ï¿½ PluginManifest (schema v1),
   PluginInstaller, PluginAuditor; CLI `jobot plugin {install|list|audit|
   remove}`.
 - **Docker/CI**: multi-stage `Dockerfile` + `docker-compose.yml`
   (`.dockerignore`); CI: CodeQL workflow, SBOM + provenance attestation job.
-- **Phase 5 honest adapters (no fabrication — release invariant)**:
+- **Phase 5 honest adapters (no fabrication ï¿½ release invariant)**:
   - `naukri`: `submit_application` clicks the real Apply button and returns
     True only on a success indicator (also detects already-applied);
     `verify_submission` navigates `https://www.naukri.com/mnjuser/myapplications`
@@ -264,3 +264,50 @@ breaking any frozen signature:
   tests/integration/test_naukri_live.py tests/integration/test_linkedin_easy_apply_live.py`.
 - **Test suite (release-1.0)**: pytest 318 passed / 13 skipped (13 = live
   opt-in browser tests), ruff check/format clean, mypy clean (115 files).
+
+## Phase 6 Addendum (2026-08-15, release-2.0)
+
+- **Workday honest adapter**: `src/jobot/adapters/workday.py` rewritten ï¿½
+  `WorkdayApi` talks to the public cxs JSON API
+  (`POST https://{tenant}.wd3.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs`
+  and `/jobPosting/{jobId}`; `html.unescape` on HTML entities).
+  `discover_jobs(keywords, location, limit, company)` requires a tenant /
+  `company` (default from config `adapters.workday.tenant`). `WorkdaySubmitter`
+  and `WorkdayVerifier` drive a real Patchright browser and refuse (honest
+  failure) unless `JOBOT_RUN_LIVE_BROWSER=1`; `fill_form` returns
+  profile-grounded values only, never fabricated form data. No confirmation
+  IDs are ever invented. `tests/test_workday_adapter.py` (16 hermetic tests,
+  FakeBrowser/FakeHTTPResponse).
+- **GUI sidecar (JSON-RPC 2.0 over stdio)**: `src/jobot/gui/sidecar.py`
+  `SidecarServer.handle_request` implements 22 methods: `ping`, `status`,
+  `profile_info`, `list_sites`, `discover_jobs`, `apply`, `approve`,
+  `applications`, `tracker_stats`, `campaign_status`, `pause`, `resume`,
+  `schedule_list`, `schedule_add`, `schedule_remove`, `digest`, `doctor`,
+  `config_show`, `config_get`, `config_set`, `config_unset`, `traces`.
+  Line-delimited JSON on stdin/stdout; JSON-RPC error codes -32601
+  (method not found), -32602 (invalid params), -32603 (internal), -32700
+  (parse). Dependencies injectable for hermetic tests
+  (`tests/test_sidecar.py`, 25 tests). CLI entry: `jobot sidecar`.
+- **Shared doctor module**: `src/jobot/doctor.py` `run_doctor_checks() ->
+  DoctorReport`; CLI `doctor_cmd` and sidecar `doctor` RPC both use it.
+- **Registry consolidation**: `infer_site` moved into
+  `src/jobot/adapters/registry.py`; `JobDiscoveryEngine.scraper_for()`
+  public alias (mypy: jobot.stubs covers numpy/pandas).
+- **Desktop GUI (Tauri 2 + React 18)**: `gui/` ï¿½ `src/` (React app:
+  `main.jsx`, `App.jsx`, `lib/{rpc.js,tauriTransport.js,useAsync.js}`,
+  `views/{Dashboard,Discover,Apply,Controls,Settings}.jsx`, `styles.css`),
+  `tests/` (vitest: 9 RPC + 7 component), `src-tauri/` (Rust shell:
+  `Cargo.toml`, `src/{main,lib}.rs`, `tauri.conf.json`,
+  `capabilities/default.json` ï¿½ shell spawn/execute scoped to `jobot`
+  sidecar only). Tauri Rust is NOT in CI gates (pytest/ruff/mypy/
+  vitest/prettier only); `tauri:dev`/`tauri:build` are local-only.
+  GUI deps live in the ROOT `package.json` (CI runs `npm ci` once);
+  `gui/package.json` is a thin wrapper (`dev`/`build`/`tauri` scripts).
+- **GUI contract tests**: `tests/npm/system.test.js` (framing) +
+  `gui/tests/` (RPC client + SSR-safe views). `vitest.config.js` at root
+  applies `@vitejs/plugin-react` to gui tests and includes both suites.
+- **Test suite (release-2.0)**: pytest 359 passed / 13 skipped, ruff
+  check/format clean, mypy clean (116 files), vitest 18 passed (3 files),
+  prettier clean. `cargo check` requires a Windows C toolchain
+  (MinGW `dlltool` or MSVC `link.exe`) ï¿½ not present on the dev machine;
+  Rust shell is minimal and not gated in CI.
