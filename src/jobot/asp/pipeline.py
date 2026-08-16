@@ -77,7 +77,16 @@ class ApplicationSubmissionPipeline:
             # Pauses for user approval in CLI / GUI
             return app
 
-        # Phase 11: Submitting
+        # Phase 11 & 12
+        if auto_approve:
+            return await self.submit_and_verify(app)
+        else:
+            app.status = ApplicationStatus.PENDING_APPROVAL
+            self.db.save_application(app)
+            return app
+
+    async def submit_and_verify(self, app: Application) -> Application:
+        """Execute Phase 11 (submit) and Phase 12 (verify) with full evidence capture."""
         app.status = ApplicationStatus.SUBMITTING
         submitted_ok = await self.adapter.submit_application(app)
         if not submitted_ok:
@@ -86,15 +95,13 @@ class ApplicationSubmissionPipeline:
             self.db.save_application(app)
             return app
 
-        # Phase 12: Verifying & Evidence Recording
         verified_ok = await self.adapter.verify_submission(app)
         if verified_ok:
             app.status = ApplicationStatus.VERIFIED
-            # Record Evidence
             evidence_item = EvidenceItem(
                 evidence_id=str(uuid.uuid4()),
                 step_name="submission_verified",
-                form_data_snapshot=form_data,
+                form_data_snapshot=app.form_values,
             )
             app.evidence.append(evidence_item)
         else:

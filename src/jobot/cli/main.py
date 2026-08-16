@@ -163,10 +163,11 @@ def auto_apply_cmd(
 
                 user_approved = Confirm.ask(f"[bold green]Proceed with final submission to {job.company}?[/bold green]")
                 if user_approved:
-                    asyncio.run(adapter.submit_application(app_res))
-                    asyncio.run(adapter.verify_submission(app_res))
-                    db.save_application(app_res)
-                    console.print(f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n")
+                    asyncio.run(pipeline.submit_and_verify(app_res))
+                    if app_res.status == ApplicationStatus.VERIFIED:
+                        console.print(f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n")
+                    else:
+                        console.print(f"[bold red][ERROR] Submission failed: {app_res.error_message}[/bold red]\n")
                 else:
                     app_res.status = ApplicationStatus.CANCELLED
                     db.save_application(app_res)
