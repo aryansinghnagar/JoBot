@@ -1,6 +1,48 @@
+import json
+import urllib.request
+
 import pytest
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
+
+
+class FakeHTTPResponse:
+    def __init__(self, payload: dict, status: int = 200):
+        self.status = status
+        self._payload = payload
+
+    def read(self):
+        return json.dumps(self._payload).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+SINGLE_JOB = {
+    "id": 999,
+    "title": "Senior Backend Engineer",
+    "location": {"name": "Remote"},
+    "content": "<p>Real job description from the board.</p>",
+}
+
+BOARD_JOBS = {
+    "jobs": [
+        {"id": 1, "title": "Engineer I", "location": {"name": "NYC"}, "content": "job one", "absolute_url": "https://boards.greenhouse.io/acme/jobs/1"},
+        {"id": 2, "title": "Engineer II", "location": {"name": "SF"}, "content": "job two", "absolute_url": "https://boards.greenhouse.io/acme/jobs/2"},
+    ]
+}
+
+
+def _monkeypatch_urlopen(monkeypatch, url_suffix: str, payload: dict):
+    def fake_urlopen(req, timeout=5):
+        if url_suffix not in req.full_url:
+            raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+        return FakeHTTPResponse(payload)
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
 
 
 @pytest.mark.asyncio
@@ -15,20 +57,65 @@ async def test_greenhouse_adapter_url_parsing():
 
 
 @pytest.mark.asyncio
-async def test_greenhouse_adapter_parse_posting():
+async def test_greenhouse_adapter_parse_posting(monkeypatch):
     adapter = GreenhouseAdapter()
-    url = "https://boards.greenhouse.io/techcorp/jobs/999"
+    url = "https://boards.greenhouse.io/acme/jobs/999"
+    _monkeypatch_urlopen(monkeypatch, "/jobs/999", SINGLE_JOB)
     job = await adapter.parse_job_posting(url)
 
     assert job.site == "greenhouse"
     assert job.job_id == "999"
-    assert job.title != ""
+    assert job.title == "Senior Backend Engineer"
+    assert job.location == "Remote"
+    assert job.description == "<p>Real job description from the board.</p>"
+
+
+@pytest.mark.asyncio
+async def test_greenhouse_adapter_parse_posting_raises_on_fetch_error(monkeypatch):
+    adapter = GreenhouseAdapter()
+    url = "https://boards.greenhouse.io/acme/jobs/404"
+
+    def boom(req, timeout=5):
+        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", boom)
+
+    with pytest.raises(urllib.error.HTTPError):
+        await adapter.parse_job_posting(url)
+
+
+@pytest.mark.asyncio
+async def test_greenhouse_adapter_discover_jobs(monkeypatch):
+    adapter = GreenhouseAdapter()
+    _monkeypatch_urlopen(monkeypatch, "/jobs?content=true", BOARD_JOBS)
+
+    postings = await adapter.discover_jobs(company="acme", limit=2)
+
+    assert len(postings) == 2
+    assert postings[0].title == "Engineer I"
+    assert postings[0].company == "Acme"
+    assert postings[1].url == "https://boards.greenhouse.io/acme/jobs/2"
+
+
+@pytest.mark.asyncio
+async def test_greenhouse_adapter_discover_jobs_empty_on_error(monkeypatch):
+    adapter = GreenhouseAdapter()
+
+    def boom(req, timeout=5):
+        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", boom)
+
+    postings = await adapter.discover_jobs(company="nope")
+
+    assert postings == []
 
 
 @pytest.mark.asyncio
 async def test_greenhouse_adapter_form_fill_and_submit(monkeypatch):
     adapter = GreenhouseAdapter()
-    url = "https://boards.greenhouse.io/techcorp/jobs/999"
+    _monkeypatch_urlopen(monkeypatch, "/jobs/999", SINGLE_JOB)
+    url = "https://boards.greenhouse.io/acme/jobs/999"
     job = await adapter.parse_job_posting(url)
 
     profile = UserProfile(
@@ -48,19 +135,12 @@ async def test_greenhouse_adapter_form_fill_and_submit(monkeypatch):
     assert filled["email"] == "gh@example.com"
     assert app.status == ApplicationStatus.FILLED
 
-    # Mock HTTP 201 response for API POST submit
-    class MockHTTPResponse:
-        status = 201
+    def fake_post(req, timeout=5):
+        assert req.get_method() == "POST"
+        assert "/applications" in req.full_url
+        return FakeHTTPResponse({}, status=201)
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            pass
-
-    import urllib.request
-
-    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=5: MockHTTPResponse())
+    monkeypatch.setattr(urllib.request, "urlopen", fake_post)
 
     submitted = await adapter.submit_application(app)
     assert submitted is True
