@@ -2,16 +2,14 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Optional
-from jobot.adapters import AdapterRegistry
+from jobot.adapters import AdapterRegistry, SiteAdapter
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.models.domain import Application, ApplicationStatus
 from jobot.obs.application_md_logger import ApplicationMarkdownLogger
+from jobot.policy.engine import PolicyEngine
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
-from jobot.policy.engine import PolicyEngine
-from jobot.models.domain import Application, ApplicationStatus
-
-from jobot.adapters import AdapterRegistry, SiteAdapter
 
 logger = logging.getLogger(__name__)
 
