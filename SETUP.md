@@ -645,12 +645,39 @@ All commands are subcommands of `jobot`. Common flags: `--profile <name>`, `--js
 
 ### Scraping & Discovery
 
+> **Phase 2**: `jobot scrape` runs against **real feeds only** — never
+> fabricated postings. Job boards (linkedin, indeed, glassdoor, google,
+> zip_recruiter, bayt, naukri, bdjobs) are scraped via the `python-jobspy`
+> library; ATS boards (greenhouse, lever, ashby, smartrecruiters) hit the
+> vendor's public JSON API directly; `careers` fingerprints company career
+> pages (see `src/jobot/scrapers/career_sites.yaml`) and dispatches to the
+> matching ATS API; `mock_ats` targets the local test server on port 5800.
+
 | Command | Purpose |
 |---|---|
-| `jobot scrape <board>` | Scrape a specific board (linkedin, greenhouse, lever, indeed, glassdoor, career-page) |
-| `jobot scrape --all` | Scrape all configured boards in parallel |
-| `jobot discover ats <employer>` | Detect what ATS an employer uses |
-| `jobot dedup` | Run dedup on existing jobs (vector similarity) |
+| `jobot scrape <board> [--keywords --location --limit --companies --json --no-dedup --hours-old --country]` | Scrape real postings from one board with two-tier dedup (exact hash + vector cosine ≥ 0.92) |
+| `jobot scrape --all` | Scrape every available board in sequence |
+| `jobot scrape careers --companies webflow,figma` | Fingerprint and scrape ATS career pages for given companies |
+| `jobot scrape lever --companies toptal` | Scrape a company's Lever/Ashby/SmartRecruiters public feed |
+| `jobot dedup [--stats]` | Show the persistent dedup cache state |
+
+**Installing the scraper library (optional extra):** the `python-jobspy`
+package cannot be a declared dependency — its metadata pins `NUMPY==1.26.3`,
+which does not resolve on Python ≥ 3.12. Install it with the documented
+`--no-deps` recipe and let the `[scrapers]` extra provide the runtime deps:
+
+```sh
+pip install -e '.[scrapers]'
+pip install python-jobspy==1.1.82 --no-deps   # import name is still `jobspy`
+```
+
+Without it, JobSpy boards fail with a clear `JobSpyNotInstalledError` message
+pointing to this recipe; ATS/careers/mock_ats boards work without it.
+
+**Politeness config** (`jobot config set`): `scraper.jobspy.delay_s` (seconds
+between scrapes, default 1.0) and `scraper.jobspy.proxy_list`
+(comma-separated proxies, optional). LinkedIn applies aggressive per-IP rate
+limits — keep the delay, consider proxies for high-volume runs.
 
 ### Ranking & Applying
 
@@ -823,16 +850,17 @@ export JOBOT_KEYRING_FILE=~/.jobot/keyring.enc
 
 ### JobSpy rate-limited by LinkedIn (HTTP 429)
 
-**Cause:** LinkedIn detected the scraper pattern.
+**Cause:** LinkedIn detected the scraper pattern (per-IP rate limiting).
 
 **Fix:**
 ```bash
-# Enable proxy rotation:
-jobot config set scraper.jobspy.proxy_list ~/proxies.txt
 # Reduce rate:
 jobot config set scraper.jobspy.delay_s 5
-# Or skip LinkedIn, use direct-API adapters:
-jobot scrape greenhouse --companies airbnb,stripe,...
+# Enable proxy rotation (comma-separated list):
+jobot config set scraper.jobspy.proxy_list "http://p1:8080,http://p2:8080"
+# Or skip LinkedIn, use direct-API adapters (never rate-limited the same way):
+jobot scrape lever --companies toptal
+jobot scrape careers --companies webflow,figma,vercel,notion,benchling
 ```
 
 ### PII masker is over-aggressive
@@ -894,20 +922,29 @@ docker compose logs jobot | tail -50
 
 ### JobSpy returns 0 results for an obvious search
 
-**Cause:** Site parameter case mismatch.
+**Cause:** (1) the `python-jobspy` library is not installed (you'll see
+`JobSpyNotInstalledError` — install via the `--no-deps` recipe above), (2) the
+board is rate-limited, or (3) you used a board JobSpy can't serve well right
+now.
 
-**Fix:** Use lowercase site names:
+**Fix:** Check the per-board message first:
 ```bash
-jobot scrape linkedin --keywords 'engineer'   # not 'LinkedIn'
+jobot scrape linkedin --keywords 'engineer'   # lowercase site names
+jobot scrape indeed --keywords 'engineer'     # alternative board
+# Google board requires the google_search_term param (auto-set by --keywords);
+# if it still returns 0, the upstream google scraper is flaky — use another board.
 ```
 
 ### JobBot is slow on first scrape
 
-**Cause:** First-time scraping triggers a vector-memory embedding call for every job (cold start).
+**Cause:** First-time scraping pulls many postings and the dedup cache is
+empty.
 
-**Fix:** This is expected. Pre-warm the cache:
+**Fix:** This is expected; the local pseudo-embedding is fast (no LLM calls).
+Warm the persistent dedup cache once:
 ```bash
-jobot dedup --warm-cache
+jobot scrape --all --limit 50
+jobot dedup --stats   # verify cache size
 ```
 
 ---

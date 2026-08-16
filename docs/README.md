@@ -15,7 +15,7 @@ functionality of 33 open-source job-search AI repositories into `jobot`.
 ## Phase 0 Deliverables
 
 - [`asp.md`](asp.md) — the 12-phase Application Submission Pipeline (ASP), single source of truth
-- [`contracts.md`](contracts.md) — frozen public interfaces the merge must not break (includes the Phase 1 addendum on `jobot/llm/`)
+- [`contracts.md`](contracts.md) — frozen public interfaces the merge must not break (includes the Phase 1 addendum on `jobot/llm/` and the Phase 2 addendum on `jobot/scrapers/`)
 
 ## Phase 1 Deliverables
 
@@ -26,6 +26,17 @@ Provider abstraction + config layer (plan.md Chapter 6):
 - [`jobot/config/`](../src/jobot/config/) — three-tier `ConfigManager` (env → keyring → `~/.jobot/config.yaml`) + profiles YAML loader (config-only, identity stays in the Fernet vault)
 - CLI: `jobot config get/set/unset/show`, `jobot doctor`
 - Live provider tests opt-in: `JOBOT_RUN_LIVE_LLM=1 pytest tests/integration/test_llm_providers_live.py`
+
+## Phase 2 Deliverables
+
+Scraper merge (plan.md Chapter 12 + §316–325): real feeds only, no fabricated data:
+
+- [`jobot/scrapers/`](../src/jobot/scrapers/) — `JobSpyAdapter` (8 boards, `python-jobspy` via `--no-deps` recipe), direct-API ATS families (lever/ashby/smartrecruiters), `CareerPageScanner` + verified `career_sites.yaml` starter set, two-tier `DedupService` (exact hash + vector cosine ≥ 0.92, persisted `job_dedup_cache` table)
+- [`jobot/discovery/engine.py`](../src/jobot/discovery/engine.py) — discovery against real feeds only; unscrapable boards skipped
+- [`jobot/adapters/greenhouse.py`](../src/jobot/adapters/greenhouse.py) — fabrication removed (parse raises on fetch error; honest `discover_jobs`)
+- CLI: `jobot scrape <board> [--keywords --location --limit --companies --all --json --no-dedup]`, `jobot dedup [--stats]`
+- Config keys: `scraper.jobspy.delay_s`, `scraper.jobspy.proxy_list`
+- Live scraper tests opt-in: `JOBOT_RUN_LIVE_SCRAPE=1 pytest tests/integration/test_scrape_live.py`
 
 ## Existing
 

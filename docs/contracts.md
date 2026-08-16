@@ -84,3 +84,63 @@ signature:
   identity facts remain canonical in the Fernet vault — no second source of
   truth was introduced.
 - **Live tests opt-in**: `JOBOT_RUN_LIVE_LLM=1 pytest tests/integration/test_llm_providers_live.py`.
+
+## Phase 2 Addendum (2026-08-13)
+
+The scraper layer (plan.md Chapter 12 + §316–325) landed without breaking any
+frozen signature:
+
+- **`GreenhouseAdapter` fabrication removed** — `parse_job_posting` now raises
+  on fetch error instead of returning invented title/description;
+  `discover_matching_jobs(board_token, limit)` delegates to the new honest
+  `discover_jobs(company, limit=25, keywords="", location="")` which returns
+  `[]` on failure (no fabricated postings anywhere in the real-feed path).
+  `fill_form` / `submit_application` / `verify_submission` unchanged.
+- **`JobDiscoveryEngine.discover_matching_jobs`** extended additively:
+  `companies=None, location=""` kwargs added; default `active_portals` now
+  maps to real feeds only. Portals without a public feed (`UNSCRAPABLE_BOARDS`:
+  workday, instahyre, cutshort, wellfound, shine, foundit, hirist, ziprecruiter,
+  naukri, glassdoor) are skipped with a warning — never fabricated.
+- **New scraper package** `src/jobot/scrapers/` (discovery-only, no frozen
+  surface affected):
+  - `jobspy.py` — `JobSpyAdapter(board, delay_s=1.0, proxies=None)` over
+    `JOBS_BOARDS` (linkedin, indeed, glassdoor, google, zip_recruiter, bayt,
+    naukri, bdjobs); uniform protocol `discover_jobs(keywords="", location="",
+    limit=25, hours_old=72, country_indeed="USA", is_remote=False,
+    job_type=None)`. The `python-jobspy` library is **not** a declared
+    dependency (metadata pins `NUMPY==1.26.3` → unresolvable on py3.14);
+    install via `pip install python-jobspy==1.1.82 --no-deps` and it is
+    import-guarded (`JobSpyNotInstalledError`).
+  - `ats.py` — `AtsFamilyAdapter` base + `LeverAdapter` / `AshbyAdapter` /
+    `SmartRecruitersAdapter` (`FAMILY_ADAPTERS`), all with the uniform
+    `discover_jobs(company=None, limit=25, keywords="", location="")` protocol.
+    Lever uses the current API schema (`text` = title; description in
+    `descriptionPlain`; `categories.location`; `hostedUrl`). Workable has no
+    anonymous feed (per-account keys) — deliberately not implemented.
+  - `careers.py` — `CareerPageScanner(companies=...)`: fingerprints a company
+    careers page from `career_sites.yaml` markers and dispatches to the
+    matching family adapter; workable fingerprints log-and-skip. Verified
+    starter set (2026-08-13 live): webflow/figma/vercel → greenhouse,
+    notion/benchling → ashby.
+  - `dedup.py` — `DedupService(db=None, threshold=0.92)`: tier 1 exact sha256
+    over normalized title|company|location; tier 2 cosine ≥ threshold over a
+    local char-bigram pseudo-embedding of the **title** (dim 64). Persists to
+    the new `job_dedup_cache` table (additive, no migration).
+- **`jobot.memory.vector.simple_embedding`** upgraded in place (deterministic,
+  order/punctuation-insensitive char-bigram bag; same signature) — used by
+  `VectorMemory` retrieval and dedup tier 2.
+- **New config keys**: `scraper.jobspy.delay_s` (default 1.0),
+  `scraper.jobspy.proxy_list` (comma-separated, optional).
+- **New CLI commands**: `jobot scrape <board> [--keywords --location --limit
+  --companies --all --json --no-dedup --hours-old --country]` (real postings
+  only; `--json` keeps stdout pure JSON, progress on stderr) and
+  `jobot dedup [--stats]` (dedup cache view).
+- **Exit criterion (plan.md:325)**: `jobot scrape linkedin --keywords 'senior
+  backend' --location 'San Francisco' --limit 50` returned 50 real postings on
+  a non-throttled IP (repeated runs are subject to LinkedIn's per-IP rate
+  limiting; indeed returned 27+ real postings). Repost reduction ≥80% is
+  enforced by `tests/test_scrapers_dedup.py::test_repost_reduction_meets_exit_criterion`.
+- **Live tests opt-in**: `JOBOT_RUN_LIVE_SCRAPE=1 pytest tests/integration/test_scrape_live.py`.
+- **CI note**: mypy targets `python_version = "3.12"` (numpy 2.5+ ships
+  pyi stubs with 3.12-only syntax; `src/` itself remains 3.11-compatible —
+  CI tests run on 3.11/3.12).
