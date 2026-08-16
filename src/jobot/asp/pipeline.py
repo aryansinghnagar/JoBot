@@ -110,7 +110,8 @@ class ApplicationSubmissionPipeline:
             if not success:
                 break
 
-        self.db.save_application(app)
+        if app.job_id and self.db.get_job_posting(app.job_id):
+            self.db.save_application(app)
         return app
 
     async def _execute_phase(
@@ -135,7 +136,8 @@ class ApplicationSubmissionPipeline:
                     level=AlertLevel.HIGH,
                 )
                 self.trace_logger.end_span(span, status=f"failed: {dod_result.reason}")
-                self.db.save_application(app)
+                if app.job_id and self.db.get_job_posting(app.job_id):
+                    self.db.save_application(app)
                 return False
 
             self.trace_logger.end_span(span, status="ok")
@@ -144,7 +146,8 @@ class ApplicationSubmissionPipeline:
             app.status = ApplicationStatus.FAILED
             app.error_message = str(exc)
             self.trace_logger.end_span(span, status=f"error: {exc}")
-            self.db.save_application(app)
+            if app.job_id and self.db.get_job_posting(app.job_id):
+                self.db.save_application(app)
             return False
 
     async def _handle_phase_1_intent(self, app: Application, profile: UserProfile, *args) -> DoDResult:
