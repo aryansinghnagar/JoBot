@@ -194,6 +194,28 @@ class DatabaseManager:
                 discovered_at=row["discovered_at"],
             )
 
+    def list_job_postings(self, limit: int = 500) -> List[JobPosting]:
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM job_postings ORDER BY discovered_at DESC LIMIT ?", (limit,)
+            ).fetchall()
+        postings = []
+        for row in rows:
+            postings.append(
+                JobPosting(
+                    job_id=row["job_id"],
+                    site=row["site"],
+                    url=row["url"],
+                    title=row["title"],
+                    company=row["company"],
+                    location=row["location"] or "",
+                    description=row["description"] or "",
+                    parsed_skills=json.loads(row["parsed_skills"] or "[]"),
+                    discovered_at=row["discovered_at"],
+                )
+            )
+        return postings
+
     # -------------------------------------------------------------------
     # Application Operations
     # -------------------------------------------------------------------

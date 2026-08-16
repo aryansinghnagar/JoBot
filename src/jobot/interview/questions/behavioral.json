@@ -1,0 +1,44 @@
+[
+  {
+    "id": "beh_001",
+    "track": "behavioral",
+    "text": "Tell me about a time you had to deliver a feature under a tight deadline.",
+    "difficulty": "easy",
+    "tags": ["deadline", "delivery"]
+  },
+  {
+    "id": "beh_002",
+    "track": "behavioral",
+    "text": "Describe a project where you had to make a significant technical trade-off.",
+    "difficulty": "easy",
+    "tags": ["trade-off", "decision"]
+  },
+  {
+    "id": "beh_003",
+    "track": "behavioral",
+    "text": "Give an example of a conflict with a teammate and how you resolved it.",
+    "difficulty": "medium",
+    "tags": ["conflict", "collaboration"]
+  },
+  {
+    "id": "beh_004",
+    "track": "behavioral",
+    "text": "Tell me about a time you failed at something and what you learned from it.",
+    "difficulty": "medium",
+    "tags": ["failure", "learning"]
+  },
+  {
+    "id": "beh_005",
+    "track": "behavioral",
+    "text": "Describe a situation where you had to influence without authority.",
+    "difficulty": "hard",
+    "tags": ["influence", "leadership"]
+  },
+  {
+    "id": "beh_006",
+    "track": "behavioral",
+    "text": "Tell me about a time you took initiative beyond your job description.",
+    "difficulty": "hard",
+    "tags": ["initiative", "ownership"]
+  }
+]

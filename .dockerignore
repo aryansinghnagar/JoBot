@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Repo artifacts
+.git/
+.gitignore
+.github/
+tests/
+tests.npm/
+node_modules/
+npm-debug.log*
+
+# Local state (never ship profiles, logs, or databases)
+.jobot/
+log.md
+err.txt
+err2.txt
+applications_export.json
+*.db
+*.sqlite*

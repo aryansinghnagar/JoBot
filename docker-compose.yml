@@ -1,0 +1,17 @@
+services:
+  jobot:
+    build: .
+    image: jobot:dev
+    container_name: jobot
+    volumes:
+      - jobot-home:/home/jobot/.jobot
+    environment:
+      - JOBOT_CONTAINER=1
+      # Runtime secrets live in the OS keyring on the host; in containers they
+      # can be supplied via an env file (gitignored). Never commit real keys.
+      - JOBOT_PROFILE=${JOBOT_PROFILE:-default}
+    command: ["doctor"]
+    restart: "no"
+
+volumes:
+  jobot-home:

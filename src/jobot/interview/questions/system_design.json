@@ -1,0 +1,44 @@
+[
+  {
+    "id": "sd_001",
+    "track": "system_design",
+    "text": "Design a URL shortener. Cover write/read ratio, hashing, and caching.",
+    "difficulty": "easy",
+    "tags": ["url shortener", "storage"]
+  },
+  {
+    "id": "sd_002",
+    "track": "system_design",
+    "text": "Design a news feed API for a social network with millions of users.",
+    "difficulty": "medium",
+    "tags": ["feed", "fanout", "caching"]
+  },
+  {
+    "id": "sd_003",
+    "track": "system_design",
+    "text": "Design a rate limiter for a public API. Discuss algorithms and distribution.",
+    "difficulty": "medium",
+    "tags": ["rate limiter", "redis"]
+  },
+  {
+    "id": "sd_004",
+    "track": "system_design",
+    "text": "Design a job queue / task scheduler with retries and dead-letter handling.",
+    "difficulty": "medium",
+    "tags": ["queue", "retries", "dlq"]
+  },
+  {
+    "id": "sd_005",
+    "track": "system_design",
+    "text": "Design a chat system supporting 1:1 and group messaging at scale.",
+    "difficulty": "hard",
+    "tags": ["chat", "websocket", "ordering"]
+  },
+  {
+    "id": "sd_006",
+    "track": "system_design",
+    "text": "Design a distributed cache with strong consistency requirements.",
+    "difficulty": "hard",
+    "tags": ["cache", "consistency"]
+  }
+]

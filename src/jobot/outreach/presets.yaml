@@ -1,0 +1,30 @@
+# JoBot outreach DM presets (profile-driven, re-implemented originals).
+# Placeholders are filled from the candidate profile and contact details only.
+presets:
+  faang_senior:
+    name: "FAANG senior outreach"
+    tone: "professional"
+    opening: "Hi {first_name}, I'm {candidate_name}, a {candidate_role} with {candidate_experience_years}+ years building {candidate_skills}."
+    body: "I've been following {company}'s work on {company_focus} and would welcome a short conversation about {role} opportunities."
+    closing: "Thanks for your time, {first_name} — happy to share my resume or portfolio."
+    call_to_action: "Would you be open to a 15-minute call this week?"
+    min_length: 80
+    max_length: 200
+  startup_founding:
+    name: "Startup founding-team outreach"
+    tone: "energetic"
+    opening: "Hi {first_name}, I'm {candidate_name} — I build {candidate_skills} and love moving fast."
+    body: "The problems {company} is tackling around {company_focus} are exactly what I want to work on, especially in a founding-team role."
+    closing: "Happy to jump into a quick chat or share how I've shipped {candidate_skills} end to end."
+    call_to_action: "Open to a quick call this week?"
+    min_length: 60
+    max_length: 180
+  quant_finance:
+    name: "Quant finance outreach"
+    tone: "precise"
+    opening: "Hi {first_name}, I'm {candidate_name}, a {candidate_role} focused on {candidate_skills}."
+    body: "I'm exploring roles at {company} where engineering rigor meets markets; my background aligns with your {role} mandate."
+    closing: "I'd welcome the chance to discuss how my experience maps to {company}'s roadmap."
+    call_to_action: "Would you have 15 minutes this week?"
+    min_length: 70
+    max_length: 180

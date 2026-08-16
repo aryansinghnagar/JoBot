@@ -32,6 +32,9 @@ include-package-data = true
 "jobot.documents" = ["templates/*.tex.j2"]
 "jobot.tracker" = ["templates/*.j2"]
 "jobot.digest" = ["templates/*.j2"]
+"jobot.interview" = ["questions/*.json"]
+"jobot.analytics" = ["data/*.yaml"]
+"jobot.outreach" = ["presets.yaml"]
 
 [project.optional-dependencies]
 providers = [

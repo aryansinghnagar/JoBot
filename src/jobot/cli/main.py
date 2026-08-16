@@ -1109,6 +1109,363 @@ def loop_cmd(
         console.print(f"  [dim]- {note}[/dim]")
 
 
+@app.command("interview")
+def interview_cmd(
+    action: str = typer.Argument(
+        "list", help="Action: 'start', 'list', 'answer', 'review', 'complete'"
+    ),
+    track: str = typer.Argument("behavioral", help="Track: behavioral | system_design | technical"),
+    session_id: Optional[str] = typer.Option(None, "--session", help="Session ID"),
+    answer: Optional[str] = typer.Option(None, "--answer", help="Answer text for 'answer' action"),
+) -> None:
+    """Mock interview sessions with STAR-method coaching."""
+    from jobot.interview.coach import MockInterviewer
+    from jobot.interview.sessions import SessionStore
+
+    store = SessionStore()
+    interviewer = MockInterviewer(store=store)
+
+    if action == "start":
+        try:
+            session = interviewer.start(track)
+        except ValueError as exc:
+            console.print(f"[bold red][ERROR] {exc}[/bold red]")
+            raise typer.Exit(code=1)
+        first = interviewer.next_question(session)
+        console.print(
+            f"[bold green][OK] Session [blue]{session.session_id}[/blue] started (track: {track})[/bold green]"
+        )
+        if first:
+            console.print(f"[cyan]Q:[/cyan] {first.text}")
+        console.print(
+            '[yellow]Answer with: jobot interview answer --session <id> --answer "..."[/yellow]'
+        )
+        return
+
+    if action == "list":
+        sessions = store.list()
+        if not sessions:
+            console.print("[yellow]No interview sessions found.[/yellow]")
+            return
+        table = Table(title="Interview Sessions")
+        table.add_column("Session ID", style="cyan")
+        table.add_column("Track")
+        table.add_column("Status", style="bold")
+        table.add_column("Turns")
+        table.add_column("Avg Score")
+        for s in sessions:
+            table.add_row(
+                s.session_id,
+                s.track,
+                s.status,
+                str(len(s.turns)),
+                str(interviewer.average_score(s)),
+            )
+        console.print(table)
+        return
+
+    if not session_id:
+        console.print("[bold red][ERROR] --session <id> required for this action.[/bold red]")
+        raise typer.Exit(code=1)
+    sess = store.load(session_id)
+    if sess is None:
+        console.print(f"[bold red][ERROR] Session '{session_id}' not found.[/bold red]")
+        raise typer.Exit(code=1)
+
+    if action == "answer":
+        if not answer:
+            console.print('[bold red][ERROR] --answer "<text>" required.[/bold red]')
+            raise typer.Exit(code=1)
+        vault = CredentialVault()
+        profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+        if not profile_path.exists():
+            console.print(
+                "[bold red][ERROR] Candidate profile missing (run 'jobot profile init').[/bold red]"
+            )
+            raise typer.Exit(code=1)
+        profile = vault.load_encrypted_profile(profile_path)
+        try:
+            turn = asyncio.run(interviewer.answer(sess, answer, profile))
+        except ValueError as exc:
+            console.print(f"[bold red][ERROR] {exc}[/bold red]")
+            raise typer.Exit(code=1)
+        console.print(f"[cyan]Q:[/cyan] {turn.question_text}")
+        console.print(f"[green]STAR score:[/green] {turn.star_score:.2f}")
+        console.print(f"[bold]Coach:[/bold] {turn.feedback}")
+        nxt = interviewer.next_question(sess)
+        if nxt:
+            console.print(f"[cyan]Next Q:[/cyan] {nxt.text}")
+        return
+
+    if action == "review":
+        table = Table(title=f"Session {sess.session_id} ({sess.track})")
+        table.add_column("#")
+        table.add_column("Question")
+        table.add_column("Score", justify="right")
+        table.add_column("Coach Feedback", overflow="fold")
+        for i, t in enumerate(sess.turns, start=1):
+            table.add_row(str(i), t.question_text, f"{t.star_score:.2f}", t.feedback)
+        console.print(table)
+        console.print(f"[bold]Average STAR score:[/bold] {interviewer.average_score(sess)}")
+        return
+
+    if action == "complete":
+        interviewer.complete(sess)
+        console.print(
+            f"[bold green][OK] Session {session_id} completed (avg {interviewer.average_score(sess)}).[/bold green]"
+        )
+        return
+
+    console.print(
+        f"[bold red][ERROR] Unknown interview action '{action}'. One of: start, list, answer, review, complete[/bold red]"
+    )
+    raise typer.Exit(code=1)
+
+
+@app.command("skill-gap")
+def skill_gap_cmd(
+    limit: int = typer.Option(500, "--limit", help="Max saved postings to analyze"),
+) -> None:
+    """Analyze skill demand from saved postings vs the candidate profile."""
+    vault = CredentialVault()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print(
+            "[bold red][ERROR] Candidate profile missing (run 'jobot profile init').[/bold red]"
+        )
+        raise typer.Exit(code=1)
+    profile = vault.load_encrypted_profile(profile_path)
+
+    from jobot.analytics.skill_gap import SkillGapAnalyzer
+
+    report = SkillGapAnalyzer().analyze(profile, limit=limit)
+    console.print(
+        f"[bold cyan]Skill Gap Report[/bold cyan] — {report.total_postings} postings ({report.sourced_from})"
+    )
+    console.print(f"Profile skills: [blue]{', '.join(report.profile_skills)}[/blue]")
+    if not report.gaps:
+        console.print("[green]No gaps detected.[/green]")
+        return
+    table = Table(title="Top In-Demand Skills Missing From Profile")
+    table.add_column("Skill", style="cyan")
+    table.add_column("Demand", justify="right")
+    for gap in report.gaps[:15]:
+        table.add_row(gap.skill, str(gap.demand_count))
+    console.print(table)
+    console.print("[bold]Learning path recommendations:[/bold]")
+    for r in report.recommendations:
+        console.print(f"  [dim]- {r}[/dim]")
+
+
+@app.command("salary")
+def salary_cmd(
+    role: str = typer.Option("backend", "--role", help="Role key (see --roles)"),
+    region: str = typer.Option("India", "--region", help="Region: India | US | EU"),
+    roles: bool = typer.Option(False, "--roles", help="List available role keys"),
+) -> None:
+    """Look up salary benchmarks (shipped reference data; live fetch opt-in via JOBOT_RUN_LIVE_SALARY=1)."""
+    from jobot.analytics.salary import SalaryBenchmarker
+
+    benchmarker = SalaryBenchmarker()
+    if roles:
+        console.print("[cyan]Available roles:[/cyan] " + ", ".join(benchmarker.list_roles()))
+        return
+    band = benchmarker.benchmark(role, region)
+    if band is None:
+        console.print(
+            f"[bold red][ERROR] No benchmark for role '{role}' / region '{region}'.[/bold red]"
+        )
+        console.print(f"[yellow]Available roles: {', '.join(benchmarker.list_roles())}[/yellow]")
+        raise typer.Exit(code=1)
+    table = Table(title=f"{band.role} ({band.region}) — {band.currency}")
+    table.add_column("Percentile")
+    table.add_column("Annual", justify="right")
+    for label, value in (("p25", band.p25), ("p50", band.p50), ("p75", band.p75)):
+        table.add_row(label, f"{value:,}")
+    console.print(table)
+    console.print(
+        f"[dim]Source: {band.source}. Reference data is approximate — verify against live offers.[/dim]"
+    )
+
+
+@app.command("outreach")
+def outreach_cmd(
+    action: str = typer.Argument("presets", help="Action: 'presets', 'draft', 'send'"),
+    preset: str = typer.Option("faang_senior", "--preset", help="Preset key"),
+    name: str = typer.Option("", "--name", help="Contact first name"),
+    company: str = typer.Option("", "--company", help="Contact company"),
+    role: str = typer.Option("", "--role", help="Target role at company"),
+    output: Optional[str] = typer.Option(None, "--output", help="Write drafted DM to this path"),
+) -> None:
+    """Cold outreach: list presets, draft DMs, send (with daily cap)."""
+    from jobot.outreach.dm import Contact, DMGenerator, OutreachGate
+    from jobot.outreach.links import LinkedInPeopleSearchURLBuilder
+
+    generator = DMGenerator()
+
+    if action == "presets":
+        presets = generator.presets()
+        table = Table(title="Outreach Presets")
+        table.add_column("Key", style="cyan")
+        table.add_column("Name")
+        table.add_column("Tone")
+        for key, p in presets.items():
+            table.add_row(key, p.name, p.tone)
+        console.print(table)
+        return
+
+    if not name or not company:
+        console.print("[bold red][ERROR] --name and --company are required.[/bold red]")
+        raise typer.Exit(code=1)
+    contact = Contact(first_name=name, company=company, role=role)
+
+    vault = CredentialVault()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print(
+            "[bold red][ERROR] Candidate profile missing (run 'jobot profile init').[/bold red]"
+        )
+        raise typer.Exit(code=1)
+    profile = vault.load_encrypted_profile(profile_path)
+
+    dm = asyncio.run(generator.draft(preset, contact, profile))
+    if not dm.grounded:
+        console.print(
+            "[bold red][ERROR] DM failed the grounding gate — review for invented facts.[/bold red]"
+        )
+        raise typer.Exit(code=1)
+
+    if action == "draft":
+        console.print(f"[bold cyan]DM draft ({dm.source}):[/bold cyan]")
+        console.print(dm.text)
+        console.print(
+            f"[dim]LinkedIn search: {LinkedInPeopleSearchURLBuilder().build_for_contact(name, company, role)}[/dim]"
+        )
+        if output:
+            out = Path(output)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(dm.text, encoding="utf-8")
+            console.print(f"[bold green][OK] Draft written to {out.resolve()}[/bold green]")
+        return
+
+    if action == "send":
+        if not dm.grounded:
+            console.print("[bold red][ERROR] Refusing to send ungrounded DM.[/bold red]")
+            raise typer.Exit(code=1)
+        gate = OutreachGate()
+        if gate.remaining() <= 0:
+            console.print(
+                f"[bold red][ERROR] Daily DM cap reached ({gate.sent_today()}).[/bold red]"
+            )
+            raise typer.Exit(code=1)
+        from jobot.notify.email import EmailSender
+
+        sender = EmailSender()
+        if not sender.is_configured():
+            console.print("[bold cyan]Subject:[/bold cyan] Outreach to {name} at {company}")
+            console.print(dm.text)
+            console.print(
+                "[yellow](dry run; SMTP not configured — set smtp.* keys to send)[/yellow]"
+            )
+            return
+        ok, msg = generator.send(dm, contact, gate=gate, email=sender)
+        if ok:
+            console.print(f"[bold green][OK] DM sent: {msg}[/bold green]")
+        else:
+            console.print(f"[bold red][ERROR] DM not sent: {msg}[/bold red]")
+        return
+
+    console.print(
+        f"[bold red][ERROR] Unknown outreach action '{action}'. One of: presets, draft, send[/bold red]"
+    )
+    raise typer.Exit(code=1)
+
+
+@app.command("plugin")
+def plugin_cmd(
+    action: str = typer.Argument("list", help="Action: 'install', 'list', 'audit', 'remove'"),
+    target: Optional[str] = typer.Argument(
+        None, help="Git URL (install) or plugin name (audit/remove)"
+    ),
+) -> None:
+    """Install, list, audit, or remove plugins (manifest-validated)."""
+    from jobot.plugins.auditor import PluginAuditor
+    from jobot.plugins.installer import PluginInstaller
+
+    installer = PluginInstaller()
+
+    if action == "install":
+        if not target:
+            console.print(
+                "[bold red][ERROR] git URL required: jobot plugin install <git-url>[/bold red]"
+            )
+            raise typer.Exit(code=1)
+        try:
+            manifest = installer.install(target)
+        except ValueError as exc:
+            console.print(f"[bold red][ERROR] Install failed: {exc}[/bold red]")
+            raise typer.Exit(code=1)
+        console.print(
+            f"[bold green][OK] Installed {manifest.name} v{manifest.version} (permissions: {', '.join(manifest.permissions) or 'none'})[/bold green]"
+        )
+        audit = PluginAuditor().audit(installer.plugins_dir / manifest.name, manifest)
+        console.print(f"[bold]Audit:[/bold] {'PASS' if audit.passed else 'FAIL'}")
+        for f in audit.findings:
+            console.print(
+                f"  [{'red' if f.severity == 'error' else 'yellow' if f.severity == 'warning' else 'dim'}]{f.severity}: {f.message}[/]"
+            )
+        return
+
+    if action == "list":
+        plugins = installer.list_plugins()
+        if not plugins:
+            console.print("[yellow]No plugins installed.[/yellow]")
+            return
+        table = Table(title="Installed Plugins")
+        table.add_column("Name", style="cyan")
+        table.add_column("Version")
+        table.add_column("Author")
+        table.add_column("Permissions")
+        for p in plugins:
+            table.add_row(
+                p["name"], p["version"], p.get("author", ""), ", ".join(p.get("permissions", []))
+            )
+        console.print(table)
+        return
+
+    if action in ("audit", "remove"):
+        if not target:
+            console.print(
+                f"[bold red][ERROR] plugin name required: jobot plugin {action} <name>[/bold red]"
+            )
+            raise typer.Exit(code=1)
+        if action == "remove":
+            if installer.remove(target):
+                console.print(f"[bold green][OK] Plugin '{target}' removed.[/bold green]")
+            else:
+                console.print(f"[bold red][ERROR] Plugin '{target}' not found.[/bold red]")
+                raise typer.Exit(code=1)
+            return
+        dest = installer.plugins_dir / target
+        if not dest.exists():
+            console.print(f"[bold red][ERROR] Plugin '{target}' not installed.[/bold red]")
+            raise typer.Exit(code=1)
+        report = PluginAuditor().audit(dest)
+        console.print(
+            f"[bold]Audit {report.plugin} v{report.version}: {'PASS' if report.passed else 'FAIL'}[/bold]"
+        )
+        for f in report.findings:
+            console.print(
+                f"  [{'red' if f.severity == 'error' else 'yellow' if f.severity == 'warning' else 'dim'}]{f.severity}: {f.message}[/]"
+            )
+        return
+
+    console.print(
+        f"[bold red][ERROR] Unknown plugin action '{action}'. One of: install, list, audit, remove[/bold red]"
+    )
+    raise typer.Exit(code=1)
+
+
 @app.command("traces")
 def traces_cmd(
     action: str = typer.Argument("list", help="Action: 'list', 'show'"),

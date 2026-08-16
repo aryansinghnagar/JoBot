@@ -1,0 +1,44 @@
+[
+  {
+    "id": "tech_001",
+    "track": "technical",
+    "text": "Explain how hash tables work and their average vs worst-case complexity.",
+    "difficulty": "easy",
+    "tags": ["hash table", "complexity"]
+  },
+  {
+    "id": "tech_002",
+    "track": "technical",
+    "text": "What is the difference between an inner join and a left join? Give an example.",
+    "difficulty": "easy",
+    "tags": ["sql", "joins"]
+  },
+  {
+    "id": "tech_003",
+    "track": "technical",
+    "text": "Describe how HTTP caching works with ETags and Cache-Control.",
+    "difficulty": "medium",
+    "tags": ["http", "caching"]
+  },
+  {
+    "id": "tech_004",
+    "track": "technical",
+    "text": "Explain the CAP theorem and how databases choose among consistency and availability.",
+    "difficulty": "medium",
+    "tags": ["cap theorem", "databases"]
+  },
+  {
+    "id": "tech_005",
+    "track": "technical",
+    "text": "What is an idempotent API operation and how do you implement one?",
+    "difficulty": "medium",
+    "tags": ["idempotency", "api"]
+  },
+  {
+    "id": "tech_006",
+    "track": "technical",
+    "text": "Design a concurrency-safe counter and explain lock-free alternatives.",
+    "difficulty": "hard",
+    "tags": ["concurrency", "locks"]
+  }
+]

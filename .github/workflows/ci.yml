@@ -74,3 +74,49 @@ jobs:
 
       - name: Run Vitest Unit Test Suite
         run: npm run test
+
+  supply-chain:
+    name: Supply Chain — SBOM + Provenance Attestation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate Python SBOM (CycloneDX)
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py environment --output sbom-python.json
+
+      - name: Generate Node SBOM (CycloneDX)
+        run: |
+          npm install --no-save @cyclonedx/cyclonedx-npm
+          npx @cyclonedx/cyclonedx-npm --output-file sbom-node.json
+
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sboms
+          path: |
+            sbom-python.json
+            sbom-node.json
+
+      - name: Attest SBOM Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            sbom-python.json
+            sbom-node.json
