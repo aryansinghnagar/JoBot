@@ -1,5 +1,12 @@
 # NEXT QUEUE — Upcoming Tasks
 
+## Phase 4 (per plan.md — pending plan review)
+
+- [ ] T4.x: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
+- [ ] T4.x: Naukri real submit/verify via Patchright (P1.1/P1.2 carryover)
+- [ ] T4.x: Live LinkedIn Easy Apply validation (needs `JOBOT_RUN_LIVE_BROWSER=1` + working LLM key)
+- [ ] T4.x: Tauri 2 + React Desktop GUI [RELEASE 2.0]
+
 ## P0 & P1 Remedial Tasks (docs/history/JoBot_Refactor_Review_2.md)
 
 - [x] P0.1: Fix missing `Dict` import in `src/jobot/obs/alerts.py`

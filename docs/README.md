@@ -15,7 +15,7 @@ functionality of 33 open-source job-search AI repositories into `jobot`.
 ## Phase 0 Deliverables
 
 - [`asp.md`](asp.md) — the 12-phase Application Submission Pipeline (ASP), single source of truth
-- [`contracts.md`](contracts.md) — frozen public interfaces the merge must not break (includes the Phase 1 addendum on `jobot/llm/` and the Phase 2 addendum on `jobot/scrapers/`)
+- [`contracts.md`](contracts.md) — frozen public interfaces the merge must not break (includes the Phase 1 addendum on `jobot/llm/`, the Phase 2 addendum on `jobot/scrapers/`, and the Phase 3 addendum on `jobot/documents/` + `jobot/asp/`)
 
 ## Phase 1 Deliverables
 
@@ -37,6 +37,17 @@ Scraper merge (plan.md Chapter 12 + §316–325): real feeds only, no fabricated
 - CLI: `jobot scrape <board> [--keywords --location --limit --companies --all --json --no-dedup]`, `jobot dedup [--stats]`
 - Config keys: `scraper.jobspy.delay_s`, `scraper.jobspy.proxy_list`
 - Live scraper tests opt-in: `JOBOT_RUN_LIVE_SCRAPE=1 pytest tests/integration/test_scrape_live.py`
+
+## Phase 3 Deliverables
+
+Document stack + auto-apply orchestration (plan.md §327–339):
+
+- [`jobot/documents/`](../src/jobot/documents/) — LaTeX templates (`default`/`modern`/`classic`), `TailorLoop` (drafter→reviewer, ≤3 iterations), deterministic grounding gate (`verify_fact_truthfulness_detailed`), 5-tone cover letters, pluggable PDF engines (LuaLaTeX + pure-python reportlab fallback), `AtsScorer` (≥ 0.85 threshold)
+- [`jobot/asp/`](../src/jobot/asp/) — `saga.py` (apply saga over new `saga_instances`/`saga_steps` tables) + `orchestrator.py` (tailor → gate → artifacts → 12-phase pipeline; supervised approval gate, compensation, dry-run)
+- [`jobot/stealth/linkedin_easy_apply.py`](../src/jobot/stealth/linkedin_easy_apply.py) — Easy Apply saga (selector-driven; hermetic Flask harness in `tests/mock_linkedin/`)
+- Adapters: `lever.py` real API (parse + submit + confirmation capture), `greenhouse.py` resume `content_base64`, `linkedin.py` honest `NotImplementedError` (no fabrication)
+- CLI: `jobot apply <job-id|--url> [--dry-run --approve --resume --template --tone --engine]`, `jobot coverletter`, `jobot qa`, `jobot resume {runner|tailor|ats-check|templates}`, `jobot scrape --save`
+- Live browser tests opt-in: `JOBOT_RUN_LIVE_BROWSER=1 pytest tests/integration/test_linkedin_easy_apply_live.py`
 
 ## Existing
 

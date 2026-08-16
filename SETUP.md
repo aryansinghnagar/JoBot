@@ -655,7 +655,7 @@ All commands are subcommands of `jobot`. Common flags: `--profile <name>`, `--js
 
 | Command | Purpose |
 |---|---|
-| `jobot scrape <board> [--keywords --location --limit --companies --json --no-dedup --hours-old --country]` | Scrape real postings from one board with two-tier dedup (exact hash + vector cosine ≥ 0.92) |
+| `jobot scrape <board> [--keywords --location --limit --companies --json --no-dedup --hours-old --country --save]` | Scrape real postings from one board with two-tier dedup (exact hash + vector cosine ≥ 0.92); `--save` persists postings to the database for `jobot apply` |
 | `jobot scrape --all` | Scrape every available board in sequence |
 | `jobot scrape careers --companies webflow,figma` | Fingerprint and scrape ATS career pages for given companies |
 | `jobot scrape lever --companies toptal` | Scrape a company's Lever/Ashby/SmartRecruiters public feed |
@@ -681,12 +681,16 @@ limits — keep the delay, consider proxies for high-volume runs.
 
 ### Ranking & Applying
 
+> **Phase 3**: `jobot apply` runs the full document stack: tailored resume PDF
+> (ATS-scored ≥ 0.85), cover letter, then the 12-phase pipeline under a saga.
+> Supervised by default (stops for approval at phase 10) unless `--approve`.
+> `--dry-run` produces the artifacts without submitting.
+
 | Command | Purpose |
 |---|---|
 | `jobot rank` | Score and rank saved jobs |
-| `jobot apply <job-id>` | Apply to a specific job via the saga |
-| `jobot apply --batch N` | Apply to top N jobs from ranked list |
-| `jobot apply --resume <saga-id>` | Resume an interrupted apply saga |
+| `jobot apply <job-id> [--url --site] [--dry-run --approve --resume <saga> --template --tone --extra-prompt --engine]` | Tailor documents and submit via the saga orchestrator |
+| `jobot apply --resume <saga-id> --approve` | Resume an interrupted apply saga |
 | `jobot tracker list` | List applications (kanban via rich tables) |
 | `jobot tracker show <job-id>` | Show application detail |
 | `jobot tracker move <job-id> <status>` | Manually move to a new ASP state |
@@ -695,10 +699,34 @@ limits — keep the delay, consider proxies for high-volume runs.
 
 | Command | Purpose |
 |---|---|
-| `jobot resume tailor` | Run drafter→reviewer loop, produce tailored PDF |
-| `jobot resume ats-check <pdf>` | Run ATS parseability check |
-| `jobot resume templates list` | List available LaTeX templates |
-| `jobot coverletter generate` | Generate cover letter for a specific job |
+| `jobot resume [action]` | No action = resume paused loops (unchanged); `tailor` = drafter→reviewer loop → tailored PDF + ATS score; `ats-check [--file <pdf>]` = parseability check; `templates` = list available LaTeX templates |
+| `jobot coverletter <job-id|--url> [--tone --extra-prompt --output]` | Generate a profile-grounded cover letter for a job |
+| `jobot qa [--job-id --question]` | Answer a job application question from the profile-grounded QA engine |
+| `jobot apply --dry-run <job-id>` | One-shot tailored PDF + cover letter + ATS score, no submission |
+
+> **PDF engines**: TeX renderer (`lualatex`) is used when installed (see
+> Prerequisites §1); otherwise jobot falls back to a pure-Python reportlab
+> renderer with identical output structure — no system TeX/poppler needed.
+> `--engine latex|fallback` forces either. `jobot doctor` reports engine
+> availability (informational, never fatal).
+
+### Windows / PowerShell Encoding Note
+
+Commands that render **rich tables** (`scrape`, `rank`, etc.) emit Unicode
+box-drawing characters. PowerShell's default console code page (`cp1252`)
+cannot encode these and `python` raises `UnicodeEncodeError` before the
+command completes. Avoid this with any of:
+
+- Use machine-readable output where supported (e.g. `jobot scrape ... --json`
+  writes plain ASCII to stdout).
+- Before running a rich command, set UTF-8 output and redirect to a file:
+  ```powershell
+  $env:PYTHONIOENCODING="utf-8"
+  python -m jobot.cli.main apply 1 --dry-run *> apply.log
+  Get-Content apply.log -Encoding utf8
+  ```
+- Permanently (in your PowerShell profile):
+  `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8`.
 
 ### Interview Prep
 

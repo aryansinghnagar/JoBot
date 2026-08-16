@@ -144,3 +144,77 @@ frozen signature:
 - **CI note**: mypy targets `python_version = "3.12"` (numpy 2.5+ ships
   pyi stubs with 3.12-only syntax; `src/` itself remains 3.11-compatible —
   CI tests run on 3.11/3.12).
+
+## Phase 3 Addendum (2026-08-13)
+
+The document stack + auto-apply orchestration (plan.md §327–339) landed without
+breaking any frozen signature:
+
+- **New `jobot.documents` package** (no frozen surface affected):
+  - `compiler.py` — `ResumeData`, `compile_resume_data(profile, job, experiences)`
+    (bullets merged only for real profile experience rows), `escape_latex`,
+    `render_tex(template, data)`, `to_plain_text`. Templates ship as package
+    data (`jobot/documents/templates/{default,modern,classic}.tex.j2`,
+    `[tool.setuptools.package-data]`).
+  - `engines.py` — pluggable render stack: `LuaLaTeXRenderer` (plan-faithful
+    TeX path) with pure-python fallback `FallbackPdfRenderer` (reportlab).
+    `get_renderer(engine="auto")` picks TeX when `lualatex` is on PATH, else
+    fallback. ASCII-only glyphs in the fallback (`- ` bullets) because
+    pdfminer mis-extracts `&bull;`/`&mdash;` as `(cid:…)`.
+  - `ats.py` — `AtsScorer` (density band 0.15–0.95, ≥2 bullets, header
+    regex `WORK EXPERIENCE`, threshold 0.85) + pdftotext/pdfminer extractors;
+    `score_pdf_file` is extractor-agnostic.
+  - `tailor.py` — `DocumentTailor` rewritten around `TailorLoop` (≤3
+    iterations, A–F reviewer rubric, PASS on LLM degradation). Grounding:
+    deterministic `verify_fact_truthfulness_detailed(text, profile, job)` —
+    skill claims must be in profile skills, traceable to profile experience/
+    education text, or absent from the common-tech lexicon
+    (`SkillExtractor.COMMON_TECH_KEYWORDS`). On `DEGRADATION_TEXT` the draft
+    falls back to profile facts verbatim (never LLM-invented).
+  - `cover.py` — `CoverLetterGenerator.generate(job, profile, matching_skills,
+    tone, extra_prompt)` with 5 tone presets (classic/narrative/technical/
+    brief/enthusiastic), `task="cover_letter"`.
+  - `pdf_exporter.py` — `ResumeExporter.export_resume_pdf(profile, job, tone,
+    template, engine, output_dir) -> (Path, AtsScore)`; keeps the frozen
+    `.txt`/`.html` export contract.
+- **New `jobot.asp` orchestration**:
+  - `saga.py` — `ApplySaga` (start/resume/checkpoint/fail/compensate/cancel/
+    complete) over new `saga_instances`/`saga_steps` tables (additive).
+  - `orchestrator.py` — `ApplyOrchestrator.apply(job, profile, auto_approve,
+    resume_saga_id, ...)`: tailor → grounding gate → artifacts → pipeline.
+    Supervised stops at `PENDING_APPROVAL` with artifacts attached to the
+    saved record; `submit_approved(app)` runs phases 11–12. Compensation:
+    CIRCUIT_OPEN → quarantine; other failures → app REJECTED with evidence,
+    saga COMPENSATED; `DUPLICATE_SKIPPED` completes the saga.
+  - `pipeline.py` — added `extra_form_data` param, merged in
+    `_handle_phase_11_submit` immediately before submission; phase ordering
+    and status contract unchanged (tested).
+- **Adapters (honesty hardening)**: `lever.py` rewritten against the real
+  Lever API (`api.lever.co/v0/postings/{company}/{id}?mode=json`); resume
+  attachment as `content_base64` on `greenhouse.py`; `linkedin.py` raises
+  `NotImplementedError` with an honest message (Easy Apply handled by the
+  saga instead). `Application` gains `job_url: Optional[str]` (additive).
+  Adapters capture real confirmation ids (`_lever_confirmation_id`,
+  `_greenhouse_confirmation_id`); `verify_submission` is honest when the id
+  is absent (returns `success=False`, never fabricated).
+- **LinkedIn Easy Apply saga**: `stealth/linkedin_easy_apply.py` —
+  selector-driven state machine (open modal → answer fields via
+  `QAEngine`/answers overrides → review/submit → evidence screenshots),
+  explicit failure when no Easy Apply button is present. Hermetic tests use a
+  Flask harness (`tests/mock_linkedin/`) + FakeBrowser; live runs are
+  opt-in via `JOBOT_RUN_LIVE_BROWSER=1`.
+- **New CLI commands**: `jobot apply <job-id|--url> [--dry-run --approve
+  --resume <saga> --template --tone --extra-prompt --engine]`, `jobot
+  coverletter`, `jobot qa`, `jobot resume {runner|tailor|ats-check|templates}`
+  (no-arg = runner resume, unchanged), `jobot scrape --save`. New config:
+  `resume_template`, `cover_letter_tone`, `qa_engine`. `jobot doctor` adds
+  informational LaTeX/pdftotext engine checks (non-fatal; reportlab always
+  available).
+- **Exit criterion (plan.md:339)**: `jobot apply --dry-run` produces a
+  tailored PDF (ATS ≥ 0.85) + cover letter; enforced by
+  `tests/test_saga_orchestrator.py` (dry-run ATS ≥ 0.85) and
+  `tests/test_documents_stack.py`.
+- **Live tests opt-in**: `JOBOT_RUN_LIVE_BROWSER=1 pytest
+  tests/integration/test_linkedin_easy_apply_live.py`.
+- **New core deps**: `jinja2>=3.1.0`, `reportlab>=4.0.0`,
+  `pdfminer.six>=20240706`.

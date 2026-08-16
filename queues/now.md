@@ -1,12 +1,18 @@
 # NOW QUEUE — Active Focus
 
-Current Version: `release-1.0-dev` (Post-Review 2 Remedial Refactor Phase)
-Current Status: Executing P0, P1, and P2 Remedial Fixes per `docs/history/JoBot_Refactor_Review_2.md`; Phase 0 audit/cleanup per JoBot Merge Plan COMPLETED
+Current Version: `release-1.0-dev` (JoBot Merge Plan — phased delivery)
+Current Status: Phase 3 (Resume + Cover-Letter + Auto-Apply) COMPLETED — 224 passed / 11 skipped, ruff+mypy clean. Next: Phase 4.
 
 ## Milestone Trajectory
 
-- [x] **dev-0.1**: Infrastructure & Wiring Phase (12-phase ASP DoD, Mock ATS Flask server fixture) [COMPLETED - Tag release-1.0-alpha]
-- [x] **dev-0.5**: Patchright Stealth Infrastructure & Naukri Login Flow [COMPLETED]
-- [ ] **dev-1.0-rc**: Greenhouse API Submit Fix, Naukri Real Submit/Verify, Dynamic Skill Extraction, CLI Test Suite [IN PROGRESS]
-- [ ] **dev-1.0**: Release-1.0 Verified CLI Launch & Retag [PENDING P0/P1 DoD COMPLETION]
+- [x] **Phase 0**: Pre-flight (canonical docs, baseline, contracts) [COMPLETED]
+- [x] **Phase 1**: LLM providers, secrets/config, doctor [COMPLETED — pytest 127/3]
+- [x] **Phase 2**: Scraping + discovery + dedup (plan.md §316–325) [COMPLETED — pytest 183/9]
+- [x] **Phase 3**: Resume/cover tailoring + auto-apply orchestration (plan.md §327–339) [COMPLETED — pytest 224/11; exit: `jobot apply --dry-run` → PDF + cover + ATS ≥ 0.85]
+- [ ] **Phase 4**: Per JoBot Merge Plan (see plan.md §340+) [PENDING]
 - [ ] **dev-2.0**: Tauri 2 + React Desktop GUI [PLANNED FOR RELEASE 2.0]
+
+## Phase 3 Exit Notes
+
+- Live LLM degraded on this machine (gemini OAuth 401) — degradation paths verified truthful via grounding gate; live browser runs opt-in (`JOBOT_RUN_LIVE_BROWSER=1`).
+- Runner.py deliberately NOT wired to ApplyOrchestrator (LLM tailoring cost per campaign application unjustified); `jobot apply` is the orchestrated path.
