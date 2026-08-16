@@ -704,6 +704,17 @@ limits — keep the delay, consider proxies for high-volume runs.
 | `jobot qa [--job-id --question]` | Answer a job application question from the profile-grounded QA engine |
 | `jobot apply --dry-run <job-id>` | One-shot tailored PDF + cover letter + ATS score, no submission |
 
+> **Live browser submissions (Phase 5 — no fabrication)**: `naukri` and
+> `linkedin` submissions require a real Patchright browser session. Without
+> `JOBOT_RUN_LIVE_BROWSER=1` set, Naukri `submit/verify` return honest
+> failures (pipeline marks the application FAILED) and LinkedIn raises
+> `NotImplementedError` — jobot never invents confirmation IDs or fake
+> submissions. With the env var set (and a logged-in session via
+> `jobot login <portal>`), Naukri clicks the real Apply button and verifies
+> against `mnjuser/myapplications`, and LinkedIn runs the Easy Apply saga
+> with success-marker verification. Live opt-in tests:
+> `JOBOT_RUN_LIVE_BROWSER=1 pytest tests/integration/test_naukri_live.py tests/integration/test_linkedin_easy_apply_live.py`.
+
 > **PDF engines**: TeX renderer (`lualatex`) is used when installed (see
 > Prerequisites §1); otherwise jobot falls back to a pure-Python reportlab
 > renderer with identical output structure — no system TeX/poppler needed.
@@ -732,26 +743,26 @@ command completes. Avoid this with any of:
 
 | Command | Purpose |
 |---|---|
-| `jobot interview mock <job-id>` | Start multi-turn mock interview |
-| `jobot interview star <question> <draft>` | Coach a draft behavioral answer into STAR |
+| `jobot interview start [--track behavioral\|system_design\|technical]` | Start a multi-turn mock interview session |
+| `jobot interview list` | List past interview sessions |
+| `jobot interview answer --session <id> --answer "..."` | Submit an answer and get STAR coaching |
+| `jobot interview review --session <id>` | Show per-question STAR scores |
+| `jobot interview complete --session <id>` | Finish a session and show the average score |
 
-### Tracker & Analytics
+### Career Analytics
 
 | Command | Purpose |
 |---|---|
-| `jobot tracker dashboard` | Render dashboard (terminal) |
-| `jobot tracker dashboard --html > dashboard.html` | Export dashboard to standalone HTML |
-| `jobot digest` | Generate + send weekly digest email |
-| `jobot career salary <role> <location>` | Look up salary band |
-| `jobot career skill-gap` | Analyze skill gap from saved JDs vs profile |
+| `jobot skill-gap [--limit N]` | Analyze skill demand from saved postings vs the profile; prints gap table + learning path recommendations |
+| `jobot salary [--role <key> --region India\|US\|EU --roles]` | Look up a salary band (shipped YAML defaults; live benchmark opt-in via `JOBOT_RUN_LIVE_SALARY=1`) |
 
 ### Outreach
 
 | Command | Purpose |
 |---|---|
-| `jobot outreach search <company> <role>` | Generate LinkedIn people-search URL |
-| `jobot outreach dm <company> <preset>` | Generate a DM template |
-| `jobot outreach batch <preset> --count N` | Generate N DMs for top recruiters |
+| `jobot outreach presets` | List available DM presets |
+| `jobot outreach draft --preset <key> --name <first> --company <c> [--role <r> --output <file>]` | Draft a grounded DM (grounding gate enforced) + LinkedIn people-search URL |
+| `jobot outreach send --preset <key> --name <first> --company <c> [--role <r>]` | Send the DM via SMTP (daily DM cap enforced; dry-run printout when SMTP unconfigured) |
 
 ### Scheduler & Loops
 
@@ -771,7 +782,7 @@ command completes. Avoid this with any of:
 | `jobot plugin install <source>` | Install plugin from pip spec or git URL |
 | `jobot plugin list` | List installed plugins |
 | `jobot plugin audit` | Verify all installed plugins match audit hash |
-| `jobot plugin uninstall <name>` | Uninstall a plugin |
+| `jobot plugin remove <name>` | Uninstall a plugin |
 
 ### Maintenance & Backup
 

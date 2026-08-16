@@ -12,7 +12,7 @@
 - [x] T4.1: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
 - [x] P1.1/P1.2: Naukri real submit/verify via Patchright (no fabrication; live opt-in)
 - [x] T4.2: LinkedIn Easy Apply saga wired into adapter (live opt-in; hermetic tests 10; live validation pending browser+LLM)
-- [ ] Release gates: sync SETUP/docs/contracts, `jobot doctor`, tag `release-1.0`
+- [x] Release gates: sync SETUP/docs/contracts, `jobot doctor`, tag `release-1.0`
 - [ ] Tauri 2 + React Desktop GUI [RELEASE 2.0]
 
 ## P0 & P1 Remedial Tasks (docs/history/JoBot_Refactor_Review_2.md)

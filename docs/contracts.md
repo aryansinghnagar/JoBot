@@ -218,3 +218,49 @@ breaking any frozen signature:
   tests/integration/test_linkedin_easy_apply_live.py`.
 - **New core deps**: `jinja2>=3.1.0`, `reportlab>=4.0.0`,
   `pdfminer.six>=20240706`.
+## Phase 4/5 Addendum (2026-08-15, release-1.0)
+
+- **Tracker**: `src/jobot/tracker/` (analytics.py, render.py, dashboard
+  HTML); db columns `responded_at`/`outcome`; CLI `jobot tracker {stats|
+  dashboard-html|table}`.
+- **Digest/scheduler**: `src/jobot/digest/`, `src/jobot/notify/email.py`
+  (SMTP via `smtp.*` config keys; digest dry-run by default, `--send` to
+  email), `src/jobot/scheduler/` — CLI `jobot digest`, `jobot loop` (4 modes:
+  watch/apply/digest/status). `jobot status` also shows digest/loop state.
+- **Interview**: `src/jobot/interview/` — STARCoach + MockInterviewer,
+  question banks in package-data (`jobot.interview = questions/*.json`);
+  CLI `jobot interview`.
+- **Analytics**: `src/jobot/analytics/` — SkillGapAnalyzer +
+  SalaryBenchmarker; CLI `jobot skill-gap`, `jobot salary`. Salary uses a
+  shipped YAML default (`data/salaries.yaml`, package-data) plus live opt-in
+  via `JOBOT_RUN_LIVE_SALARY=1` with 24h cache + circuit breaker + silent
+  fallback to defaults (never fabricated figures).
+- **Outreach**: `src/jobot/outreach/` — LinkedInPeopleSearchURLBuilder,
+  DMGenerator, OutreachGate (daily DM cap from config); presets in
+  package-data (`jobot.outreach = presets.yaml`); CLI `jobot outreach`.
+- **Plugins**: `src/jobot/plugins/` — PluginManifest (schema v1),
+  PluginInstaller, PluginAuditor; CLI `jobot plugin {install|list|audit|
+  remove}`.
+- **Docker/CI**: multi-stage `Dockerfile` + `docker-compose.yml`
+  (`.dockerignore`); CI: CodeQL workflow, SBOM + provenance attestation job.
+- **Phase 5 honest adapters (no fabrication — release invariant)**:
+  - `naukri`: `submit_application` clicks the real Apply button and returns
+    True only on a success indicator (also detects already-applied);
+    `verify_submission` navigates `https://www.naukri.com/mnjuser/myapplications`
+    and matches the job; both return honest failures (never fabricated
+    confirmation ids). Refuse cleanly unless `JOBOT_RUN_LIVE_BROWSER=1`.
+  - `linkedin`: `fill_form` returns profile-grounded email/name only,
+    `submit_application` runs the Easy Apply saga, `verify_submission`
+    re-checks the success marker (saga `verify_submitted`). All raise
+    `NotImplementedError` unless `JOBOT_RUN_LIVE_BROWSER=1`. Injectable
+    `saga_factory`/`profile_loader`/`browser_provider` for hermetic tests.
+  - Pipeline behavior with live browser disabled: Naukri submit returns
+    False -> phase 11 DoD fails -> application FAILED (honest, verified by
+    `tests/integration/test_naukri_fixture.py`); LinkedIn raises -> FAILED.
+- **Runner (T4.1)**: `src/jobot/runner.py` campaign loop runs
+  `ApplyOrchestrator.apply()` (saga/idempotency/grounding) and halts when
+  `router.current_spent_usd >= router.daily_budget_usd` (LLM cost gate).
+- **Live tests opt-in**: `JOBOT_RUN_LIVE_BROWSER=1 pytest
+  tests/integration/test_naukri_live.py tests/integration/test_linkedin_easy_apply_live.py`.
+- **Test suite (release-1.0)**: pytest 318 passed / 13 skipped (13 = live
+  opt-in browser tests), ruff check/format clean, mypy clean (115 files).
