@@ -1,10 +1,16 @@
+from datetime import datetime
 import json
 import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
-from jobot.models.domain import Application, ApplicationStatus, Goal, JobPosting, Task, TaskStatus
+from jobot.models.domain import Application, ApplicationStatus, Goal, JobPosting, Task, TaskStatus, TrustLevel
+
+
+class DuplicateApplicationError(Exception):
+    """Raised when an application with the same idempotency_key already exists."""
+    pass
 
 
 class DatabaseManager:
@@ -136,28 +142,75 @@ class DatabaseManager:
     # Application Operations
     # -------------------------------------------------------------------
 
-    def save_application(self, app: Application) -> None:
+    def get_application_by_idempotency_key(self, idempotency_key: str) -> Optional[Application]:
         with self._get_connection() as conn:
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO applications
-                (application_id, job_id, site, profile_id, status, idempotency_key, trust_level, form_values, error_message, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    app.application_id,
-                    app.job_id,
-                    app.site,
-                    app.profile_id,
-                    app.status.value,
-                    app.idempotency_key,
-                    app.trust_level.value,
-                    json.dumps(app.form_values),
-                    app.error_message,
-                    app.created_at.isoformat(),
-                    app.updated_at.isoformat(),
-                ),
+            row = conn.execute("SELECT * FROM applications WHERE idempotency_key = ?", (idempotency_key,)).fetchone()
+            if not row:
+                return None
+            return Application(
+                application_id=row["application_id"],
+                job_id=row["job_id"],
+                site=row["site"],
+                profile_id=row["profile_id"],
+                status=ApplicationStatus(row["status"]),
+                idempotency_key=row["idempotency_key"],
+                trust_level=TrustLevel(row["trust_level"]),
+                form_values=json.loads(row["form_values"] or "{}"),
+                error_message=row["error_message"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
             )
+
+    def save_application(self, app: Application) -> None:
+        existing = self.get_application(app.application_id)
+        with self._get_connection() as conn:
+            if existing:
+                conn.execute(
+                    """
+                    UPDATE applications
+                    SET job_id = ?, site = ?, profile_id = ?, status = ?, trust_level = ?, form_values = ?, error_message = ?, updated_at = ?
+                    WHERE application_id = ?
+                    """,
+                    (
+                        app.job_id,
+                        app.site,
+                        app.profile_id,
+                        app.status.value,
+                        app.trust_level.value,
+                        json.dumps(app.form_values),
+                        app.error_message,
+                        app.updated_at.isoformat(),
+                        app.application_id,
+                    ),
+                )
+            else:
+                try:
+                    conn.execute(
+                        """
+                        INSERT INTO applications
+                        (application_id, job_id, site, profile_id, status, idempotency_key, trust_level, form_values, error_message, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            app.application_id,
+                            app.job_id,
+                            app.site,
+                            app.profile_id,
+                            app.status.value,
+                            app.idempotency_key,
+                            app.trust_level.value,
+                            json.dumps(app.form_values),
+                            app.error_message,
+                            app.created_at.isoformat(),
+                            app.updated_at.isoformat(),
+                        ),
+                    )
+                except sqlite3.IntegrityError as err:
+                    if "idempotency_key" in str(err):
+                        raise DuplicateApplicationError(
+                            f"Application already exists for idempotency_key={app.idempotency_key}"
+                        ) from err
+                    raise
 
     def get_application(self, application_id: str) -> Optional[Application]:
         with self._get_connection() as conn:
