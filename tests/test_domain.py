@@ -1,5 +1,5 @@
 import pytest
-from jobot.models.domain import CompensationDetails, PersonalInfo, UserProfile, WorkExperience
+from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile, WorkExperience
 
 
 def test_user_profile_creation():
@@ -23,3 +23,11 @@ def test_user_profile_creation():
     assert profile.personal_info.first_name == "Rahul"
     assert profile.compensation.notice_period_days == 30
     assert "Python" in profile.skills
+
+
+def test_application_status_enum_additions():
+    assert ApplicationStatus.REJECTED.value == "rejected"
+    assert ApplicationStatus.BLOCKED.value == "blocked"
+    assert ApplicationStatus.CIRCUIT_OPEN.value == "circuit_open"
+    assert ApplicationStatus.DUPLICATE_SKIPPED.value == "duplicate_skipped"
+    assert ApplicationStatus.CANCELLED.value == "cancelled"
