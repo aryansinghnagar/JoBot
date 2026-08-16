@@ -150,7 +150,9 @@ class ContinuousCampaignRunner:
                         f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score * 100)}% -> {app_res.status.value.upper()}"
                     )
                 except Exception as exc:
-                    logger.error(f"[RUNNER ERROR] Failed processing match for portal {selected_portal}: {exc}")
+                    logger.error(
+                        f"[RUNNER ERROR] Failed processing match for portal {selected_portal}: {exc}"
+                    )
 
                 await asyncio.sleep(0.05)  # Fast continuous loop throughput
 
