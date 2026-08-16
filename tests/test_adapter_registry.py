@@ -41,4 +41,6 @@ def test_adapter_registry_mapping():
 
     for site_name, expected_cls in expected_mappings.items():
         adapter = AdapterRegistry.get_adapter(site_name)
-        assert isinstance(adapter, expected_cls), f"Expected {expected_cls.__name__} for '{site_name}', got {type(adapter).__name__}"
+        assert isinstance(adapter, expected_cls), (
+            f"Expected {expected_cls.__name__} for '{site_name}', got {type(adapter).__name__}"
+        )

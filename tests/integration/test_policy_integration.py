@@ -1,6 +1,12 @@
 import pytest
 
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
+from jobot.models.domain import (
+    Application,
+    ApplicationStatus,
+    JobPosting,
+    PersonalInfo,
+    UserProfile,
+)
 from jobot.policy.engine import PolicyEngine
 
 
@@ -36,11 +42,14 @@ async def test_integration_policy_daily_cap_enforcement(live_mock_ats_server):
 @pytest.mark.asyncio
 async def test_integration_policy_sensitive_data_protection(live_mock_ats_server):
     from jobot.ai.qa_engine import QAEngine, QuestionType
+
     qa = QAEngine()
 
     q_type = qa.classify_question("Please submit your Aadhaar number and SSN")
     assert q_type == QuestionType.SENSITIVE
 
-    res = await qa.answer_question("Please submit your Aadhaar number and SSN", UserProfile(profile_id="p_sens"))
+    res = await qa.answer_question(
+        "Please submit your Aadhaar number and SSN", UserProfile(profile_id="p_sens")
+    )
     assert res.requires_user_approval is True
     assert res.answer == "[SENSITIVE_FIELD_PAUSED]"

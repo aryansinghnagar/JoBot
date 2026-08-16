@@ -4,7 +4,13 @@ import pytest
 
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
-from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, TrustLevel, UserProfile
+from jobot.models.domain import (
+    Application,
+    ApplicationStatus,
+    PersonalInfo,
+    TrustLevel,
+    UserProfile,
+)
 from jobot.storage.db import DatabaseManager
 
 
@@ -139,7 +145,9 @@ async def test_phase_10_approval_dod_pause(pipeline_env):
     pipeline, db, profile = pipeline_env
     app = make_app("app_p10", profile.profile_id)
     app.trust_level = TrustLevel.SUPERVISED
-    dod = await pipeline._handle_phase_10_approval(app, profile, "http://127.0.0.1:5800/jobs/1", False)
+    dod = await pipeline._handle_phase_10_approval(
+        app, profile, "http://127.0.0.1:5800/jobs/1", False
+    )
     assert dod.passed is True
     assert app.status == ApplicationStatus.PENDING_APPROVAL
 
@@ -148,5 +156,9 @@ async def test_phase_10_approval_dod_pause(pipeline_env):
 async def test_full_12_phase_pipeline_execution(pipeline_env):
     pipeline, db, profile = pipeline_env
     app = await pipeline.execute("http://127.0.0.1:5800/jobs/1", profile, auto_approve=True)
-    assert app.status in [ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED, ApplicationStatus.FAILED]
+    assert app.status in [
+        ApplicationStatus.VERIFIED,
+        ApplicationStatus.SUBMITTED,
+        ApplicationStatus.FAILED,
+    ]
     assert app.job_id != ""

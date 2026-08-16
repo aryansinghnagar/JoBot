@@ -55,9 +55,7 @@ def apply():
         return jsonify({"error": "Job not found"}), 404
 
     submission_id = str(uuid.uuid4())
-    idempotency_key = hashlib.sha256(
-        f"{data['job_id']}:{data['email']}".encode()
-    ).hexdigest()
+    idempotency_key = hashlib.sha256(f"{data['job_id']}:{data['email']}".encode()).hexdigest()
 
     if idempotency_key in applications:
         return jsonify({"error": "Duplicate application"}), 409
@@ -80,9 +78,7 @@ def apply():
         "idempotency_key": idempotency_key,
         "status": "SUBMITTED",
         "submitted_at": now_iso,
-        "signature": hashlib.sha256(
-            f"{submission_id}:{idempotency_key}".encode()
-        ).hexdigest(),
+        "signature": hashlib.sha256(f"{submission_id}:{idempotency_key}".encode()).hexdigest(),
     }
     verification_receipts[submission_id] = receipt
 

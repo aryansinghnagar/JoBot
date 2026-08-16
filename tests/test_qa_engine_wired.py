@@ -40,4 +40,7 @@ async def test_qa_engine_wired_in_pipeline(live_mock_ats_server):
         assert "What is your email address?" in app_res.form_values
         assert app_res.form_values["What is your email address?"] == "aryan_qa@example.com"
         assert "Please enter your Aadhaar / SSN number." in app_res.form_values
-        assert app_res.form_values["Please enter your Aadhaar / SSN number."] == "[SENSITIVE_FIELD_PAUSED]"
+        assert (
+            app_res.form_values["Please enter your Aadhaar / SSN number."]
+            == "[SENSITIVE_FIELD_PAUSED]"
+        )

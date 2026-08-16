@@ -1,6 +1,12 @@
 from pathlib import Path
 import tempfile
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
+from jobot.models.domain import (
+    Application,
+    ApplicationStatus,
+    JobPosting,
+    PersonalInfo,
+    UserProfile,
+)
 from jobot.obs.alerts import AlertDispatcher, AlertLevel
 from jobot.policy.engine import PolicyEngine
 
@@ -10,7 +16,9 @@ def test_alert_dispatcher_persistence_and_acknowledgement():
         alert_file = Path(tmpdir) / "alerts.jsonl"
         dispatcher = AlertDispatcher(alert_file=alert_file)
 
-        msg = dispatcher.dispatch_alert("Test Alert", "Alert message content", level=AlertLevel.HIGH)
+        msg = dispatcher.dispatch_alert(
+            "Test Alert", "Alert message content", level=AlertLevel.HIGH
+        )
         assert msg.alert_id.startswith("ALT-")
 
         alerts = dispatcher.list_alerts()

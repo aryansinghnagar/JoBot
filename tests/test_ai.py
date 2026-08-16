@@ -8,8 +8,13 @@ def test_qa_engine_question_classification():
     engine = QAEngine()
 
     assert engine.classify_question("What is your notice period?") == QuestionType.PROFILE_DIRECT
-    assert engine.classify_question("What is your expected CTC in INR?") == QuestionType.PROFILE_DIRECT
-    assert engine.classify_question("Why do you want to join our engineering team?") == QuestionType.BEHAVIORAL
+    assert (
+        engine.classify_question("What is your expected CTC in INR?") == QuestionType.PROFILE_DIRECT
+    )
+    assert (
+        engine.classify_question("Why do you want to join our engineering team?")
+        == QuestionType.BEHAVIORAL
+    )
     assert engine.classify_question("What is your Aadhaar Card number?") == QuestionType.SENSITIVE
 
 
@@ -53,7 +58,9 @@ def test_grounding_verification_pass_and_fail():
     # Valid answer containing candidate email
     assert engine.verify_grounding("Your email?", "My email is rahul@example.com", profile) is True
     # Fake email in answer fails grounding check
-    assert engine.verify_grounding("Your email?", "My email is fake@otherdomain.com", profile) is False
+    assert (
+        engine.verify_grounding("Your email?", "My email is fake@otherdomain.com", profile) is False
+    )
 
 
 @pytest.mark.asyncio

@@ -25,7 +25,9 @@ class StealthHTTPClient:
             "Accept-Language": "en-US,en;q=0.9",
         }
 
-    async def get(self, url: str, headers: Optional[Dict[str, str]] = None, timeout: float = 10.0) -> str:
+    async def get(
+        self, url: str, headers: Optional[Dict[str, str]] = None, timeout: float = 10.0
+    ) -> str:
         """Execute stealth GET request with header impersonation."""
         req_headers = dict(self.default_headers)
         if headers:

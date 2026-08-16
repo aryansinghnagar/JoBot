@@ -6,7 +6,9 @@ from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, Us
 @pytest.mark.asyncio
 async def test_greenhouse_adapter_url_parsing():
     adapter = GreenhouseAdapter()
-    board, job_id = adapter._extract_board_and_job_id("https://boards.greenhouse.io/acme/jobs/12345")
+    board, job_id = adapter._extract_board_and_job_id(
+        "https://boards.greenhouse.io/acme/jobs/12345"
+    )
 
     assert board == "acme"
     assert job_id == "12345"
@@ -49,10 +51,15 @@ async def test_greenhouse_adapter_form_fill_and_submit(monkeypatch):
     # Mock HTTP 201 response for API POST submit
     class MockHTTPResponse:
         status = 201
-        def __enter__(self): return self
-        def __exit__(self, *args): pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
 
     import urllib.request
+
     monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=5: MockHTTPResponse())
 
     submitted = await adapter.submit_application(app)

@@ -21,7 +21,9 @@ async def test_integration_circuit_breaker_trips_to_open(live_mock_ats_server):
         db = DatabaseManager(Path(tmpdir) / "cb_int.db")
         alert_file = Path(tmpdir) / "cb_alerts.jsonl"
         dispatcher = AlertDispatcher(alert_file=alert_file)
-        cb = CircuitBreaker(failure_threshold=2, max_retries=1, backoff_factor=0.01, alert_dispatcher=dispatcher)
+        cb = CircuitBreaker(
+            failure_threshold=2, max_retries=1, backoff_factor=0.01, alert_dispatcher=dispatcher
+        )
         adapter = FailingIntegrationAdapter(base_url=live_mock_ats_server)
         pipeline = ApplicationSubmissionPipeline(adapter, db, circuit_breaker=cb)
 
@@ -45,7 +47,9 @@ async def test_integration_circuit_breaker_dispatches_alert(live_mock_ats_server
         db = DatabaseManager(Path(tmpdir) / "cb_alert_int.db")
         alert_file = Path(tmpdir) / "cb_alert_test.jsonl"
         dispatcher = AlertDispatcher(alert_file=alert_file)
-        cb = CircuitBreaker(failure_threshold=1, max_retries=1, backoff_factor=0.01, alert_dispatcher=dispatcher)
+        cb = CircuitBreaker(
+            failure_threshold=1, max_retries=1, backoff_factor=0.01, alert_dispatcher=dispatcher
+        )
         adapter = FailingIntegrationAdapter(base_url=live_mock_ats_server)
         pipeline = ApplicationSubmissionPipeline(adapter, db, circuit_breaker=cb)
 

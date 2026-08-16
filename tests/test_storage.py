@@ -1,7 +1,13 @@
 import tempfile
 from pathlib import Path
 import pytest
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
+from jobot.models.domain import (
+    Application,
+    ApplicationStatus,
+    JobPosting,
+    PersonalInfo,
+    UserProfile,
+)
 from jobot.storage.db import DatabaseManager, DuplicateApplicationError
 from jobot.storage.vault import CredentialVault
 

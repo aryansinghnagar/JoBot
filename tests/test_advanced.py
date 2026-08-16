@@ -9,7 +9,9 @@ def test_resume_exporter(tmp_path):
     exporter = ResumeExporter()
     profile = UserProfile(
         profile_id="adv_test",
-        personal_info=PersonalInfo(first_name="Aryan", last_name="Nagar", email="aryan@example.com"),
+        personal_info=PersonalInfo(
+            first_name="Aryan", last_name="Nagar", email="aryan@example.com"
+        ),
         skills=["Python", "FastAPI", "SQLite"],
     )
 
@@ -26,7 +28,9 @@ def test_resume_exporter(tmp_path):
 
 def test_alert_dispatcher():
     dispatcher = AlertDispatcher()
-    alert = dispatcher.dispatch_alert("Test Milestone", "100 applications submitted", level=AlertLevel.INFO)
+    alert = dispatcher.dispatch_alert(
+        "Test Milestone", "100 applications submitted", level=AlertLevel.INFO
+    )
 
     assert alert.title == "Test Milestone"
     assert len(dispatcher.alert_history) == 1

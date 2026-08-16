@@ -13,9 +13,7 @@ from tests.mock_ats.server import app as flask_app
 @pytest.fixture(scope="module")
 def mock_ats_server():
     server_thread = threading.Thread(
-        target=lambda: flask_app.run(
-            host="127.0.0.1", port=5800, debug=False, use_reloader=False
-        ),
+        target=lambda: flask_app.run(host="127.0.0.1", port=5800, debug=False, use_reloader=False),
         daemon=True,
     )
     server_thread.start()

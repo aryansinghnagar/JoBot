@@ -48,9 +48,7 @@ class VectorMemory:
         )
         self._points.append(point)
 
-    def retrieve_similar(
-        self, query_text: str, top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    def retrieve_similar(self, query_text: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """Retrieve most similar stored Q&A answers via cosine similarity."""
         if not self._points:
             return []

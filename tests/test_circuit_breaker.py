@@ -4,7 +4,9 @@ from jobot.stealth.circuit_breaker import CircuitBreaker, CircuitOpenError
 
 @pytest.mark.asyncio
 async def test_circuit_breaker_retry_success():
-    cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1.0, max_retries=3, backoff_factor=0.01)
+    cb = CircuitBreaker(
+        failure_threshold=3, recovery_timeout=1.0, max_retries=3, backoff_factor=0.01
+    )
     attempts = 0
 
     async def transient_func():
@@ -22,7 +24,9 @@ async def test_circuit_breaker_retry_success():
 
 @pytest.mark.asyncio
 async def test_circuit_breaker_opens_on_threshold():
-    cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.2, max_retries=1, backoff_factor=0.01)
+    cb = CircuitBreaker(
+        failure_threshold=2, recovery_timeout=0.2, max_retries=1, backoff_factor=0.01
+    )
 
     async def failing_func():
         raise RuntimeError("Persistent error")

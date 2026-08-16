@@ -23,18 +23,22 @@ class ApplicationWorkflow:
     ) -> Application:
         """Execute durable 12-phase workflow with activity retries and approval signals."""
         logger.info(f"[WORKFLOW START] Starting durable application workflow for {job_url}")
-        
+
         # Step 1: Execute 12-phase ASP pipeline up to approval checkpoint
         app = await self.pipeline.execute(job_url, profile, auto_approve=auto_approve)
 
         # Step 2: Handle Supervised Approval Checkpoint Signal
         if app.status == ApplicationStatus.PENDING_APPROVAL and not auto_approve:
-            logger.info(f"[WORKFLOW APPROVAL WAIT] Application {app.application_id[:8]} awaiting approval signal...")
+            logger.info(
+                f"[WORKFLOW APPROVAL WAIT] Application {app.application_id[:8]} awaiting approval signal..."
+            )
             # Workflow checkpointing: wait for human approval signal or auto-approval trigger
             if self._approval_received or auto_approve:
-                logger.info(f"[WORKFLOW SIGNAL RECEIVED] Approval received for application {app.application_id[:8]}")
+                logger.info(
+                    f"[WORKFLOW SIGNAL RECEIVED] Approval received for application {app.application_id[:8]}"
+                )
                 app = await self.pipeline.submit_and_verify(app)
-        
+
         return cast(Application, app)
 
     def signal_approval(self) -> None:

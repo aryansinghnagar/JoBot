@@ -25,7 +25,9 @@ async def test_asp_closed_loop_autonomous(live_mock_ats_server):
             ),
         )
 
-        app_result = await pipeline.execute(f"{live_mock_ats_server}/jobs/1", profile, auto_approve=True)
+        app_result = await pipeline.execute(
+            f"{live_mock_ats_server}/jobs/1", profile, auto_approve=True
+        )
 
         assert app_result.status == ApplicationStatus.VERIFIED
         assert app_result.form_values["email"] == "asp_test@example.com"
@@ -45,6 +47,8 @@ async def test_asp_supervised_approval_gate(live_mock_ats_server):
         )
 
         # Supervised mode (auto_approve = False) pauses at PENDING_APPROVAL
-        app_result = await pipeline.execute(f"{live_mock_ats_server}/jobs/1", profile, auto_approve=False)
+        app_result = await pipeline.execute(
+            f"{live_mock_ats_server}/jobs/1", profile, auto_approve=False
+        )
 
         assert app_result.status == ApplicationStatus.PENDING_APPROVAL
