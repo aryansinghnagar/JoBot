@@ -158,6 +158,7 @@ class Application(BaseModel):
     status: ApplicationStatus = ApplicationStatus.INTENT
     idempotency_key: str
     trust_level: TrustLevel = TrustLevel.SUPERVISED
+    job_url: Optional[str] = None
     form_values: Dict[str, Any] = Field(default_factory=dict)
     unanswered_questions: List[str] = Field(default_factory=list)
     evidence: List[EvidenceItem] = Field(default_factory=list)

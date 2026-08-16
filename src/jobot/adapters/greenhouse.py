@@ -3,6 +3,7 @@ import logging
 import urllib.request
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from jobot.adapters.base import SiteAdapter
 from jobot.models.domain import (
@@ -136,6 +137,21 @@ class GreenhouseAdapter(SiteAdapter):
             "email": application.form_values.get("email"),
             "phone": application.form_values.get("phone"),
         }
+        if application.form_values.get("linkedin_profile"):
+            payload["linkedin_profile"] = application.form_values["linkedin_profile"]
+
+        resume_path = application.form_values.get("resume_path") or ""
+        if resume_path:
+            resume_file = Path(resume_path)
+            if resume_file.exists():
+                import base64
+
+                payload["resume"] = {
+                    "filename": resume_file.name,
+                    "content_base64": base64.b64encode(resume_file.read_bytes()).decode("ascii"),
+                }
+            else:
+                logger.warning("resume_path set but file missing: %s", resume_path)
 
         try:
             req_data = json.dumps(payload).encode("utf-8")
@@ -147,6 +163,16 @@ class GreenhouseAdapter(SiteAdapter):
             )
             with urllib.request.urlopen(req, timeout=5) as resp:
                 if resp.status in [200, 201]:
+                    body = resp.read().decode("utf-8")
+                    if body:
+                        try:
+                            confirmation = json.loads(body).get("id")
+                        except json.JSONDecodeError:
+                            confirmation = None
+                        if confirmation:
+                            application.form_values["_greenhouse_confirmation_id"] = str(
+                                confirmation
+                            )
                     application.status = ApplicationStatus.SUBMITTED
                     return True
                 else:
@@ -160,11 +186,18 @@ class GreenhouseAdapter(SiteAdapter):
             return False
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        application.status = ApplicationStatus.VERIFIED
-        confirmation_id = f"GH_CONF_{application.application_id[:8].upper()}"
+        confirmation = (application.form_values or {}).get("_greenhouse_confirmation_id")
+        if confirmation:
+            application.status = ApplicationStatus.VERIFIED
+            return VerificationResult(
+                success=True,
+                confidence=0.9,
+                confirmation_id=str(confirmation),
+                reason="Greenhouse API returned an application record on submit",
+            )
         return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=confirmation_id,
-            reason="Greenhouse submission verified via API confirmation payload",
+            success=False,
+            confidence=0.0,
+            confirmation_id="",
+            reason="Greenhouse API returned no confirmation record; submission outcome unknown",
         )
