@@ -36,5 +36,9 @@ async def test_naukri_adapter_fixture_execution():
         app = await pipeline.execute(job_url, profile, auto_approve=True)
 
         assert app.site == "naukri"
-        assert app.status in [ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED]
         assert app.form_values.get("email") == "aryan_nk@example.com"
+
+        # P1.1: without a live browser the adapter refuses to fabricate a
+        # submission — the pipeline must fail honestly instead of claiming
+        # SUBMITTED/VERIFIED.
+        assert app.status == ApplicationStatus.FAILED

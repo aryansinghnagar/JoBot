@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 import random
 import uuid
 from datetime import datetime, timezone
@@ -11,12 +13,18 @@ from jobot.adapters.naukri.login import NaukriLoginFlow
 from jobot.adapters.naukri.submit import NaukriSubmitter
 from jobot.adapters.naukri.verify import NaukriVerifier
 from jobot.models.domain import Application, JobPosting, UserProfile, VerificationResult
+from jobot.stealth.browser import BrowserSession
+
+logger = logging.getLogger(__name__)
 
 
 class NaukriAdapter(SiteAdapter):
     """
     Naukri.com Portal Adapter (Primary India Market Focus).
     Integrates Patchright browser automation, login persistence, real form filling, and submission verification.
+
+    P1.1/P1.2: submit and verify drive a real browser page and refuse to
+    fabricate results. Live browser runs are opt-in via JOBOT_RUN_LIVE_BROWSER=1.
     """
 
     def __init__(self) -> None:
@@ -26,6 +34,20 @@ class NaukriAdapter(SiteAdapter):
         self.form_filler = NaukriFormFiller()
         self.submitter = NaukriSubmitter()
         self.verifier = NaukriVerifier()
+        self._session: Optional[BrowserSession] = None
+
+    async def _browser_page(self) -> Optional[Any]:
+        """Return an authenticated browser page when live browser runs are enabled."""
+        if os.getenv("JOBOT_RUN_LIVE_BROWSER") != "1":
+            logger.warning(
+                "[NAUKRI] Live browser disabled (JOBOT_RUN_LIVE_BROWSER=1 to enable) — "
+                "refusing to fabricate submit/verify."
+            )
+            return None
+        if self._session is None:
+            self._session = BrowserSession(portal="naukri", headless=True)
+            await self._session.start()
+        return await self._session.new_page()
 
     async def _jitter_delay(self, min_sec: float = 0.5, max_sec: float = 1.5) -> None:
         delay = random.uniform(min_sec, max_sec)
@@ -59,8 +81,10 @@ class NaukriAdapter(SiteAdapter):
 
     async def submit_application(self, application: Application) -> bool:
         await self._jitter_delay(0.5, 1.5)
-        return await self.submitter.submit(application)
+        page = await self._browser_page()
+        return await self.submitter.submit(application, page=page)
 
     async def verify_submission(self, application: Application) -> VerificationResult:
         await self._jitter_delay(0.2, 0.8)
-        return await self.verifier.verify(application)
+        page = await self._browser_page()
+        return await self.verifier.verify(application, page=page)
