@@ -1,4 +1,69 @@
+from jobot.documents.ats import AtsScore, AtsScorer, score_pdf_file
+from jobot.documents.compiler import (
+    TEMPLATE_NAMES,
+    ResumeData,
+    ResumeEntry,
+    ResumeSection,
+    compile_resume_data,
+    escape_latex,
+    render_tex,
+)
+from jobot.documents.cover import CoverLetterGenerator, TONE_PRESETS, list_tones
+from jobot.documents.engines import (
+    FallbackPdfRenderer,
+    LuaLaTeXRenderer,
+    PdfRenderer,
+    get_renderer,
+    lualatex_available,
+    pdftotext_available,
+    tex_engine_available,
+    xelatex_available,
+)
 from jobot.documents.pdf_exporter import ResumeExporter
-from jobot.documents.tailor import DocumentTailor, TailoredDocumentResult
+from jobot.documents.tailor import (
+    DEFAULT_MAX_ITERATIONS,
+    DEFAULT_MIN_RUBRIC,
+    RUBRIC_DIMENSIONS,
+    DocumentTailor,
+    Drafter,
+    Reviewer,
+    RubricScores,
+    TailorLoop,
+    TailoredDocumentResult,
+    verify_fact_truthfulness_detailed,
+)
 
-__all__ = ["DocumentTailor", "TailoredDocumentResult", "ResumeExporter"]
+__all__ = [
+    "AtsScore",
+    "AtsScorer",
+    "CoverLetterGenerator",
+    "DEFAULT_MAX_ITERATIONS",
+    "DEFAULT_MIN_RUBRIC",
+    "DocumentTailor",
+    "Drafter",
+    "FallbackPdfRenderer",
+    "LuaLaTeXRenderer",
+    "PdfRenderer",
+    "RUBRIC_DIMENSIONS",
+    "ResumeData",
+    "ResumeEntry",
+    "ResumeExporter",
+    "ResumeSection",
+    "Reviewer",
+    "RubricScores",
+    "TEMPLATE_NAMES",
+    "TONE_PRESETS",
+    "TailorLoop",
+    "TailoredDocumentResult",
+    "compile_resume_data",
+    "escape_latex",
+    "get_renderer",
+    "list_tones",
+    "lualatex_available",
+    "pdftotext_available",
+    "render_tex",
+    "score_pdf_file",
+    "tex_engine_available",
+    "verify_fact_truthfulness_detailed",
+    "xelatex_available",
+]

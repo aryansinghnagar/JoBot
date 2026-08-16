@@ -1,0 +1,55 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.6in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries {{ data.name | latex }}}
+\vspace{2pt}
+
+{\small {{ data.contact | latex }}}
+{% if data.linkedin %}\\
+{\small {{ data.linkedin | latex }}}
+{% endif %}
+\end{center}
+
+{% if data.summary %}
+\vspace{6pt}
+{{ data.summary | latex }}
+{% endif %}
+
+\vspace{4pt}
+{\large\bfseries SKILLS}
+\vspace{2pt}
+
+{{ data.skills | join(", ") | latex }}
+
+{% for section in data.sections %}
+\vspace{6pt}
+{\large\bfseries {{ section.heading | latex }}}
+\vspace{2pt}
+
+{% for entry in section.entries %}
+\textbf{{ '{' }}{{ entry.title | latex }}{{ '}' }}
+{% if entry.subtitle %} --- \emph{{ '{' }}{{ entry.subtitle | latex }}{{ '}' }}{% endif %}
+{% if entry.period %} \hfill {{ entry.period | latex }}{% endif %}
+
+{% if entry.bullets %}
+\begin{itemize}[leftmargin=1.2em, itemsep=1pt, topsep=1pt]
+{% for bullet in entry.bullets %}
+\item {{ bullet | latex }}
+{% endfor %}
+\end{itemize}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+\end{document}

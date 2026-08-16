@@ -1,6 +1,10 @@
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
+
+from jobot.documents.ats import AtsScore, AtsScorer
+from jobot.documents.compiler import ResumeData, compile_resume_data
+from jobot.documents.engines import PdfRenderer, get_renderer
 from jobot.models.domain import UserProfile
 
 logger = logging.getLogger(__name__)
@@ -100,3 +104,44 @@ class ResumeExporter:
 
         logger.info(f"Exported ATS resume to: {txt_file}")
         return txt_file
+
+    def export_resume_pdf(
+        self,
+        profile: UserProfile,
+        template: str = "default",
+        engine: Optional[str] = None,
+        output_dir: Optional[Path] = None,
+        summary: Optional[str] = None,
+        skills: Optional[List[str]] = None,
+        experience_bullets: Optional[Dict[str, List[str]]] = None,
+        scorer: Optional[AtsScorer] = None,
+    ) -> tuple[Path, AtsScore]:
+        """Render profile (optionally tailored) to PDF and score ATS parseability.
+
+        engine: None (auto) | "latex" | "fallback". Returns (pdf_path, ats_score).
+        """
+        if output_dir is None:
+            output_dir = Path.home() / ".jobot" / "resumes"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        data = compile_resume_data(
+            profile,
+            summary=summary,
+            skills=skills,
+            experience_bullets=experience_bullets,
+        )
+        renderer: PdfRenderer = get_renderer(engine)
+        pdf_path = output_dir / f"resume_{profile.profile_id}_{template}.pdf"
+        renderer.render(data, template, pdf_path)
+
+        txt_path = output_dir / f"resume_{profile.profile_id}_{template}.txt"
+        txt_path.write_text(data.to_plain_text(), encoding="utf-8")
+
+        ats = (scorer or AtsScorer()).score_pdf(pdf_path)
+        logger.info(
+            "Exported resume PDF %s (ATS score %.2f, %s)",
+            pdf_path,
+            ats.score,
+            "PASS" if ats.passed else "FAIL",
+        )
+        return pdf_path, ats
