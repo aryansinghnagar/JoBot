@@ -34,6 +34,27 @@ class ApplicationStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class PipelinePhase(str, Enum):
+    PHASE_1_INTENT = "phase_1_intent"
+    PHASE_2_PARSE = "phase_2_parse"
+    PHASE_3_MATCH = "phase_3_match"
+    PHASE_4_EXTRACT_QUESTIONS = "phase_4_extract_questions"
+    PHASE_5_ANSWER_QUESTIONS = "phase_5_answer_questions"
+    PHASE_6_FILL_FORM = "phase_6_fill_form"
+    PHASE_7_VALIDATE_FILL = "phase_7_validate_fill"
+    PHASE_8_GROUNDING_CHECK = "phase_8_grounding_check"
+    PHASE_9_REVIEW = "phase_9_review"
+    PHASE_10_APPROVAL = "phase_10_approval"
+    PHASE_11_SUBMIT = "phase_11_submit"
+    PHASE_12_VERIFY = "phase_12_verify"
+
+
+class DoDResult(BaseModel):
+    passed: bool
+    reason: str = ""
+    evidence_required: Optional[List[str]] = None
+
+
 # -------------------------------------------------------------------
 # Candidate Profile Domain Models
 # -------------------------------------------------------------------
