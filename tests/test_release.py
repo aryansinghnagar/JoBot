@@ -1,10 +1,10 @@
 import pytest
-from jobaut.documents.tailor import DocumentTailor
-from jobaut.models.domain import JobPosting, PersonalInfo, UserProfile
-from jobaut.security.audit import SecurityAuditor
-from jobaut.stealth.behavior import BehavioralMimicry
-from jobaut.stealth.proxy import ProxyConfig, ProxyManager
-from jobaut.updater import ReleaseManager
+from jobot.documents.tailor import DocumentTailor
+from jobot.models.domain import JobPosting, PersonalInfo, UserProfile
+from jobot.security.audit import SecurityAuditor
+from jobot.stealth.behavior import BehavioralMimicry
+from jobot.stealth.proxy import ProxyConfig, ProxyManager
+from jobot.updater import ReleaseManager
 
 
 def test_behavioral_mimicry_bezier_and_typing():

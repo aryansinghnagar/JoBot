@@ -1,5 +1,5 @@
 import pytest
-from jobaut.obs.manual_test_logger import ManualTestLogger
+from jobot.obs.manual_test_logger import ManualTestLogger
 
 
 def test_manual_test_logger_recording(tmp_path):

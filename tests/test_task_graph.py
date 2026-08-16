@@ -1,6 +1,6 @@
 import pytest
-from jobaut.models.domain import Task, TaskStatus
-from jobaut.task_graph import TaskGraphEngine
+from jobot.models.domain import Task, TaskStatus
+from jobot.task_graph import TaskGraphEngine
 
 
 def test_task_graph_engine_dependency_resolution():

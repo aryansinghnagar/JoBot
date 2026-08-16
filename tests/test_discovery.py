@@ -1,6 +1,6 @@
 import pytest
-from jobaut.discovery.engine import JobDiscoveryEngine
-from jobaut.models.domain import JobPosting, PersonalInfo, UserProfile
+from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.models.domain import JobPosting, PersonalInfo, UserProfile
 
 
 @pytest.mark.asyncio

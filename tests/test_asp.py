@@ -1,10 +1,10 @@
 import tempfile
 from pathlib import Path
 import pytest
-from jobaut.adapters.mock_ats import MockATSAdapter
-from jobaut.asp.pipeline import ApplicationSubmissionPipeline
-from jobaut.models.domain import ApplicationStatus, PersonalInfo, UserProfile
-from jobaut.storage.db import DatabaseManager
+from jobot.adapters.mock_ats import MockATSAdapter
+from jobot.asp.pipeline import ApplicationSubmissionPipeline
+from jobot.models.domain import ApplicationStatus, PersonalInfo, UserProfile
+from jobot.storage.db import DatabaseManager
 
 
 @pytest.mark.asyncio

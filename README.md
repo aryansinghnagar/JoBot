@@ -1,9 +1,9 @@
-# `jobaut` — Autonomous Job Application Operating System
+# `jobot` — Autonomous Job Application Operating System
 
 Local-First, Privacy-Preserving, Human-Governed Job Discovery and Application Assistance.
 
 ## Overview
-`jobaut` is a self-improving agentic operating system designed to automate repetitive job application workflows across 25+ job portals and Applicant Tracking Systems (ATS), with India as the primary market and global portals supported.
+`jobot` is a self-improving agentic operating system designed to automate repetitive job application workflows across 25+ job portals and Applicant Tracking Systems (ATS), with India as the primary market and global portals supported.
 
 ## Architecture
 - **CLI**: Built with `typer` and `rich`

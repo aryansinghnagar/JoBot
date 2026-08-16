@@ -11,20 +11,20 @@
 Add 5 portal adapters (Naukri, LinkedIn, Indeed, Greenhouse, Lever), provider-neutral LLM `ModelRouter` (Gemini, OpenAI, Anthropic, Ollama), Form Q&A Engine with grounding checks and prompt-injection defense, `PolicyEngine` with 9 default security policies, and CLI scheduling functionality.
 
 ## 2. Completed Scope
-1. **LLM & Q&A Engine** (`src/jobaut/ai/`):
+1. **LLM & Q&A Engine** (`src/jobot/ai/`):
    - `ModelRouter`: Gemini 2.5/3.0 primary integration (`google-genai`), OpenAI/Anthropic/Ollama fallbacks, daily budget tracking & cost logging.
    - `QAEngine`: Question classification (`PROFILE_DIRECT`, `BEHAVIORAL`, `SENSITIVE`, `UNANSWERABLE`), candidate profile direct retrieval, profile grounding verification gate, and prompt-injection sanitization.
-2. **Site Adapters** (`src/jobaut/adapters/`):
+2. **Site Adapters** (`src/jobot/adapters/`):
    - `LinkedInAdapter` (Camoufox engine, stealth headers, rate limits)
    - `IndeedAdapter` (Indeed.com flow)
    - `GreenhouseAdapter` (Greenhouse ATS API & form submission)
    - `LeverAdapter` (Lever ATS API & form submission)
    - `NaukriAdapter` & `MockATSAdapter`
-3. **Governance & Security PolicyEngine** (`src/jobaut/policy/`):
+3. **Governance & Security PolicyEngine** (`src/jobot/policy/`):
    - 9 default safety & governance policies (max daily applications, grounding failure checks, sensitive field exclusion, rate-limiting, secret redaction, circuit breakers).
-4. **CLI Polish** (`src/jobaut/cli/`):
+4. **CLI Polish** (`src/jobot/cli/`):
    - Multi-site support (`naukri`, `linkedin`, `indeed`, `greenhouse`, `lever`, `mock_ats`)
-   - `jobaut schedule`: Automated background apply scheduling
+   - `jobot schedule`: Automated background apply scheduling
 
 ## 3. Exit Criteria Verification
 - [x] 5 Site Adapters operational with rate-limiting and jitter

@@ -1,6 +1,6 @@
 import pytest
-from jobaut.adapters import GreenhouseAdapter, IndeedAdapter, LeverAdapter, LinkedInAdapter
-from jobaut.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
+from jobot.adapters import GreenhouseAdapter, IndeedAdapter, LeverAdapter, LinkedInAdapter
+from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
 
 
 @pytest.mark.asyncio

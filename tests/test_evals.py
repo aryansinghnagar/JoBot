@@ -1,5 +1,5 @@
 import pytest
-from jobaut.evals.harness import EvalCategory, EvalHarness, EvalScenario
+from jobot.evals.harness import EvalCategory, EvalHarness, EvalScenario
 
 
 def test_eval_harness_execution():
