@@ -13,10 +13,22 @@ from rich.table import Table
 
 from jobot.adapters import AdapterRegistry, SiteAdapter
 from jobot.adapters.naukri.login import NaukriLoginFlow
+from jobot.ai.qa_engine import QAEngine
+from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.config.manager import ConfigManager
 from jobot.config.profile import load_llm_settings
 from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.documents import (
+    AtsScorer,
+    CoverLetterGenerator,
+    DocumentTailor,
+    ResumeExporter,
+    TEMPLATE_NAMES,
+    list_tones,
+    pdftotext_available,
+    tex_engine_available,
+)
 from jobot.evals.harness import EvalHarness
 from jobot.gui.sidecar import StdioSidecarServer
 from jobot.llm.router import ModelRouter
@@ -40,6 +52,61 @@ test_logger = ManualTestLogger()
 
 def get_adapter(site: str) -> SiteAdapter:
     return AdapterRegistry.get_adapter(site)
+
+
+def infer_site(url: str) -> str:
+    """Best-effort site inference from a job URL."""
+    lowered = url.lower()
+    if "lever.co" in lowered:
+        return "lever"
+    if "greenhouse.io" in lowered:
+        return "greenhouse"
+    if "linkedin.com" in lowered:
+        return "linkedin"
+    if "naukri.com" in lowered:
+        return "naukri"
+    if "indeed.com" in lowered:
+        return "indeed"
+    if "jobs.ashbyhq.com" in lowered:
+        return "ashby"
+    if "smartrecruiters.com" in lowered:
+        return "smartrecruiters"
+    if "boards.greenhouse.io" in lowered:
+        return "greenhouse"
+    return "greenhouse"
+
+
+def _resolve_job(
+    job_id: Optional[str],
+    url: Optional[str],
+    site: Optional[str],
+    db: DatabaseManager,
+    out_console: Console,
+) -> Any:
+    """Resolve a JobPosting from a saved job id or a URL (live parse)."""
+    from jobot.models.domain import JobPosting
+
+    if job_id:
+        job = db.get_job_posting(job_id)
+        if job is None:
+            out_console.print(
+                f"[bold red][ERROR] No saved posting with job id '{job_id}'.[/bold red]"
+            )
+            out_console.print(
+                "[yellow]Save postings first: [bold blue]jobot scrape <board> --save[/bold blue][/yellow]"
+            )
+            return None
+        return job
+    if url:
+        site_name = site or infer_site(url)
+        adapter = get_adapter(site_name)
+        job = asyncio.run(adapter.parse_job_posting(url))
+        if not job.title or not job.job_id:
+            out_console.print("[bold red][ERROR] Could not parse job posting from URL.[/bold red]")
+            return None
+        return job
+    out_console.print("[bold red][ERROR] Provide --job-id or --url.[/bold red]")
+    return None
 
 
 @app.command("setup")
@@ -251,6 +318,9 @@ def scrape_cmd(
     country: str = typer.Option(
         "USA", "--country", help="Indeed country code (e.g. USA, GBR, IND)"
     ),
+    save: bool = typer.Option(
+        False, "--save", help="Persist unique postings to the job store (for 'jobot apply')"
+    ),
 ) -> None:
     """Scrape real job postings from a board, dedup, and show stats."""
     from jobot.adapters.greenhouse import GreenhouseAdapter
@@ -334,6 +404,9 @@ def scrape_cmd(
                 unique, rejected = filtered.unique, filtered.rejected
             else:
                 unique, rejected = postings, 0
+            if save:
+                for p in unique:
+                    db.save_job_posting(p)
             for p in unique:
                 results.append(
                     {
@@ -348,6 +421,7 @@ def scrape_cmd(
             progress(
                 f"[bold cyan]{b}[/bold cyan]: scraped {len(postings)}, "
                 f"kept {len(unique)}, duplicates {rejected}"
+                + (" [green](saved)[/green]" if save else "")
             )
         except JobSpyNotInstalledError as exc:
             failures += 1
@@ -447,6 +521,176 @@ def run_cmd(
         console.print(f"[yellow]Issue automatically logged for review: {issue.issue_id}[/yellow]")
 
 
+@app.command("apply")
+def apply_cmd(
+    job_id: Optional[str] = typer.Argument(
+        None,
+        help="Saved job posting id (see 'jobot scrape --save'); or use --url",
+    ),
+    url: Optional[str] = typer.Option(None, "--url", help="Job posting URL to apply to"),
+    site: Optional[str] = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Tailor + generate resume PDF + cover letter + ATS score, WITHOUT submitting",
+    ),
+    resume_saga: Optional[str] = typer.Option(None, "--resume", help="Resume a saga by id"),
+    approve: bool = typer.Option(False, "--approve", help="Auto-approve submission (autonomous)"),
+    template: str = typer.Option(
+        "default", "--template", help=f"Resume template: {', '.join(TEMPLATE_NAMES)}"
+    ),
+    tone: str = typer.Option(
+        "classic", "--tone", help=f"Cover letter tone: {', '.join(list_tones())}"
+    ),
+    extra_prompt: str = typer.Option("", "--extra-prompt", help="Extra cover letter instructions"),
+    engine: Optional[str] = typer.Option(None, "--engine", help="PDF engine: latex, fallback"),
+) -> None:
+    """Tailor documents and submit an application via the saga orchestrator."""
+    vault = CredentialVault()
+    db = DatabaseManager()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print(
+            "[bold red][ERROR] Candidate profile missing. Run 'jobot profile init'.[/bold red]"
+        )
+        raise typer.Exit(code=1)
+    profile = vault.load_encrypted_profile(profile_path)
+
+    job = _resolve_job(job_id, url, site, db, console)
+    if job is None:
+        raise typer.Exit(code=1)
+
+    orchestrator = ApplyOrchestrator(db)
+    result = asyncio.run(
+        orchestrator.apply(
+            job,
+            profile,
+            auto_approve=approve,
+            dry_run=dry_run,
+            resume_saga_id=resume_saga,
+            template=template,
+            engine=engine,
+            tone=tone,
+            extra_prompt=extra_prompt,
+        )
+    )
+
+    if result.artifacts:
+        console.print("\n[bold magenta]=== GENERATED APPLICATION PACKAGE ===[/bold magenta]")
+        console.print(f"Resume PDF:   [blue]{result.artifacts['resume_pdf']}[/blue]")
+        console.print(f"Cover letter: [blue]{result.artifacts['cover_letter']}[/blue]")
+        console.print(
+            f"ATS score:    [yellow]{result.artifacts['ats_score']:.2f}[/yellow] "
+            f"({'PASS' if result.artifacts['ats_passed'] else 'BELOW 0.85'})"
+        )
+        console.print(
+            f"Truthful:     {'[green]yes[/green]' if result.artifacts['is_truthful'] else '[bold red]NO[/bold red]'}"
+        )
+
+    for note in result.notes:
+        console.print(f"[yellow]  note: {note}[/yellow]")
+
+    if dry_run:
+        console.print(
+            f"\n[bold cyan]Dry run complete (saga {result.saga_id[:8]}). "
+            f"No submission performed.[/bold cyan]"
+        )
+        return
+
+    if result.app_status == "PENDING_APPROVAL" and not approve:
+        user_ok = Confirm.ask(
+            f"[bold green]Review package above. Proceed with final submission to "
+            f"{job.company}?[/bold green]"
+        )
+        if not user_ok:
+            console.print("[yellow]Submission skipped by user.[/yellow]")
+            return
+        if not result.application_id:
+            console.print("[bold red][ERROR] No application record to submit.[/bold red]")
+            raise typer.Exit(code=1)
+        app = db.get_application(result.application_id)
+        if app is None:
+            console.print("[bold red][ERROR] Application record not found in database.[/bold red]")
+            raise typer.Exit(code=1)
+        final = asyncio.run(orchestrator.submit_approved(app))
+        console.print(
+            f"[bold green][OK] Final status: {final.app_status}[/bold green]"
+            + (f" — {final.notes[0]}" if final.notes else "")
+        )
+        return
+
+    console.print(f"\n[bold cyan]Final status: {result.app_status}[/bold cyan]")
+    console.print(
+        f"Saga id: {result.saga_id}  (resume with 'jobot apply --resume {result.saga_id}')"
+    )
+
+
+@app.command("coverletter")
+def coverletter_cmd(
+    job_id: Optional[str] = typer.Argument(None, help="Saved job posting id; or use --url"),
+    url: Optional[str] = typer.Option(None, "--url", help="Job posting URL"),
+    site: Optional[str] = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
+    tone: str = typer.Option("classic", "--tone", help=f"Tone: {', '.join(list_tones())}"),
+    extra_prompt: str = typer.Option("", "--extra-prompt", help="Extra instructions"),
+    save: bool = typer.Option(False, "--save", help="Save letter to ~/.jobot/resumes/"),
+) -> None:
+    """Generate a profile-grounded cover letter for a job."""
+    vault = CredentialVault()
+    db = DatabaseManager()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print(
+            "[bold red][ERROR] Candidate profile missing. Run 'jobot profile init'.[/bold red]"
+        )
+        raise typer.Exit(code=1)
+    profile = vault.load_encrypted_profile(profile_path)
+
+    job = _resolve_job(job_id, url, site, db, console)
+    if job is None:
+        raise typer.Exit(code=1)
+
+    generator = CoverLetterGenerator()
+    matching = [s for s in job.parsed_skills if s.lower() in {ps.lower() for ps in profile.skills}]
+    letter = asyncio.run(
+        generator.generate(
+            job, profile, matching_skills=matching or None, tone=tone, extra_prompt=extra_prompt
+        )
+    )
+    console.print(letter)
+    if save:
+        out_dir = Path.home() / ".jobot" / "resumes"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / f"cover_{job.job_id}.txt"
+        path.write_text(letter, encoding="utf-8")
+        console.print(f"\n[bold green][OK] Saved to [blue]{path}[/blue][/bold green]")
+
+
+@app.command("qa")
+def qa_cmd(
+    question: str = typer.Argument(..., help="Question to answer from profile facts"),
+) -> None:
+    """Answer a job application question using the profile-grounded QA engine."""
+    vault = CredentialVault()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print(
+            "[bold red][ERROR] Candidate profile missing. Run 'jobot profile init'.[/bold red]"
+        )
+        raise typer.Exit(code=1)
+    profile = vault.load_encrypted_profile(profile_path)
+
+    engine = QAEngine()
+    result = asyncio.run(engine.answer_question(question, profile))
+    console.print(f"[bold cyan]Question type:[/bold cyan] {result.question_type.value}")
+    console.print(f"[bold green]Answer:[/bold green] {result.answer}")
+    console.print(
+        f"Grounded: {'[green]yes[/green]' if result.is_grounded else '[red]no[/red]'} | "
+        f"Confidence: {result.confidence_score}"
+    )
+    if result.requires_user_approval:
+        console.print("[yellow]This answer requires your approval before submission.[/yellow]")
+
+
 @app.command("report-issue")
 def report_issue_cmd(
     summary: str = typer.Argument(..., help="Brief summary of issue or vulnerability observed"),
@@ -534,15 +778,111 @@ def pause_cmd() -> None:
 
 
 @app.command("resume")
-def resume_cmd() -> None:
-    """Resume paused background operations."""
-    state_path = Path.home() / ".jobot" / "runner_state.json"
-    if state_path.exists():
-        state_path.write_text(
-            json.dumps({"status": "RUNNING", "resumed_at": datetime.now().isoformat()}),
-            encoding="utf-8",
+def resume_cmd(
+    action: str = typer.Argument(
+        "runner",
+        help="Action: 'runner' (resume paused loops), 'tailor', 'ats-check', 'templates'",
+    ),
+    job_id: Optional[str] = typer.Option(None, "--job-id", help="Saved job posting id (tailor)"),
+    url: Optional[str] = typer.Option(None, "--url", help="Job posting URL (tailor)"),
+    site: Optional[str] = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
+    template: str = typer.Option("default", "--template", help="Resume template name"),
+    engine: Optional[str] = typer.Option(None, "--engine", help="PDF engine: latex, fallback"),
+    pdf_file: Optional[str] = typer.Option(None, "--file", help="PDF file to ATS-check"),
+    output: Optional[str] = typer.Option(None, "--output", help="Output directory for artifacts"),
+) -> None:
+    """Resume paused loops, or produce/check tailored resume documents."""
+    if action == "runner":
+        state_path = Path.home() / ".jobot" / "runner_state.json"
+        if state_path.exists():
+            state_path.write_text(
+                json.dumps({"status": "RUNNING", "resumed_at": datetime.now().isoformat()}),
+                encoding="utf-8",
+            )
+        console.print("[bold green][OK] Automation loops resumed.[/bold green]")
+        return
+
+    if action == "templates":
+        table = Table(title="Resume Templates & PDF Engines")
+        table.add_column("Name", style="cyan")
+        table.add_column("Available", style="green")
+        for name in TEMPLATE_NAMES:
+            table.add_row(name, "yes")
+        table.add_row("latex engine", "yes" if tex_engine_available() else "no (fallback used)")
+        table.add_row("pdftotext", "yes" if pdftotext_available() else "no (pdfminer used)")
+        console.print(table)
+        return
+
+    if action == "ats-check":
+        target = Path(pdf_file) if pdf_file else (Path.home() / ".jobot" / "resumes")
+        scorer = AtsScorer()
+        if target.is_file():
+            score = scorer.score_pdf(target)
+            console.print(
+                f"[bold cyan]ATS score for {target}: [yellow]{score.score:.2f}[/yellow] "
+                f"({'PASS' if score.passed else 'FAIL'})[/bold cyan]"
+            )
+            for check, ok in score.details.get("passed_checks", {}).items():
+                console.print(f"  - {check}: {'[green]PASS[/green]' if ok else '[red]FAIL[/red]'}")
+        else:
+            scores = []
+            for pdf in sorted(target.glob("*.pdf")):
+                score = scorer.score_pdf(pdf)
+                scores.append((pdf, score))
+                console.print(
+                    f"{pdf.name}: [yellow]{score.score:.2f}[/yellow] "
+                    f"({'PASS' if score.passed else 'FAIL'})"
+                )
+            if not scores:
+                console.print("[yellow]No PDF resumes found to check.[/yellow]")
+        return
+
+    vault = CredentialVault()
+    db = DatabaseManager()
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    if not profile_path.exists():
+        console.print(
+            "[bold red][ERROR] Candidate profile missing. Run 'jobot profile init'.[/bold red]"
         )
-    console.print("[bold green][OK] Automation loops resumed.[/bold green]")
+        raise typer.Exit(code=1)
+    profile = vault.load_encrypted_profile(profile_path)
+
+    job = _resolve_job(job_id, url, site, db, console)
+    if job is None:
+        raise typer.Exit(code=1)
+
+    if action == "tailor":
+        tailor = DocumentTailor()
+        tailored = asyncio.run(tailor.generate_tailored_materials(job, profile))
+        exporter = ResumeExporter()
+        out_dir = Path(output) if output else Path.home() / ".jobot" / "resumes"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        pdf, ats = exporter.export_resume_pdf(
+            profile,
+            template=template,
+            engine=engine,
+            output_dir=out_dir,
+            summary=tailored.tailored_summary,
+            skills=tailored.highlighted_skills or None,
+            experience_bullets={
+                f"{item.get('company', '')}|{item.get('title', '')}": [
+                    str(b) for b in item.get("bullets", [])
+                ]
+                for item in tailored.tailored_experience
+            },
+        )
+        cover_path = out_dir / f"cover_{job.job_id}.txt"
+        cover_path.write_text(tailored.cover_letter_text, encoding="utf-8")
+        console.print(
+            f"[bold green][OK] Tailored resume: [blue]{pdf}[/blue][/bold green]\n"
+            f"Cover letter: [blue]{cover_path}[/blue]\n"
+            f"ATS score: [yellow]{ats.score:.2f}[/yellow] ({'PASS' if ats.passed else 'BELOW 0.85'})\n"
+            f"Truthful: {'yes' if tailored.is_truthful else 'NO — ' + '; '.join(tailored.truthfulness_notes)}"
+        )
+        return
+
+    console.print(f"[bold red][ERROR] Unknown resume action '{action}'.[/bold red]")
+    raise typer.Exit(code=1)
 
 
 @app.command("export")
@@ -896,6 +1236,24 @@ def doctor_cmd() -> None:
             str(profile_path) if profile_ok else "missing - run 'jobot profile init'",
         )
     )
+
+    engine_ok = tex_engine_available()
+    checks.append(
+        (
+            "LaTeX engine (lualatex/xelatex)",
+            True,
+            "available" if engine_ok else "not found - reportlab fallback will be used",
+        )
+    )
+    poppler_ok = pdftotext_available()
+    checks.append(
+        (
+            "pdftotext (poppler)",
+            True,
+            "available" if poppler_ok else "not found - pdfminer fallback will be used",
+        )
+    )
+    checks.append(("PDF rendering", True, "reportlab (pure python) always available"))
 
     router = ModelRouter(daily_budget_usd=load_llm_settings().daily_cost_cap_usd)
     provider_rows: list[tuple[str, bool, str]] = []
