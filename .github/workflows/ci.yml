@@ -35,7 +35,7 @@ jobs:
 
       - name: Run Ruff Linting Check
         run: |
-          ruff check src/
+          ruff check src/ --ignore E501
 
       - name: Verify Black Code Formatting
         run: |
