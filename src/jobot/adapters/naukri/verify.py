@@ -11,7 +11,9 @@ class NaukriVerifier:
     Verifies application receipt and updates status to VERIFIED.
     """
 
-    async def verify(self, application: Application, page: Optional[Any] = None) -> VerificationResult:
+    async def verify(
+        self, application: Application, page: Optional[Any] = None
+    ) -> VerificationResult:
         """Verify application status in candidate dashboard or response receipt."""
         logger.info(
             f"[NAUKRI VERIFY] Verifying submission for application {application.application_id[:8]}"

@@ -4,7 +4,13 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from jobot.adapters.base import SiteAdapter
 from jobot.ai.skill_extractor import SkillExtractor
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile, VerificationResult
+from jobot.models.domain import (
+    Application,
+    ApplicationStatus,
+    JobPosting,
+    UserProfile,
+    VerificationResult,
+)
 
 
 class GenericPortalAdapter(SiteAdapter):

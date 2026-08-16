@@ -4,7 +4,13 @@ from typing import Any, Dict, Optional
 import urllib.error
 import urllib.request
 from jobot.adapters.base import SiteAdapter
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile, VerificationResult
+from jobot.models.domain import (
+    Application,
+    ApplicationStatus,
+    JobPosting,
+    UserProfile,
+    VerificationResult,
+)
 
 
 class MockATSAdapter(SiteAdapter):
