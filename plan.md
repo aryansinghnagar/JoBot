@@ -44,7 +44,7 @@ Three Tier-1 source repositories define the capability surface to absorb:
 - **A7.** The user is technically literate.
 - **A8.** JoBot is a force multiplier, not a recruiter replacement. Human-in-the-loop checkpoint before any external side effect more consequential than a job "save".
 
-**Methodology:** 33 repos inventoried via GitHub REST API on 2026-08-13. Star counts are API-verified. Full research artifact: [`upload/repo_research.md`](./upload/repo_research.md).
+**Methodology:** 33 repos inventoried via GitHub REST API on 2026-08-13. Star counts are API-verified. Full research artifact: [`repo_research.md`](./repo_research.md).
 
 ### Chapter 2 — JoBot Current State Audit
 
@@ -69,7 +69,7 @@ Three Tier-1 source repositories define the capability surface to absorb:
 
 ### Chapter 3 — Source Repository Inventory
 
-Full inventory: 33 repos, sorted by stars descending. See [Appendix A](#appendix-a-full-source-repository-star-inventory) below, or the full research file [`upload/repo_research.md`](./upload/repo_research.md).
+Full inventory: 33 repos, sorted by stars descending. See [Appendix A](#appendix-a-full-source-repository-star-inventory) below, or the full research file [`repo_research.md`](./repo_research.md).
 
 **Tier 1 (10k+ stars):** career-ops (63k), ai-job-search (31k), AIHawk (30k)
 **Tier 2 (1k–10k):** JobSpy (4k), job-ops (3.8k), Auto_job_applier_linkedIn (2.7k), JobFunnel (2.2k archived), boss-agent-cli (1.6k), boss-zhipin-scraper (1.1k)

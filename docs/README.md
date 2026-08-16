@@ -9,6 +9,8 @@ functionality of 33 open-source job-search AI repositories into `jobot`.
 - [`plan.md`](../plan.md) — markdown companion (executive summary, decisions, roadmap)
 - [`JoBot_Merge_Plan.pdf`](../JoBot_Merge_Plan.pdf) — full 127-page version
 - [`SETUP.md`](../SETUP.md) — setup, configuration & secrets, Docker, CLI reference, troubleshooting
+- [`repo_research.md`](../repo_research.md) — the research artifact behind the plan (Task R-1; 33 repos, GitHub-API-verified star counts on 2026-08-13). Its "JoBot Current State" section is a snapshot taken before Phase 0 — where it differs from code, code is truth
+- [`cover.html`](../cover.html) — HTML source of the `JoBot_Merge_Plan.pdf` cover (pdf.py toolchain)
 
 ## Phase 0 Deliverables
 
