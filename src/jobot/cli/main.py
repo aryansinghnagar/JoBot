@@ -420,5 +420,64 @@ def evals_cmd(
     console.print(table)
 
 
+import shutil
+from jobot.adapters.naukri.login import NaukriLoginFlow
+from jobot.stealth.browser import BrowserSession
+
+
+@app.command("login")
+def login_cmd(
+    portal: Optional[str] = typer.Argument(None, help="Target portal: naukri, linkedin, indeed, etc."),
+    status: bool = typer.Option(False, "--status", help="Show active portal login sessions"),
+    logout: Optional[str] = typer.Option(None, "--logout", help="Clear session for specified portal"),
+) -> None:
+    """Manage interactive portal login sessions and cookie persistence."""
+    sessions_base = Path.home() / ".jobot" / "sessions"
+
+    if status:
+        if not sessions_base.exists():
+            console.print("[yellow]No active portal sessions found.[/yellow]")
+            return
+
+        table = Table(title="Active Portal Login Sessions")
+        table.add_column("Portal", style="cyan")
+        table.add_column("Session Directory")
+        table.add_column("Status", style="green")
+
+        for p_dir in sessions_base.iterdir():
+            if p_dir.is_dir():
+                table.add_row(p_dir.name, str(p_dir), "ACTIVE")
+
+        console.print(table)
+        return
+
+    if logout:
+        target_dir = sessions_base / logout.lower().strip()
+        if target_dir.exists():
+            shutil.rmtree(target_dir)
+            console.print(f"[bold green][OK] Session cleared for portal '{logout}'.[/bold green]")
+        else:
+            console.print(f"[yellow]No session found for portal '{logout}'.[/yellow]")
+        return
+
+    if not portal:
+        console.print("[bold red][ERROR] Please specify portal name, --status, or --logout <portal>[/bold red]")
+        console.print("[yellow]Usage: jobot login naukri[/yellow]")
+        raise typer.Exit(code=1)
+
+    portal_clean = portal.lower().strip()
+    console.print(f"[bold cyan]Opening browser login for portal '{portal_clean}'...[/bold cyan]")
+
+    if portal_clean == "naukri":
+        flow = NaukriLoginFlow(headless=False)
+        success = asyncio.run(flow.execute_login())
+        if success:
+            console.print(f"[bold green][OK] Naukri session successfully saved to {sessions_base / 'naukri'}[/bold green]")
+    else:
+        session = BrowserSession(portal=portal_clean, headless=False)
+        asyncio.run(session.start())
+        console.print(f"[bold green][OK] Browser launched. Complete login in browser window.[/bold green]")
+
+
 if __name__ == "__main__":
     app()

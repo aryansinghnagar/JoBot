@@ -225,7 +225,7 @@ class ApplicationSubmissionPipeline:
         """DoD: Required fields (email, name) populated in form_values."""
         if not app.form_values.get("email"):
             return DoDResult(passed=False, reason="Required field 'email' missing from form values")
-        if not app.form_values.get("name") and not app.form_values.get("first_name"):
+        if not (app.form_values.get("name") or app.form_values.get("first_name") or app.form_values.get("full_name")):
             return DoDResult(passed=False, reason="Required field 'name' missing from form values")
         return DoDResult(passed=True)
 

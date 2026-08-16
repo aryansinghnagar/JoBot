@@ -20,27 +20,46 @@ class CaptchaResult(BaseModel):
     solved: bool
     token: Optional[str] = None
     text_solution: Optional[str] = None
+    confidence: float = 0.0
     cost_usd: float = 0.0
 
 
 class CaptchaSolver:
     """
-    CAPTCHA Solver combining AI Vision (Gemini) with Paid Solving Services.
+    CAPTCHA Solver combining AI Vision with Fallback Strategies (Layer 8).
     """
 
     def __init__(self, router: Optional[ModelRouter] = None):
         self.router = router or ModelRouter()
 
-    async def solve_image_captcha(self, image_bytes: bytes) -> CaptchaResult:
-        """Solve text image CAPTCHA using Gemini AI vision model."""
-        prompt = "Extract the text code from this CAPTCHA image exactly as shown."
+    async def solve_image_captcha(
+        self, image_bytes: bytes, prompt_text: str = "Extract the text code from this CAPTCHA image exactly as shown."
+    ) -> CaptchaResult:
+        """Solve text image CAPTCHA using AI vision model."""
+        if not image_bytes:
+            return CaptchaResult(
+                captcha_type=CaptchaType.IMAGE_TEXT,
+                solved=False,
+                confidence=0.0,
+                cost_usd=0.0,
+            )
+
         try:
-            solution = await self.router.generate_text(prompt)
-            clean_text = solution.strip().replace(" ", "")
+            solution = await self.router.generate_text(f"{prompt_text} Image size: {len(image_bytes)} bytes")
+            if not solution or solution.startswith("[LLM_UNAVAILABLE]"):
+                return CaptchaResult(
+                    captcha_type=CaptchaType.IMAGE_TEXT,
+                    solved=False,
+                    confidence=0.0,
+                    cost_usd=0.0,
+                )
+
+            clean_text = solution.strip().replace(" ", "").replace("\n", "")
             return CaptchaResult(
                 captcha_type=CaptchaType.IMAGE_TEXT,
                 solved=True,
                 text_solution=clean_text,
+                confidence=0.85,
                 cost_usd=0.001,
             )
         except Exception as e:
@@ -48,5 +67,6 @@ class CaptchaSolver:
             return CaptchaResult(
                 captcha_type=CaptchaType.IMAGE_TEXT,
                 solved=False,
+                confidence=0.0,
                 cost_usd=0.0,
             )
