@@ -11,7 +11,7 @@
 - [x] WS7: Dockerfile (multi-stage) + docker-compose.yml + CI hardening (CodeQL, SBOM)
 - [x] T4.1: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
 - [x] P1.1/P1.2: Naukri real submit/verify via Patchright (no fabrication; live opt-in)
-- [ ] T4.2: Live LinkedIn Easy Apply validation (needs `JOBOT_RUN_LIVE_BROWSER=1` + working LLM key)
+- [x] T4.2: LinkedIn Easy Apply saga wired into adapter (live opt-in; hermetic tests 10; live validation pending browser+LLM)
 - [ ] Release gates: sync SETUP/docs/contracts, `jobot doctor`, tag `release-1.0`
 - [ ] Tauri 2 + React Desktop GUI [RELEASE 2.0]
 

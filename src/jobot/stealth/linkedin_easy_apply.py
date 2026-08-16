@@ -245,3 +245,20 @@ class EasyApplySaga:
             ),
             unanswered_fields=unanswered,
         )
+
+    async def verify_submitted(self, job_url: str) -> EasyApplyResult:
+        """Re-open the posting and check for a submitted/success marker (T4.2)."""
+        page = await self.browser.navigate(job_url)
+        marker = await self._first_visible(self.selectors["success_text"], page)
+        shot = await self.browser.screenshot(self.evidence_dir / "04_verify.png", page=page)
+        return EasyApplyResult(
+            success=marker is not None,
+            status=EasyApplyStep.VERIFY.value,
+            job_url=job_url,
+            evidence_shots=[str(shot)],
+            reason=(
+                "Success marker visible on the posting page"
+                if marker is not None
+                else "No success marker found on the posting page"
+            ),
+        )

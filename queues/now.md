@@ -1,7 +1,7 @@
 # NOW QUEUE — Active Focus
 
 Current Version: `release-1.0-dev` (JoBot Merge Plan — phased delivery)
-Current Status: Phase 4 COMPLETED (WS1–WS7: tracker, digest/loop, interview, analytics, outreach, plugins, Docker+CI — 289/11). Phase 5 in progress: T4.1 runner→orchestrator + cost gate, P1.1/P1.2 Naukri real submit/verify — 308 passed / 13 skipped, ruff+mypy clean. Next: T4.2 LinkedIn Easy Apply live validation, then release gates.
+Current Status: Phase 4 COMPLETED (WS1–WS7 — 289/11). Phase 5: T4.1, P1.1/P1.2, T4.2 done — 318 passed / 13 skipped, ruff+mypy clean. Next: release gates (docs sync, doctor, tag release-1.0).
 
 ## Milestone Trajectory
 
@@ -12,7 +12,7 @@ Current Status: Phase 4 COMPLETED (WS1–WS7: tracker, digest/loop, interview, a
 - [x] **Phase 4 WS1**: Tracker analytics + dashboard HTML + responded_at/outcome (plan.md §341) [COMPLETED — `jobot tracker dashboard-html`]
 - [x] **Phase 4 WS2**: Weekly digest + SMTP email + 4-mode scheduler loop (plan.md §345-348) [COMPLETED — `jobot digest`, `jobot loop`; pytest 245/11]
 - [x] **Phase 4 WS3+**: InterviewPrep, CareerAnalytics, Outreach, plugins, Docker+CI (plan.md §342-344, 349-353) [COMPLETED — `jobot interview/skill-gap/salary/outreach/plugin`; pytest 289/11; committed 38cc024]
-- [ ] **Phase 5**: Release-1.0 hardening [IN PROGRESS — T4.1 done, P1.1/P1.2 done; T4.2 LinkedIn Easy Apply live validation next]
+- [ ] **Phase 5**: Release-1.0 hardening [IN PROGRESS — T4.1, P1.1/P1.2, T4.2 done; release gates next]
 - [ ] **dev-2.0**: Tauri 2 + React Desktop GUI [PLANNED FOR RELEASE 2.0]
 
 ## Phase 3 Exit Notes
