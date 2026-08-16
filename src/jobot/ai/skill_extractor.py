@@ -41,7 +41,7 @@ class SkillExtractor:
                 json_str = raw_response.strip()
                 if json_str.startswith("```"):
                     lines = json_str.splitlines()
-                    json_str = "\n".join([l for l in lines if not l.startswith("```")])
+                    json_str = "\n".join([line for line in lines if not line.startswith("```")])
                 parsed = json.loads(json_str)
                 if isinstance(parsed, list):
                     return self._normalize_skills([str(s) for s in parsed])

@@ -1,4 +1,3 @@
-import pytest
 from jobot.failure.catalog import FailureMode
 from jobot.stealth.circuit_breaker import CircuitBreaker
 from jobot.memory.system import EightTierMemorySystem

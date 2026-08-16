@@ -4,7 +4,7 @@ import pytest
 
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
-from jobot.models.domain import ApplicationStatus, PersonalInfo, PipelinePhase, UserProfile
+from jobot.models.domain import ApplicationStatus, PersonalInfo, UserProfile
 from jobot.storage.db import DatabaseManager
 
 

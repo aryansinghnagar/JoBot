@@ -1,10 +1,8 @@
 from pathlib import Path
 import tempfile
-import pytest
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
 from jobot.obs.alerts import AlertDispatcher, AlertLevel
 from jobot.policy.engine import PolicyEngine
-from jobot.stealth.circuit_breaker import CircuitBreaker
 
 
 def test_alert_dispatcher_persistence_and_acknowledgement():

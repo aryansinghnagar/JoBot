@@ -1,14 +1,11 @@
 from pathlib import Path
 import tempfile
-import threading
-import time
 import pytest
 from jobot.adapters.mock_ats import MockATSAdapter
-from jobot.ai.qa_engine import QAEngine, QuestionType
+from jobot.ai.qa_engine import QAEngine
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
-from jobot.models.domain import ApplicationStatus, PersonalInfo, UserProfile
+from jobot.models.domain import PersonalInfo, UserProfile
 from jobot.storage.db import DatabaseManager
-from tests.mock_ats.server import app as flask_app
 
 
 class MockQuestionAdapter(MockATSAdapter):

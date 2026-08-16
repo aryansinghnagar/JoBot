@@ -1,7 +1,5 @@
 from pathlib import Path
 import tempfile
-import threading
-import time
 import pytest
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.asp.pipeline import ApplicationSubmissionPipeline

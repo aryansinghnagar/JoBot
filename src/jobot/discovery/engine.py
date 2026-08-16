@@ -1,8 +1,9 @@
-import asyncio
 import logging
 from typing import List, Optional
 from pydantic import BaseModel
+
 from jobot.adapters import AdapterRegistry, SiteAdapter
+from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import JobPosting, UserProfile
 
 logger = logging.getLogger(__name__)
@@ -14,9 +15,6 @@ class JobMatchResult(BaseModel):
     matching_skills: List[str]
     missing_skills: List[str]
     recommendation: str  # "HIGH_FIT", "MEDIUM_FIT", "LOW_FIT"
-
-
-from jobot.ai.skill_extractor import SkillExtractor
 
 
 class JobDiscoveryEngine:

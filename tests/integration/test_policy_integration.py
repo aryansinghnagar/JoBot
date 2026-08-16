@@ -1,5 +1,3 @@
-from pathlib import Path
-import tempfile
 import pytest
 
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile

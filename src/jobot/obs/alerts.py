@@ -1,6 +1,9 @@
+import json
 import logging
+import uuid
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -12,11 +15,6 @@ class AlertLevel(str, Enum):
     WARNING = "WARNING"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
-
-
-import json
-import uuid
-from pathlib import Path
 
 
 class AlertMessage(BaseModel):

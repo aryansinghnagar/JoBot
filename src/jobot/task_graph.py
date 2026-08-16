@@ -1,6 +1,5 @@
-import asyncio
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 from jobot.models.domain import Task, TaskStatus
 
 logger = logging.getLogger(__name__)

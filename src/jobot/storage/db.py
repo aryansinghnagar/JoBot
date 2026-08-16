@@ -4,8 +4,8 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
-from jobot.models.domain import Application, ApplicationStatus, Goal, JobPosting, Task, TaskStatus, TrustLevel
+from typing import Generator, List, Optional
+from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
 
 
 class DuplicateApplicationError(Exception):

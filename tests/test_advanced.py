@@ -1,4 +1,3 @@
-import pytest
 from jobot.documents.pdf_exporter import ResumeExporter
 from jobot.evals.optimizer import EvalOptimizer
 from jobot.gui.sidecar import StdioSidecarServer

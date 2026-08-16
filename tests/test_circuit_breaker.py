@@ -1,5 +1,3 @@
-import asyncio
-import time
 import pytest
 from jobot.stealth.circuit_breaker import CircuitBreaker, CircuitOpenError
 

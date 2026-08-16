@@ -1,7 +1,8 @@
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 from jobot.models.domain import Application, JobPosting, TrustLevel, UserProfile
+from jobot.obs.alerts import AlertDispatcher, AlertLevel
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +18,6 @@ class PolicyEvaluationResult(BaseModel):
     requires_approval: bool
     violations: List[PolicyViolation]
     blocking_reason: Optional[str] = None
-
-
-from jobot.obs.alerts import AlertDispatcher, AlertLevel
 
 
 class PolicyEngine:

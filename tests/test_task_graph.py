@@ -1,5 +1,4 @@
-import pytest
-from jobot.models.domain import Task, TaskStatus
+from jobot.models.domain import Task
 from jobot.task_graph import TaskGraphEngine
 
 

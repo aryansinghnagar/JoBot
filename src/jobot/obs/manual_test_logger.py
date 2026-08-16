@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import platform
@@ -6,10 +5,8 @@ import sys
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
-from jobot.failure.catalog import FailureMode
-from jobot.obs.tracing import IncidentSeverity
 
 logger = logging.getLogger(__name__)
 
