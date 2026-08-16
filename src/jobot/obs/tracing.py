@@ -33,12 +33,22 @@ class TraceSpan(BaseModel):
     attributes: Dict[str, Any] = Field(default_factory=dict)
 
 
+import json
+from pathlib import Path
+
+
 class TraceLogger:
     """
     OpenTelemetry-compatible Trace & Incident Logger (Layer L).
+    Persists trace spans to ~/.jobot/traces/<run_id>.jsonl.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, trace_dir: Optional[Path] = None, run_id: Optional[str] = None) -> None:
+        if trace_dir is None:
+            trace_dir = Path.home() / ".jobot" / "traces"
+        self.trace_dir = trace_dir
+        self.trace_dir.mkdir(parents=True, exist_ok=True)
+        self.run_id = run_id or f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}"
         self.spans: List[TraceSpan] = []
         self.incidents: List[Incident] = []
 
@@ -51,8 +61,23 @@ class TraceLogger:
         self.spans.append(span)
         return span
 
-    def end_span(self, span: TraceSpan) -> None:
+    def end_span(self, span: TraceSpan, status: str = "ok") -> None:
         span.end_time = datetime.now(timezone.utc)
+        span.attributes["status"] = status
+        duration_ms = int((span.end_time - span.start_time).total_seconds() * 1000)
+        span.attributes["duration_ms"] = duration_ms
+
+        trace_file = self.trace_dir / f"{self.run_id}.jsonl"
+        with open(trace_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "span_id": span.span_id,
+                "run_id": self.run_id,
+                "name": span.name,
+                "start_time": span.start_time.isoformat(),
+                "end_time": span.end_time.isoformat(),
+                "duration_ms": duration_ms,
+                "attributes": span.attributes,
+            }) + "\n")
 
     def raise_incident(
         self,
@@ -72,3 +97,17 @@ class TraceLogger:
         )
         self.incidents.append(inc)
         return inc
+
+    def list_traces(self) -> List[Path]:
+        return sorted(list(self.trace_dir.glob("*.jsonl")))
+
+    def get_trace_spans(self, run_id: str) -> List[Dict[str, Any]]:
+        trace_file = self.trace_dir / f"{run_id}.jsonl"
+        if not trace_file.exists():
+            return []
+        spans = []
+        with open(trace_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    spans.append(json.loads(line))
+        return spans

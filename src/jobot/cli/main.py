@@ -304,5 +304,49 @@ def export_cmd() -> None:
     console.print("[bold green][OK] Diagnostic package exported to ~/.jobot/backups/[/bold green]")
 
 
+from jobot.obs.tracing import TraceLogger
+
+
+@app.command("traces")
+def traces_cmd(
+    action: str = typer.Argument("list", help="Action: 'list', 'show'"),
+    run_id: Optional[str] = typer.Argument(None, help="Run ID for 'show' action"),
+) -> None:
+    """List or inspect OpenTelemetry-compatible trace spans."""
+    tl = TraceLogger()
+    if action == "list":
+        trace_files = tl.list_traces()
+        if not trace_files:
+            console.print("[yellow]No trace files found in ~/.jobot/traces/[/yellow]")
+            return
+        table = Table(title="JoBot Trace Runs")
+        table.add_column("Run ID", style="cyan")
+        table.add_column("File Size", style="dim")
+        for tf in trace_files:
+            table.add_row(tf.stem, f"{tf.stat().st_size} bytes")
+        console.print(table)
+    elif action == "show":
+        if not run_id:
+            console.print("[bold red]Please provide run_id to show (e.g. jobot traces show <run_id>)[/bold red]")
+            return
+        spans = tl.get_trace_spans(run_id)
+        if not spans:
+            console.print(f"[yellow]No trace spans found for run_id '{run_id}'[/yellow]")
+            return
+        table = Table(title=f"Trace Timeline: {run_id}")
+        table.add_column("Span Name", style="cyan")
+        table.add_column("Status", style="green")
+        table.add_column("Duration (ms)", style="magenta")
+        table.add_column("Start Time", style="dim")
+        for s in spans:
+            table.add_row(
+                s.get("name", ""),
+                s.get("attributes", {}).get("status", "ok"),
+                str(s.get("duration_ms", 0)),
+                s.get("start_time", "")[:19],
+            )
+        console.print(table)
+
+
 if __name__ == "__main__":
     app()

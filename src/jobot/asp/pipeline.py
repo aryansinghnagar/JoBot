@@ -10,6 +10,9 @@ from jobot.stealth.circuit_breaker import CircuitBreaker, CircuitOpenError
 from jobot.storage.db import DatabaseManager
 
 
+from jobot.obs.tracing import TraceLogger
+
+
 class ApplicationSubmissionPipeline:
     """
     12-Phase Application Submission Pipeline (ASP) Specialized Harness.
@@ -24,6 +27,7 @@ class ApplicationSubmissionPipeline:
         artifact_dir: Optional[Path] = None,
         qa_engine: Optional[QAEngine] = None,
         circuit_breaker: Optional[CircuitBreaker] = None,
+        trace_logger: Optional[TraceLogger] = None,
     ):
         self.adapter = adapter
         self.db = db_manager
@@ -33,6 +37,7 @@ class ApplicationSubmissionPipeline:
         self.artifact_dir.mkdir(parents=True, exist_ok=True)
         self.qa_engine = qa_engine or QAEngine()
         self.circuit_breaker = circuit_breaker or CircuitBreaker()
+        self.trace_logger = trace_logger or TraceLogger()
 
     def _generate_idempotency_key(self, job_url: str, profile_id: str) -> str:
         raw = f"{job_url}::{profile_id}"
@@ -61,13 +66,16 @@ class ApplicationSubmissionPipeline:
             )
 
         # Phase 2 & 3: Job Parsing -> Parsed
+        span_parse = self.trace_logger.start_span("Phase 2&3: Job Parsing", {"url": job_url})
         app.status = ApplicationStatus.PARSING
         job: JobPosting = await self.adapter.parse_job_posting(job_url)
         app.job_id = job.job_id
         self.db.save_job_posting(job)
         app.status = ApplicationStatus.PARSED
+        self.trace_logger.end_span(span_parse)
 
         # Phase 4 & 5: Q&A Extraction & Profile-Grounded Answering -> Matched
+        span_qa = self.trace_logger.start_span("Phase 4&5: Q&A Extraction & Grounding", {"job_id": job.job_id})
         app.status = ApplicationStatus.MATCHING
         form_questions = await self.adapter.extract_form_questions(job)
         qa_answers: Dict[str, Any] = {}
@@ -80,20 +88,26 @@ class ApplicationSubmissionPipeline:
             app.form_values = {}
         app.form_values.update(qa_answers)
         app.status = ApplicationStatus.MATCHED
+        self.trace_logger.end_span(span_qa)
 
         # Phase 6 & 7: Form Filling -> Filled
+        span_fill = self.trace_logger.start_span("Phase 6&7: Form Filling", {"job_id": job.job_id})
         app.status = ApplicationStatus.FILLING
         form_data = await self.adapter.fill_form(job, profile, app)
         app.status = ApplicationStatus.FILLED
+        self.trace_logger.end_span(span_fill)
 
         # Phase 8 & 9: Review & Grounding Check -> Reviewed
+        span_review = self.trace_logger.start_span("Phase 8&9: Grounding Verification")
         app.status = ApplicationStatus.REVIEWING
         if form_data.get("email") and form_data.get("email") != profile.personal_info.email:
             app.status = ApplicationStatus.FAILED
             app.error_message = "Grounding failure: Filled email does not match profile email."
             self.db.save_application(app)
+            self.trace_logger.end_span(span_review, status="grounding_failed")
             return app
         app.status = ApplicationStatus.REVIEWED
+        self.trace_logger.end_span(span_review)
 
         # Phase 10: Approval Gate
         if app.trust_level == TrustLevel.SUPERVISED and not auto_approve:
