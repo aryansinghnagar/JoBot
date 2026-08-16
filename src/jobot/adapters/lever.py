@@ -6,10 +6,8 @@ Lever public postings API. Verification is honest: a confirmation is only
 reported when the API actually returns an application record.
 """
 
-import asyncio
 import json
 import logging
-import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -21,6 +19,7 @@ from jobot.models.domain import (
     UserProfile,
     VerificationResult,
 )
+from jobot.security.url_guard import safe_urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -49,20 +48,19 @@ class LeverAdapter(SiteAdapter):
         return company, posting_id
 
     def _get_json(self, url: str) -> Dict[str, Any]:
-        req = urllib.request.Request(url, headers={"User-Agent": "JoBot/1.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with safe_urlopen(url, headers={"User-Agent": "JoBot/1.0"}, timeout=5.0) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         return data if isinstance(data, dict) else {}
 
     def _post_json(self, url: str, payload: Dict[str, Any]) -> tuple[int, Dict[str, Any]]:
         req_data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
+        with safe_urlopen(
             url,
             data=req_data,
             headers={"Content-Type": "application/json", "User-Agent": "JoBot/1.0"},
+            timeout=10.0,
             method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        ) as resp:
             body = resp.read().decode("utf-8")
             parsed = json.loads(body) if body else {}
             return resp.status, parsed

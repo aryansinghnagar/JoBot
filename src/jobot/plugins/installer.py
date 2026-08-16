@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from jobot.plugins.manifest import MANIFEST_FILENAME, PluginManifest, load_manifest
+from jobot.plugins.manifest import PluginManifest, load_manifest
 
 logger = logging.getLogger(__name__)
 

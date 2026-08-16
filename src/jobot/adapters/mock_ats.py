@@ -2,9 +2,8 @@ from datetime import datetime, timezone
 import json
 import logging
 from typing import Any, Dict, List, Optional
-import urllib.error
-import urllib.request
 from jobot.adapters.base import SiteAdapter
+from jobot.security.url_guard import safe_urlopen
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -38,8 +37,8 @@ class MockATSAdapter(SiteAdapter):
         """Fetch postings from the local mock ATS job feed."""
         postings: List[JobPosting] = []
         try:
-            req = urllib.request.Request(f"{self.base_url}/jobs")
-            with urllib.request.urlopen(req) as resp:
+            # Mock ATS is local test infrastructure: loopback is by design.
+            with safe_urlopen(f"{self.base_url}/jobs", allow_private_hosts=True) as resp:
                 data = json.loads(resp.read().decode())
         except Exception as exc:  # noqa: BLE001
             logger.warning("[MOCK ATS] discover_jobs failed: %s", exc)
@@ -67,8 +66,7 @@ class MockATSAdapter(SiteAdapter):
         job_id = url.split("/")[-1]
         req_url = f"{self.base_url}/jobs/{job_id}"
         try:
-            req = urllib.request.Request(req_url)
-            with urllib.request.urlopen(req) as resp:
+            with safe_urlopen(req_url, allow_private_hosts=True) as resp:
                 data = json.loads(resp.read().decode())
                 return JobPosting(
                     job_id=str(data.get("id", job_id)),
@@ -113,10 +111,13 @@ class MockATSAdapter(SiteAdapter):
         req_url = f"{self.base_url}/apply"
         try:
             payload = json.dumps(application.form_values or {}).encode("utf-8")
-            req = urllib.request.Request(
-                req_url, data=payload, headers={"Content-Type": "application/json"}
-            )
-            with urllib.request.urlopen(req) as resp:
+            with safe_urlopen(
+                req_url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+                allow_private_hosts=True,
+            ) as resp:
                 if resp.status == 200:
                     res_data = json.loads(resp.read().decode())
                     submission_id = res_data.get("submission_id")
@@ -145,8 +146,7 @@ class MockATSAdapter(SiteAdapter):
 
         req_url = f"{self.base_url}/verify/{submission_id}"
         try:
-            req = urllib.request.Request(req_url)
-            with urllib.request.urlopen(req) as resp:
+            with safe_urlopen(req_url, allow_private_hosts=True) as resp:
                 if resp.status == 200:
                     data = json.loads(resp.read().decode())
                     application.status = ApplicationStatus.VERIFIED

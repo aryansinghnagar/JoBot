@@ -8,11 +8,11 @@ import asyncio
 import json
 import logging
 import time
-import urllib.error
-import urllib.request
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Dict, List, Optional, cast
 from pydantic import BaseModel, Field
+
+from jobot.security.url_guard import safe_urlopen
 
 if TYPE_CHECKING:
     from jobot.llm.pricing import PricingTable
@@ -54,13 +54,13 @@ def http_post_json(
     timeout_s: float = 60.0,
 ) -> Dict[str, Any]:
     """POST JSON to a REST endpoint and return the parsed response body."""
-    req = urllib.request.Request(
+    with safe_urlopen(
         url,
-        headers=headers,
         data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        timeout=timeout_s,
         method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310
+    ) as resp:
         return cast(Dict[str, Any], json.loads(resp.read().decode("utf-8")))
 
 
@@ -70,8 +70,7 @@ def http_get_json(
     timeout_s: float = 5.0,
 ) -> Dict[str, Any]:
     """GET a JSON endpoint (used for cheap health probes)."""
-    req = urllib.request.Request(url, headers=headers or {}, method="GET")
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310
+    with safe_urlopen(url, headers=headers or {}, timeout=timeout_s) as resp:
         return cast(Dict[str, Any], json.loads(resp.read().decode("utf-8")))
 
 

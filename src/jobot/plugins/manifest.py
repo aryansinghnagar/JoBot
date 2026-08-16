@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import yaml
 from pydantic import BaseModel, Field, field_validator

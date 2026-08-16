@@ -61,13 +61,15 @@ JOBS_PAYLOAD = {
 
 
 def _monkeypatch_post(monkeypatch, url_suffix: str, payload: dict):
-    def fake_urlopen(req, timeout=5):
-        if url_suffix not in req.full_url:
-            raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
-        assert req.get_method() == "POST"
+    def fake_safe_urlopen(
+        url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False
+    ):
+        if url_suffix not in url:
+            raise ConnectionError(f"unexpected fetch: {url}")
+        assert method == "POST"
         return FakeHTTPResponse(payload)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr("jobot.adapters.workday.safe_urlopen", fake_safe_urlopen)
 
 
 class FakeLocator:
@@ -175,10 +177,10 @@ async def test_workday_parse_posting(monkeypatch):
 async def test_workday_parse_posting_raises_on_fetch_error(monkeypatch):
     adapter = WorkdayAdapter()
 
-    def boom(req, timeout=5):
-        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def boom(*args, **kwargs):
+        raise ConnectionError("simulated fetch failure")
 
-    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setattr("jobot.adapters.workday.safe_urlopen", boom)
 
     with pytest.raises(RuntimeError):
         await adapter.parse_job_posting(
@@ -212,10 +214,10 @@ async def test_workday_discover_jobs_requires_company(monkeypatch):
 async def test_workday_discover_jobs_empty_on_error(monkeypatch):
     adapter = WorkdayAdapter()
 
-    def boom(req, timeout=5):
-        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def boom(*args, **kwargs):
+        raise ConnectionError("simulated fetch failure")
 
-    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setattr("jobot.adapters.workday.safe_urlopen", boom)
 
     postings = await adapter.discover_jobs(company="nope")
 

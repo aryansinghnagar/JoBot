@@ -11,10 +11,10 @@ import html
 import json
 import logging
 import re
-import urllib.request
 from typing import Any, Dict, List, Optional
 
 from jobot.models.domain import JobPosting
+from jobot.security.url_guard import safe_urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,7 @@ def _strip_html(text: str) -> str:
 
 
 def _fetch_json(url: str, timeout_s: float = 10.0) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": "JoBot/1.0"}, method="GET")
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310
+    with safe_urlopen(url, headers={"User-Agent": "JoBot/1.0"}, timeout=timeout_s) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 

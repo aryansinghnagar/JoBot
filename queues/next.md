@@ -1,48 +1,30 @@
-# NEXT QUEUE — Upcoming Tasks
+# NEXT QUEUE — Ready to Run (per MASTER_PLAN_EXPANDED.md Section 24; WS1 → G1 verification → WS2)
 
-## Phase 4 (per plan.md — pending plan review)
+## G1 close-out (immediate)
 
-- [x] WS1: Tracker analytics + dashboard HTML + responded_at/outcome cols
-- [x] WS2: Weekly digest + shared SMTP sender + 4-mode scheduler loop (`jobot loop`)
-- [x] WS3: InterviewPrep module (mock session + STAR coach)
-- [x] WS4: CareerAnalytics (salary + skill-gap)
-- [x] WS5: Outreach module (URL gen + DM templates + SMTP)
-- [x] WS6: PluginInstaller + PluginManifest schema + audit flow
-- [x] WS7: Dockerfile (multi-stage) + docker-compose.yml + CI hardening (CodeQL, SBOM)
-- [x] T4.1: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
-- [x] P1.1/P1.2: Naukri real submit/verify via Patchright (no fabrication; live opt-in)
-- [x] T4.2: LinkedIn Easy Apply saga wired into adapter (live opt-in; hermetic tests 10; live validation pending browser+LLM)
-- [x] Release gates: sync SETUP/docs/contracts, `jobot doctor`, tag `release-1.0`
-- [x] Tauri 2 + React Desktop GUI [RELEASE 2.0]
-- [x] Workday honest adapter (cxs API + live-browser submit/verify) [RELEASE 2.0]
+- [ ] Full-suite verification run after WS1 landing: `python -m pytest -q`, `npm test`, `npm run lint`, `python scripts/sync_versions.py --check` — record in worklog + `artifacts/gates/G1.json`.
+- [ ] Verify 9 CodeQL `py/incomplete-url-substring-sanitization` alerts close on next scan (root cause fixed in `registry.py` + `workday.py`).
+- [ ] Remove unused `black` dev dependency (plan5 W4 leftover).
+- [ ] `publish.yml`: switch PyPI upload to trusted publishing (needs PyPI project config — coordinate with owner; see blocked queue).
 
-## P0 & P1 Remedial Tasks (docs/history/JoBot_Refactor_Review_2.md)
+## WS2 Durable core (gate G2) — next workstream
 
-- [x] P0.1: Fix missing `Dict` import in `src/jobot/obs/alerts.py`
-- [x] P0.2: Fix missing `json` and `datetime` imports in `src/jobot/cli/main.py`
-- [x] P0.3: Fix Greenhouse `submit_application` URL-parser bug and explicit HTTP 404/500 `ApplicationStatus.FAILED` error handling
-- [x] P0.4: Retract premature `release-1.0` git tag and sync project state documentation
-- [x] P0.5: Fix `EvalHarness` directory creation exception handling and verify 100% test collection
-- [x] P1.7: Fix `AdapterRegistry` to raise explicit `ValueError` for unregistered portals
-- [x] P1.8: Delete duplicate `@app.command("schedule")` decorator in `src/jobot/cli/main.py`
-- [x] P1.9: Remove duplicate Flask server fixtures in `test_asp.py` and `test_qa_engine_wired.py`
-- [x] P1.10: Delete dead duplicate `CircuitBreaker` in `src/jobot/failure/catalog.py`
-- [x] P2.6: Write CLI test suite `tests/test_cli_commands.py`
+- [ ] UC-07: `schema_migrations` table + versioned migration runner replacing `_ensure_column`; `jobot db migrate|status` CLI; migration tests.
+- [ ] UC-01: durable task engine — `tasks`/`task_attempts`/`task_leases`/`task_dependencies`/`task_artifacts` tables (DDL in MASTER_PLAN_EXPANDED.md §30.1), atomic claim (§6.4), heartbeats, lease expiry reclaim, kill-anywhere-at-every-phase test.
+- [ ] UC-02: append-only event ledger `task_events` with correlation/causation ids + audit/replay tests.
+- [ ] UC-03: `external_effects` idempotency ledger — unique idempotency key, reservation protocol, duplicate-submission-impossible test.
+- [ ] UC-05: durable `approval_requests` entity + CLI (`approval list/decide`) + sidecar RPC; survives restart test.
 
-## Active P1 Adapter Upgrades (In Progress)
+## Foundation quick wins (post-G1, parallelizable)
 
-- [ ] P1.1: Naukri real `submit_application` driving Patchright browser context
-- [ ] P1.2: Naukri real `verify_submission` checking portal application history
-- [x] P1.3: Naukri real `discover_jobs` scraping search results
-- [x] P1.4: Dynamic `SkillExtractor` execution across all adapter job descriptions
+- [ ] Wire `scripts/sync_versions.py --check` into CI (drift-fail step in `ci.yml`).
+- [ ] Coverage floor: measure (add `pytest-cov` to dev extras), set `--cov-fail-under` at measured −2% (min 70%).
+- [ ] `.gitignore` additions (`.venv/`, `*.p12`, `.coverage.*`, `*.pem`, `*.key`, `htmlcov/`, `*.log`, `*.db-journal`, `__pycache__/`, `*.pyc`, `gui/src-tauri/target/`, `.DS_Store`).
+- [ ] Local gates scripts `scripts/gates.{sh,ps1}`.
+- [ ] `docs/implementation/requirements-matrix.md` from MASTER_PLAN_EXPANDED.md Section 4 UC catalog.
 
-## Release 2.0 Roadmap (Completed)
+## Older follow-ups still open
 
-- [x] T4.1: Tauri 2 + React Desktop GUI Integration
-- [x] T4.2: Workday honest adapter (Lever already native)
-
-## Release 2.0 Follow-ups (blocked/optional)
-
-- [ ] `cargo check`/`tauri:dev` on this machine — needs MinGW (`dlltool`) or MSVC (`link.exe`) C toolchain installed
-- [ ] Live Workday submit/verify run — needs `JOBOT_RUN_LIVE_BROWSER=1` + a logged-in Workday session
-- [ ] Real app icon (`npm run tauri icon` replaces the placeholder)
+- [ ] Naukri real submit/verify (P1.1/P1.2) — live opt-in.
+- [ ] Real app icon (`npm run tauri icon`).
+- [ ] `cargo check` once a C toolchain exists (or first desktop CI run closes it).

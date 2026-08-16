@@ -17,6 +17,7 @@ import yaml
 
 from jobot.models.domain import JobPosting
 from jobot.scrapers.ats import FAMILY_ADAPTERS, AtsFamilyAdapter
+from jobot.security.url_guard import safe_urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +41,12 @@ SLUG_PATTERNS: Dict[str, Pattern[str]] = {
 
 
 def _fetch_html(url: str, timeout_s: float = 10.0) -> Optional[str]:
-    import urllib.request
-
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) JoBot/1.0"}
-    )
     try:
-        with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310
+        with safe_urlopen(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) JoBot/1.0"},
+            timeout=timeout_s,
+        ) as resp:
             return cast(str, resp.read().decode("utf-8", "replace"))
     except Exception as exc:  # noqa: BLE001
         logger.debug("[CareerPageScanner] fetch failed for %s: %s", url, exc)

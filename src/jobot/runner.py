@@ -7,7 +7,7 @@ from jobot.adapters import AdapterRegistry, SiteAdapter
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.llm.router import ModelRouter
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
+from jobot.models.domain import Application, ApplicationStatus, TrustLevel
 from jobot.obs.application_md_logger import ApplicationMarkdownLogger
 from jobot.policy.engine import PolicyEngine
 from jobot.storage.db import DatabaseManager

@@ -1,6 +1,5 @@
 import json
 import logging
-import urllib.request
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,6 +12,7 @@ from jobot.models.domain import (
     UserProfile,
     VerificationResult,
 )
+from jobot.security.url_guard import safe_urlopen, validate_fetch_url, validate_path_segment
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +48,11 @@ class GreenhouseAdapter(SiteAdapter):
 
     async def parse_job_posting(self, url: str) -> JobPosting:
         board, job_id = self._extract_board_and_job_id(url)
-        api_url = f"{self.BASE_API_URL}/{board}/jobs/{job_id}"
+        board = validate_path_segment(board)
+        job_id = validate_path_segment(job_id)
+        api_url = validate_fetch_url(f"{self.BASE_API_URL}/{board}/jobs/{job_id}")
 
-        req = urllib.request.Request(api_url, headers={"User-Agent": "JoBot/1.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with safe_urlopen(api_url, headers={"User-Agent": "JoBot/1.0"}, timeout=5.0) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return JobPosting(
                 job_id=str(data.get("id", job_id)),
@@ -79,12 +80,12 @@ class GreenhouseAdapter(SiteAdapter):
         location: str = "",
     ) -> List[JobPosting]:
         """Fetch real postings for a Greenhouse board; empty on failure (no fabrication)."""
-        api_url = f"{self.BASE_API_URL}/{company}/jobs?content=true"
+        company = validate_path_segment(company)
+        api_url = validate_fetch_url(f"{self.BASE_API_URL}/{company}/jobs?content=true")
         postings: List[JobPosting] = []
 
         try:
-            req = urllib.request.Request(api_url, headers={"User-Agent": "JoBot/1.0"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with safe_urlopen(api_url, headers={"User-Agent": "JoBot/1.0"}, timeout=5.0) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 jobs = data.get("jobs", [])[:limit]
                 for item in jobs:
@@ -129,7 +130,9 @@ class GreenhouseAdapter(SiteAdapter):
     async def submit_application(self, application: Application) -> bool:
         target_url = getattr(application, "job_url", "") or application.site
         board, job_id = self._extract_board_and_job_id(target_url)
-        api_url = f"{self.BASE_API_URL}/{board}/jobs/{job_id}/applications"
+        board = validate_path_segment(board)
+        job_id = validate_path_segment(job_id)
+        api_url = validate_fetch_url(f"{self.BASE_API_URL}/{board}/jobs/{job_id}/applications")
 
         payload = {
             "first_name": application.form_values.get("first_name"),
@@ -155,13 +158,13 @@ class GreenhouseAdapter(SiteAdapter):
 
         try:
             req_data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(
+            with safe_urlopen(
                 api_url,
                 data=req_data,
                 headers={"Content-Type": "application/json", "User-Agent": "JoBot/1.0"},
+                timeout=5.0,
                 method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            ) as resp:
                 if resp.status in [200, 201]:
                     body = resp.read().decode("utf-8")
                     if body:

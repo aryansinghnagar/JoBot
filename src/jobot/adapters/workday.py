@@ -25,6 +25,7 @@ from jobot.models.domain import (
     UserProfile,
     VerificationResult,
 )
+from jobot.security.url_guard import safe_urlopen
 from jobot.stealth.browser import BrowserSession
 
 logger = logging.getLogger(__name__)
@@ -92,10 +93,14 @@ class WorkdayApi:
         if lowered.startswith("http"):
             tenant, site = WorkdayApi._tenant_site_from_url(company)
             return tenant, site
-        if "myworkdayjobs.com" in lowered:
-            host = urllib.parse.urlparse("https://" + company).netloc
-            tenant, _ = WorkdayApi._tenant_site_from_host(host)
-            return tenant, tenant
+        # Host-suffix match on the parsed netloc (never substring against the
+        # raw spec: "evil.com/?x=myworkdayjobs.com" is not a Workday host).
+        if "." in company:
+            raw_host = urllib.parse.urlparse("https://" + company).netloc
+            host = raw_host.split("@")[-1].split(":")[0].lower()
+            if host == "myworkdayjobs.com" or host.endswith(".myworkdayjobs.com"):
+                tenant, _ = WorkdayApi._tenant_site_from_host(host)
+                return tenant, tenant
         parts = company.split(".")
         if len(parts) >= 2:
             return parts[0], parts[1]
@@ -132,13 +137,13 @@ class WorkdayApi:
         return f"https://{tenant}.wd3.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
 
     def _post_json(self, url: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-        req = urllib.request.Request(
+        with safe_urlopen(
             url,
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json", "User-Agent": "JoBot/1.0"},
+            timeout=self.timeout,
             method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+        ) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return cast(Dict[str, Any], data)
 

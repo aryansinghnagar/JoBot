@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
@@ -7,7 +7,7 @@ from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.ai.skill_extractor import SkillExtractor
 from jobot.config.manager import ConfigManager
 from jobot.models.domain import JobPosting, UserProfile
-from jobot.scrapers.ats import FAMILY_ADAPTERS, AtsFamilyAdapter
+from jobot.scrapers.ats import FAMILY_ADAPTERS
 from jobot.scrapers.careers import CareerPageScanner
 from jobot.scrapers.dedup import DedupService
 from jobot.scrapers.jobspy import JOBS_BOARDS, JobSpyAdapter

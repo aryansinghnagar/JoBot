@@ -1,8 +1,6 @@
-"""Phase 3 T3.5: real Lever adapter (mocked urlopen) — parse, submit, honest verify."""
+"""Phase 3 T3.5: real Lever adapter (mocked safe_urlopen) — parse, submit, honest verify."""
 
 import json
-import urllib.error
-import urllib.request
 
 import pytest
 from jobot.adapters.lever import LeverAdapter
@@ -34,12 +32,14 @@ class FakeResponse:
 
 
 def _monkeypatch(monkeypatch, url_suffix, payload, status=200):
-    def fake_urlopen(req, timeout=5):
-        if url_suffix not in req.full_url:
-            raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def fake_safe_urlopen(
+        url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False
+    ):
+        if url_suffix not in url:
+            raise ConnectionError(f"unexpected fetch: {url}")
         return FakeResponse(payload, status=status)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr("jobot.adapters.lever.safe_urlopen", fake_safe_urlopen)
 
 
 def _app():
@@ -70,11 +70,11 @@ async def test_parse_real_lever_json(monkeypatch):
 async def test_parse_raises_on_http_error(monkeypatch):
     adapter = LeverAdapter()
 
-    def boom(req, timeout=5):
-        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def boom(*args, **kwargs):
+        raise ConnectionError("simulated fetch failure")
 
-    monkeypatch.setattr(urllib.request, "urlopen", boom)
-    with pytest.raises(urllib.error.HTTPError):
+    monkeypatch.setattr("jobot.adapters.lever.safe_urlopen", boom)
+    with pytest.raises(ConnectionError):
         await adapter.parse_job_posting("https://jobs.lever.co/acme/nope")
 
 

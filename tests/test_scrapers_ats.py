@@ -163,10 +163,10 @@ async def test_fetch_json_real_http(monkeypatch):
         def read(self):
             return b'{"ok": true}'
 
-    def fake_urlopen(req, timeout=10.0):
+    def fake_safe_urlopen(url, **kwargs):
         return FakeResp()
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr("jobot.scrapers.ats.safe_urlopen", fake_safe_urlopen)
     assert await asyncio.to_thread(_fetch_json, "https://example.test/feed") == {"ok": True}
 
 
@@ -182,9 +182,9 @@ async def test_fetch_json_decodes_utf8(monkeypatch):
         def read(self):
             return '{"title": "caf\u00e9"}'.encode("utf-8")
 
-    def fake_urlopen(req, timeout=10.0):
+    def fake_safe_urlopen(url, **kwargs):
         return FakeResp()
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr("jobot.scrapers.ats.safe_urlopen", fake_safe_urlopen)
     data = await asyncio.to_thread(_fetch_json, "https://example.test/feed")
     assert data == {"title": "caf\u00e9"}

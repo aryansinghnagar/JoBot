@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from jobot.documents.ats import AtsScore, AtsScorer
-from jobot.documents.compiler import ResumeData, compile_resume_data
+from jobot.documents.compiler import compile_resume_data
 from jobot.documents.engines import PdfRenderer, get_renderer
 from jobot.models.domain import UserProfile
 

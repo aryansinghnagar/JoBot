@@ -1,9 +1,12 @@
 {
   "name": "jobot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Autonomous Job Application Operating System - Dual Stack Package (Python backend + Tauri 2/React desktop GUI)",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "lint": "prettier --check \"tests/npm/**/*.{js,ts,json}\" \"gui/src/**/*.{js,jsx}\" \"gui/tests/**/*.{js,jsx}\" \"gui/src-tauri/**/*.json\" package.json gui/package.json",
     "format": "prettier --write \"tests/npm/**/*.{js,ts,json}\" \"gui/src/**/*.{js,jsx}\" \"gui/tests/**/*.{js,jsx}\" \"gui/src-tauri/**/*.json\" package.json gui/package.json",
@@ -13,14 +16,14 @@
     "tauri:build": "cd gui && tauri build"
   },
   "devDependencies": {
-    "@tauri-apps/api": "^2.1.1",
-    "@tauri-apps/cli": "^2.1.0",
-    "@tauri-apps/plugin-shell": "^2.1.0",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/cli": "^2.11.4",
+    "@tauri-apps/plugin-shell": "^2.3.5",
+    "@vitejs/plugin-react": "^6.0.5",
     "prettier": "^3.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^5.4.11",
-    "vitest": "^3.2.6"
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
   }
 }

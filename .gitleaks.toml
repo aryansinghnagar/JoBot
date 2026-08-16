@@ -1,0 +1,16 @@
+# Gitleaks configuration for JoBot.
+# Extends the default bundled ruleset; only adds a global path allowlist so
+# vendored dependencies, build output, and local state are never flagged.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist: vendored deps, build artifacts, local state"
+paths = [
+  '''(^|/)\.venv/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)state/''',
+  '''(?i)\.db$''',
+  '''(^|/)gui/src-tauri/target/''',
+]

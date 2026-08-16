@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
@@ -35,6 +36,11 @@ class AlertDispatcher:
     def __init__(self, alert_file: Optional[Path] = None) -> None:
         if alert_file is None:
             alert_file = Path.home() / ".jobot" / "alerts.jsonl"
+        alert_file = Path(alert_file)
+        # No traversal components: the alert store must be an explicit,
+        # literal path (home default or test-injected temp path).
+        if ".." in alert_file.parts:
+            raise ValueError(f"path traversal is not allowed in alert_file: {alert_file}")
         self.alert_file = alert_file
         self.alert_file.parent.mkdir(parents=True, exist_ok=True)
         self.alert_history: List[AlertMessage] = []
@@ -89,7 +95,20 @@ class AlertDispatcher:
                 a["acknowledged"] = True
                 found = True
         if found:
-            with open(self.alert_file, "w", encoding="utf-8") as f:
-                for a in alerts:
-                    f.write(json.dumps(a) + "\n")
+            # Atomic rewrite (vault-style): write a fresh temp then replace,
+            # so a crash mid-write never truncates the alert store. Path is
+            # traversal-free by construction (validated in __init__).
+            tmp_path = self.alert_file.with_name(self.alert_file.name + ".tmp")
+            fd = os.open(
+                tmp_path,
+                os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0),
+            )
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    for a in alerts:
+                        f.write(json.dumps(a) + "\n")
+                os.replace(tmp_path, self.alert_file)
+            except OSError:
+                tmp_path.unlink(missing_ok=True)
+                raise
         return found

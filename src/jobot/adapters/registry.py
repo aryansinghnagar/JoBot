@@ -1,4 +1,6 @@
 from typing import Any, Dict, cast
+from urllib.parse import urlsplit
+
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.adapters.indeed import IndeedAdapter
@@ -19,27 +21,60 @@ from jobot.adapters.more_adapters import (
 from jobot.adapters.naukri import NaukriAdapter
 from jobot.adapters.workday import WorkdayAdapter
 
+# Canonical site -> hostname suffixes. A URL matches only when its parsed
+# hostname IS the suffix or is a subdomain of it (exact/suffix match on the
+# netloc, never substring matching against the raw URL — see CodeQL
+# py/incomplete-url-substring-sanitization). Only sites with a registered
+# adapter are listed; "ashby" intentionally absent (no adapter registered).
+_SITE_HOST_SUFFIXES: Dict[str, tuple] = {
+    "lever": ("lever.co",),
+    "greenhouse": ("greenhouse.io",),
+    "linkedin": ("linkedin.com",),
+    "naukri": ("naukri.com",),
+    "indeed": ("indeed.com",),
+    "smartrecruiters": ("smartrecruiters.com",),
+    "workday": ("myworkdayjobs.com",),
+    "glassdoor": ("glassdoor.com",),
+    "ziprecruiter": ("ziprecruiter.com",),
+    "shine": ("shine.com",),
+    "foundit": ("foundit.com", "foundit.in"),
+    "hirist": ("hirist.tech",),
+    "instahyre": ("instahyre.com",),
+    "cutshort": ("cutshort.io",),
+    "wellfound": ("wellfound.com",),
+}
+
+
+def _host_matches_suffix(host: str, suffix: str) -> bool:
+    host = host.lower().rstrip(".")
+    return host == suffix or host.endswith("." + suffix)
+
 
 def infer_site(url: str) -> str:
-    """Best-effort site inference from a job URL (shared by CLI and GUI sidecar)."""
-    lowered = url.lower()
-    if "lever.co" in lowered:
-        return "lever"
-    if "greenhouse.io" in lowered or "boards.greenhouse.io" in lowered:
-        return "greenhouse"
-    if "linkedin.com" in lowered:
-        return "linkedin"
-    if "naukri.com" in lowered:
-        return "naukri"
-    if "indeed.com" in lowered:
-        return "indeed"
-    if "jobs.ashbyhq.com" in lowered:
-        return "ashby"
-    if "smartrecruiters.com" in lowered:
-        return "smartrecruiters"
-    if "myworkdayjobs.com" in lowered:
-        return "workday"
-    return "greenhouse"
+    """Infer the site id from a job URL via exact host-suffix matching.
+
+    Raises ValueError for unknown hosts instead of guessing a default (D1 in
+    MASTER_PLAN_EXPANDED.md Section 8): a wrong adapter silently applied to a
+    URL is worse than an explicit error. Scheme-less inputs that look like a
+    bare host are retried once with an https:// prefix.
+    """
+    parsed = urlsplit(str(url).strip())
+    if not parsed.netloc and "." in (parsed.path.split("/", 1)[0] or ""):
+        parsed = urlsplit("https://" + str(url).strip())
+    host = (parsed.hostname or "").lower()
+    if not host:
+        raise ValueError(
+            f"Cannot infer job site from URL (no hostname): {url!r}. "
+            f"Pass --site explicitly or use a supported site."
+        )
+    for site, suffixes in _SITE_HOST_SUFFIXES.items():
+        if any(_host_matches_suffix(host, suffix) for suffix in suffixes):
+            return site
+    raise ValueError(
+        f"Unknown job site host: {host!r}. Supported hosts: "
+        + ", ".join(sorted({s for suffixes in _SITE_HOST_SUFFIXES.values() for s in suffixes}))
+        + ". Run `jobot list-sites` for the full adapter list."
+    )
 
 
 class AdapterRegistry:

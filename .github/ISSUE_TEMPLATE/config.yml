@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: README
+    url: https://github.com/aryansinghnagar/JoBot/blob/main/README.md
+    about: Project overview and architecture summary — start here.
+  - name: Setup guide
+    url: https://github.com/aryansinghnagar/JoBot/blob/main/SETUP.md
+    about: Installation, configuration and secrets, Docker, CLI reference, and troubleshooting. Most "it does not start" questions are answered here.
+  - name: Documentation index
+    url: https://github.com/aryansinghnagar/JoBot/blob/main/docs/README.md
+    about: Docs index including the 12-phase Application Submission Pipeline (asp.md) and frozen interface contracts (contracts.md).
+  - name: Security vulnerabilities
+    url: https://github.com/aryansinghnagar/JoBot/security/advisories/new
+    about: Report vulnerabilities privately here. Do NOT open a public issue for security problems — see SECURITY.md.

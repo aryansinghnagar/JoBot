@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import yaml
 from pydantic import BaseModel
 
+from jobot.security.url_guard import safe_urlopen
 from jobot.stealth.circuit_breaker import CircuitBreaker
 
 logger = logging.getLogger(__name__)
@@ -138,9 +139,7 @@ class SalaryBenchmarker:
 
     @staticmethod
     def _default_getter(url: str) -> Tuple[int, str]:
-        import urllib.request
-
-        with urllib.request.urlopen(url, timeout=15) as resp:  # noqa: S310
+        with safe_urlopen(url, timeout=15.0) as resp:
             return resp.status, resp.read().decode("utf-8", errors="replace")
 
     def benchmark(

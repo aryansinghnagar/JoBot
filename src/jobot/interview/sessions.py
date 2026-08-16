@@ -1,6 +1,5 @@
 """Interview session persistence to ~/.jobot/interviews/<session_id>.json."""
 
-import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path

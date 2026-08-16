@@ -1,6 +1,6 @@
 import statistics
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from jobot.models.domain import ApplicationStatus
 from jobot.storage.db import DatabaseManager

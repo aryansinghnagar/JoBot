@@ -136,21 +136,19 @@ class DatabaseManager:
         with self._get_connection() as conn:
             yield conn
 
-    @staticmethod
-    def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
-        return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
-
-    def _ensure_column(
-        self, conn: sqlite3.Connection, table: str, column: str, definition: str
-    ) -> None:
-        if column not in self._columns(conn, table):
-            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
-
     def migrate(self) -> None:
-        """Idempotent additive schema migrations for existing databases."""
+        """Idempotent additive schema migrations for existing databases.
+
+        SQLite cannot bind identifiers as SQL parameters, so every statement
+        below is a fixed literal at the execute call site — never built from
+        interpolated values.
+        """
         with self._get_connection() as conn:
-            self._ensure_column(conn, "applications", "responded_at", "TEXT")
-            self._ensure_column(conn, "applications", "outcome", "TEXT")
+            existing = {row["name"] for row in conn.execute("PRAGMA table_info(applications)")}
+            if "responded_at" not in existing:
+                conn.execute("ALTER TABLE applications ADD COLUMN responded_at TEXT")
+            if "outcome" not in existing:
+                conn.execute("ALTER TABLE applications ADD COLUMN outcome TEXT")
 
     # -------------------------------------------------------------------
     # JobPosting Operations

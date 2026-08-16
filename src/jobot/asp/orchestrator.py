@@ -15,8 +15,8 @@ from pydantic import BaseModel
 
 from jobot.adapters import AdapterRegistry
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
-from jobot.asp.saga import ApplySaga, SagaStatus
-from jobot.documents.ats import AtsScore, AtsScorer
+from jobot.asp.saga import ApplySaga
+from jobot.documents.ats import AtsScorer
 from jobot.documents.cover import CoverLetterGenerator
 from jobot.documents.pdf_exporter import ResumeExporter
 from jobot.documents.tailor import DocumentTailor, TailoredDocumentResult

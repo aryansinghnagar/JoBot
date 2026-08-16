@@ -65,11 +65,11 @@ async def test_greenhouse_submit_attaches_resume(monkeypatch, tmp_path):
 
     captured = {}
 
-    def fake_post(req, timeout=5):
-        captured["body"] = json.loads(req.data.decode("utf-8"))
+    def fake_post(url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False):
+        captured["body"] = json.loads(data.decode("utf-8"))
         return FakeResponse({"id": "gh_app_1"}, status=201)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_post)
+    monkeypatch.setattr("jobot.adapters.greenhouse.safe_urlopen", fake_post)
     app = _greenhouse_app(resume_path=resume)
     ok = await adapter.submit_application(app)
 

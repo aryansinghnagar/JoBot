@@ -2,6 +2,7 @@ import asyncio
 import csv
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -17,7 +18,6 @@ from jobot.ai.qa_engine import QAEngine
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.config.manager import ConfigManager
-from jobot.config.profile import load_llm_settings
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.documents import (
     AtsScorer,
@@ -31,15 +31,12 @@ from jobot.documents import (
 )
 from jobot.evals.harness import EvalHarness
 from jobot.gui.sidecar import StdioSidecarServer
-from jobot.llm.router import ModelRouter
-from jobot.llm.providers import PROVIDER_REGISTRY
 from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
 from jobot.obs.alerts import AlertDispatcher
 from jobot.obs.manual_test_logger import ManualTestLogger
 from jobot.obs.tracing import TraceLogger
 from jobot.runner import ContinuousCampaignRunner
 from jobot.scheduler import SchedulerManager
-from jobot.secrets import mask
 from jobot.stealth.browser import BrowserSession
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
@@ -66,7 +63,6 @@ def _resolve_job(
     out_console: Console,
 ) -> Any:
     """Resolve a JobPosting from a saved job id or a URL (live parse)."""
-    from jobot.models.domain import JobPosting
 
     if job_id:
         job = db.get_job_posting(job_id)
@@ -80,7 +76,15 @@ def _resolve_job(
             return None
         return job
     if url:
-        site_name = site or infer_site(url)
+        try:
+            site_name = site or infer_site(url)
+        except ValueError as exc:
+            out_console.print(f"[bold red][ERROR] {exc}[/bold red]")
+            out_console.print(
+                "[yellow]Run [bold blue]jobot list-sites[/bold blue] to see supported sites, "
+                "or pass [bold blue]--site[/bold blue] explicitly.[/yellow]"
+            )
+            return None
         adapter = get_adapter(site_name)
         job = asyncio.run(adapter.parse_job_posting(url))
         if not job.title or not job.job_id:
@@ -89,6 +93,14 @@ def _resolve_job(
         return job
     out_console.print("[bold red][ERROR] Provide --job-id or --url.[/bold red]")
     return None
+
+
+@app.command("list-sites")
+def list_sites() -> None:
+    """List all registered job-site adapters."""
+    console.print("[bold]Supported job sites[/bold]")
+    for name in AdapterRegistry.list_supported_sites():
+        console.print(f"  • {name}")
 
 
 @app.command("setup")
@@ -880,12 +892,30 @@ def export_cmd(
         output = f"applications_export.{format_type.lower()}"
 
     out_path = Path(output)
+    # Relative export paths are confined to the working directory (blocks
+    # `--output ../../secrets.json` style traversal); explicit absolute
+    # paths are deliberate user intent and allowed.
+    if not out_path.is_absolute():
+        resolved = out_path.resolve()
+        if not resolved.is_relative_to(Path.cwd().resolve()):
+            console.print(
+                f"[bold red][ERROR] Relative export path escapes the working "
+                f"directory: {output}[/bold red]"
+            )
+            raise typer.Exit(code=2)
+        out_path = resolved
 
     if format_type.lower() == "json":
         data = [a.model_dump() for a in apps]
         out_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
     else:
-        with open(out_path, "w", newline="", encoding="utf-8") as f:
+        # Vault-style open: validated + confined path, O_NOFOLLOW (POSIX),
+        # no symlink swap between check and write.
+        fd = os.open(
+            out_path,
+            os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0),
+        )
+        with os.fdopen(fd, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
                 ["application_id", "site", "job_id", "status", "trust_level", "created_at"]

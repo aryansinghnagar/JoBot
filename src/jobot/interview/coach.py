@@ -5,8 +5,7 @@ dependency in degraded mode, per the project's degradation doctrine).
 """
 
 import json
-import re
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 

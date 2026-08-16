@@ -1,5 +1,4 @@
 import json
-import urllib.request
 
 import pytest
 from jobot.adapters.greenhouse import GreenhouseAdapter
@@ -37,12 +36,14 @@ BOARD_JOBS = {
 
 
 def _monkeypatch_urlopen(monkeypatch, url_suffix: str, payload: dict):
-    def fake_urlopen(req, timeout=5):
-        if url_suffix not in req.full_url:
-            raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def fake_safe_urlopen(
+        url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False
+    ):
+        if url_suffix not in url:
+            raise FileNotFoundError(f"unexpected fetch: {url}")
         return FakeHTTPResponse(payload)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr("jobot.adapters.greenhouse.safe_urlopen", fake_safe_urlopen)
 
 
 @pytest.mark.asyncio
@@ -75,12 +76,12 @@ async def test_greenhouse_adapter_parse_posting_raises_on_fetch_error(monkeypatc
     adapter = GreenhouseAdapter()
     url = "https://boards.greenhouse.io/acme/jobs/404"
 
-    def boom(req, timeout=5):
-        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def boom(*args, **kwargs):
+        raise ConnectionError("simulated fetch failure")
 
-    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setattr("jobot.adapters.greenhouse.safe_urlopen", boom)
 
-    with pytest.raises(urllib.error.HTTPError):
+    with pytest.raises(ConnectionError):
         await adapter.parse_job_posting(url)
 
 
@@ -101,10 +102,10 @@ async def test_greenhouse_adapter_discover_jobs(monkeypatch):
 async def test_greenhouse_adapter_discover_jobs_empty_on_error(monkeypatch):
     adapter = GreenhouseAdapter()
 
-    def boom(req, timeout=5):
-        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+    def boom(*args, **kwargs):
+        raise ConnectionError("simulated fetch failure")
 
-    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setattr("jobot.adapters.greenhouse.safe_urlopen", boom)
 
     postings = await adapter.discover_jobs(company="nope")
 
@@ -135,12 +136,12 @@ async def test_greenhouse_adapter_form_fill_and_submit(monkeypatch):
     assert filled["email"] == "gh@example.com"
     assert app.status == ApplicationStatus.FILLED
 
-    def fake_post(req, timeout=5):
-        assert req.get_method() == "POST"
-        assert "/applications" in req.full_url
+    def fake_post(url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False):
+        assert method == "POST"
+        assert "/applications" in url
         return FakeHTTPResponse({}, status=201)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_post)
+    monkeypatch.setattr("jobot.adapters.greenhouse.safe_urlopen", fake_post)
 
     submitted = await adapter.submit_application(app)
     assert submitted is True
