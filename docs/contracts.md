@@ -55,3 +55,32 @@ the code name is canonical and the plan name is not yet implemented.
 - ASP freeze: `tests/test_asp_12_phase.py`, `tests/integration/test_pipeline_12_phase.py`
 - Storage freeze: `tests/test_storage.py`
 - Policy freeze: `tests/test_policy*.py`, `tests/integration/test_policy_integration.py`
+
+## Phase 1 Addendum (2026-08-13)
+
+The `jobot/llm/` package (plan.md Chapter 6) landed without breaking any frozen
+signature:
+
+- **`ModelRouter.generate_text(prompt, system_prompt=None, fallback_chain=None)`**
+  is preserved — `src/jobot/ai/router.py` is now a re-export shim of
+  `jobot.llm.router.ModelRouter`. Additive-only changes: `task=` kwarg and
+  `complete()` / `health_check()` / `list_configured_providers()` methods.
+- **New providers** (12 registry entries): `GeminiProvider`, `OpenAIProvider`,
+  `AnthropicProvider` (refactored from the old `_call_provider`),
+  `OpenAICompatProvider` (openrouter/groq/together/ollama/vllm), `MistralProvider`,
+  `CohereProvider` (HTTP-native), `BedrockProvider` (boto3, optional
+  `[providers]` extra), `VertexProvider` (google-genai vertex client).
+- **Costing**: `src/jobot/llm/pricing.yaml` (package data) + user override at
+  `~/.jobot/pricing.yaml`; `LLMProvider.estimate_cost()` per model.
+- **Daily cost cap**: `llm.daily_cost_cap_usd` (default 5.00), spend persisted
+  to `~/.jobot/data/llm_spend.json` (date-keyed, survives restarts).
+- **Secrets**: `jobot.secrets` wraps the OS keyring (service `jobot`); key
+  lookup order is env var → keyring (`llm.api_key.<provider>`).
+- **Config surface**: `jobot config get/set/unset/show` (three-tier: env →
+  keyring → `~/.jobot/config.yaml`; secrets masked on `show`) and
+  `jobot doctor` (exit 0 with ≥1 provider configured).
+- **Profiles YAML**: `~/.jobot/profiles/<name>.yaml` (`JOBOT_PROFILE` select)
+  holds **non-identity** config only (search/target/resume_base/llm/outreach);
+  identity facts remain canonical in the Fernet vault — no second source of
+  truth was introduced.
+- **Live tests opt-in**: `JOBOT_RUN_LIVE_LLM=1 pytest tests/integration/test_llm_providers_live.py`.

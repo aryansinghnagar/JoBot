@@ -15,7 +15,17 @@ functionality of 33 open-source job-search AI repositories into `jobot`.
 ## Phase 0 Deliverables
 
 - [`asp.md`](asp.md) — the 12-phase Application Submission Pipeline (ASP), single source of truth
-- [`contracts.md`](contracts.md) — frozen public interfaces the merge must not break
+- [`contracts.md`](contracts.md) — frozen public interfaces the merge must not break (includes the Phase 1 addendum on `jobot/llm/`)
+
+## Phase 1 Deliverables
+
+Provider abstraction + config layer (plan.md Chapter 6):
+
+- [`jobot/llm/`](../src/jobot/llm/) — `ModelRouter` v2 (cost-aware, spend persisted to `~/.jobot/data/llm_spend.json`), 12-entry `PROVIDER_REGISTRY`, `pricing.yaml`, provider ABC
+- [`jobot/secrets.py`](../src/jobot/secrets.py) — OS keyring wrapper (service `jobot`)
+- [`jobot/config/`](../src/jobot/config/) — three-tier `ConfigManager` (env → keyring → `~/.jobot/config.yaml`) + profiles YAML loader (config-only, identity stays in the Fernet vault)
+- CLI: `jobot config get/set/unset/show`, `jobot doctor`
+- Live provider tests opt-in: `JOBOT_RUN_LIVE_LLM=1 pytest tests/integration/test_llm_providers_live.py`
 
 ## Existing
 
