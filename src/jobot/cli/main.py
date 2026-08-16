@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import shutil
 import sys
-from typing import Optional
+from typing import Any, Dict, List, Optional
 import typer
 from rich.console import Console
 from rich.prompt import Confirm
@@ -34,6 +34,7 @@ from jobot.storage.vault import CredentialVault
 
 app = typer.Typer(name="jobot", help="Autonomous Job Application Operating System CLI")
 console = Console()
+err_console = Console(stderr=True)
 test_logger = ManualTestLogger()
 
 
@@ -223,6 +224,175 @@ def auto_apply_cmd(
                     app_res.status = ApplicationStatus.CANCELLED
                     db.save_application(app_res)
                     console.print("[yellow]Submission skipped by user.[/yellow]\n")
+
+
+@app.command("scrape")
+def scrape_cmd(
+    board: str = typer.Argument(
+        ...,
+        help="Board to scrape: linkedin, indeed, glassdoor, google, zip_recruiter, bayt, "
+        "naukri, bdjobs, greenhouse, lever, ashby, smartrecruiters, careers, mock_ats — "
+        "or 'all'.",
+    ),
+    keywords: str = typer.Option("", "--keywords", help="Search keywords (job boards)"),
+    location: str = typer.Option("", "--location", help="Location filter (job boards)"),
+    limit: int = typer.Option(25, "--limit", help="Max postings to fetch"),
+    companies: str = typer.Option(
+        "", "--companies", help="Comma-separated companies (ATS boards / careers)"
+    ),
+    all_boards: bool = typer.Option(
+        False, "--all", help="Scrape every available board in sequence"
+    ),
+    json_out: bool = typer.Option(False, "--json", help="Emit results as JSON to stdout"),
+    no_dedup: bool = typer.Option(False, "--no-dedup", help="Disable the two-tier dedup"),
+    hours_old: Optional[int] = typer.Option(
+        72, "--hours-old", help="Only postings newer than N hours"
+    ),
+    country: str = typer.Option(
+        "USA", "--country", help="Indeed country code (e.g. USA, GBR, IND)"
+    ),
+) -> None:
+    """Scrape real job postings from a board, dedup, and show stats."""
+    from jobot.adapters.greenhouse import GreenhouseAdapter
+    from jobot.scrapers import JobSpyNotInstalledError
+    from jobot.scrapers.ats import FAMILY_ADAPTERS
+    from jobot.scrapers.careers import CareerPageScanner
+    from jobot.scrapers.dedup import DedupService
+    from jobot.scrapers.jobspy import JOBS_BOARDS, JobSpyAdapter
+
+    all_boards_list = list(JOBS_BOARDS) + [
+        "greenhouse",
+        "lever",
+        "ashby",
+        "smartrecruiters",
+        "careers",
+        "mock_ats",
+    ]
+    boards = all_boards_list if all_boards else [board.strip().lower()]
+    if not all_boards:
+        for b in boards:
+            if b not in all_boards_list:
+                console.print(
+                    f"[bold red][ERROR] Unknown board '{b}'. Supported: {', '.join(all_boards_list)}[/bold red]"
+                )
+                raise typer.Exit(code=1)
+
+    company_list = [c.strip() for c in companies.split(",") if c.strip()]
+    config = ConfigManager()
+    db = DatabaseManager()
+    dedup = DedupService(db=db) if not no_dedup else None
+    results: List[Dict[str, Any]] = []
+    failures = 0
+
+    def progress(msg: str) -> None:
+        # Progress goes to stderr in JSON mode so stdout stays machine-readable.
+        if json_out:
+            err_console.print(msg)
+        else:
+            console.print(msg)
+
+    for b in boards:
+        try:
+            if b in JOBS_BOARDS:
+                delay = float(config.get("scraper.jobspy.delay_s", 1.0))
+                proxies_raw = config.get("scraper.jobspy.proxy_list", "")
+                proxies = [p.strip() for p in str(proxies_raw).split(",") if p.strip()]
+                scraper = JobSpyAdapter(b, delay_s=delay, proxies=proxies or None)
+                postings = asyncio.run(
+                    scraper.discover_jobs(
+                        keywords=keywords,
+                        location=location,
+                        limit=limit,
+                        hours_old=hours_old,
+                        country_indeed=country,
+                    )
+                )
+            elif b in FAMILY_ADAPTERS:
+                if not company_list:
+                    progress(f"[yellow]Board '{b}' requires --companies; skipping[/yellow]")
+                    continue
+                adapter = FAMILY_ADAPTERS[b](company=company_list[0])
+                postings = asyncio.run(adapter.discover_jobs(limit=limit))
+            elif b == "greenhouse":
+                if not company_list:
+                    progress("[yellow]Board 'greenhouse' requires --companies; skipping[/yellow]")
+                    continue
+                adapter = GreenhouseAdapter()
+                postings = asyncio.run(adapter.discover_jobs(company=company_list[0], limit=limit))
+            elif b == "careers":
+                scanner = CareerPageScanner(companies=company_list)
+                postings = asyncio.run(scanner.discover_jobs(limit=limit))
+            elif b == "mock_ats":
+                from jobot.adapters.mock_ats import MockATSAdapter
+
+                postings = asyncio.run(MockATSAdapter().discover_jobs(limit=limit))
+            else:  # pragma: no cover
+                postings = []
+
+            if dedup is not None:
+                filtered = dedup.filter_unique(postings)
+                unique, rejected = filtered.unique, filtered.rejected
+            else:
+                unique, rejected = postings, 0
+            for p in unique:
+                results.append(
+                    {
+                        "site": p.site,
+                        "title": p.title,
+                        "company": p.company,
+                        "location": p.location,
+                        "url": p.url,
+                        "description": p.description,
+                    }
+                )
+            progress(
+                f"[bold cyan]{b}[/bold cyan]: scraped {len(postings)}, "
+                f"kept {len(unique)}, duplicates {rejected}"
+            )
+        except JobSpyNotInstalledError as exc:
+            failures += 1
+            progress(f"[bold yellow]{b}: {exc}[/bold yellow]")
+        except Exception as exc:  # noqa: BLE001
+            failures += 1
+            progress(f"[bold red]{b}: scrape failed: {exc}[/bold red]")
+
+    if json_out:
+        # Plain ASCII stdout (ensure_ascii) — immune to console encoding quirks.
+        sys.stdout.write(json.dumps(results, indent=2, default=str) + "\n")
+        return
+
+    table = Table(title="Scraped Postings")
+    for col in ("Site", "Title", "Company", "Location", "URL"):
+        table.add_column(col, style="bold" if col == "Title" else "")
+    for r in results:
+        table.add_row(r["site"], r["title"], r["company"], r["location"], r["url"])
+    console.print(table)
+    total = len(results)
+    console.print(
+        f"[bold green]Total: {total} unique postings from {len(boards)} board(s), "
+        f"{failures} failed[/bold green]"
+    )
+    if total == 0 and failures == len(boards):
+        raise typer.Exit(code=1)
+
+
+@app.command("dedup")
+def dedup_cmd(
+    stats: bool = typer.Option(True, "--stats", help="Show dedup cache stats"),
+) -> None:
+    """Show the persistent dedup cache state."""
+    from jobot.scrapers.dedup import DedupService
+
+    service = DedupService()
+    entries = service.db.list_dedup_entries()
+    console.print(f"[bold cyan]Dedup cache: {len(entries)} unique posting(s) recorded[/bold cyan]")
+    if stats and entries:
+        table = Table(title="Dedup Cache Sample")
+        for col in ("Title", "Company", "Location"):
+            table.add_column(col, style="bold" if col == "Title" else "")
+        for e in entries[:10]:
+            table.add_row(e["title"], e["company"], e["location"])
+        console.print(table)
 
 
 @app.command("run")
