@@ -1,12 +1,33 @@
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
 
-from jobot.adapters import AdapterRegistry, SiteAdapter
+from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.ai.skill_extractor import SkillExtractor
+from jobot.config.manager import ConfigManager
 from jobot.models.domain import JobPosting, UserProfile
+from jobot.scrapers.ats import FAMILY_ADAPTERS, AtsFamilyAdapter
+from jobot.scrapers.careers import CareerPageScanner
+from jobot.scrapers.dedup import DedupService
+from jobot.scrapers.jobspy import JOBS_BOARDS, JobSpyAdapter
+from jobot.storage.db import DatabaseManager
 
 logger = logging.getLogger(__name__)
+
+# Boards without a real public feed: discovery skips them (no fabricated data).
+UNSCRAPABLE_BOARDS = (
+    "workday",
+    "instahyre",
+    "cutshort",
+    "wellfound",
+    "shine",
+    "foundit",
+    "hirist",
+    "ziprecruiter",
+    "naukri",
+    "glassdoor",
+)
 
 
 class JobMatchResult(BaseModel):
@@ -19,38 +40,72 @@ class JobMatchResult(BaseModel):
 
 class JobDiscoveryEngine:
     """
-    Automated Job Search & Skill Matching Engine (Layer D).
-    Discovers relevant job postings on configured portals and computes candidate fit scores.
+    Job discovery & skill matching (Layer D).
+
+    Phase 2: discovery only runs against real feeds — JobSpy boards, direct-API
+    ATS families, the CareerPageScanner, and the local mock ATS. Portals
+    without a real feed are skipped with a warning. Never fabricates postings.
     """
 
     def __init__(
         self,
         active_portals: Optional[List[str]] = None,
         skill_extractor: Optional[SkillExtractor] = None,
+        db: Optional[DatabaseManager] = None,
+        dedup: Optional[DedupService] = None,
+        config: Optional[ConfigManager] = None,
     ) -> None:
         if active_portals is None:
             active_portals = [
-                "naukri",
                 "linkedin",
                 "indeed",
-                "greenhouse",
-                "lever",
-                "workday",
                 "glassdoor",
-                "instahyre",
-                "cutshort",
-                "wellfound",
-                "shine",
-                "foundit",
-                "hirist",
-                "ziprecruiter",
+                "zip_recruiter",
+                "google",
+                "bayt",
+                "bdjobs",
+                "naukri",
+                "lever",
+                "ashby",
                 "smartrecruiters",
+                "greenhouse",
+                "careers",
+                "mock_ats",
             ]
-        self.active_portals = active_portals
+        self.active_portals = [p for p in active_portals if p not in UNSCRAPABLE_BOARDS]
+        skipped = [p for p in active_portals if p in UNSCRAPABLE_BOARDS]
+        if skipped:
+            logger.info("Discovery: skipping portals without a real feed: %s", skipped)
         self.skill_extractor = skill_extractor or SkillExtractor()
+        self.db = db or DatabaseManager()
+        self.dedup = dedup or DedupService(db=self.db)
+        self.config = config or ConfigManager()
 
-    def _get_adapter(self, site: str) -> SiteAdapter:
-        return AdapterRegistry.get_adapter(site)
+    def _scraper_for(self, portal: str, companies: List[str]) -> Any:
+        if portal in JOBS_BOARDS:
+            delay = float(self.config.get("scraper.jobspy.delay_s", 1.0))
+            proxies_raw = self.config.get("scraper.jobspy.proxy_list", "")
+            proxies = [p.strip() for p in str(proxies_raw).split(",") if p.strip()]
+            return JobSpyAdapter(portal, delay_s=delay, proxies=proxies or None)
+        if portal in FAMILY_ADAPTERS:
+            adapter_cls = FAMILY_ADAPTERS[portal]
+            if not companies:
+                logger.info("Discovery: portal '%s' needs --companies; skipping", portal)
+                return None
+            return adapter_cls(company=companies[0])
+        if portal == "greenhouse":
+            from jobot.adapters.greenhouse import GreenhouseAdapter
+
+            if not companies:
+                logger.info("Discovery: portal 'greenhouse' needs --companies; skipping")
+                return None
+            return GreenhouseAdapter()
+        if portal == "careers":
+            return CareerPageScanner(companies=companies)
+        if portal == "mock_ats":
+            return MockATSAdapter()
+        logger.warning("Discovery: no scraper for portal '%s'; skipping", portal)
+        return None
 
     def evaluate_match(self, posting: JobPosting, profile: UserProfile) -> JobMatchResult:
         """Compute matching score between candidate profile skills and job requisition skills."""
@@ -92,21 +147,30 @@ class JobDiscoveryEngine:
         target_title: str = "Python Developer",
         limit_per_portal: int = 2,
         min_match_threshold: float = 0.20,
+        companies: Optional[List[str]] = None,
+        location: str = "",
     ) -> List[JobMatchResult]:
-        """Search across target portals for postings matching candidate skills (min_match_threshold=0.20)."""
+        """Search real feeds for postings matching the candidate profile (dedup applied)."""
+        companies = companies or []
         matched_jobs: List[JobMatchResult] = []
 
         for portal in self.active_portals:
             try:
-                adapter = self._get_adapter(portal)
-                # Parse sample job postings for search query
-                for i in range(limit_per_portal):
-                    sample_url = f"https://www.{portal}.com/job/{target_title.replace(' ', '-').lower()}-{i + 101}"
-                    job_posting = await adapter.parse_job_posting(sample_url)
-                    match_res = self.evaluate_match(job_posting, profile)
-                    if match_res.match_score >= min_match_threshold:
-                        matched_jobs.append(match_res)
-            except Exception as e:
-                logger.error(f"Discovery error on portal {portal}: {e}")
+                scraper = self._scraper_for(portal, companies)
+                if scraper is None:
+                    continue
+                postings = await scraper.discover_jobs(
+                    keywords=target_title, location=location, limit=limit_per_portal
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Discovery error on portal %s: %s", portal, exc)
+                continue
 
+            unique = self.dedup.filter_unique(postings).unique
+            for posting in unique:
+                match_res = self.evaluate_match(posting, profile)
+                if match_res.match_score >= min_match_threshold:
+                    matched_jobs.append(match_res)
+
+        matched_jobs.sort(key=lambda r: r.match_score, reverse=True)
         return matched_jobs
