@@ -1,0 +1,3325 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>JoBot Master Implementation Plan</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  @page { size: A4; margin: 18mm 16mm; }
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  body { font-family: Georgia, "Times New Roman", serif; font-size: 10.5pt; line-height: 1.5; color: #1a1a1a; }
+  h1 { font-family: Arial, Helvetica, sans-serif; font-size: 20pt; color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-top: 0; }
+  h2 { font-family: Arial, Helvetica, sans-serif; font-size: 14pt; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 20px; break-after: avoid; }
+  h3 { font-family: Arial, Helvetica, sans-serif; font-size: 11.5pt; color: #1e293b; margin-top: 14px; break-after: avoid; }
+  code, pre { font-family: Consolas, "Courier New", monospace; }
+  code { font-size: 9pt; background: #f1f5f9; padding: 0 2px; }
+  pre { font-size: 8.5pt; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; overflow-wrap: break-word; white-space: pre-wrap; break-inside: avoid; }
+  table { border-collapse: collapse; width: 100%; font-size: 8.5pt; margin: 10px 0; font-family: Arial, Helvetica, sans-serif; }
+  th { background: #0f172a; color: #fff; padding: 4px 6px; text-align: left; }
+  td { border: 1px solid #cbd5e1; padding: 3px 6px; overflow-wrap: break-word; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  blockquote { border-left: 3px solid #64748b; margin: 10px 0; padding: 2px 12px; color: #334155; background: #f8fafc; }
+  a { color: #1d4ed8; text-decoration: none; }
+  hr { border: none; border-top: 1px solid #cbd5e1; margin: 16px 0; }
+  ul, ol { padding-left: 20px; }
+  li { margin: 2px 0; }
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">JoBot Master Implementation Plan</h1>
+</header>
+<h1 id="jobot-master-implementation-plan">JoBot Master Implementation
+Plan</h1>
+<p><strong>Document type:</strong> Canonical Master Implementation Plan
+(supersedes all source plans) <strong>Date:</strong> 2026-08-16
+<strong>Repository:</strong> <a
+href="https://github.com/aryansinghnagar/JoBot">https://github.com/aryansinghnagar/JoBot</a>
+<strong>Guiding doctrine:</strong> <code>AGENTS.md</code> (task-driven,
+verification-first, production-grade, deterministic, zero-hallucination)
+<strong>Source set synthesized:</strong> <code>agents.md</code>,
+<code>Plan1.md</code> (+<code>Plan1.pdf</code>), <code>Plan2.md</code>,
+<code>Plan3.md</code>, <code>plan4.md</code>, <code>plan5.md</code>,
+<code>Plan6.md</code>, <code>Plan7.md</code>, <code>Plan8.md</code>
+(+<code>Plan8.pdf</code>), <code>Plan9.md</code> (empty file),
+<code>Plan10.md</code>, <code>Plan11.md</code>
+<strong>Deliverables:</strong> this file +
+<code>MASTER_PLAN.pdf</code></p>
+<hr />
+<h2 id="1-executive-summary--north-star">1. Executive Summary &amp;
+North Star</h2>
+<p><strong>Strategy.</strong> Do not rewrite JoBot. Do not add breadth
+first. Turn the existing architecture into a trustworthy execution
+substrate, prove one complete application workflow durable under
+crash/failure/restart, then expand capability on top of that substrate.
+A high-throughput agent that duplicates a submission or loses state is
+materially worse than a missing feature.</p>
+<pre class="mermaid"><code>flowchart TD
+    A[Truthful baseline] --&gt; B[Security + supply-chain blockers]
+    B --&gt; C[Durable execution]
+    C --&gt; D[Application state + effect correctness]
+    D --&gt; E[Browser + adapter reliability]
+    E --&gt; F[Candidate truth + AI reliability]
+    F --&gt; G[Verification, evidence, evals]
+    G --&gt; H[Control-plane UX]
+    H --&gt; I[Release engineering]
+    I --&gt; J[Docs, cleanup, refactor, performance]
+    J --&gt; K[Capability expansion]
+    K --&gt; L[Outcome learning]
+    L --&gt; M[Bounded self-improvement]
+    M --&gt; N[Multi-worker + multi-machine]
+    N --&gt; O[Career operating system]</code></pre>
+<p><strong>v1.0 product promise (narrow and strong).</strong></p>
+<blockquote>
+<p>JoBot reliably discovers, evaluates, prepares, verifies, submits, and
+tracks applications across a defined set of supported job sources and
+ATSs, while preserving durable state, respecting explicit policies,
+surviving crashes, grounding candidate facts, capturing evidence, and
+exposing every consequential action to the user.</p>
+</blockquote>
+<p><strong>Long-term moat.</strong> durable execution + trustworthy
+candidate data + evidence + human-governed autonomy + outcome learning +
+career intelligence. The moat is not the number of job boards.</p>
+<p><strong>Core production invariants (mandatory in every
+phase).</strong></p>
+<pre class="text"><code>NO ACTION WITHOUT A STATE          NO STATE WITHOUT AN EVENT
+NO COMPLETION WITHOUT VERIFICATION NO SIDE EFFECT WITHOUT POLICY
+NO RETRY WITHOUT IDEMPOTENCY       NO LONG RUN WITHOUT CHECKPOINT
+NO MEMORY WITHOUT PROVENANCE       NO AUTONOMY WITHOUT MEASUREMENT
+NO PLUGIN WITHOUT PERMISSIONS      NO SECRET IN LOGS/PROMPTS/EVENTS/TELEMETRY
+NO EXTERNAL CONTENT TRUSTED        NO UNKNOWN STATE TREATED AS SUCCESS
+NO AMBIGUOUS EFFECT REPLAYED       NO SECURITY GATE BYPASSED FOR VELOCITY
+NO RELEASE WITHOUT REPRODUCIBLE EVIDENCE</code></pre>
+<p><strong>Autonomy model.</strong> Autonomy is scoped (user x site x
+adapter x skill x action class), earned from measured outcomes, never a
+global switch.</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Example</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R0</td>
+<td>Local read / analysis</td>
+<td>Automatic</td>
+</tr>
+<tr>
+<td>R1</td>
+<td>Public job discovery</td>
+<td>Automatic</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Resume/cover generation</td>
+<td>Automatic + validation</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Application preparation / draft fill</td>
+<td>Automatic or draft-only</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Save / bookmark / tracker mutation</td>
+<td>Policy dependent</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Submit application</td>
+<td>Human approval; bounded autonomy after proven trust</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>Recruiter outreach / external message</td>
+<td>Approval by default</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>Credential / security-setting change</td>
+<td>Human approval</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Irreversible high-impact action</td>
+<td>Human only</td>
+</tr>
+</tbody>
+</table>
+<p>Risk = f(action, target, reversibility, credentials, external side
+effect, personal data, cost, volume, confidence, trust). Hard blocks
+come from policy rules; the score routes escalation.</p>
+<p><strong>Definition of done (one sentence).</strong> An average user
+installs JoBot, builds a profile, discovers jobs, receives grounded and
+independently verified application materials, approves and executes
+applications that survive injected crashes without duplicate effects,
+inspects evidence, backs up and restores data, and runs on
+signed/attested release artifacts — all under explicit policy controls
+and eval gates.</p>
+<hr />
+<h2 id="2-current-state-assessment-repo--plan-gap-matrix">2. Current
+State Assessment (Repo + Plan Gap Matrix)</h2>
+<h3 id="21-evidence-hierarchy-conflict-resolution-rule">2.1 Evidence
+hierarchy (conflict resolution rule)</h3>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Source</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>AGENTS.md</code></td>
+<td>Governing doctrine</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Live repo at working commit</td>
+<td>Ground truth for what exists/passes/fails</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Code contracts + tests</td>
+<td>Behavioral truth</td>
+</tr>
+<tr>
+<td>4</td>
+<td>This Master Plan</td>
+<td>Target architecture + sequence</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Source Plan1–Plan11</td>
+<td>Requirements/evidence (merged here)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>External research</td>
+<td>Hypotheses only; never adopted without local eval</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Historical docs/worklogs</td>
+<td>Context only</td>
+</tr>
+</tbody>
+</table>
+<p>Several plans carry conflicting snapshots ("release 2.0 tagged" vs
+live <code>pyproject.toml</code> 0.1.0; differing test counts).
+Resolution: every phase opens with a machine-generated baseline; release
+notes describe only what is verified at the release commit; historical
+claims stay in the archive.</p>
+<h3 id="22-verified-repo-facts-2026-08-16-audit">2.2 Verified repo facts
+(2026-08-16 audit)</h3>
+<p><strong>Architecture.</strong> Dual stack: Python 3.11+ core (~13.8k
+LOC, 27 packages under <code>src/jobot/</code>) + Tauri 2 / React 18 GUI
+with thin Rust shell and stdio JSON-RPC sidecar
+(<code>gui/sidecar.py</code>, 416 lines, 22 methods). SQLite WAL storage
+(0600 perms, FK on) + Fernet vault + OS keyring. 12-phase Application
+Submission Pipeline + saga orchestrator with DoD gates and persisted
+saga instances/steps. Adapter registry: greenhouse, lever, linkedin,
+workday, indeed, mock_ats, naukri, more_adapters + JobSpy boards. Policy
+engine, circuit breakers, quarantine, traces, alerts, doctor,
+backup/migrate, scheduler with caps, plugins, evals harness, interview
+coach, outreach, digest, PII masker, analytics (skill gap, salary).
+Tests: 69 Python test files, hermetic mock ATS/LinkedIn fixtures; vitest
+GUI suite; multi-OS CI.</p>
+<p><strong>Defects and debt (verified in code).</strong></p>
+<ul>
+<li><code>task_graph.py</code>: <code>TaskGraphEngine.tasks</code> is an
+<strong>in-memory dict</strong>; DB <code>tasks</code> table exists but
+the engine never persists leases/attempts — no durable multi-worker
+coordination.</li>
+<li>All 7 LLM provider <code>stream()</code> methods +
+<code>scrapers/ats.py</code> + most of <code>adapters/linkedin.py</code>
+raise <code>NotImplementedError</code>.</li>
+<li><code>cli/main.py</code> is a 1,748-line monolith.</li>
+<li>Version drift: pyproject 0.1.0, root package.json 0.1.0, gui
+package.json 2.0.0, tauri.conf.json 2.0.0.</li>
+<li><code>tauri.conf.json</code> <code>"csp": null</code>; shell
+capabilities <code>args: true</code> (arbitrary args).</li>
+<li>CI: tag-pinned actions (not SHA), narrow Ruff
+(<code>--select E,F</code>), node 18/20 (EOL), stale <code>dev</code>
+triggers, no coverage floor, no security-gates job;
+<code>publish.yml</code> uses long-lived PyPI token; Dependabot lacks
+cargo.</li>
+<li>Ad-hoc DB migrations (<code>_ensure_column</code>), no
+<code>schema_migrations</code>.</li>
+<li><code>stealth/</code> selectors hard-coded;
+<code>proxy.py</code>/<code>captcha.py</code> vision unwired;
+<code>form_field_memory</code> not persisted; no event bus;
+AlertDispatcher not wired to scheduler/GUI; broad
+<code>except Exception</code> / <code># noqa: BLE001</code>
+swallowing.</li>
+<li><code>EightTierMemorySystem</code> + <code>memory/vector.py</code>
+skeletal (~140 LOC) — memory exists in name more than substance.</li>
+<li>Root cruft: tracked <code>JoBot_Merge_Plan.pdf</code>,
+<code>Plan1.pdf</code>, <code>cover.html</code>; duplicate plan sets at
+root and <code>Plans/</code>; <code>repo_research.md</code>;
+ignored-but-present 403 KB <code>log.md</code>, <code>.env</code>,
+<code>applications_export.json</code>, <code>.freebuff/</code>,
+<code>.mimosa/</code>; README is 25 lines pointing to a nonexistent
+<code>plan.md</code>; <code>queues/improve.md</code> stale vs
+worklog.</li>
+<li>Zero TODO/FIXME comments; <code>datetime.utcnow()</code> usage;
+missing governance files
+(SECURITY/CONTRIBUTING/CODE_OF_CONDUCT/CHANGELOG/FUNDING/templates/CODEOWNERS).</li>
+</ul>
+<p><strong>Known vulnerability set (plan5, re-verify at
+execution).</strong> vite CVE-2026-53571/53632/39365 (high), esbuild
+GHSA-67mh-4wv8-2f99, glib GHSA-wrw7-89jp-8q8g (tauri-2 transitive, no
+in-tree fix), nanoid &lt;3.3.18; 9 CodeQL
+<code>py/incomplete-url-substring-sanitization</code> alerts in
+<code>registry.py infer_site()</code> + <code>workday.py:95</code>.</p>
+<h3 id="23-runtime-capability-matrix">2.3 Runtime capability matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>State</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Shell / process mgmt</td>
+<td>yes</td>
+<td>CLI + sidecar stdio</td>
+</tr>
+<tr>
+<td>Filesystem r/w + search</td>
+<td>yes</td>
+<td>state/, artifacts, docs</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>yes</td>
+<td>repo, history clean of secrets (gitleaks verified in plan5)</td>
+</tr>
+<tr>
+<td>Network (HTTP)</td>
+<td>yes</td>
+<td>httpx with TLS-fingerprint client</td>
+</tr>
+<tr>
+<td>Local database</td>
+<td>yes</td>
+<td>SQLite WAL; migrations weak</td>
+</tr>
+<tr>
+<td>Browser automation</td>
+<td>partial</td>
+<td>Patchright wired; selectors fragile, no healing/pool manager</td>
+</tr>
+<tr>
+<td>Screenshot/evidence</td>
+<td>partial</td>
+<td>capture exists; not systematic pre/post + DOM snapshot</td>
+</tr>
+<tr>
+<td>Tool calling / LLM</td>
+<td>yes</td>
+<td>12-provider router; streaming stubbed</td>
+</tr>
+<tr>
+<td>Sub-agent delegation</td>
+<td>partial</td>
+<td>task graph in-memory; no worker loop</td>
+</tr>
+<tr>
+<td>Long-running background</td>
+<td>partial</td>
+<td>scheduler loop exists; not durable/checkpointed</td>
+</tr>
+<tr>
+<td>Schedules/cron</td>
+<td>partial</td>
+<td>4-mode loop; DST/catch-up untested</td>
+</tr>
+<tr>
+<td>Persistent storage</td>
+<td>yes</td>
+<td>SQLite + vault + keyring</td>
+</tr>
+<tr>
+<td>UI/dashboard</td>
+<td>partial</td>
+<td>5 GUI views; no approvals/evidence/kanban depth</td>
+</tr>
+<tr>
+<td>Secret management</td>
+<td>partial</td>
+<td>keyring+Fernet; keyfile perms window</td>
+</tr>
+<tr>
+<td>Approval/interruption</td>
+<td>partial</td>
+<td>PENDING_APPROVAL phase; not a durable entity</td>
+</tr>
+<tr>
+<td>Multi-machine</td>
+<td>no</td>
+<td>future AR-11</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="24-gap-matrix--plan-capability-x-repo-state-x-missing-coverage">2.4
+Gap Matrix — [Plan capability] x [Repo state] x [Missing coverage]</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Capability (source plans)</th>
+<th>Repo state</th>
+<th>Missing coverage / gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td>Durable task graph, leases, events (Plan1/6/8/10/11)</td>
+<td>In-memory dict</td>
+<td>DB-backed Task/Attempt/Lease/Event/Artifact/Dependency; atomic
+claiming; heartbeats</td>
+</tr>
+<tr>
+<td>G2</td>
+<td>Effect ledger + idempotency (Plan1, plan5)</td>
+<td>Pipeline key job_url+profile_id</td>
+<td>ExternalEffect table, reservation protocol, request_hash, replay
+policy</td>
+</tr>
+<tr>
+<td>G3</td>
+<td>Unknown states + reconciliation (Plan1)</td>
+<td>Binary SUBMITTED/VERIFIED</td>
+<td>SUBMISSION_UNKNOWN etc., reconciliation service</td>
+</tr>
+<tr>
+<td>G4</td>
+<td>Durable approvals (Plan1/7)</td>
+<td>Phase flag</td>
+<td>ApprovalRequest entity shared CLI/GUI/MCP</td>
+</tr>
+<tr>
+<td>G5</td>
+<td>Policy as universal pre-effect gate (Plan9-style synthesis)</td>
+<td>Injected but not universal; big numeric caps</td>
+<td>Mandatory gate before every side effect; typed decisions; tiered
+caps</td>
+</tr>
+<tr>
+<td>G6</td>
+<td>Browser reliability stack (Plan1, Plan3 AR-2/3)</td>
+<td>Hard-coded selectors; unwired proxy/captcha</td>
+<td>SelectorRegistry+healing, BrowserSessionManager/pool, evidence
+protocol, site health, CAPTCHA boundary</td>
+</tr>
+<tr>
+<td>G7</td>
+<td>Adapter family generalization (Plan3 AR-1)</td>
+<td>Workday cxs bespoke</td>
+<td>CxsApiAdapter base + Workable/Recruitee/Teamtailor/BambooHR</td>
+</tr>
+<tr>
+<td>G8</td>
+<td>Boundary schemas (Plan3 AR-4)</td>
+<td>Duck-typed protocol</td>
+<td>Pydantic models validated at registry + ASP phases; quarantine on
+invalid</td>
+</tr>
+<tr>
+<td>G9</td>
+<td>Apply-method classification (Plan3 F-10)</td>
+<td>Absent</td>
+<td>classify_apply_method + policy override</td>
+</tr>
+<tr>
+<td>G10</td>
+<td>API apply paths (Plan2/Plan7)</td>
+<td>Partial adapters</td>
+<td>Greenhouse/Lever/Ashby/SmartRecruiters submission + authorization
+modes</td>
+</tr>
+<tr>
+<td>G11</td>
+<td>LLM streaming (Plan2/Plan7)</td>
+<td>All stubs</td>
+<td>stream() per provider + router fallback + CLI/GUI wiring</td>
+</tr>
+<tr>
+<td>G12</td>
+<td>Candidate truth system (Plan1)</td>
+<td>Absent</td>
+<td>CandidateFact entity + grounding verifier</td>
+</tr>
+<tr>
+<td>G13</td>
+<td>Prompt registry/versioning (Plan1)</td>
+<td>Absent</td>
+<td>prompts/ tree + per-call prompt_id/version</td>
+</tr>
+<tr>
+<td>G14</td>
+<td>ModelRouter v2 economics (Plan1)</td>
+<td>Cost-aware routing exists</td>
+<td>llm_calls/budgets/reservations/health/capabilities/routing_decisions
+tables</td>
+</tr>
+<tr>
+<td>G15</td>
+<td>Multi-stage matching (Plan1/Plan7)</td>
+<td>Keyword overlap</td>
+<td>4-stage ladder + explanations</td>
+</tr>
+<tr>
+<td>G16</td>
+<td>Resume pipeline reviewer (Plan1)</td>
+<td>Drafter-&gt;reviewer exists</td>
+<td>Independent reviewer rubric + PDF text/visual verification</td>
+</tr>
+<tr>
+<td>G17</td>
+<td>Resume PDF ingestion (Plan2)</td>
+<td>Absent</td>
+<td>pdfminer parser + LLM assist + import-resume command</td>
+</tr>
+<tr>
+<td>G18</td>
+<td>Layered memory (Plan1)</td>
+<td>8-tier skeleton</td>
+<td>Persisted tiers + provenance/confidence; answer bank table</td>
+</tr>
+<tr>
+<td>G19</td>
+<td>Versioned migrations (Plan1/9)</td>
+<td>_ensure_column</td>
+<td>schema_migrations + db CLI</td>
+</tr>
+<tr>
+<td>G20</td>
+<td>Backup/restore/purge (plan4)</td>
+<td>backup exists</td>
+<td>Encrypted round-trip, golden fixtures, restore drills in CI,
+purge</td>
+</tr>
+<tr>
+<td>G21</td>
+<td>GUI control plane (Plan1/2/3)</td>
+<td>5 basic views</td>
+<td>Home/task inspector/approval
+inbox/evidence/trace/cost/incident/kanban/settings + a11y</td>
+</tr>
+<tr>
+<td>G22</td>
+<td>Sidecar supervision (plan4 R3.1, AR-5)</td>
+<td>Basic spawn</td>
+<td>Auto-respawn, EOF/backpressure, process-tree kill, double-run
+lock</td>
+</tr>
+<tr>
+<td>G23</td>
+<td>GUI E2E (plan4 R3.6)</td>
+<td>None</td>
+<td>tauri-driver suite</td>
+</tr>
+<tr>
+<td>G24</td>
+<td>Event bus (AR-7)</td>
+<td>None</td>
+<td>Typed events + subscribers; ledger stays source of truth</td>
+</tr>
+<tr>
+<td>G25</td>
+<td>Observability (plan4 R3.5, Plan2)</td>
+<td>File traces</td>
+<td>JSONL logs+rotation, OTEL, alert wiring, trace export</td>
+</tr>
+<tr>
+<td>G26</td>
+<td>Telemetry/privacy (plan4 R4)</td>
+<td>None</td>
+<td>Opt-in Sentry+analytics, redaction, kill switch, privacy doc
+tested</td>
+</tr>
+<tr>
+<td>G27</td>
+<td>Eval platform as release gate (Plan1)</td>
+<td>Harness exists</td>
+<td>Suites:
+capability/reliability/safety/truthfulness/long-horizon/regression/production-derived</td>
+</tr>
+<tr>
+<td>G28</td>
+<td>Failure injection + soak (plan4 R3.2/3.3)</td>
+<td>None</td>
+<td>Suite + 1000-iteration soak</td>
+</tr>
+<tr>
+<td>G29</td>
+<td>Security remediation (plan5 W1–W10)</td>
+<td>Open alerts</td>
+<td>vite/vitest stack, URL sanitization, vault, Tauri CSP/caps, CI
+hardening, trusted publishing</td>
+</tr>
+<tr>
+<td>G30</td>
+<td>Version authority + packaging metadata (plan4/plan5)</td>
+<td>4-way drift</td>
+<td>sync_versions.py, SPDX license, classifiers, drift-failing CI</td>
+</tr>
+<tr>
+<td>G31</td>
+<td>Governance + docs suite (plan4 R1/R5)</td>
+<td>Missing</td>
+<td>SECURITY/CONTRIBUTING/COC/CHANGELOG/FUNDING/templates + VitePress
+site</td>
+</tr>
+<tr>
+<td>G32</td>
+<td>Release channels + artifacts (plan4 R2)</td>
+<td>Publish-on-release only</td>
+<td>GHCR multi-arch, desktop CI 3-OS, icons, updater, signing,
+release.yml</td>
+</tr>
+<tr>
+<td>G33</td>
+<td>Doctor expansion (Plan1/plan4)</td>
+<td>Basic</td>
+<td>Full check tree + --json + --fix-safe</td>
+</tr>
+<tr>
+<td>G34</td>
+<td>Repo cleanup (all plans)</td>
+<td>Heavy cruft</td>
+<td>Archive plan set, dedupe, .gitignore, secret sweep, queue
+reconciliation</td>
+</tr>
+<tr>
+<td>G35</td>
+<td>Refactor RF-1..12 (Plan1/3)</td>
+<td>Monolith + duck typing</td>
+<td>CLI split, boundaries, repositories, async hot paths, plugin
+ABI</td>
+</tr>
+<tr>
+<td>G36</td>
+<td>Performance program (Plan6/8/9)</td>
+<td>Unmeasured</td>
+<td>Baselines + budgets + soak SLOs + profiling guards</td>
+</tr>
+<tr>
+<td>G37</td>
+<td>Multi-profile (Plan2)</td>
+<td>Hardcoded "default"</td>
+<td>Named profiles through vault/DB/tasks/applications</td>
+</tr>
+<tr>
+<td>G38</td>
+<td>MCP/API/TUI/extension surfaces (Plan1/2/3)</td>
+<td>None</td>
+<td>jobot mcp (stdio), jobot serve loopback, textual TUI, post-1.0
+extension</td>
+</tr>
+<tr>
+<td>G39</td>
+<td>Career intelligence + outcome learning (Plan1)</td>
+<td>Tracker stats only</td>
+<td>Outcome tracking, funnel analytics, career graph (post-v1)</td>
+</tr>
+<tr>
+<td>G40</td>
+<td>Self-improvement + skills (Plan1)</td>
+<td>None</td>
+<td>Bounded loop, skill registry, trust promotion (post-v1)</td>
+</tr>
+<tr>
+<td>G41</td>
+<td>Community/launch ops (plan4 R5)</td>
+<td>None</td>
+<td>stale-bot, roadmap page, launch checklist</td>
+</tr>
+<tr>
+<td>G42</td>
+<td>ToS-risk features (Plan3 F-19/20/21)</td>
+<td>None</td>
+<td>Behind JOBOT_ENABLE_RISKY=1, default off, capped</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Repo needs no plan covers:</strong> README referencing
+nonexistent <code>plan.md</code>; case-duplicate <code>Plans/</code> vs
+<code>plans/</code> on Windows; 403 KB <code>log.md</code> and
+<code>.freebuff/</code>/<code>.mimosa/</code> workspace dirs; skeletal
+EightTierMemory marketed as built; <code>jobs</code> DB table unused by
+the task engine; zero-coverage modules (<code>digest/</code>,
+<code>notify/</code>, <code>outreach/</code>,
+<code>scheduler/loop.py</code>); <code>applications_export.json</code>
+(user data) sitting in repo root.</p>
+<h3 id="25-implementation-contract-phase-0-output">2.5 Implementation
+contract (Phase 0 output)</h3>
+<ul>
+<li><strong>Mission:</strong> ship JoBot v1.0.0 — reliable,
+policy-governed, evidence-producing autonomous job-application agent for
+an average end user.</li>
+<li><strong>Runtime profile:</strong> local-first, single-user; CLI +
+Tauri desktop GUI; SQLite WAL; Patchright browser behind a replaceable
+interface; BYOK LLM providers (12-provider router); optional Docker
+headless.</li>
+<li><strong>First milestone:</strong> one end-to-end durable verified
+application under injected failure (Section 17).</li>
+<li><strong>Non-goals v1:</strong> hosted SaaS, multi-tenant
+auth/billing, defeating platform anti-bot controls, high-volume bulk
+apply, remote workers.</li>
+<li><strong>Constraints:</strong> AGPL-3.0 core; no secrets in
+logs/telemetry; opt-in telemetry only; live adapters stay opt-in
+(<code>JOBOT_RUN_LIVE_BROWSER=1</code>); human approval default for
+submission.</li>
+<li><strong>Safety posture:</strong> conservative ToS stance
+(LinkedIn/boards), policy envelope R0–R8, sandbox ladder for
+plugins.</li>
+<li><strong>Proof-of-progress metrics:</strong> gate table G0–G7;
+release criteria in Section 15.</li>
+<li><strong>Verification strategy:</strong> 8-level pyramid (Section 9)
++ eval release gates (Section 10).</li>
+</ul>
+<hr />
+<h2 id="3-target-architecture--design-decisions">3. Target Architecture
+&amp; Design Decisions</h2>
+<h3 id="31-assumptions-stated-verifiable">3.1 Assumptions (stated,
+verifiable)</h3>
+<ol type="1">
+<li><strong>Environment:</strong> developer laptop / end-user desktop,
+Windows/macOS/Linux Tier-1; WSL2 + Docker documented.</li>
+<li><strong>Persona:</strong> average non-CLI-first job seeker
+(GUI-primary) plus power users (CLI/TUI); single user per install.</li>
+<li><strong>Deployment:</strong> local-first; distribution via PyPI,
+GHCR, desktop installers; no server component in v1.</li>
+<li><strong>Runtime/token budget:</strong> BYOK provider keys;
+daily/monthly cost caps enforced by budget reservations before expensive
+work; local Ollama path for privacy/cost.</li>
+<li><strong>Stack:</strong> Python 3.11+ (Typer, Pydantic v2, SQLite,
+httpx, Patchright), Tauri 2 + React 18, Node &gt;= 20.19. All libraries
+verified against repo manifests; nothing assumed.</li>
+<li><strong>Allowed external services:</strong> LLM providers via
+router; public job boards/ATS APIs; recruiter email via Gmail API OAuth
+(opt-in). LinkedIn and similar boards: policy-gated, opt-in,
+ToS-reviewed, never anti-control circumvention.</li>
+<li><strong>Legal/compliance posture:</strong> never defeat
+CAPTCHAs/anti-bot/usage limits; CAPTCHA = detection + human-handoff
+boundary; bulk/ste/connection features default-off behind
+<code>JOBOT_ENABLE_RISKY=1</code>; release notes state validation status
+honestly.</li>
+</ol>
+<h3 id="32-unified-target-architecture">3.2 Unified target
+architecture</h3>
+<pre class="mermaid"><code>flowchart TB
+    subgraph CP [Control Plane - CLI / GUI / MCP / API]
+        UI[Universal ask + inbox + approvals]
+    end
+    subgraph TG [Task Graph Engine - durable]
+        T[Task / Lease / Dependency / Checkpoint]
+    end
+    W1[Worker - LLM / documents]
+    W2[Worker - browser / adapters]
+    W3[Worker - discovery / scrapers]
+    subgraph FX [Effect Layer]
+        EL[ExternalEffect ledger + idempotency]
+    end
+    V[Verifier - independent]
+    EV[Evidence store]
+    ST[(Durable state + memory + events)]
+    P[Policy + risk + trust + budget]
+    UI --&gt; P --&gt; TG
+    TG --&gt; W1 &amp; W2 &amp; W3
+    W1 &amp; W2 &amp; W3 --&gt; EL --&gt; V
+    V --&gt; EV --&gt; ST
+    TG --&gt; ST
+    ST --&gt; CP</code></pre>
+<p>Agents propose; policy decides; execution adapters perform; effects
+are recorded; independent verification confirms; only then does durable
+state transition. Never let the producer of a step certify it.</p>
+<p><strong>Closed loop (every substantial workflow):</strong></p>
+<pre class="mermaid"><code>flowchart LR
+    G[Goal] --&gt; D[Decompose -&gt; task graph]
+    D --&gt; PE[Policy evaluation]
+    PE --&gt; X[Execution]
+    X --&gt; VE[Verification]
+    VE --&gt; EF[Evidence]
+    EF --&gt; S[Durable state update]
+    S --&gt; M[Memory update]
+    M --&gt; R[Visible result]
+    R --&gt; L[Learning signal]
+    L --&gt; IC[Improvement candidate]</code></pre>
+<h3 id="33-first-class-entities-and-state-machines">3.3 First-class
+entities and state machines</h3>
+<p>Entities:
+<code>Goal, Task, TaskAttempt, TaskLease, TaskDependency, TaskEvent, TaskArtifact, ApprovalRequest, ExternalEffect, Checkpoint, Incident, BudgetReservation, CandidateFact</code>.</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; PENDING
+    PENDING --&gt; READY: deps met
+    READY --&gt; CLAIMED: atomic lease
+    CLAIMED --&gt; RUNNING
+    RUNNING --&gt; WAITING: durable waitpoint
+    WAITING --&gt; RUNNING: resume
+    RUNNING --&gt; VERIFYING
+    RUNNING --&gt; RETRYING
+    RETRYING --&gt; RUNNING
+    VERIFYING --&gt; COMPLETED
+    VERIFYING --&gt; FAILED
+    RUNNING --&gt; FAILED
+    FAILED --&gt; QUARANTINED: repeated failure
+    RUNNING --&gt; UNKNOWN
+    UNKNOWN --&gt; RUNNING: reconcile
+    RUNNING --&gt; CANCELLED
+    PENDING --&gt; CANCELLED</code></pre>
+<p>Application protocol (separate from task states; explicit transition
+table, no free enum mutation):</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; DISCOVERED
+    DISCOVERED --&gt; NORMALIZED --&gt; DEDUPLICATED --&gt; ENRICHED --&gt; MATCHED --&gt; SHORTLISTED
+    SHORTLISTED --&gt; PREPARING --&gt; PREPARED --&gt; AWAITING_APPROVAL
+    AWAITING_APPROVAL --&gt; SUBMITTING: approved
+    SUBMITTING --&gt; SUBMITTED
+    SUBMITTING --&gt; SUBMISSION_UNKNOWN
+    SUBMISSION_UNKNOWN --&gt; VERIFYING: reconcile
+    SUBMITTED --&gt; VERIFYING
+    VERIFYING --&gt; VERIFIED
+    VERIFYING --&gt; VERIFICATION_UNKNOWN
+    VERIFIED --&gt; OUTCOME_TRACKING
+    OUTCOME_TRACKING --&gt; INTERVIEW
+    OUTCOME_TRACKING --&gt; REJECTED
+    OUTCOME_TRACKING --&gt; OFFER
+    OUTCOME_TRACKING --&gt; WITHDRAWN
+    OUTCOME_TRACKING --&gt; EXPIRED
+    SUBMISSION_UNKNOWN --&gt; QUARANTINED: unresolvable
+    PREPARING --&gt; FAILED</code></pre>
+<p>Timestamp semantics split: <code>submitted_at</code> /
+<code>submission_verified_at</code> /
+<code>first_employer_response_at</code> / <code>current_outcome</code>
+(with migration + backfill).</p>
+<h3 id="34-design-decisions-and-tradeoffs">3.4 Design decisions and
+tradeoffs</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Alternatives</th>
+<th>Tradeoff rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td>SQLite WAL now; Postgres only on measured need</td>
+<td>Postgres from day one</td>
+<td>Local-first simplicity; durable interfaces keep migration path
+open</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Pull-based workers + DB-conditional claiming</td>
+<td>Push orchestration</td>
+<td>Survives partial failure; no in-memory dispatch; two workers never
+share a lease</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Append-only event ledger = source of truth; in-process bus =
+delivery</td>
+<td>Bus-only</td>
+<td>Replay/audit/timelines need durable events; bus is replaceable</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>Policy gate mandatory before every external side effect</td>
+<td>Trust pipeline internals</td>
+<td>Removes current phase-10/11 split; typed machine-readable
+decisions</td>
+</tr>
+<tr>
+<td>A5</td>
+<td>Unknown as first-class state + reconcile-never-replay</td>
+<td>Binary success/fail</td>
+<td>Eliminates duplicate-submission class of failure</td>
+</tr>
+<tr>
+<td>A6</td>
+<td>Adapter modes PUBLIC_READ / USER_AUTHORIZED_API /
+BROWSER_ASSISTED</td>
+<td>Fake API flows</td>
+<td>Public read API never implies submit authorization</td>
+</tr>
+<tr>
+<td>A7</td>
+<td>Patchright stays default behind a replaceable browser capability
+interface</td>
+<td>Vanilla Playwright switch now</td>
+<td>Stealth value retained; fork-risk mitigated by interface +
+fallback</td>
+</tr>
+<tr>
+<td>A8</td>
+<td>Prompts versioned as files; per-call provenance</td>
+<td>Inline prompt strings</td>
+<td>Measurable, rollbackable; one-change eval loops possible</td>
+</tr>
+<tr>
+<td>A9</td>
+<td>Layered memory without vector DB until scale justifies</td>
+<td>Embedding store now</td>
+<td>Current corpus tiny; SQLite + provenance suffices; revisit on
+measurements</td>
+</tr>
+<tr>
+<td>A10</td>
+<td>MCP/REST/TUI as thin adapters over shared services</td>
+<td>Core-coupled surfaces</td>
+<td>No forked business logic; core never depends on MCP</td>
+</tr>
+<tr>
+<td>A11</td>
+<td>Single-agent baseline first; multi-worker only after G2</td>
+<td>Swarm now</td>
+<td>AGENTS.md doctrine; simpler control flow until reliability
+proven</td>
+</tr>
+<tr>
+<td>A12</td>
+<td>Async hot paths behind <code>jobot.asyncx</code> sync shim</td>
+<td>Full-async rewrite</td>
+<td>CLI stays sync; &gt;= 1.2x bench gate before adoption</td>
+</tr>
+<tr>
+<td>A13</td>
+<td>Plugins deny-by-default manifest + sandbox ladder</td>
+<td>Open plugin trust</td>
+<td>Supply-chain safety; health-checked install</td>
+</tr>
+<tr>
+<td>A14</td>
+<td>Incremental refactor with import shims, suite green each move</td>
+<td>Big-bang restructure</td>
+<td>359-test baseline protects behavior; no multi-week branch</td>
+</tr>
+<tr>
+<td>A15</td>
+<td>Anti-detection ideas reinterpreted as compliance-bound
+reliability</td>
+<td>Stealth-first</td>
+<td>LinkedIn ToS prohibits circumvention; reputation + account
+safety</td>
+</tr>
+<tr>
+<td>A16</td>
+<td>Local-first telemetry opt-in with kill switch</td>
+<td>Default-on analytics</td>
+<td>Privacy promise is a product feature; docs must match code
+exactly</td>
+</tr>
+</tbody>
+</table>
+<h3 id="35-planning-layers">3.5 Planning layers</h3>
+<p>Charter (this document Section 1) -&gt; workstreams (Section 5) -&gt;
+milestones (M1–M4) -&gt; task graph (Section 6) -&gt; execution focus
+(<code>queues/now.md</code>) -&gt; recurring ops
+(<code>queues/recurring.md</code>) -&gt; risk register (Section 7) -&gt;
+decision register (Section 8). Planning files are living files: if the
+plan changed and files didn't, the system is lying to itself.</p>
+<p><strong>Feature-priority rubric</strong> (score 1–5 each, weighted):
+user value x1.5, reliability impact x1.5, unblocking effect x1.5,
+cost/effort inverse x1.0, implementation risk inverse x1.0. P0 =
+release-blocking per Section 15.</p>
+<h3 id="36-failure-modes-and-mitigations">3.6 Failure modes and
+mitigations</h3>
+<table>
+<thead>
+<tr>
+<th>Failure mode</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Auth/credential loss</td>
+<td>Keyring+vault, hardened keyfiles, rotation, fail-closed startup
+checks</td>
+</tr>
+<tr>
+<td>Rate limits (LLM/boards)</td>
+<td>Per-provider circuit breakers, jittered backoff, budget
+reservations, Ollama fallback</td>
+</tr>
+<tr>
+<td>Bot detection / account bans</td>
+<td>Policy-gated opt-in, session reuse, realistic pacing, daily caps,
+human fallback, circuit breaker</td>
+</tr>
+<tr>
+<td>Schema/driver drift (boards)</td>
+<td>Selector registry + healing + drift fixtures; adapter health
+monitoring; API-path preference</td>
+</tr>
+<tr>
+<td>Partial failure mid-workflow</td>
+<td>Step checkpoints, saga compensation, effect ledger,
+resume-without-replay</td>
+</tr>
+<tr>
+<td>Resume-state loss after crash</td>
+<td>Durable task/lease/checkpoint tables; kill-anywhere test gate</td>
+</tr>
+<tr>
+<td>Secret leakage</td>
+<td>Redaction layer at logs/traces/telemetry/prompts; no secrets in
+events; tests</td>
+</tr>
+<tr>
+<td>Ambiguous submit outcome</td>
+<td>SUBMISSION_UNKNOWN + reconciliation service + evidence</td>
+</tr>
+<tr>
+<td>DB corruption</td>
+<td>Versioned migrations, backup drills, corruption detection,
+safe-versions rollback list</td>
+</tr>
+<tr>
+<td>Provider outage</td>
+<td>Router fallback chains + health table; degrade, never corrupt task
+state</td>
+</tr>
+</tbody>
+</table>
+<h3 id="37-per-milestone-verification-rule">3.7 Per-milestone
+verification rule</h3>
+<p>Every milestone M delivers: named artifacts (code+docs), a passing
+gate from Section 9, evidence files under <code>artifacts/</code>,
+updated <code>worklog.md</code> + queues, and at least one reusable
+asset or eval added. No milestone closes on assertion alone.</p>
+<hr />
+<h2
+id="4-unified-feature-catalog-deduplicated-conflict-resolved-source-tagged">4.
+Unified Feature Catalog (deduplicated, conflict-resolved,
+source-tagged)</h2>
+<p>Conflicts resolved here: "anti-detection" -&gt; compliance-bound
+reliability (A15); "auto-promote best resume after N" -&gt; statistical
+gate with minimum sample; "delete stubs" vs "honest stubs" -&gt;
+implement or explicitly mark out-of-scope; Plan8/10/11 sequencing
+variants -&gt; single build order (Section 16); duplicate F-<em>/C-</em>
+identifiers unified.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Feature</th>
+<th>Source</th>
+<th>Priority</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UC-01</td>
+<td>Durable task queue + atomic leases + heartbeats</td>
+<td>Plan1/6/8/10/11</td>
+<td>P0</td>
+<td>Closes G1</td>
+</tr>
+<tr>
+<td>UC-02</td>
+<td>Event ledger + typed event bus</td>
+<td>Plan1, AR-7</td>
+<td>P0/P1</td>
+<td>Ledger first, bus after</td>
+</tr>
+<tr>
+<td>UC-03</td>
+<td>Effect ledger + idempotency audit</td>
+<td>Plan1/9</td>
+<td>P0</td>
+<td>All side effects</td>
+</tr>
+<tr>
+<td>UC-04</td>
+<td>Unknown states + reconciliation service</td>
+<td>Plan1</td>
+<td>P0</td>
+<td>Never blind retry</td>
+</tr>
+<tr>
+<td>UC-05</td>
+<td>Durable ApprovalRequest entity (CLI/GUI/MCP)</td>
+<td>Plan1/7</td>
+<td>P0</td>
+<td>Shared lifecycle</td>
+</tr>
+<tr>
+<td>UC-06</td>
+<td>Risk/trust engine, tiered caps, scoped trust</td>
+<td>Plan1/9</td>
+<td>P0</td>
+<td>Replaces big numeric caps</td>
+</tr>
+<tr>
+<td>UC-07</td>
+<td>Versioned DB migrations + <code>jobot db</code> CLI</td>
+<td>Plan1/9</td>
+<td>P0</td>
+<td>schema_migrations</td>
+</tr>
+<tr>
+<td>UC-08</td>
+<td>Encrypted backup/restore drills + purge</td>
+<td>plan4</td>
+<td>P0</td>
+<td>Golden fixtures in CI</td>
+</tr>
+<tr>
+<td>UC-09</td>
+<td>BrowserSessionManager + pool + persistence</td>
+<td>Plan1</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-10</td>
+<td>Selector registry + healing + drift tests</td>
+<td>AR-2</td>
+<td>P0</td>
+<td><code>stealth/selectors.py</code></td>
+</tr>
+<tr>
+<td>UC-11</td>
+<td>Browser evidence protocol (pre/post shot, DOM, args)</td>
+<td>Plan1</td>
+<td>P0</td>
+<td>Retention + dedup</td>
+</tr>
+<tr>
+<td>UC-12</td>
+<td>CAPTCHA boundary: detect + escalate + human handoff</td>
+<td>Plan1/3</td>
+<td>P0</td>
+<td>Never bypass</td>
+</tr>
+<tr>
+<td>UC-13</td>
+<td>Site health + circuit breaker + auto-demote</td>
+<td>Plan1/3</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-14</td>
+<td>Pydantic boundary schemas at adapter/ASP phases</td>
+<td>AR-4</td>
+<td>P0</td>
+<td>Invalid -&gt; quarantine</td>
+</tr>
+<tr>
+<td>UC-15</td>
+<td>cxs adapter family (Workable/Recruitee/Teamtailor/BambooHR)</td>
+<td>AR-1</td>
+<td>P0/P1</td>
+<td>Workday byte-identical</td>
+</tr>
+<tr>
+<td>UC-16</td>
+<td>Direct API apply: Greenhouse/Lever/Ashby/SmartRecruiters</td>
+<td>Plan2/7</td>
+<td>P0/P1</td>
+<td>Authorization modes</td>
+</tr>
+<tr>
+<td>UC-17</td>
+<td>LinkedIn Easy Apply completion (assisted, approval-gated)</td>
+<td>Plan2/7, F-19-adjacent</td>
+<td>P1</td>
+<td>ToS-governed</td>
+</tr>
+<tr>
+<td>UC-18</td>
+<td>LLM streaming all providers + router fallback</td>
+<td>Plan2/7</td>
+<td>P0/P1</td>
+<td>CLI <code>--stream</code></td>
+</tr>
+<tr>
+<td>UC-19</td>
+<td>Typed LLM contracts + prompt registry/versioning</td>
+<td>Plan1</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-20</td>
+<td>ModelRouter v2: capabilities/health/routing/cost tables</td>
+<td>Plan1</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-21</td>
+<td>Candidate truth system + grounding verifier</td>
+<td>Plan1</td>
+<td>P0</td>
+<td>LLM proposes, never mutates</td>
+</tr>
+<tr>
+<td>UC-22</td>
+<td>Independent reviewer (resume/cover)</td>
+<td>Plan1</td>
+<td>P0</td>
+<td>Catches unsupported claims</td>
+</tr>
+<tr>
+<td>UC-23</td>
+<td>Multi-stage matching + explanations</td>
+<td>Plan1/7</td>
+<td>P0/P1</td>
+<td>Cost ladder</td>
+</tr>
+<tr>
+<td>UC-24</td>
+<td>Job fraud/quality detection</td>
+<td>Plan1</td>
+<td>P1</td>
+<td>Untrusted content</td>
+</tr>
+<tr>
+<td>UC-25</td>
+<td>Resume PDF ingestion (<code>import-resume</code>)</td>
+<td>Plan2</td>
+<td>P1</td>
+<td>&gt;=80% field accuracy</td>
+</tr>
+<tr>
+<td>UC-26</td>
+<td>Layered memory (8 tiers real) + answer bank persistence</td>
+<td>Plan1, AR-3, F-02</td>
+<td>P0/P1</td>
+<td>Provenance per record</td>
+</tr>
+<tr>
+<td>UC-27</td>
+<td>Multi-profile support</td>
+<td>Plan2</td>
+<td>P1</td>
+<td>Remove "default"</td>
+</tr>
+<tr>
+<td>UC-28</td>
+<td>Job/company normalization + dedupe + freshness</td>
+<td>Plan1</td>
+<td>P1</td>
+<td>Fingerprints not title-match</td>
+</tr>
+<tr>
+<td>UC-29</td>
+<td>GUI control plane:
+Home/task/approval/evidence/trace/cost/incident/settings</td>
+<td>Plan1/2</td>
+<td>P0</td>
+<td>+ accessibility</td>
+</tr>
+<tr>
+<td>UC-30</td>
+<td>Kanban + funnel analytics</td>
+<td>F-01</td>
+<td>P0</td>
+<td>tracker_move RPC</td>
+</tr>
+<tr>
+<td>UC-31</td>
+<td>Answer bank UI (search/dedupe)</td>
+<td>F-08</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-32</td>
+<td>Browser-health diagnostics in GUI</td>
+<td>F-03</td>
+<td>P0</td>
+<td>Healing surfaced</td>
+</tr>
+<tr>
+<td>UC-33</td>
+<td>Live ATS score + per-job resume variants in GUI</td>
+<td>F-07</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-34</td>
+<td>Export/import CSV+JSON round-trip</td>
+<td>F-06</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-35</td>
+<td>Apply-method classification + policy override</td>
+<td>F-10</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-36</td>
+<td>Follow-up automation (email-only, rate-capped, opt-in)</td>
+<td>F-05</td>
+<td>P0*</td>
+<td>Human approval to send</td>
+</tr>
+<tr>
+<td>UC-37</td>
+<td>Job clipping from URL</td>
+<td>F-23</td>
+<td>P1</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-38</td>
+<td>Sidecar supervision (respawn/EOF/lock/tree-kill)</td>
+<td>AR-5/plan4 R3.1</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-39</td>
+<td>GUI E2E (tauri-driver)</td>
+<td>plan4 R3.6</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-40</td>
+<td>Failure-injection + soak suites</td>
+<td>plan4 R3.2/3.3</td>
+<td>P0</td>
+<td>1000-iter soak</td>
+</tr>
+<tr>
+<td>UC-41</td>
+<td>Eval platform as release gate (7 suites)</td>
+<td>Plan1</td>
+<td>P0</td>
+<td>Section 10</td>
+</tr>
+<tr>
+<td>UC-42</td>
+<td>Prompt-injection boundary + adversarial corpus</td>
+<td>Plan1/9</td>
+<td>P0</td>
+<td>OWASP LLM01</td>
+</tr>
+<tr>
+<td>UC-43</td>
+<td>Observability: JSONL logs, OTEL traces, alert wiring, trace
+export</td>
+<td>plan4 R3.5</td>
+<td>P0/P1</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-44</td>
+<td>Opt-in telemetry + redaction + kill switch + privacy doc</td>
+<td>plan4 R4</td>
+<td>P0</td>
+<td>Docs match code</td>
+</tr>
+<tr>
+<td>UC-45</td>
+<td>Security remediation W1–W10 (deps, URL, vault, Tauri, CI,
+publishing)</td>
+<td>plan5</td>
+<td>P0</td>
+<td>Release-blocking W1/W2/W4</td>
+</tr>
+<tr>
+<td>UC-46</td>
+<td>Version authority + packaging metadata + drift CI</td>
+<td>plan4 R1.1/plan5 W6</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-47</td>
+<td>Governance files + README overhaul</td>
+<td>plan4 R1.6–R1.8</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-48</td>
+<td>Distribution: PyPI trusted publishing, GHCR multi-arch, desktop 3-OS
+CI, icons, updater, signing</td>
+<td>plan4 R2</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-49</td>
+<td>Doctor expansion (--json, --fix-safe, full tree)</td>
+<td>Plan1/plan4</td>
+<td>P0</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-50</td>
+<td>Docs suite + VitePress site + generated references</td>
+<td>plan4 R5, Plan7</td>
+<td>P0</td>
+<td>Section 12</td>
+</tr>
+<tr>
+<td>UC-51</td>
+<td>Repo cleanup + planning archive + queue reconciliation</td>
+<td>all</td>
+<td>P0</td>
+<td>Section 13</td>
+</tr>
+<tr>
+<td>UC-52</td>
+<td>Refactor RF-1..RF-12 + typed errors + logging</td>
+<td>Plan1/3/7</td>
+<td>P0/P1</td>
+<td>Section 14</td>
+</tr>
+<tr>
+<td>UC-53</td>
+<td>Performance program: baselines, budgets, soak SLOs, guards</td>
+<td>Plan6/8/9</td>
+<td>P0</td>
+<td>Section 14</td>
+</tr>
+<tr>
+<td>UC-54</td>
+<td>Gmail watcher (OAuth) -&gt; status signals</td>
+<td>F-09</td>
+<td>P1</td>
+<td>No IMAP passwords</td>
+</tr>
+<tr>
+<td>UC-55</td>
+<td>24/7 matcher + opportunity digest</td>
+<td>F-11</td>
+<td>P1</td>
+<td>Never submits w/o policy</td>
+</tr>
+<tr>
+<td>UC-56</td>
+<td>Interview calendar + question bank expansion</td>
+<td>F-12/F-22</td>
+<td>P1</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-57</td>
+<td>Salary negotiation toolkit + market intel</td>
+<td>F-13, Plan1</td>
+<td>P1/P2</td>
+<td>Freshness visible</td>
+</tr>
+<tr>
+<td>UC-58</td>
+<td>Session recordings in evidence viewer</td>
+<td>F-14</td>
+<td>P1</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-59</td>
+<td>Resume bank + A/B testing (statistical gate)</td>
+<td>F-17, Plan2</td>
+<td>P1</td>
+<td>Min sample size</td>
+</tr>
+<tr>
+<td>UC-60</td>
+<td>Local LLM path (Ollama incl. vision)</td>
+<td>F-18</td>
+<td>P1</td>
+<td>Eval-gated</td>
+</tr>
+<tr>
+<td>UC-61</td>
+<td>MCP server (stdio first)</td>
+<td>F-16/AR-9</td>
+<td>P1</td>
+<td>Pinned spec revision</td>
+</tr>
+<tr>
+<td>UC-62</td>
+<td><code>jobot serve</code> REST (loopback)</td>
+<td>Plan2/7</td>
+<td>P1/P2</td>
+<td>API-key + CORS before expose</td>
+</tr>
+<tr>
+<td>UC-63</td>
+<td>TUI (textual)</td>
+<td>Plan2/7</td>
+<td>P1/P2</td>
+<td>Reuses services</td>
+</tr>
+<tr>
+<td>UC-64</td>
+<td>HTML reports + funnel charts + PDF export</td>
+<td>Plan2</td>
+<td>P1</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-65</td>
+<td>OTEL external export (+ optional Langfuse)</td>
+<td>Plan2</td>
+<td>P1</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-66</td>
+<td>Trust-level automation + audit events</td>
+<td>Plan2</td>
+<td>P1</td>
+<td>Configurable thresholds</td>
+</tr>
+<tr>
+<td>UC-67</td>
+<td>Sandbox ladder (subprocess-&gt;container-&gt;remote)</td>
+<td>Plan1/7</td>
+<td>P1/P2</td>
+<td>Plugins/code</td>
+</tr>
+<tr>
+<td>UC-68</td>
+<td>Plugin ABI + community gallery</td>
+<td>AR-8, F-24</td>
+<td>P2</td>
+<td>Deny-by-default</td>
+</tr>
+<tr>
+<td>UC-69</td>
+<td>Browser extension (separate repo)</td>
+<td>F-15</td>
+<td>P2</td>
+<td>Never a bypass channel</td>
+</tr>
+<tr>
+<td>UC-70</td>
+<td>Networking graph + referrals</td>
+<td>Plan1/2</td>
+<td>P2</td>
+<td>Authorized data only</td>
+</tr>
+<tr>
+<td>UC-71</td>
+<td>LinkedIn profile scoring</td>
+<td>Plan2</td>
+<td>P2</td>
+<td>Exported data only</td>
+</tr>
+<tr>
+<td>UC-72</td>
+<td>Multilingual resumes</td>
+<td>Plan2</td>
+<td>P2</td>
+<td>Locale validation</td>
+</tr>
+<tr>
+<td>UC-73</td>
+<td>ToS-risk: LinkedIn follow-ups / proxy rotation / bulk apply</td>
+<td>F-19/20/21</td>
+<td>P2</td>
+<td>JOBOT_ENABLE_RISKY=1, off</td>
+</tr>
+<tr>
+<td>UC-74</td>
+<td>Outcome learning loop</td>
+<td>Plan1</td>
+<td>P1/P2</td>
+<td>Observational wording</td>
+</tr>
+<tr>
+<td>UC-75</td>
+<td>Skill extraction + registry</td>
+<td>Plan1</td>
+<td>P2</td>
+<td>Trajectory -&gt; skill</td>
+</tr>
+<tr>
+<td>UC-76</td>
+<td>Bounded self-improvement (one-change rule)</td>
+<td>Plan1/9</td>
+<td>P2</td>
+<td>Human gates on policy</td>
+</tr>
+<tr>
+<td>UC-77</td>
+<td>Automated eval generation from failures</td>
+<td>Plan1</td>
+<td>P2</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-78</td>
+<td>Career intelligence graph</td>
+<td>Plan1</td>
+<td>P2/P3</td>
+<td>Post-v1</td>
+</tr>
+<tr>
+<td>UC-79</td>
+<td>Multi-machine workers / remote sandbox</td>
+<td>AR-11, Plan1</td>
+<td>P2/P3</td>
+<td>File-protocol sync</td>
+</tr>
+<tr>
+<td>UC-80</td>
+<td>Conversational <code>jobot ask</code> assistant</td>
+<td>Plan2</td>
+<td>P1/P2</td>
+<td>Session context</td>
+</tr>
+<tr>
+<td>UC-81</td>
+<td>Homebrew/Scoop/Flatpak</td>
+<td>Plan2</td>
+<td>P2</td>
+<td></td>
+</tr>
+<tr>
+<td>UC-82</td>
+<td>Community ops + launch (stale-bot, roadmap page, announcements)</td>
+<td>plan4 R5</td>
+<td>P0 (launch)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Catalog is exhaustive over the source set: every AR-<em>, F-</em>,
+R*, W*, C-* and plan-phase item maps to a UC id (traceability in Section
+20).</p>
+<hr />
+<h2 id="5-workstream-decomposition--milestone-roadmap">5. Workstream
+Decomposition &amp; Milestone Roadmap</h2>
+<table>
+<thead>
+<tr>
+<th>WS</th>
+<th>Workstream</th>
+<th>Scope (UC ids)</th>
+<th>Milestone</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WS0</td>
+<td>Truth, baseline, freeze</td>
+<td>baselines, contracts freeze, scorecard</td>
+<td>M1 gate G0</td>
+</tr>
+<tr>
+<td>WS1</td>
+<td>Security + supply chain</td>
+<td>UC-45, UC-46, UC-47</td>
+<td>M1 gate G1</td>
+</tr>
+<tr>
+<td>WS2</td>
+<td>Durable execution core</td>
+<td>UC-01..UC-08</td>
+<td>M1 gate G2</td>
+</tr>
+<tr>
+<td>WS3</td>
+<td>Application correctness</td>
+<td>UC-03..UC-06 (app-level), timestamps</td>
+<td>M1 gate G3</td>
+</tr>
+<tr>
+<td>WS4</td>
+<td>Browser + adapters</td>
+<td>UC-09..UC-17</td>
+<td>M1 gate G4</td>
+</tr>
+<tr>
+<td>WS5</td>
+<td>AI reliability + truth</td>
+<td>UC-18..UC-26</td>
+<td>M1 gate G5</td>
+</tr>
+<tr>
+<td>WS6</td>
+<td>Control-plane UX</td>
+<td>UC-29..UC-39</td>
+<td>M1 gate G6</td>
+</tr>
+<tr>
+<td>WS7</td>
+<td>Observability + evals</td>
+<td>UC-40..UC-44</td>
+<td>M1 gate G5/G7 support</td>
+</tr>
+<tr>
+<td>WS8</td>
+<td>Docs + cleanup + refactor + perf</td>
+<td>UC-50..UC-53</td>
+<td>M1 gate G7</td>
+</tr>
+<tr>
+<td>WS9</td>
+<td>Release engineering + launch</td>
+<td>UC-48, UC-49, UC-82</td>
+<td>M1 = v1.0.0</td>
+</tr>
+<tr>
+<td>WS10</td>
+<td>Product completion (P1)</td>
+<td>UC-25..UC-28, 37, 54..66, 80</td>
+<td>M2</td>
+</tr>
+<tr>
+<td>WS11</td>
+<td>Strategic moat (P2)</td>
+<td>UC-67..UC-79, 81</td>
+<td>M3</td>
+</tr>
+<tr>
+<td>WS12</td>
+<td>General agent platform (P3)</td>
+<td>career-OS reuse of runtime</td>
+<td>M4</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Milestones.</strong> M1 = v1.0.0 release (all gates green).
+M2 = product completion (v1.1.x). M3 = strategic moat (v1.2+/v2). M4 =
+general agent OS on the same durable runtime. Calendar estimate for M1:
+~26–32 focused weeks, parallelizable after WS3 across WS4/WS5/WS6
+tracks; every promotion requires evidence the previous layer is
+reliable.</p>
+<hr />
+<h2 id="6-task-graph--dependency-rails">6. Task Graph &amp; Dependency
+Rails</h2>
+<pre class="mermaid"><code>flowchart LR
+    WS0[WS0 baseline] --&gt; WS1[WS1 security]
+    WS1 --&gt; WS2[WS2 durable core]
+    WS2 --&gt; WS3[WS3 app correctness]
+    WS3 --&gt; WS4[WS4 browser] &amp; WS5[WS5 AI]
+    WS2 --&gt; WS6[WS6 GUI control plane]
+    WS4 &amp; WS5 &amp; WS6 --&gt; WS7[WS7 evals + obs]
+    WS1 --&gt; WS8[WS8 docs + cleanup + refactor]
+    WS7 &amp; WS8 --&gt; WS9[WS9 release]
+    WS9 --&gt; M2[M2 product completion]
+    M2 --&gt; M3[M3 moat]
+    M3 --&gt; M4[M4 general agent OS]</code></pre>
+<p><strong>Rails.</strong> Serialized (dependency-gated): security -&gt;
+durable core -&gt; app correctness; migrations before any new table
+consumer; policy gate before any effect-path feature. Fan-out
+(parallelizable after WS2): adapter family work || LLM streaming || GUI
+views || docs generation; discovery/ranking fan-out at runtime with
+bounded concurrency (target &gt;= 2x multi-core). Fan-in: release
+pipeline assembles WS9 artifacts; verification gate fans in all
+suites.</p>
+<p><strong>Definition of Done per task cluster (selected core; full
+per-task DoD lives in
+<code>docs/implementation/requirements-matrix.md</code>).</strong></p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>DoD (all required)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1 Baseline reports</td>
+<td>Reports committed; contracts regression tests green; scorecard with
+evidence links</td>
+</tr>
+<tr>
+<td>T2 npm stack upgrade</td>
+<td>npm audit 0 high; vitest green; GUI build OK; engines field; CI node
+20/22</td>
+</tr>
+<tr>
+<td>T3 URL sanitization</td>
+<td>urlsplit exact/suffix match; unknown -&gt; ValueError; adversarial
+suite green; 9 CodeQL closed</td>
+</tr>
+<tr>
+<td>T4 Vault hardening</td>
+<td>0600 atomic create; owner/mode checks; O_NOFOLLOW; hardening tests
+green</td>
+</tr>
+<tr>
+<td>T5 Tauri hardening</td>
+<td>CSP set; args regex allowlist; capability regression tests;
+dev+build clean</td>
+</tr>
+<tr>
+<td>T6 CI hardening</td>
+<td>SHA-pinned; security-gates job green; actionlint clean;
+test_imports.py green</td>
+</tr>
+<tr>
+<td>T7 Durable task engine</td>
+<td>Kill-worker-at-every-phase test green; no double lease; heartbeats;
+lease expiry reclaim</td>
+</tr>
+<tr>
+<td>T8 Event ledger</td>
+<td>Append-only; correlation/causation ids; audit/replay tests</td>
+</tr>
+<tr>
+<td>T9 Effect ledger</td>
+<td>Duplicate-submission test impossible; reservation protocol;
+compensation/quarantine states</td>
+</tr>
+<tr>
+<td>T10 Approvals</td>
+<td>Entity + CLI/GUI flows; survives restart; edit/defer supported</td>
+</tr>
+<tr>
+<td>T11 App state machine</td>
+<td>Transition table validated; timestamp split migrated +
+backfilled</td>
+</tr>
+<tr>
+<td>T12 Browser stack</td>
+<td>Registry+healing+drift fixtures; evidence protocol; CAPTCHA
+boundary; site health</td>
+</tr>
+<tr>
+<td>T13 Adapter family + schemas</td>
+<td>Workday unchanged; 4 new adapters hermetic-tested; schemas enforced;
+quarantine on invalid</td>
+</tr>
+<tr>
+<td>T14 LLM platform</td>
+<td>Streaming per provider or capability-gated; prompt provenance per
+call; cost tables</td>
+</tr>
+<tr>
+<td>T15 Candidate truth</td>
+<td>No unsupported claims in critical evals; propose-not-mutate enforced
+by tests</td>
+</tr>
+<tr>
+<td>T16 Matching ladder</td>
+<td>4 stages; component scores stored; explanation emitted; cost reduced
+vs baseline</td>
+</tr>
+<tr>
+<td>T17 GUI control plane</td>
+<td>Views live from real state; a11y baseline; E2E green; supervision
+kill tests</td>
+</tr>
+<tr>
+<td>T18 Eval platform</td>
+<td>7 suites runnable in CI; release report shows deltas</td>
+</tr>
+<tr>
+<td>T19 Telemetry</td>
+<td>Opt-in only; redaction tests; kill switch; privacy doc
+schema-matched</td>
+</tr>
+<tr>
+<td>T20 Docs + cleanup</td>
+<td>Docs tree live + generated refs; archive manifest; root canonical;
+gates scripts exit clean</td>
+</tr>
+<tr>
+<td>T21 Refactor/perf</td>
+<td>Suite green each move; interface inventory unchanged; perf budgets
+met vs baseline</td>
+</tr>
+<tr>
+<td>T22 Release</td>
+<td>All Section 15 checks green on RC; artifacts on 3 channels;
+attestations verified</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Parallel-work rules:</strong> feature branches + one coherent
+commit; parallel coding lanes use one git worktree per owned task; never
+multiple workers editing the same files blindly; merge only after
+verification.</p>
+<hr />
+<h2 id="7-risk-register--mitigations">7. Risk Register &amp;
+Mitigations</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Risk</th>
+<th>L</th>
+<th>I</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>LinkedIn/board detects Patchright; account bans</td>
+<td>H</td>
+<td>C</td>
+<td>Policy-gated opt-in, session reuse, realistic pacing, daily caps,
+circuit breaker, human fallback; never circumvent controls</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>JobSpy/selector breakage on redesigns</td>
+<td>M</td>
+<td>H</td>
+<td>Registry + healing + drift fixtures, health cron, direct-API
+fallback</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>LLM rate limits / cost spikes</td>
+<td>M</td>
+<td>M</td>
+<td>Fallback chain, per-provider breaker, budget reservations, Ollama
+fallback</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Duplicate external submissions</td>
+<td>L</td>
+<td>C</td>
+<td>Effect ledger + idempotency + unknown states; zero-tolerance release
+test</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>PII leakage to providers/logs</td>
+<td>L</td>
+<td>C</td>
+<td>PII masker at every layer; redaction tests; audit</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>vite 8 / vitest 4 breakage</td>
+<td>M</td>
+<td>H</td>
+<td>Build+test before proceeding; documented revert path</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>GUI work delays v1</td>
+<td>M</td>
+<td>M</td>
+<td>CLI fully functional; GUI ships 1.0.1 if needed</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Live adapters unvalidated on dev machine</td>
+<td>M</td>
+<td>M</td>
+<td>Hermetic tests mandatory; live opt-in; honest release notes</td>
+</tr>
+<tr>
+<td>R9</td>
+<td>Refactor churn vs 359-test baseline</td>
+<td>M</td>
+<td>M</td>
+<td>Full suite green after every package; branches; interface inventory
+diff</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>ToS-flagged features harm reputation</td>
+<td>M</td>
+<td>M</td>
+<td>Default-off flags, docs, rate caps, no volume blasting</td>
+</tr>
+<tr>
+<td>R11</td>
+<td>SQLite single-user ceiling</td>
+<td>L</td>
+<td>M</td>
+<td>Documented limit; Postgres path in roadmap only</td>
+</tr>
+<tr>
+<td>R12</td>
+<td>AGPL deters enterprise adoption</td>
+<td>L</td>
+<td>M</td>
+<td>Clear license docs; dual-license exploration post-1.0</td>
+</tr>
+<tr>
+<td>R13</td>
+<td>infer_site ValueError degrades UX</td>
+<td>M</td>
+<td>M</td>
+<td>Clean error + <code>jobot list-sites</code> guidance</td>
+</tr>
+<tr>
+<td>R14</td>
+<td>P0 feature load delays v1.0.0</td>
+<td>M</td>
+<td>M</td>
+<td>Scope = enumerated UC set; slippage -&gt; P1 with owner
+approval</td>
+</tr>
+<tr>
+<td>R15</td>
+<td>Desktop CI time blowout</td>
+<td>M</td>
+<td>M</td>
+<td>Cargo caching; tag+nightly-only desktop builds; &lt;= 25
+min/job</td>
+</tr>
+<tr>
+<td>R16</td>
+<td>Patchright fork falls behind Playwright</td>
+<td>M</td>
+<td>M</td>
+<td>Monitor upstream; browser capability interface + vanilla
+fallback</td>
+</tr>
+<tr>
+<td>R17</td>
+<td>glib RUSTSEC residual (tauri 2)</td>
+<td>M</td>
+<td>L</td>
+<td>Documented in SECURITY.md; cargo Dependabot + audit; re-eval on
+tauri 3</td>
+</tr>
+<tr>
+<td>R18</td>
+<td>Telemetry redaction regression</td>
+<td>L</td>
+<td>C</td>
+<td>Payload schema test + redaction suite + kill switch test</td>
+</tr>
+<tr>
+<td>R19</td>
+<td>DB corruption on upgrade</td>
+<td>L</td>
+<td>H</td>
+<td>Versioned migrations, pre-release upgrade tests, backups, rollback
+policy</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-decision-register-decisions-defaults-escalation-paths">8.
+Decision Register (decisions, defaults, escalation paths)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Default</th>
+<th>Escalation / revisit trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td><code>infer_site()</code> unknown URLs</td>
+<td>Raise ValueError; no silent default</td>
+<td>UX friction reports</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>vite upgrade path</td>
+<td>5.4.21 -&gt; 8.x line (8.2.1 candidate; re-verify at exec)</td>
+<td>Build breakage -&gt; document residual</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>glib RUSTSEC-2024-0429</td>
+<td>Accepted documented residual</td>
+<td>tauri &gt;= 3 / gtk4</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Execution order</td>
+<td>Security -&gt; durability -&gt; correctness -&gt; breadth</td>
+<td>—</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>macOS notarization</td>
+<td>Defer v1; document Gatekeeper workaround</td>
+<td>Adoption friction metrics</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Windows signing</td>
+<td>SignPath OSS; fallback documented SmartScreen</td>
+<td>Approval outcome</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>Auto-update hosting</td>
+<td>GitHub Releases</td>
+<td>Scale needs</td>
+</tr>
+<tr>
+<td>D8</td>
+<td>Docs generator</td>
+<td>VitePress</td>
+<td>Maintenance cost</td>
+</tr>
+<tr>
+<td>D9</td>
+<td>Crash reporting</td>
+<td>Sentry SaaS free tier, opt-in</td>
+<td>Volume/cost</td>
+</tr>
+<tr>
+<td>D10</td>
+<td>Browser extension</td>
+<td>Defer post-1.0, separate repo</td>
+<td>Community demand</td>
+</tr>
+<tr>
+<td>D11</td>
+<td>Gmail auth</td>
+<td>Gmail API OAuth only; no IMAP passwords</td>
+<td>—</td>
+</tr>
+<tr>
+<td>D12</td>
+<td>ToS-risk features</td>
+<td>JOBOT_ENABLE_RISKY=1 + per-feature flags; default off</td>
+<td>Legal review</td>
+</tr>
+<tr>
+<td>D13</td>
+<td>MCP scope</td>
+<td>stdio first, SSE later; pinned spec revision</td>
+<td>Ecosystem shifts</td>
+</tr>
+<tr>
+<td>D14</td>
+<td>GUI in v1</td>
+<td>Required (approvals + evidence + kanban); CLI-first fallback
+explicit</td>
+<td>Schedule risk</td>
+</tr>
+<tr>
+<td>D15</td>
+<td>Submission autonomy</td>
+<td>Human by default; trusted-site promotion only from measured
+outcomes</td>
+<td>Trust evidence</td>
+</tr>
+<tr>
+<td>D16</td>
+<td>Platforms</td>
+<td>macOS/Linux/Windows Tier-1; WSL2/Docker documented</td>
+<td>Usage data</td>
+</tr>
+<tr>
+<td>D17</td>
+<td>Patchright</td>
+<td>Default behind replaceable capability interface</td>
+<td>Fork health</td>
+</tr>
+<tr>
+<td>D18</td>
+<td>Local-first</td>
+<td>Non-negotiable; cloud optional</td>
+<td>—</td>
+</tr>
+<tr>
+<td>D19</td>
+<td>Database</td>
+<td>SQLite WAL; Postgres only on measured need</td>
+<td>Concurrency evidence</td>
+</tr>
+<tr>
+<td>D20</td>
+<td>SaaS/hosted</td>
+<td>Out of scope for v1</td>
+<td>Post-1.0 strategy</td>
+</tr>
+<tr>
+<td>D21</td>
+<td>Structured logging</td>
+<td>stdlib-based formatter over new dependency</td>
+<td>Complexity</td>
+</tr>
+<tr>
+<td>D22</td>
+<td>LaTeX resumes</td>
+<td>Keep LaTeX + robust fallback engines</td>
+<td>Install-friction data</td>
+</tr>
+<tr>
+<td>D23</td>
+<td>Coverage floor</td>
+<td>measured −2%, min 70%, target 75%</td>
+<td>Baseline result</td>
+</tr>
+<tr>
+<td>D24</td>
+<td>Risky-feature caps</td>
+<td>Hard caps + human approval even when enabled</td>
+<td>Abuse signals</td>
+</tr>
+</tbody>
+</table>
+<p>Human escalation path: any D* change requires an entry in
+<code>decisions.md</code> + queue update; safety-class decisions (D5,
+D12, D15, D18, D20) additionally require explicit owner sign-off.</p>
+<hr />
+<h2 id="9-verification--acceptance-matrix">9. Verification &amp;
+Acceptance Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Scope</th>
+<th>Method/tool</th>
+<th>Acceptance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L1 Unit</td>
+<td>State transitions, schemas, URL parsing, policy, repos, selector
+resolver, cost accounting, PII redaction, answer bank, hashing</td>
+<td>pytest</td>
+<td>Green; coverage &gt;= floor</td>
+</tr>
+<tr>
+<td>L2 Contract</td>
+<td>Every adapter:
+discover/normalize/questions/prepare/submit-or-dry-run/verify/health</td>
+<td>Shared canonical suite</td>
+<td>All registered adapters pass</td>
+</tr>
+<tr>
+<td>L3 Integration</td>
+<td>Pipeline + saga + DB + sidecar with mock ATS servers and fake
+browser/HTTP fixtures</td>
+<td>pytest integration</td>
+<td>Green, no network</td>
+</tr>
+<tr>
+<td>L4 Browser-interaction</td>
+<td>Named actions, healing, evidence capture against recorded/drifted
+fixtures</td>
+<td>Playwright fixture harness</td>
+<td>No silent corruption</td>
+</tr>
+<tr>
+<td>L5 E2E (GUI)</td>
+<td>Boot, discover via mock_ats, dry-run apply, approve, dashboard,
+kanban, answer bank</td>
+<td>tauri-driver + WebDriver</td>
+<td>Green in CI (win/ubuntu)</td>
+</tr>
+<tr>
+<td>L6 Failure injection</td>
+<td>Disconnect, DNS, 429, 500, malformed JSON, browser crash, tab close,
+sidecar death, provider timeout/outage, corrupted checkpoint, DB lock,
+dup event/effect, stale selector, invalid data, prompt injection, plugin
+violation, CAPTCHA detect, ambiguity</td>
+<td><code>tests/test_failure_injection.py</code></td>
+<td>Breakers open; quarantine receives; GUI recovers; zero dup
+effects</td>
+</tr>
+<tr>
+<td>L7 Soak/leak</td>
+<td>1000-iteration sidecar loop; RSS/WAL/fd/browser-process growth</td>
+<td>tracemalloc + soak script</td>
+<td>RSS ±10%, linear DB growth, 0 crashes</td>
+</tr>
+<tr>
+<td>L8 Security</td>
+<td>CodeQL (py/js/rust), pip-audit, npm audit, gitleaks, bandit, URL
+fuzzing, prompt-injection corpus, Tauri capability regression, vault
+perms, plugin sandbox, credential redaction</td>
+<td>CI security-gates</td>
+<td>0 unaccepted findings</td>
+</tr>
+<tr>
+<td>L9 Release candidate</td>
+<td>Fresh install per OS, upgrade-from-previous, backup/restore,
+rollback, wheel/sdist, Docker smoke, desktop launch, doctor,
+DST/catch-up scheduler</td>
+<td>release.yml RC stage</td>
+<td>All green + attestations verified</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Phase gates.</strong> G0 Truth (baselines committed,
+contradictions tagged, queues truthful) | G1 Security (zero unaccepted
+blockers, adversarial URL suite, hardened Tauri/vault/CI, provenance
+working) | G2 Durability (kill-anywhere resume; no double lease) | G3
+App correctness (no duplicate submissions under any injected failure;
+approvals survive restart) | G4 Browser/adapters (mock ATS + Tier-1
+survive injected failures; schemas enforced) | G5 AI (zero unsupported
+candidate claims; PDF dual verification; provider failures degrade
+cleanly) | G6 UX (new-user journey without source code; a11y baseline) |
+G7 Release (Section 15 checklist green; onboarding scenario proven under
+failure injection).</p>
+<hr />
+<h2 id="10-eval--self-improvement-plan">10. Eval &amp; Self-Improvement
+Plan</h2>
+<p><strong>Suites.</strong> Capability (discovery, parsing, matching,
+tailoring, QA, form filling, submission, verification, tracking).
+Reliability (crash/restart, network loss, timeouts, stale selectors,
+rate limits, browser death; pass@1, pass@N, median/p95, retries,
+intervention rate, silent-failure rate, unknown-state rate, evidence
+completeness). Safety (prompt injection from JDs, malicious HTML/URLs,
+fake jobs, credential exfiltration, secret leakage, destructive tool
+requests, malicious plugins, compromised adapters). Truthfulness
+(fabricated credentials, contradictions, unsupported salary/skill
+claims). Long-horizon (find 20 -&gt; rank -&gt; shortlist 3 -&gt; tailor
+-&gt; answers -&gt; approvals -&gt; submit authorized -&gt; verify -&gt;
+tracker -&gt; memory -&gt; outcome, with kills between phases).
+Regression (every change vs baseline). Production-derived (incidents +
+human corrections become cases).</p>
+<p><strong>Release rule.</strong> A release must show pass@1,
+repeated-trial pass rate, cost-to-pass, time-to-pass, intervention
+frequency, silent-failure rate, regression delta. No "improved" claim
+without eval/production evidence; quality gains that raise unsafe
+behavior/cost/intervention are not improvements.</p>
+<p><strong>Trajectory recorder.</strong> Persists operational decisions,
+tool calls, transitions, validations, evidence, outputs, concise
+rationales — never chain-of-thought.</p>
+<p><strong>Self-improvement (bounded).</strong> signal -&gt; classify
+gap (skill/tool/policy/prompt/memory/decomposition/verifier/routing)
+-&gt; bounded proposal -&gt; isolated branch/sandbox -&gt; targeted eval
+-&gt; baseline compare -&gt; security/policy gate -&gt; promote/discard.
+One-change rule; never unrestricted production self-modification;
+forbidden targets for automation (security policy, credentials,
+destructive rules, release permissions, autonomy thresholds, secret
+storage, data-sharing policy) require human approval.</p>
+<p><strong>Skill ladder.</strong> solve once -&gt; trajectory -&gt;
+skill candidate -&gt; test corpus -&gt; review -&gt; registry (trigger,
+inputs, tools, permissions, outputs, verification, retry, stop
+conditions, corpus, trust, version). Trust promotion/demotion recorded
+as audit events; thresholds configurable, evidence-based.</p>
+<p><strong>Complexity notes.</strong> Multi-stage matching: O(N)
+deterministic filter, O(N·d) lexical/embedding on survivors, O(k) LLM
+calls with k &lt;&lt; N (shortlist only). Dedupe: O(1) hash fingerprint
+lookup per posting. Effect/idempotency check: O(1) indexed unique key.
+Event ledger append: O(1) amortized; timeline query O(log n) via
+(aggregate, created_at) index.</p>
+<hr />
+<h2 id="11-observability-incident-management--rollback-strategy">11.
+Observability, Incident Management &amp; Rollback Strategy</h2>
+<ul>
+<li><strong>Traces.</strong> OpenTelemetry-compatible hierarchy Goal
+-&gt; Task -&gt;
+Model/Tool/Browser/Policy/Approval/Verification/Artifact/Effect, each
+span carrying stable ids, provider/model, prompt version, policy
+version, adapter version, worker, profile, application id.
+<code>jobot trace export</code> verified end-to-end.</li>
+<li><strong>Logs.</strong> Structured JSONL with rotation, retention
+limits, correlation-id propagation (stdlib-based formatter, D21).
+Documented format.</li>
+<li><strong>Metrics.</strong> Task success/verification rate; median/p95
+completion; cost per successful application; intervention, retry,
+quarantine, browser-failure, provider-fallback,
+application-verification, unsupported-claim, match-precision,
+resume-review-failure rates; <strong>duplicate-effect rate (must be
+zero)</strong>; recovery-after-crash success; memory reuse; regression
+rate.</li>
+<li><strong>Audit log.</strong> Append-only consequential-action log
+(timestamp, actor, action, target, outcome, policy result, effect id,
+evidence) with tamper-evident hash chain.</li>
+<li><strong>Alerts.</strong> AlertDispatcher wired (email/webhook) to
+incidents and breaker trips via the event bus.</li>
+<li><strong>Incidents.</strong> Record: severity, impact, affected
+users/apps, timeline, last-known-good version, root cause, mitigation,
+corrective action, eval/test added. Handling flow: creation -&gt; triage
+-&gt; mitigation -&gt; postmortem -&gt; prevention -&gt; backlog
+item.</li>
+<li><strong>Telemetry privacy.</strong> Opt-in only (Sentry + anonymous
+analytics: task counts, success rates, cost/run, version — no
+application data); redaction layer (identity, keys, URLs, evidence
+paths); GUI consent; <code>telemetry.enabled</code> config +
+<code>JOBOT_TELEMETRY=off</code> kill switch;
+<code>docs/privacy.md</code> schema-tested against code.</li>
+<li><strong>Rollback.</strong> Revoke artifacts, patched release, DB
+downgrade-or-forward-fix policy, safe-versions list,
+corrupted-user-state recovery, disable unsafe features via local config.
+Release notes distinguish hermetic vs live validation.</li>
+</ul>
+<hr />
+<h2 id="12-documentation-suite-specification">12. Documentation Suite
+Specification</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Purpose</th>
+<th>Audience</th>
+<th>Location</th>
+<th>Template/source</th>
+<th>Owner</th>
+<th>Acceptance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>README</td>
+<td>First contact: promise, quickstart, badges, architecture, honest
+adapter status, FAQ, sponsorship</td>
+<td>All users</td>
+<td><code>/README.md</code></td>
+<td>plan4 R1.8; generated diagram</td>
+<td>maintainer</td>
+<td>Renders; quickstart verified in fresh venv; no stale claims</td>
+</tr>
+<tr>
+<td>CONTRIBUTING</td>
+<td>Dev setup, gates, branch/PR rules, release roles</td>
+<td>Contributors</td>
+<td><code>/CONTRIBUTING.md</code></td>
+<td>plan4 R1.6</td>
+<td>maintainer</td>
+<td>Fresh clone -&gt; gates green following it</td>
+</tr>
+<tr>
+<td>ARCHITECTURE</td>
+<td>System layers, entities, state machines, eventing</td>
+<td>Dev/power users</td>
+<td><code>docs/architecture.md</code> +
+<code>docs/architecture/*</code></td>
+<td>This plan Section 3</td>
+<td>maintainer</td>
+<td>Matches code; diagrams generated</td>
+</tr>
+<tr>
+<td>USAGE</td>
+<td>User guide: profiles, discovery, matching, applications, approvals,
+resume, interview, tracker, networking, backups</td>
+<td>End users</td>
+<td><code>docs/user/*</code></td>
+<td>Section 19.1 tree</td>
+<td>maintainer</td>
+<td>Every command runs as written</td>
+</tr>
+<tr>
+<td>API</td>
+<td>RPC + REST + MCP surfaces</td>
+<td>Integrators</td>
+<td><code>docs/reference/rpc.md</code>, <code>api.md</code></td>
+<td>Generated from sidecar registry / OpenAPI / MCP catalogue</td>
+<td>maintainer</td>
+<td>Generated, drift-checked</td>
+</tr>
+<tr>
+<td>CONFIG</td>
+<td>All configuration keys, env, telemetry, policies</td>
+<td>Users/admins</td>
+<td><code>docs/reference/configuration.md</code></td>
+<td>Generated from typed settings</td>
+<td>maintainer</td>
+<td>Schema-generated</td>
+</tr>
+<tr>
+<td>SECURITY</td>
+<td>Reporting, PGP, glib risk register, threat model, secure config,
+plugin security, prompt injection, secrets</td>
+<td>Users/researchers</td>
+<td><code>/SECURITY.md</code> + <code>docs/security/*</code></td>
+<td>plan5 W3/W8</td>
+<td>maintainer</td>
+<td>Renders; matches implementation</td>
+</tr>
+<tr>
+<td>PRIVACY</td>
+<td>What is/isn't collected, retention, disable, deletion</td>
+<td>End users</td>
+<td><code>docs/privacy.md</code></td>
+<td>plan4 R4.3</td>
+<td>maintainer</td>
+<td>CI test enforces code match</td>
+</tr>
+<tr>
+<td>CHANGELOG</td>
+<td>Release history</td>
+<td>All</td>
+<td><code>/CHANGELOG.md</code></td>
+<td>Keep a Changelog; backfilled from worklog</td>
+<td>maintainer</td>
+<td>Entries traceable to worklog</td>
+</tr>
+<tr>
+<td>ROADMAP</td>
+<td>Public milestones from queues</td>
+<td>Community</td>
+<td><code>docs/planning/milestones.md</code> + site page</td>
+<td>Rendered from <code>queues/now.md</code></td>
+<td>maintainer</td>
+<td>Auto-rendered</td>
+</tr>
+<tr>
+<td>TROUBLESHOOTING</td>
+<td>Doctor decode, common failures, adapter health, recovery</td>
+<td>Users</td>
+<td><code>docs/getting-started/troubleshooting.md</code>,
+<code>doctor.md</code></td>
+<td>doctor output map</td>
+<td>maintainer</td>
+<td>Covers every error code</td>
+</tr>
+<tr>
+<td>DEVELOPMENT</td>
+<td>Testing, contracts, plugin dev, browser fixtures, ADRs</td>
+<td>Contributors</td>
+<td><code>docs/developer/*</code>, <code>docs/decisions/</code></td>
+<td>—</td>
+<td>maintainer</td>
+<td>Current with test pyramid</td>
+</tr>
+<tr>
+<td>DEPLOYMENT</td>
+<td>Install per OS/channel (pip, Docker, desktop), WSL2/headless,
+upgrade/rollback</td>
+<td>Users/admins</td>
+<td><code>docs/getting-started/installation.md</code>,
+<code>docs/operations/*</code></td>
+<td>plan4 R2/R3</td>
+<td>maintainer</td>
+<td>Install-to-doctor &lt;= 5 min</td>
+</tr>
+<tr>
+<td>Runbooks</td>
+<td>Local gates, release checklist, incident response, backup/restore,
+migrations, telemetry, rollback</td>
+<td>Maintainer</td>
+<td><code>docs/operations/runbook.md</code> etc.</td>
+<td>plan4 R5.2</td>
+<td>maintainer</td>
+<td>Dry-run executed successfully</td>
+</tr>
+<tr>
+<td>Reference set</td>
+<td>CLI, events, schemas, state machines, adapter matrix, error
+codes</td>
+<td>All</td>
+<td><code>docs/reference/*</code></td>
+<td>Generated from Typer/event defs/registry</td>
+<td>maintainer</td>
+<td>Generated, validated</td>
+</tr>
+<tr>
+<td>Site</td>
+<td>All of the above, navigable</td>
+<td>All</td>
+<td>VitePress -&gt; GitHub Pages</td>
+<td>plan4 R5.1</td>
+<td>maintainer</td>
+<td>Builds clean; links checked</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Generation automation:</strong> CLI ref from Typer metadata;
+RPC ref from sidecar schema registry; adapter matrix from registry
+metadata; config ref from Pydantic settings; event catalog from typed
+events; migration list from files; version tables from CI matrix;
+changelog deltas from PR labels; benchmark summaries from CI artifacts.
+<strong>Quality gates:</strong> valid links, runnable samples, current
+versions, no stale claims, privacy docs match telemetry code,
+screenshots from supported builds, safety caveats at risky operations,
+command examples verified against current CLI.</p>
+<hr />
+<h2 id="13-repo-cleanup--hygiene">13. Repo Cleanup &amp; Hygiene</h2>
+<p><strong>Policy.</strong> Never delete on filename alone. For every
+candidate: search references -&gt; inspect build/runtime usage -&gt;
+classify keep/move/archive/regenerate/delete -&gt; cleanup manifest
+-&gt; full test run. Duplicate detection: exact hash, normalized text
+hash, semantic similarity; similar titles prove nothing. Rollback:
+everything in git; archive directory
+<code>docs/planning/archive/2026-08-16/</code> with manifest; deletions
+reversible via <code>git revert</code>.</p>
+<p><strong>Inventory + actions.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Class</th>
+<th>Action</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Plans/</code> full set + root
+<code>Plan1-3/plan4/plan5.md</code> duplicates</td>
+<td>duplicate</td>
+<td>Archive one canonical copy to <code>docs/planning/archive/</code>;
+delete the other</td>
+<td>Zero-idea-loss guaranteed by this plan + traceability matrix</td>
+</tr>
+<tr>
+<td><code>Plan1.pdf</code>, <code>Plan8.pdf</code>,
+<code>Plan9.pdf</code>, <code>JoBot_Merge_Plan.pdf</code></td>
+<td>historical</td>
+<td>Archive (PDFs) then remove from root</td>
+<td>Binary cruft; superseded</td>
+</tr>
+<tr>
+<td><code>Plan9.md</code> (empty)</td>
+<td>junk</td>
+<td>Delete</td>
+<td>No content</td>
+</tr>
+<tr>
+<td><code>cover.html</code></td>
+<td>suspected-dead</td>
+<td>Verify references; delete if none</td>
+<td>Unused by build/docs</td>
+</tr>
+<tr>
+<td><code>repo_research.md</code></td>
+<td>historical</td>
+<td>Archive under <code>docs/history/</code></td>
+<td>Provenance</td>
+</tr>
+<tr>
+<td><code>README.md</code> 25-line stub + pointer to nonexistent
+<code>plan.md</code></td>
+<td>stale</td>
+<td>Replace per Section 12</td>
+<td>Misleading entry point</td>
+</tr>
+<tr>
+<td><code>queues/improve.md</code> stale entries</td>
+<td>stale</td>
+<td>Rewrite vs worklog
+(QAEngine/PolicyEngine/CircuitBreaker/TraceLogger/AlertDispatcher
+wired)</td>
+<td>Truthful queues</td>
+</tr>
+<tr>
+<td><code>log.md</code> (403 KB), <code>applications_export.json</code>,
+<code>.freebuff/</code>, <code>.mimosa/</code>, caches</td>
+<td>local/untracked</td>
+<td>Ensure ignored; do not commit</td>
+<td>Local state</td>
+</tr>
+<tr>
+<td>Tracked build outputs if any (<code>dist/</code>, caches, tauri
+target)</td>
+<td>generated</td>
+<td>Untrack + ignore</td>
+<td>Hygiene</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td>secret</td>
+<td>Verify ignored (it is); gitleaks full history; rotate if ever
+committed</td>
+<td>Security</td>
+</tr>
+<tr>
+<td><code>SETUP.md</code> (35 KB)</td>
+<td>active</td>
+<td>Keep; expand doctor section or reduce to docs pointer</td>
+<td>Onboarding</td>
+</tr>
+<tr>
+<td><code>docs/history/*</code> (15 files)</td>
+<td>historical</td>
+<td>Keep, marked historical</td>
+<td>Decisions provenance</td>
+</tr>
+<tr>
+<td>Unused <code>black</code> dep; narrow ruff flags</td>
+<td>dead</td>
+<td>Remove; pyproject defaults</td>
+<td>Tooling hygiene</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Canonical root layout.</strong></p>
+<pre class="text"><code>AGENTS.md README.md LICENSE SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md
+CHANGELOG.md MASTER_PLAN.md SETUP.md pyproject.toml package.json package-lock.json
+Dockerfile docker-compose.yml .editorconfig
+src/ tests/ gui/ docs/ scripts/ queues/ state/ .github/</code></pre>
+<p><strong>Migration plan.</strong> Module moves happen only in Section
+14 work packages with import shims; docs/planning reorganization lands
+with WS8; <code>.gitignore</code> additions (<code>.venv/</code>,
+<code>venv/</code>, <code>*.p12</code>, <code>*.pem</code>,
+<code>*.key</code>, <code>.coverage.*</code>, <code>htmlcov/</code>,
+<code>__pycache__/</code>, <code>*.pyc</code>,
+<code>gui/src-tauri/target/</code>, <code>*.log</code>,
+<code>*.db-journal</code>, <code>.DS_Store</code>). <strong>Final
+gate:</strong> root contains only intentional files; a new contributor
+identifies the authoritative plan in minutes; exactly one active plan;
+<code>git status</code> clean; no tracked secrets; suite green.</p>
+<hr />
+<h2 id="14-refactoring--performance-optimization">14. Refactoring &amp;
+Performance Optimization</h2>
+<p><strong>Target layout (incremental, import shims, suite green after
+every move; Track A low-regression stable before Track B deep
+restructure):</strong></p>
+<pre class="text"><code>src/jobot/
+  core/          events, state, tasks, workflows, errors, contracts (no external deps)
+  control/       goals, approvals, budgets, policies, trust, incidents
+  execution/     workers, leases, checkpoints, effects, sandbox, browser, tools
+  ai/            router, providers, prompts, profiles, evaluation
+  memory/        semantic, episodic, procedural, retrieval, provenance
+  career/        discovery, matching, scoring, companies, market, networking, interview, outcomes
+  applications/  state_machine, preparation, submission, verification
+  documents/     resume, cover_letter, pdf, ats
+  adapters/      ats, boards, browser, email
+  observability/ logs, tracing, metrics, events
+  plugins/  cli/  gui/</code></pre>
+<p><strong>Work packages.</strong> RF-1 CLI monolith split
+(<code>main.py</code> &lt; 100 lines; groups
+apply/scrape/resume/interview/tracker/profile/config/admin/doctor/helpers;
+signatures frozen). RF-2 provider boundary (routing/accounting/prompt
+metadata/health separated; stable interface: completion, streaming,
+structured output, tools, accounting, health, timeouts, error
+normalization, cancellation). RF-3 adapter boundary (DTOs + parsing; no
+persistence reach-in; plugin ABI later). RF-4 storage repositories
+(connection/transaction, schema/migrations, repositories, projections,
+backup, queries split; no scattered raw SQL). RF-5 application protocol
+extraction (state machine independently testable). RF-6 typed event bus.
+RF-7 sidecar supervision. RF-8 browser infrastructure separation. RF-9
+memory tiers made real (provenance/confidence/versioning). RF-10 async
+hot paths via <code>jobot.asyncx</code> (bench &gt;= 1.2x). RF-11 plugin
+ABI. RF-12 multi-worker foundations (worktree/ownership conventions;
+AR-11 scaffolding). Accompanying hygiene: typed error taxonomy
+(<code>ConfigurationError, ValidationError, PolicyDenied, AuthenticationRequired, RateLimited, TransientNetworkError, AdapterProtocolError, BrowserDriftError, VerificationFailed, ExternalEffectUnknown, QuotaExceeded, DependencyUnavailable, MigrationError, SecurityViolation</code>)
+each mapping to user message/retry/severity/quarantine; eliminate
+<code>except Exception: pass</code> and BLE001 swallowing;
+<code>datetime.now(timezone.utc)</code>; structured logging +
+correlation ids; hypothesis property tests for PII masker; domain
+services callable from CLI/GUI/TUI/API/MCP/scheduler/tests.</p>
+<p><strong>Performance targets (set after WS0 baseline;
+regression-guarded in CI).</strong></p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobot --help</code> cold start</td>
+<td>&lt; 500 ms (lazy imports)</td>
+</tr>
+<tr>
+<td>Browser context warm start</td>
+<td>&lt; 2 s</td>
+</tr>
+<tr>
+<td>Hot DB queries (indexed)</td>
+<td>&lt; 50 ms</td>
+</tr>
+<tr>
+<td>Steady-state RSS (normal load)</td>
+<td>&lt; 512 MB, bounded by soak not decree</td>
+</tr>
+<tr>
+<td>Sidecar RPC p95</td>
+<td>Agreed local target from baseline; no regression</td>
+</tr>
+<tr>
+<td>Async hot-path throughput</td>
+<td>&gt;= 1.2x vs sync baseline</td>
+</tr>
+<tr>
+<td>LLM cost on matching</td>
+<td>&gt;= 50% reduction vs single-stage baseline</td>
+</tr>
+<tr>
+<td>Token cost per application cycle</td>
+<td>Tracked + budget-capped; report per release</td>
+</tr>
+<tr>
+<td>Soak (1000 iters)</td>
+<td>RSS ±10%, linear DB/WAL growth, 0 crashes</td>
+</tr>
+<tr>
+<td>Duplicate external effects</td>
+<td>0 (hard gate)</td>
+</tr>
+<tr>
+<td>Install-to-doctor</td>
+<td>&lt;= 5 min per Tier-1 OS</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Profiling strategy + regression guards.</strong> WS0
+micro-benchmarks (startup, discovery 100, rank 100, prepare 1/10,
+browser run, GUI idle/active, sidecar p50/95/99) stored as CI artifacts;
+<code>scripts/bench/</code> re-runs per release and diffs against
+baseline; <code>tracemalloc</code> in soak; cProfile/py-spy on hot paths
+when a budget regresses; DB <code>EXPLAIN QUERY PLAN</code> review for
+new queries; perf regression fails RC.</p>
+<p><strong>Efficiency doctrine.</strong> Deterministic code over LLM
+calls; cache/reuse over recompute (embeddings, prompts, HTTP sessions,
+conditional requests); batch writes/parse/embed; bounded concurrency
+with per-domain rate limits + jittered backoff; browser only when API
+path absent; screenshots only at evidence checkpoints, compressed;
+artifacts deduped by hash; large binaries outside tables (hash+path);
+WAL checkpoint policy; lazy GUI rendering (virtualized lists,
+event-driven updates, paginated evidence); retrieval-first context (only
+relevant skills/rules/memory in prompts; stable prefixes); cost ladder
+deterministic -&gt; cheap semantic -&gt; small structured -&gt; strong
+reasoning.</p>
+<hr />
+<h2 id="15-release-readiness-checklist-v100">15. Release Readiness
+Checklist (v1.0.0)</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Functional</td>
+<td>One E2E durable application (mock + one live opt-in) surviving
+injected crashes; all P0 UC ids shipped; adapter contract suite green;
+CLI+GUI smoke</td>
+</tr>
+<tr>
+<td>Reliable</td>
+<td>Kill-anywhere resume; zero duplicate effects under retry;
+approval/resume; browser reconnect; provider fallback; DB corruption
+detection; soak pass</td>
+</tr>
+<tr>
+<td>Tested</td>
+<td>L1–L8 green; coverage &gt;= floor (target 75%); failure-injection
+suite green; eval release report (Section 10) produced</td>
+</tr>
+<tr>
+<td>Documented</td>
+<td>Docs suite live (Section 12);
+README/CHANGELOG/SECURITY/CONTRIBUTING/LICENSE accurate; privacy doc
+matches code; release notes distinguish hermetic vs live</td>
+</tr>
+<tr>
+<td>Packaged</td>
+<td>Wheel+sdist install clean; <code>twine check</code> clean; SBOMs +
+attestations generated and verified; Docker multi-arch on GHCR; desktop
+installers 3 OS</td>
+</tr>
+<tr>
+<td>Installable</td>
+<td>Fresh-VM installers launch (window title "JoBot Desktop"); pip
+install -&gt; doctor passes; compose smoke (doctor + mock_ats scrape);
+upgrade-from-previous test</td>
+</tr>
+<tr>
+<td>Zero-config defaults</td>
+<td>Safe defaults on first run: human approval on, low caps, telemetry
+off, no risky features, backup prompt after profile creation; doctor
+explains every optional dependency</td>
+</tr>
+<tr>
+<td>Error-handled</td>
+<td>Typed errors surface cleanly in CLI/GUI; no silent failures; unknown
+states reconcile; quarantine visible</td>
+</tr>
+<tr>
+<td>Observable</td>
+<td>Traces/metrics/logs/audit live; cost dashboard data; incident view;
+<code>doctor --json</code> schema stable</td>
+</tr>
+<tr>
+<td>Reversible</td>
+<td>Backup/restore drills pass; rollback policy documented; updater
+signed; safe-versions list</td>
+</tr>
+<tr>
+<td>Safe</td>
+<td>Policy envelope enforced; prompt-injection suite green; secrets
+redacted everywhere; Tauri capabilities least-privilege; plugins
+deny-by-default; platform protections never defeated</td>
+</tr>
+<tr>
+<td>Community</td>
+<td>Governance files render; roadmap page from queues; sponsorship page;
+launch announcement drafted with honest adapter-status notes</td>
+</tr>
+</tbody>
+</table>
+<p>Post-launch (30 days): CI green every PR; telemetry opt-in &gt;= 10%
+with zero PII incidents; &gt;= 1 external contribution;
+install-to-doctor &lt;= 5 min each OS.</p>
+<hr />
+<h2 id="16-build-order-entryexit-criteria--gates">16. Build Order
+(entry/exit criteria + gates)</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Entry</th>
+<th>Work</th>
+<th>Exit (gate)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0 Baseline</td>
+<td>Clean tree; this plan adopted</td>
+<td>WS0: baselines, contracts freeze, scorecard, queue rewrite</td>
+<td>G0</td>
+</tr>
+<tr>
+<td>P1 Security</td>
+<td>G0</td>
+<td>WS1: W1/W2/W4 release-blockers, then W3/W5–W10, version sync,
+governance files</td>
+<td>G1</td>
+</tr>
+<tr>
+<td>P2 Durable core</td>
+<td>G1</td>
+<td>WS2: entities, state machine, atomic leases, events, checkpoints,
+quarantine, migrations</td>
+<td>G2</td>
+</tr>
+<tr>
+<td>P3 App correctness</td>
+<td>G2</td>
+<td>WS3: app state machine, effect ledger, approvals, policy gate,
+unknown states, reconciliation, timestamp split</td>
+<td>G3</td>
+</tr>
+<tr>
+<td>P4 Browser + adapters</td>
+<td>G3 (AR items may start at G1 in parallel)</td>
+<td>WS4: manager/pool, selectors+healing, evidence, CAPTCHA boundary,
+cxs family, schemas, API apply, classification, wire unwired</td>
+<td>G4</td>
+</tr>
+<tr>
+<td>P5 AI reliability</td>
+<td>G2 (parallel with P4)</td>
+<td>WS5: streaming, prompts, router v2, candidate truth, reviewer,
+matching ladder, fraud, ingestion, answer bank</td>
+<td>G5</td>
+</tr>
+<tr>
+<td>P6 Control-plane UX</td>
+<td>G3</td>
+<td>WS6: GUI views, kanban, answer bank UI, diagnostics, sidecar
+supervision, E2E, a11y</td>
+<td>G6</td>
+</tr>
+<tr>
+<td>P7 Obs + evals</td>
+<td>G5/G6</td>
+<td>WS7: failure injection, soak, eval platform, telemetry, privacy</td>
+<td>G5/G7 inputs</td>
+</tr>
+<tr>
+<td>P8 Docs/cleanup/refactor/perf</td>
+<td>G1 (rolling)</td>
+<td>WS8: docs suite, cleanup archive, RF packages, perf budgets</td>
+<td>G7 pre</td>
+</tr>
+<tr>
+<td>P9 Release</td>
+<td>all gates</td>
+<td>WS9: distribution, signing, updater, doctor, RC pipeline,
+launch</td>
+<td>G7 = v1.0.0 tag</td>
+</tr>
+<tr>
+<td>P10 Product completion</td>
+<td>v1.0.0</td>
+<td>WS10 P1 features (profiles, Gmail, digest, MCP, Ollama, A/B,
+...)</td>
+<td>M2</td>
+</tr>
+<tr>
+<td>P11 Moat + platform</td>
+<td>M2</td>
+<td>WS11/WS12: plugins, extension, networking, self-improvement,
+multi-machine, career OS</td>
+<td>M3/M4</td>
+</tr>
+</tbody>
+</table>
+<p>Rules: freeze scope during P0; no big-bang branches; every phase ends
+with gates green + worklog/queues/CHANGELOG updated; parallel tracks
+only where Section 6 rails allow; live adapters remain opt-in
+throughout.</p>
+<hr />
+<h2 id="17-first-milestone-proof-end-to-end">17. First Milestone Proof
+(end-to-end)</h2>
+<p><strong>Scenario: one durable, verified application under injected
+failure.</strong> Sequence: 1 resolve job -&gt; 2 persist job -&gt; 3
+create goal/task -&gt; 4 policy evaluation -&gt; 5 fit evaluation -&gt;
+6 tailored resume -&gt; 7 cover letter -&gt; 8 independent review -&gt;
+9 PDF compile -&gt; 10 ATS-verify PDF -&gt; 11 approval request -&gt; 12
+persist waitpoint -&gt; 13 resume after approval -&gt; 14 open browser
+(or API path) -&gt; 15 fill application -&gt; 16 submit -&gt; 17 verify
+confirmation -&gt; 18 capture evidence -&gt; 19 persist outcome -&gt; 20
+update memory -&gt; 21 emit trace -&gt; 22 update metrics -&gt; 23
+generate improvement candidate.</p>
+<p><strong>Failure injection:</strong> kill the process after steps 4,
+8, 12, 15, 18 (and 22 in the extended 32-step variant), restart, and
+prove: execution resumes from the last checkpoint; no external effect is
+replayed; approvals survive; state is traceable via events; evidence
+intact.</p>
+<p><strong>Human-visible artifact:</strong> application detail view
+(job, match explanation, resume/cover artifacts, answers, submission
+state, screenshots, verification, timeline, cost) + trace + metrics
+delta.</p>
+<p><strong>Learned improvement (at least one):</strong> e.g., classify
+the first injected failure into a gap (missing skill/policy/test) and
+land it — concretely: convert the step-15 kill into
+<code>tests/test_failure_injection.py</code> case +
+<code>improve.md</code> entry + selector-healing data point. This
+milestone is the foundation of v1.0.0 and the release-blocking scenario
+of Section 15.</p>
+<hr />
+<h2 id="18-operational-momentum-queues-seeded">18. Operational Momentum
+Queues (seeded)</h2>
+<p>Live files under <code>queues/</code> are updated with this plan
+(truthful against the repo):</p>
+<ul>
+<li><strong>now:</strong> Adopt <code>MASTER_PLAN.md</code> as the
+single authority; execute P0 baselines (inventory, tests, security,
+performance) and produce
+<code>docs/quality/production-readiness.md</code> scorecard.</li>
+<li><strong>next:</strong> W1 npm stack upgrade; W2 URL sanitization +
+adversarial tests; <code>scripts/sync_versions.py</code> + drift CI;
+governance files (W8); <code>tests/test_imports.py</code>; coverage
+floor; durable task entity migrations design.</li>
+<li><strong>blocked:</strong> D15 final submission autonomy default
+(owner confirm — safe default: human-by-default); D5 macOS notarization
+budget; geographic adapter priority (India vs US/EU first); W10 manual
+repo settings (push protection, branch protection — needs owner).</li>
+<li><strong>improve:</strong> Add <code>tests/test_imports.py</code>
+undeclared-deps guard (first queued improvement candidate); reconcile
+stale wired-subsystem entries; split <code>cli/main.py</code> (RF-1) as
+first refactor slice; property-based PII masker tests.</li>
+<li><strong>recurring:</strong> Weekly issue triage + dependency review;
+monthly release train; quarterly architecture review +
+external-intelligence digest
+(LangGraph/Temporal/Letta/PydanticAI/OpenHands/MCP ecosystem monitor);
+adapter-health sweep; backup drill.</li>
+</ul>
+<p>Anti-stall rules apply: blocked &gt; short interval -&gt; decompose;
+same failure twice -&gt; guardrail/test/policy; never finish a run
+empty-handed.</p>
+<hr />
+<h2 id="19-open-questions-for-the-human-blocking-items-only">19. Open
+Questions for the Human (blocking items only)</h2>
+<ol type="1">
+<li><strong>D15 — Submission autonomy default.</strong> Confirm
+human-approval-by-default with trusted-site promotion (safe default
+chosen; only blocks F-19/21 scope, not v1.0).</li>
+<li><strong>Geographic adapter priority.</strong> India-first
+(Naukri/LinkedIn India) vs US/EU-first for the first three months
+post-v1.0? Affects adapter live-validation order only.</li>
+<li><strong>D5/D6 — Signing budget.</strong> Approve SignPath OSS
+enrollment (Windows) and decide macOS notarization spend vs documented
+workaround. Blocks signing steps of WS9 only; fallback documented.</li>
+<li><strong>W10 — Repo settings authority.</strong> Owner must enable
+push protection, Dependabot security updates, branch protection (needs
+repo admin).</li>
+<li><strong>Hard deadline?</strong> Job-search timing vs continuous
+delivery — affects M1 scope compression decisions (D14 fallback
+pre-authorized).</li>
+</ol>
+<p>All have safe defaults recorded in Section 8; none block Phase 0–3
+execution.</p>
+<hr />
+<h2 id="20-appendix-source-plan-traceability-matrix">20. Appendix:
+Source Plan Traceability Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Intent (one line)</th>
+<th>Mapped sections</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agents.md</code></td>
+<td>Doctrine: agentic OS principles, reliability math, harness
+engineering</td>
+<td>1, 3 (invariants, closed loop, A11), 10 (eval doctrine), 18
+(queues)</td>
+<td>Governs all; never a task list</td>
+</tr>
+<tr>
+<td><code>Plan1.md</code> (+pdf dup)</td>
+<td>Architectural spine: durable execution, effect ledger, verification,
+memory, evals, career OS</td>
+<td>2.4 G1–G5, 3.2–3.3, 4 UC-01..08/18..24/74–79, 6, 9, 10, 17</td>
+<td>Backbone P0</td>
+</tr>
+<tr>
+<td><code>Plan2.md</code></td>
+<td>Product parity: streaming, CLI refactor, LinkedIn, multi-profile,
+PDF ingest, GUI, API, launch</td>
+<td>4 UC-16/17/25/27/62–66/69–72/80/81, 14 RF-1, 16</td>
+<td>P1 expansion after substrate</td>
+</tr>
+<tr>
+<td><code>Plan3.md</code></td>
+<td>Refactor AR-1..11 + F-01..24 backlog + competitive research</td>
+<td>4 UC-09..UC-15 mapping (AR), UC-30..37 (F), 13, 14, 20 rows
+preserved</td>
+<td>P0–P1 refactor/extension</td>
+</tr>
+<tr>
+<td><code>plan4.md</code></td>
+<td>Production readiness R1–R5: artifacts, reliability, telemetry, docs,
+launch</td>
+<td>4 UC-38/39/40/43/44/46–50/82, 12, 15, 16 P1/P9, 18</td>
+<td>P0 release track</td>
+</tr>
+<tr>
+<td><code>plan5.md</code></td>
+<td>Vulnerability remediation W1–W10 + decisions D-1..4</td>
+<td>2.2 vuln set, 4 UC-45, 7 R6/R13/R17, 8 D1–D3, 16 P1</td>
+<td>P0 release blocker</td>
+</tr>
+<tr>
+<td><code>Plan6.md</code></td>
+<td>Unified roadmap P0–P10 with work packages</td>
+<td>5 WS mapping, 6 T-table, 14 targets, 15 criteria</td>
+<td>Synthesis input; sequence merged</td>
+</tr>
+<tr>
+<td><code>Plan7.md</code></td>
+<td>Parts I–V: hygiene, cleanup, optimization, phases 0–8</td>
+<td>12, 13, 14, 16</td>
+<td>Synthesis input</td>
+</tr>
+<tr>
+<td><code>Plan8.md</code> (+pdf dup)</td>
+<td>Master plan v2: phases, cleanup, perf, docs checklist,
+decision/risk/metrics, post-1.0</td>
+<td>5, 13, 14, 15, 16, M2/M3 roadmap</td>
+<td>Synthesis input</td>
+</tr>
+<tr>
+<td><code>Plan9.md</code></td>
+<td>Empty file — no content</td>
+<td>—</td>
+<td>Nothing to preserve (documented, not invented)</td>
+</tr>
+<tr>
+<td><code>Plan10.md</code></td>
+<td>Master plan: phases 0–21+, privacy/plugin security, doctor,
+onboarding, waves, backlog</td>
+<td>2.4 G20–G42, 3.6, 4, 11, 12, 15, 17, 21-era content in 5/16</td>
+<td>Synthesis input</td>
+</tr>
+<tr>
+<td><code>Plan11.md</code></td>
+<td>Near-identical to Plan10 with unified source-set note</td>
+<td>(same as Plan10)</td>
+<td>Duplicate; merged</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Item-family traceability.</strong> AR-1..AR-11 -&gt;
+UC-09..15, 24 (AR-4), 38 (AR-5), 02 (AR-7), 68 (AR-8), 61 (AR-9), RF-10
+(AR-10), 79 (AR-11). F-01..F-24 -&gt; UC-30..37, 54..61, 68–73 as
+cataloged. plan4 R1.1–R5.5 -&gt; UC-34/38–40/43–50/82 + Sections
+12/15/16. plan5 W1–W10 -&gt; UC-45 + Section 16 P1. Plan6 P0.1–P10.5
+-&gt; WS0–WS9 tasks. Plan1 §47–49 backlogs -&gt; UC catalog P0/P1/P2
+rows. Plan10/11 §34 backlog + §28 matrix -&gt; UC-01..82 complete set.
+Zero-idea-loss check: every UC row carries &gt;= one source; every
+source item carries &gt;= one UC/section — verified during Phase 3
+self-check.</p>
+<p><strong>Verification of this document (Phase 3).</strong> Coverage:
+all twelve sources represented (Plan9 emptiness documented). Conflict:
+resolutions recorded in Sections 1, 3.4, 4 header, 8. Repo coverage: all
+42 gap rows addressed by UC ids or Sections 12–14. Completeness: 20
+sections, no stubs. Executability: Sections 5, 6, 16, 17 give a
+competent engineer an immediate starting sequence. Release readiness:
+Section 15 defines shippable-done. Format: valid GitHub-flavored
+Markdown; PDF rendered and page-verified.</p>
+<hr />
+<p><em>End of Master Implementation Plan. Generated 2026-08-16 from
+exhaustive synthesis of all twelve source plans, a live repository
+audit, and the AGENTS.md doctrine. Supersedes all prior plans for
+execution; originals archived under <code>docs/planning/archive/</code>
+for provenance.</em></p>
+</body>
+</html>
