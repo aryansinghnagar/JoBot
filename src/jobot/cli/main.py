@@ -348,5 +348,51 @@ def traces_cmd(
         console.print(table)
 
 
+from jobot.obs.alerts import AlertDispatcher
+
+
+@app.command("alerts")
+def alerts_cmd(
+    show_all: bool = typer.Option(False, "--all", help="Show all alerts including acknowledged"),
+    ack_id: Optional[str] = typer.Option(None, "--ack", help="Acknowledge alert ID"),
+) -> None:
+    """List operational alerts or acknowledge an alert by ID."""
+    dispatcher = AlertDispatcher()
+    if ack_id:
+        success = dispatcher.acknowledge_alert(ack_id)
+        if success:
+            console.print(f"[bold green][OK] Alert '{ack_id}' acknowledged.[/bold green]")
+        else:
+            console.print(f"[bold red][ERROR] Alert '{ack_id}' not found.[/bold red]")
+        return
+
+    alerts = dispatcher.list_alerts(unack_only=not show_all)
+    if not alerts:
+        console.print("[green]No unacknowledged system alerts.[/green]")
+        return
+
+    table = Table(title="JoBot Operational Alerts")
+    table.add_column("Alert ID", style="cyan")
+    table.add_column("Level", style="bold red")
+    table.add_column("Title", style="bold yellow")
+    table.add_column("Message")
+    table.add_column("Timestamp", style="dim")
+    table.add_column("Ack", style="green")
+
+    for a in alerts:
+        lvl = a.get("level", "INFO")
+        style = "bold red" if lvl in ["CRITICAL", "HIGH"] else "yellow"
+        table.add_row(
+            a.get("alert_id", "")[:12],
+            f"[{style}]{lvl}[/{style}]",
+            a.get("title", ""),
+            a.get("message", ""),
+            a.get("timestamp", "")[:19],
+            "Yes" if a.get("acknowledged") else "No",
+        )
+
+    console.print(table)
+
+
 if __name__ == "__main__":
     app()

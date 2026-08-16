@@ -13,6 +13,9 @@ class CircuitOpenError(Exception):
     pass
 
 
+from jobot.obs.alerts import AlertDispatcher, AlertLevel
+
+
 class CircuitBreaker:
     """
     Portal-level Circuit Breaker & Retry with Exponential Backoff (Layer 8).
@@ -25,11 +28,13 @@ class CircuitBreaker:
         recovery_timeout: float = 60.0,
         max_retries: int = 3,
         backoff_factor: float = 2.0,
+        alert_dispatcher: Optional[AlertDispatcher] = None,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
+        self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
 
         self._failure_counts: Dict[str, int] = {}
         self._circuit_state: Dict[str, str] = {}  # "CLOSED", "OPEN", "HALF_OPEN"
@@ -56,6 +61,11 @@ class CircuitBreaker:
             self._last_state_change[domain] = time.time()
             logger.warning(
                 f"[CIRCUIT BREAKER] Circuit OPEN for domain '{domain}' after {count} failures."
+            )
+            self.alert_dispatcher.dispatch_alert(
+                title=f"Circuit Breaker OPEN ({domain})",
+                message=f"Circuit for '{domain}' tripped after {count} consecutive failures.",
+                level=AlertLevel.CRITICAL,
             )
 
     async def execute_with_retry(
