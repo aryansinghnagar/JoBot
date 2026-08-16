@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 import shutil
+import sys
 from typing import Optional
 import typer
 from rich.console import Console
@@ -13,15 +14,20 @@ from rich.table import Table
 from jobot.adapters import AdapterRegistry, SiteAdapter
 from jobot.adapters.naukri.login import NaukriLoginFlow
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
+from jobot.config.manager import ConfigManager
+from jobot.config.profile import load_llm_settings
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.evals.harness import EvalHarness
 from jobot.gui.sidecar import StdioSidecarServer
+from jobot.llm.router import ModelRouter
+from jobot.llm.providers import PROVIDER_REGISTRY
 from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
 from jobot.obs.alerts import AlertDispatcher
 from jobot.obs.manual_test_logger import ManualTestLogger
 from jobot.obs.tracing import TraceLogger
 from jobot.runner import ContinuousCampaignRunner
 from jobot.scheduler import SchedulerManager
+from jobot.secrets import mask
 from jobot.stealth.browser import BrowserSession
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
@@ -625,6 +631,166 @@ def login_cmd(
         console.print(
             "[bold green][OK] Browser launched. Complete login in browser window.[/bold green]"
         )
+
+
+@app.command("config")
+def config_cmd(
+    action: str = typer.Argument(..., help="Action: 'get', 'set', 'unset', 'show'"),
+    key: str = typer.Argument(None, help="Dotted config key, e.g. llm.api_key.gemini"),
+    value: str = typer.Argument(None, help="Value to set"),
+) -> None:
+    """Read/write configuration (three-tier: env, keyring, config.yaml)."""
+    manager = ConfigManager()
+
+    if action == "show":
+        table = Table(title="JoBot Configuration")
+        table.add_column("Key", style="cyan")
+        table.add_column("Value")
+        for k, v in manager.show_masked().items():
+            table.add_row(k, v if manager.is_secret(k) else f"[green]{v}[/green]")
+        console.print(table)
+        return
+
+    if not key:
+        console.print("[bold red][ERROR] Please specify a config key.[/bold red]")
+        raise typer.Exit(code=1)
+
+    if action == "get":
+        resolved = manager.get(key)
+        if resolved is None:
+            console.print(f"[yellow]Config key '{key}' is not set.[/yellow]")
+            raise typer.Exit(code=1)
+        console.print(str(resolved))
+        return
+
+    if action == "set":
+        if value is None:
+            console.print(
+                "[bold red][ERROR] Please specify a value: jobot config set <key> <value>[/bold red]"
+            )
+            raise typer.Exit(code=1)
+        manager.set(key, value)
+        location = "OS keyring" if manager.is_secret(key) else str(manager.config_path)
+        console.print(f"[bold green][OK] {key} stored in {location}.[/bold green]")
+        return
+
+    if action == "unset":
+        manager.unset(key)
+        console.print(f"[bold green][OK] {key} removed.[/bold green]")
+        return
+
+    console.print(
+        f"[bold red][ERROR] Unknown config action '{action}'. Use get|set|unset|show.[/bold red]"
+    )
+    raise typer.Exit(code=1)
+
+
+@app.command("doctor")
+def doctor_cmd() -> None:
+    """Diagnose environment: keyring, storage, profile, and LLM providers."""
+    checks: list[tuple[str, bool, str]] = []
+    all_ok = True
+
+    py_ok = sys.version_info >= (3, 11)
+    checks.append(("Python >= 3.11", py_ok, f"{sys.version.split()[0]}"))
+
+    try:
+        import keyring
+
+        backend = keyring.get_keyring()
+        backend_name = backend.__class__.__name__
+        keyring_ok = "fail" not in backend_name.lower() and "null" not in backend_name.lower()
+        checks.append(("OS keyring", keyring_ok, backend_name))
+    except Exception as exc:  # noqa: BLE001
+        checks.append(("OS keyring", False, str(exc)))
+
+    try:
+        db = DatabaseManager()
+        db_ok = True
+        checks.append(("SQLite database", db_ok, str(db.db_path)))
+    except Exception as exc:  # noqa: BLE001
+        checks.append(("SQLite database", False, str(exc)))
+
+    try:
+        vault = CredentialVault()
+        checks.append(("Encryption vault", True, str(vault.key_dir)))
+    except Exception as exc:  # noqa: BLE001
+        checks.append(("Encryption vault", False, str(exc)))
+
+    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+    profile_ok = profile_path.exists()
+    checks.append(
+        (
+            "Profile (encrypted)",
+            profile_ok,
+            str(profile_path) if profile_ok else "missing - run 'jobot profile init'",
+        )
+    )
+
+    router = ModelRouter(daily_budget_usd=load_llm_settings().daily_cost_cap_usd)
+    provider_rows: list[tuple[str, bool, str]] = []
+    for name in PROVIDER_REGISTRY:
+        configured = name in router.list_configured_providers()
+        reachable = asyncio.run(router.health_check(name)) if configured else False
+        provider_rows.append(
+            (
+                name,
+                configured and reachable,
+                "configured + reachable"
+                if reachable
+                else ("configured" if configured else "not configured"),
+            )
+        )
+
+    any_provider = any(configured for _, configured, _ in provider_rows)
+    checks.append(
+        (
+            "LLM provider (>= 1 configured)",
+            any_provider,
+            f"{sum(1 for _, c, _ in provider_rows if c)}/{len(provider_rows)}",
+        )
+    )
+
+    table = Table(title="jobot doctor")
+    table.add_column("Check", style="cyan")
+    table.add_column("Status")
+    table.add_column("Detail", style="dim")
+    for label, ok, detail in checks:
+        if label == "Profile (encrypted)":
+            table.add_row(
+                label,
+                "[yellow]WARN[/yellow]" if not ok else "[bold green]PASS[/bold green]",
+                detail,
+            )
+            continue
+        all_ok = all_ok and ok
+        table.add_row(
+            label, "[bold green]PASS[/bold green]" if ok else "[bold red]FAIL[/bold red]", detail
+        )
+    console.print(table)
+
+    if any_provider:
+        provider_table = Table(title="LLM Providers")
+        provider_table.add_column("Provider", style="cyan")
+        provider_table.add_column("Status")
+        for name, ok, detail in provider_rows:
+            provider_table.add_row(
+                name,
+                "[bold green]PASS[/bold green]"
+                if ok
+                else "[yellow]SKIP[/yellow]"
+                if detail == "not configured"
+                else "[bold red]FAIL[/bold red]",
+                detail,
+            )
+        console.print(provider_table)
+
+    console.print(
+        "[bold green][OK] doctor passed[/bold green]"
+        if all_ok
+        else "[bold red][ERROR] doctor failed - fix the failing checks above[/bold red]"
+    )
+    raise typer.Exit(code=0 if all_ok else 1)
 
 
 @app.command("reset-db")

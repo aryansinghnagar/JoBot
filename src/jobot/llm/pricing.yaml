@@ -1,0 +1,68 @@
+# Approximate per-1M-token pricing (USD). Estimates, not guaranteed rates;
+# input_per_1k / output_per_1k are expressed per 1,000 tokens for
+# ProviderPricing. Local providers (ollama/vllm) cost zero.
+gemini:
+  gemini-2.5-flash:
+    input_per_1k: 0.0003
+    output_per_1k: 0.0015
+    max_tokens: 65536
+  gemini-2.0-flash:
+    input_per_1k: 0.0001
+    output_per_1k: 0.0004
+    max_tokens: 8192
+openai:
+  gpt-4o-mini:
+    input_per_1k: 0.00015
+    output_per_1k: 0.0006
+    max_tokens: 16384
+  gpt-4o:
+    input_per_1k: 0.0025
+    output_per_1k: 0.01
+    max_tokens: 16384
+anthropic:
+  claude-3-5-haiku-20241022:
+    input_per_1k: 0.0008
+    output_per_1k: 0.004
+    max_tokens: 8192
+  claude-3-5-sonnet-20241022:
+    input_per_1k: 0.003
+    output_per_1k: 0.015
+    max_tokens: 8192
+mistral:
+  mistral-small-latest:
+    input_per_1k: 0.0001
+    output_per_1k: 0.0003
+    max_tokens: 32768
+  mistral-large-latest:
+    input_per_1k: 0.002
+    output_per_1k: 0.006
+    max_tokens: 32768
+cohere:
+  command-r:
+    input_per_1k: 0.00015
+    output_per_1k: 0.0006
+    max_tokens: 8192
+  command-r-plus:
+    input_per_1k: 0.0025
+    output_per_1k: 0.01
+    max_tokens: 8192
+openai_compat:
+  default:
+    input_per_1k: 0.00025
+    output_per_1k: 0.001
+    max_tokens: 8192
+ollama:
+  llama3:
+    input_per_1k: 0.0
+    output_per_1k: 0.0
+    max_tokens: 8192
+bedrock:
+  anthropic.claude-3-5-haiku-20241022-v1:0:
+    input_per_1k: 0.0008
+    output_per_1k: 0.004
+    max_tokens: 8192
+vertex:
+  gemini-2.5-flash:
+    input_per_1k: 0.0003
+    output_per_1k: 0.0015
+    max_tokens: 65536
