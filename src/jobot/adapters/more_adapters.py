@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from jobot.adapters.base import SiteAdapter
+from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
 
 
@@ -14,7 +15,9 @@ class GenericPortalAdapter(SiteAdapter):
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.1)
+        desc = f"Requirement for Software Engineer on {self.site_name.capitalize()} with expertise in Python, FastAPI, React, PostgreSQL, Docker, and CI/CD."
+        skills = SkillExtractor().extract_skills_sync(desc)
         return JobPosting(
             job_id=str(uuid.uuid4()),
             site=self.site_name,
@@ -22,8 +25,8 @@ class GenericPortalAdapter(SiteAdapter):
             title=f"Engineer on {self.site_name.capitalize()}",
             company=f"{self.site_name.capitalize()} Hiring Partner",
             location="India",
-            description="Python & FastAPI position.",
-            parsed_skills=["Python", "FastAPI"],
+            description=desc,
+            parsed_skills=skills,
             discovered_at=datetime.now(timezone.utc),
         )
 
