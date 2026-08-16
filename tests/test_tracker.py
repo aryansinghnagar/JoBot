@@ -1,7 +1,6 @@
 """Phase 4 WS1: Application Tracking System — analytics + rendering."""
 
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
 
 import pytest
 from jobot.models.domain import (

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from jobot.adapters.base import SiteAdapter
 from jobot.applications.state_machine import transition_application
@@ -67,7 +67,7 @@ class ReconciliationService:
         if app.form_values is None:
             app.form_values = {}
         app.form_values["_reconcile_attempts"] = self._attempts(app) + 1
-        return app.form_values["_reconcile_attempts"]
+        return int(app.form_values["_reconcile_attempts"])
 
     async def reconcile(self, app: Application) -> Application:
         """Reconcile one application; returns the (possibly mutated) app."""
@@ -116,7 +116,7 @@ class ReconciliationService:
 
     # ------------------------------------------------------------------
 
-    async def _verify_only(self, app: Application):
+    async def _verify_only(self, app: Application) -> Any:
         """FETCH step: the ONLY adapter interaction reconciliation performs.
 
         submit_application is deliberately unreachable from this service —

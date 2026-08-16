@@ -19,6 +19,7 @@ from jobot.documents.engines import (
     tex_engine_available,
     xelatex_available,
 )
+from jobot.documents.importer import ResumeImporter
 from jobot.documents.pdf_exporter import ResumeExporter
 from jobot.documents.tailor import (
     DEFAULT_MAX_ITERATIONS,
@@ -48,6 +49,7 @@ __all__ = [
     "ResumeData",
     "ResumeEntry",
     "ResumeExporter",
+    "ResumeImporter",
     "ResumeSection",
     "Reviewer",
     "RubricScores",

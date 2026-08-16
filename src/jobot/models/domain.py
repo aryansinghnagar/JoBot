@@ -214,4 +214,43 @@ class Goal(BaseModel):
     title: str
     description: str = ""
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CandidateFact(BaseModel):
+    id: Optional[int] = None
+    profile_id: str = "default"
+    fact_type: str  # skill | experience | education | credential | achievement
+    fact_value: str
+    source: str = "resume"  # resume | linkedin | user_asserted | inferred
+    source_path: Optional[str] = None
+    confidence: float = 1.0
+    verified: bool = False
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    superseded_by: Optional[int] = None
+
+
+class AnswerBankRecord(BaseModel):
+    id: Optional[int] = None
+    profile_id: str = "default"
+    question_hash: str
+    question_text: str
+    answer: str
+    source: str = "user"  # profile | memory | llm | user
+    used_count: int = 0
+    last_used_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class FormFieldMemoryRecord(BaseModel):
+    id: Optional[int] = None
+    profile_id: str = "default"
+    adapter_id: str
+    field_selector: str
+    field_label: Optional[str] = None
+    field_type: Optional[str] = None
+    value: str
+    confidence: float = 1.0
+    last_used_at: Optional[datetime] = None

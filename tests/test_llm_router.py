@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from jobot.llm.base import LLMResponse, Message
-from jobot.llm.router import DEGRADATION_TEXT, DEFAULT_FALLBACK_CHAIN, ModelProvider, ModelRouter
+from jobot.llm.router import DEGRADATION_TEXT, DEFAULT_FALLBACK_CHAIN, ModelRouter
 from jobot.secrets import set_secret
 
 
@@ -39,8 +39,14 @@ def fake_keyring(monkeypatch):
 @pytest.fixture
 def clean_env(monkeypatch):
     for key in (
-        "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "MISTRAL_API_KEY",
-        "OPENROUTER_API_KEY", "COHERE_API_KEY", "OLLAMA_MODEL", "GOOGLE_CLOUD_PROJECT",
+        "GEMINI_API_KEY",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "MISTRAL_API_KEY",
+        "OPENROUTER_API_KEY",
+        "COHERE_API_KEY",
+        "OLLAMA_MODEL",
+        "GOOGLE_CLOUD_PROJECT",
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("JOBOT_DEFAULT_LLM_PROVIDER", raising=False)
@@ -100,7 +106,9 @@ async def test_generate_text_fallback_chain(monkeypatch, tmp_path):
 async def test_generate_text_all_fail_degrades(monkeypatch, tmp_path):
     router = _router(monkeypatch, tmp_path)
     _install_stub_providers(monkeypatch, failing=["gemini", "openai", "anthropic", "ollama"])
-    text = await router.generate_text("hello", fallback_chain=["gemini", "openai", "anthropic", "ollama"])
+    text = await router.generate_text(
+        "hello", fallback_chain=["gemini", "openai", "anthropic", "ollama"]
+    )
     assert text == DEGRADATION_TEXT
 
 
@@ -176,3 +184,45 @@ async def test_health_check_configured_provider(clean_env, fake_keyring, monkeyp
     router = ModelRouter()
     assert await router.health_check("gemini") is True
     assert await router.health_check("openai") is False
+
+
+class StubStreamProvider(StubProvider):
+    async def stream(self, messages: List[Message], **kwargs: Any):
+        if self.fail:
+            raise RuntimeError(f"{self.name} stream down")
+        for chunk in [f"{self.name} ", "chunk"]:
+            yield chunk
+
+
+@pytest.mark.asyncio
+async def test_router_generate_text_stream_fallback(monkeypatch, tmp_path):
+    router = _router(monkeypatch, tmp_path)
+
+    def factory(self: ModelRouter, name: str):
+        return StubStreamProvider(name, fail=(name == "gemini"))
+
+    monkeypatch.setattr(ModelRouter, "get_provider", factory)
+    chunks = [
+        chunk
+        async for chunk in router.generate_text_stream(
+            "test prompt", fallback_chain=["gemini", "openai"]
+        )
+    ]
+    assert "".join(chunks) == "openai chunk"
+
+
+@pytest.mark.asyncio
+async def test_router_generate_text_stream_all_fail_yields_degradation(monkeypatch, tmp_path):
+    router = _router(monkeypatch, tmp_path)
+
+    def factory(self: ModelRouter, name: str):
+        return StubStreamProvider(name, fail=True)
+
+    monkeypatch.setattr(ModelRouter, "get_provider", factory)
+    chunks = [
+        chunk
+        async for chunk in router.generate_text_stream(
+            "test prompt", fallback_chain=["gemini", "openai"]
+        )
+    ]
+    assert "".join(chunks) == DEGRADATION_TEXT

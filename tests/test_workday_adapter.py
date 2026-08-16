@@ -6,8 +6,6 @@ Patchright submitter/verifier logic against a fake browser.
 """
 
 import json
-import urllib.error
-import urllib.request
 
 import pytest
 from jobot.adapters.workday import WorkdayAdapter, WorkdaySubmitter, WorkdayVerifier
@@ -295,7 +293,9 @@ async def test_workday_submitter_full_flow():
 
 @pytest.mark.asyncio
 async def test_workday_submitter_no_confirmation_returns_false():
-    browser = FakeBrowser(body_text="some intermediate page", apply_present=True, submit_present=True)
+    browser = FakeBrowser(
+        body_text="some intermediate page", apply_present=True, submit_present=True
+    )
     submitter = WorkdaySubmitter()
     app = _app("https://toptal.wd3.myworkdayjobs.com/en-US/Toptal/job/a1b2c3d4")
 

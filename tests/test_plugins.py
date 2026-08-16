@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from jobot.plugins.auditor import PluginAuditor
 from jobot.plugins.installer import PluginInstaller
-from jobot.plugins.manifest import PluginManifest, load_manifest
+from jobot.plugins.manifest import load_manifest
 from typer.testing import CliRunner
 
 from jobot.cli.main import app
@@ -67,9 +67,7 @@ def plugin_repo(tmp_path):
     repo = tmp_path / "hello-repo"
     repo.mkdir()
     (repo / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
-    (repo / "hello_plugin.py").write_text(
-        "def run():\n    return 'hello'\n", encoding="utf-8"
-    )
+    (repo / "hello_plugin.py").write_text("def run():\n    return 'hello'\n", encoding="utf-8")
     git("init", cwd=repo)
     git("add", ".", cwd=repo)
     git("commit", "-m", "init", cwd=repo)

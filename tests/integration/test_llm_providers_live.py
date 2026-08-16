@@ -23,7 +23,11 @@ MESSAGES = [
 
 
 def _configured_providers() -> list[str]:
-    return [name for name in ("gemini", "openai", "anthropic", "mistral", "cohere", "openrouter") if os.getenv(f"{name.upper()}_API_KEY")]
+    return [
+        name
+        for name in ("gemini", "openai", "anthropic", "mistral", "cohere", "openrouter")
+        if os.getenv(f"{name.upper()}_API_KEY")
+    ]
 
 
 @pytest.mark.integration

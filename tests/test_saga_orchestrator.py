@@ -3,7 +3,6 @@
 import pytest
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.asp.saga import ApplySaga, SagaStatus
-from jobot.documents import DocumentTailor
 from jobot.models.domain import (
     CompensationDetails,
     Education,
@@ -21,7 +20,9 @@ DRAFT_JSON = (
 
 
 class FakeRouter:
-    async def generate_text(self, prompt, system_prompt=None, fallback_chain=None, task=None, **kwargs):
+    async def generate_text(
+        self, prompt, system_prompt=None, fallback_chain=None, task=None, **kwargs
+    ):
         if task == "resume_tailoring":
             return DRAFT_JSON
         if task == "resume_reviewer":
@@ -61,7 +62,9 @@ def rich_profile(email: str = "aryan@example.com") -> UserProfile:
                 description="Built Django features and wrote unit tests.",
             ),
         ],
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
 
 
@@ -126,7 +129,9 @@ async def test_apply_supervised_approval_flow(live_mock_ats_server, tmp_path):
     job = (await MockATSAdapter().discover_jobs(limit=1))[0]
     orchestrator = ApplyOrchestrator(db, router=FakeRouter(), artifact_dir=tmp_path / "resumes")
 
-    result = await orchestrator.apply(job, rich_profile(email="sup@example.com"), auto_approve=False)
+    result = await orchestrator.apply(
+        job, rich_profile(email="sup@example.com"), auto_approve=False
+    )
     assert result.app_status == "pending_approval"
     assert result.application_id
 
@@ -147,7 +152,9 @@ async def test_apply_auto_approve_verified(live_mock_ats_server, tmp_path):
     job = (await MockATSAdapter().discover_jobs(limit=1))[0]
     orchestrator = ApplyOrchestrator(db, router=FakeRouter(), artifact_dir=tmp_path / "resumes")
 
-    result = await orchestrator.apply(job, rich_profile(email="auto@example.com"), auto_approve=True)
+    result = await orchestrator.apply(
+        job, rich_profile(email="auto@example.com"), auto_approve=True
+    )
     assert result.app_status == "verified"
 
     again = await orchestrator.apply(job, rich_profile(email="auto@example.com"), auto_approve=True)

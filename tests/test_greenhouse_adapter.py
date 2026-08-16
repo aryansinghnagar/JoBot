@@ -29,8 +29,20 @@ SINGLE_JOB = {
 
 BOARD_JOBS = {
     "jobs": [
-        {"id": 1, "title": "Engineer I", "location": {"name": "NYC"}, "content": "job one", "absolute_url": "https://boards.greenhouse.io/acme/jobs/1"},
-        {"id": 2, "title": "Engineer II", "location": {"name": "SF"}, "content": "job two", "absolute_url": "https://boards.greenhouse.io/acme/jobs/2"},
+        {
+            "id": 1,
+            "title": "Engineer I",
+            "location": {"name": "NYC"},
+            "content": "job one",
+            "absolute_url": "https://boards.greenhouse.io/acme/jobs/1",
+        },
+        {
+            "id": 2,
+            "title": "Engineer II",
+            "location": {"name": "SF"},
+            "content": "job two",
+            "absolute_url": "https://boards.greenhouse.io/acme/jobs/2",
+        },
     ]
 }
 
@@ -136,7 +148,9 @@ async def test_greenhouse_adapter_form_fill_and_submit(monkeypatch):
     assert filled["email"] == "gh@example.com"
     assert app.status == ApplicationStatus.FILLED
 
-    def fake_post(url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False):
+    def fake_post(
+        url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False
+    ):
         assert method == "POST"
         assert "/applications" in url
         return FakeHTTPResponse({}, status=201)

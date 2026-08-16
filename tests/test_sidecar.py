@@ -9,7 +9,6 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
 from jobot.asp.orchestrator import ApplyResult
 from jobot.gui.sidecar import StdioSidecarServer
 from jobot.models.domain import Application, JobPosting, UserProfile
@@ -67,7 +66,16 @@ class FakeOrchestrator:
     def __init__(self, result: ApplyResult):
         self.result = result
 
-    async def apply(self, job, profile, auto_approve=False, dry_run=False, template="default", engine=None, tone="classic"):
+    async def apply(
+        self,
+        job,
+        profile,
+        auto_approve=False,
+        dry_run=False,
+        template="default",
+        engine=None,
+        tone="classic",
+    ):
         return self.result
 
     async def submit_approved(self, app: Application):
@@ -103,7 +111,12 @@ class FakeScheduler:
         return self.schedules
 
     def add_schedule(self, cron: str, command: str):
-        entry = {"schedule_id": f"sch_{len(self.schedules) + 1:03d}", "cron": cron, "command": command, "active": True}
+        entry = {
+            "schedule_id": f"sch_{len(self.schedules) + 1:03d}",
+            "cron": cron,
+            "command": command,
+            "active": True,
+        }
         self.schedules.append(entry)
         return entry
 
@@ -169,9 +182,7 @@ def _server(monkeypatch, tmp_path, **overrides) -> StdioSidecarServer:
     }
     defaults.update(overrides)
     server = StdioSidecarServer(**defaults)
-    monkeypatch.setattr(
-        "jobot.gui.sidecar.RUNNER_STATE_PATH", tmp_path / "runner_state.json"
-    )
+    monkeypatch.setattr("jobot.gui.sidecar.RUNNER_STATE_PATH", tmp_path / "runner_state.json")
     return server
 
 
@@ -274,9 +285,7 @@ def test_sidecar_apply_missing_job_id_and_url(monkeypatch, tmp_path):
 
 def test_sidecar_approve(monkeypatch, tmp_path):
     db = FakeDB()
-    app = Application(
-        application_id="app_1", job_id="job_1", site="mock_ats", idempotency_key="k1"
-    )
+    app = Application(application_id="app_1", job_id="job_1", site="mock_ats", idempotency_key="k1")
     db.apps = [app]
     server = _server(monkeypatch, tmp_path, db=db)
     res = _call(server, "approve", {"application_id": "app_1"})

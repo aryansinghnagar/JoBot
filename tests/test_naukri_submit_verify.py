@@ -1,6 +1,6 @@
 """P1.1/P1.2 — honest Naukri submit/verify (no fabrication without a real browser)."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pytest
 
@@ -10,7 +10,9 @@ from jobot.adapters.naukri.verify import NaukriVerifier
 from jobot.models.domain import Application, ApplicationStatus
 
 
-def _app(job_id: str = "job-101", job_url: str = "https://www.naukri.com/job/job-101") -> Application:
+def _app(
+    job_id: str = "job-101", job_url: str = "https://www.naukri.com/job/job-101"
+) -> Application:
     return Application(
         application_id="app_nk",
         job_id=job_id,

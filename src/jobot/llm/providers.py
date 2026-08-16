@@ -7,6 +7,8 @@ monkeypatch a single call site. Gemini/Vertex reuse the existing
 lazy-imported and run off the event loop).
 """
 
+import asyncio
+import json
 import logging
 import os
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Type, Union
@@ -20,6 +22,7 @@ from jobot.llm.base import (
     estimate_tokens,
     http_get_json,
     http_post_json,
+    http_post_sse_async,
 )
 from jobot.llm.pricing import PricingTable
 
@@ -97,8 +100,45 @@ class OpenAIProvider(HTTPChatProvider):
             estimated_cost_usd=self.estimate_cost(in_tok, out_tok, m),
         )
 
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]:
-        raise NotImplementedError("OpenAI streaming lands in a later phase")
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        m = self._resolve_model(model)
+        payload: Dict[str, Any] = {
+            "model": m,
+            "messages": [msg.model_dump() for msg in messages],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+        }
+        if tools:
+            payload["tools"] = [{"type": "function", "function": t.model_dump()} for t in tools]
+        headers = {
+            "Authorization": f"Bearer {self._api_key() or ''}",
+            "Content-Type": "application/json",
+        }
+        async for line in http_post_sse_async(self.api_url, headers, payload, timeout_s):
+            if line.startswith("data: "):
+                data_str = line[6:].strip()
+                if data_str == "[DONE]":
+                    break
+                try:
+                    data = json.loads(data_str)
+                    choices = data.get("choices") or []
+                    if choices:
+                        delta = choices[0].get("delta") or {}
+                        chunk = delta.get("content") or ""
+                        if chunk:
+                            yield chunk
+                except Exception:
+                    continue
 
 
 class OpenAICompatProvider(OpenAIProvider):
@@ -184,8 +224,47 @@ class AnthropicProvider(HTTPChatProvider):
             estimated_cost_usd=self.estimate_cost(in_tok, out_tok, m),
         )
 
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]:
-        raise NotImplementedError("Anthropic streaming lands in a later phase")
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        m = self._resolve_model(model)
+        payload: Dict[str, Any] = {
+            "model": m,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [msg.model_dump() for msg in messages if msg.role != "system"],
+            "stream": True,
+        }
+        system = " ".join(msg.content for msg in messages if msg.role == "system")
+        if system:
+            payload["system"] = system
+        headers = {
+            "x-api-key": self._api_key() or "",
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+        }
+        async for line in http_post_sse_async(self.api_url, headers, payload, timeout_s):
+            if line.startswith("data: "):
+                data_str = line[6:].strip()
+                if data_str == "[DONE]":
+                    break
+                try:
+                    data = json.loads(data_str)
+                    if data.get("type") == "content_block_delta":
+                        delta = data.get("delta") or {}
+                        if delta.get("type") == "text_delta":
+                            text = delta.get("text") or ""
+                            if text:
+                                yield text
+                except Exception:
+                    continue
 
 
 class MistralProvider(HTTPChatProvider):
@@ -233,8 +312,43 @@ class MistralProvider(HTTPChatProvider):
             estimated_cost_usd=self.estimate_cost(in_tok, out_tok, m),
         )
 
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]:
-        raise NotImplementedError("Mistral streaming lands in a later phase")
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        m = self._resolve_model(model)
+        payload = {
+            "model": m,
+            "messages": [msg.model_dump() for msg in messages],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+        }
+        headers = {
+            "Authorization": f"Bearer {self._api_key() or ''}",
+            "Content-Type": "application/json",
+        }
+        async for line in http_post_sse_async(self.api_url, headers, payload, timeout_s):
+            if line.startswith("data: "):
+                data_str = line[6:].strip()
+                if data_str == "[DONE]":
+                    break
+                try:
+                    data = json.loads(data_str)
+                    choices = data.get("choices") or []
+                    if choices:
+                        delta = choices[0].get("delta") or {}
+                        chunk = delta.get("content") or ""
+                        if chunk:
+                            yield chunk
+                except Exception:
+                    continue
 
 
 class CohereProvider(HTTPChatProvider):
@@ -283,8 +397,48 @@ class CohereProvider(HTTPChatProvider):
             estimated_cost_usd=self.estimate_cost(in_tok, out_tok, m),
         )
 
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]:
-        raise NotImplementedError("Cohere streaming lands in a later phase")
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        m = self._resolve_model(model)
+        system = " ".join(msg.content for msg in messages if msg.role == "system")
+        chat_messages = [msg.model_dump() for msg in messages if msg.role != "system"]
+        payload: Dict[str, Any] = {
+            "model": m,
+            "messages": chat_messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+        }
+        if system:
+            payload["system_prompt"] = system
+        headers = {
+            "Authorization": f"Bearer {self._api_key() or ''}",
+            "Content-Type": "application/json",
+        }
+        async for line in http_post_sse_async(self.api_url, headers, payload, timeout_s):
+            if line.startswith("data: "):
+                data_str = line[6:].strip()
+                if data_str == "[DONE]":
+                    break
+                try:
+                    data = json.loads(data_str)
+                    if data.get("type") == "content-delta":
+                        delta = data.get("delta") or {}
+                        msg = delta.get("message") or {}
+                        content = msg.get("content") or {}
+                        text = content.get("text") or ""
+                        if text:
+                            yield text
+                except Exception:
+                    continue
 
 
 class GeminiProvider(LLMProvider):
@@ -346,8 +500,35 @@ class GeminiProvider(LLMProvider):
             estimated_cost_usd=self.estimate_cost(in_tok, out_tok, m),
         )
 
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]:
-        raise NotImplementedError("Gemini streaming lands in a later phase")
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        from google import genai  # already a core dependency
+        from google.genai import types
+
+        m = self._resolve_model(model)
+        client = genai.Client(api_key=self._api_key())
+        system = " ".join(msg.content for msg in messages if msg.role == "system")
+        prompt_text = " ".join(msg.content for msg in messages if msg.role != "system")
+        config = types.GenerateContentConfig(temperature=temperature, max_output_tokens=max_tokens)
+        if system:
+            config.system_instruction = system
+        gen: Any = client.aio.models.generate_content_stream(
+            model=m, contents=prompt_text, config=config
+        )
+        if hasattr(gen, "__await__"):
+            gen = await gen
+        async for chunk in gen:
+            text = chunk.text
+            if text:
+                yield text
 
     async def health_check(self) -> bool:
         return self._api_key() is not None
@@ -403,6 +584,37 @@ class VertexProvider(GeminiProvider):
             output_tokens=out_tok,
             estimated_cost_usd=self.estimate_cost(in_tok, out_tok, m),
         )
+
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        from google import genai  # already a core dependency
+        from google.genai import types
+
+        m = self._resolve_model(model)
+        project, location = self._project_location()
+        client = genai.Client(vertexai=True, project=project, location=location)
+        system = " ".join(msg.content for msg in messages if msg.role == "system")
+        prompt_text = " ".join(msg.content for msg in messages if msg.role != "system")
+        config = types.GenerateContentConfig(temperature=temperature, max_output_tokens=max_tokens)
+        if system:
+            config.system_instruction = system
+        gen: Any = client.aio.models.generate_content_stream(
+            model=m, contents=prompt_text, config=config
+        )
+        if hasattr(gen, "__await__"):
+            gen = await gen
+        async for chunk in gen:
+            text = chunk.text
+            if text:
+                yield text
 
     async def health_check(self) -> bool:
         return bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
@@ -487,8 +699,59 @@ class BedrockProvider(LLMProvider):
             latency_ms=self._timed(start),
         )
 
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]:
-        raise NotImplementedError("Bedrock streaming lands in a later phase")
+    async def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        import boto3
+
+        m = self._resolve_model(model)
+        loop = asyncio.get_running_loop()
+        q: asyncio.Queue[Optional[Any]] = asyncio.Queue()
+
+        def _stream_sync() -> None:
+            try:
+                client = boto3.client("bedrock-runtime", region_name=self._region())
+                system = [{"text": msg.content} for msg in messages if msg.role == "system"]
+                body = [
+                    {"role": msg.role, "content": [{"text": msg.content}]}
+                    for msg in messages
+                    if msg.role != "system"
+                ]
+                response = client.converse_stream(
+                    modelId=m,
+                    messages=body,
+                    system=system,
+                    inferenceConfig={"temperature": temperature, "maxTokens": max_tokens},
+                )
+                for event in response.get("stream", []):
+                    if "contentBlockDelta" in event:
+                        delta = event["contentBlockDelta"].get("delta", {})
+                        text = delta.get("text", "")
+                        if text:
+                            loop.call_soon_threadsafe(q.put_nowait, text)
+            except Exception as exc:  # noqa: BLE001
+                loop.call_soon_threadsafe(q.put_nowait, exc)
+            finally:
+                loop.call_soon_threadsafe(q.put_nowait, None)
+
+        fut = loop.run_in_executor(None, _stream_sync)
+        try:
+            while True:
+                item = await q.get()
+                if item is None:
+                    break
+                if isinstance(item, Exception):
+                    raise item
+                yield item
+        finally:
+            await fut
 
     async def health_check(self) -> bool:
         try:

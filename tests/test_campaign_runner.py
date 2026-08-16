@@ -1,15 +1,11 @@
 """Phase 5 T4.1: campaign runner wired to ApplyOrchestrator + LLM cost gate."""
 
-from pathlib import Path
-
 import pytest
 from jobot.asp.orchestrator import ApplyResult
 from jobot.discovery.engine import JobMatchResult
 from jobot.models.domain import (
-    ApplicationStatus,
     JobPosting,
     PersonalInfo,
-    TrustLevel,
     UserProfile,
 )
 from jobot.runner import ContinuousCampaignRunner

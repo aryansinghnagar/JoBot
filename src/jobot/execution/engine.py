@@ -34,7 +34,7 @@ from dataclasses import dataclass, field
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Generator, Optional, cast
 
 from jobot.storage.db import DatabaseManager
 
@@ -182,7 +182,7 @@ class DurableTaskEngine:
     # ------------------------------------------------------------------
 
     @contextmanager
-    def _conn(self):
+    def _conn(self) -> Generator[sqlite3.Connection, None, None]:
         """Yield a configured connection that is ALWAYS closed on exit.
 
         `with sqlite3.connect(...)` alone only manages transactions; on
@@ -314,7 +314,7 @@ class DurableTaskEngine:
         new_status: TaskStatus,
         *,
         actor: str = "system",
-        payload: Optional[dict] = None,
+        payload: Optional[dict[str, Any]] = None,
     ) -> DurableTask:
         current = self.get_task(task_id)
         if current is None:
@@ -433,7 +433,7 @@ class DurableTaskEngine:
                 ),
             )
             conn.commit()
-            return cur.rowcount == 1
+            return bool(cur.rowcount == 1)
 
     def reclaim_expired(self, now: Optional[datetime] = None) -> list[str]:
         """Return expired-lease tasks to READY (or QUARANTINE at max attempts).
@@ -443,7 +443,7 @@ class DurableTaskEngine:
         """
         now = now or _now()
         reclaimed: list[str] = []
-        events: list[tuple[str, str, dict]] = []
+        events: list[tuple[str, str, dict[str, Any]]] = []
         with self._conn() as conn:
             rows = conn.execute(
                 "SELECT DISTINCT t.id, t.max_attempts, t.status FROM tasks t "
@@ -500,7 +500,7 @@ class DurableTaskEngine:
         self,
         task_id: str,
         event_type: str,
-        payload: Optional[dict] = None,
+        payload: Optional[dict[str, Any]] = None,
         *,
         actor: str = "system",
         correlation_id: Optional[str] = None,
@@ -526,13 +526,13 @@ class DurableTaskEngine:
         self,
         task_id: str,
         event_type: str,
-        payload: Optional[dict] = None,
+        payload: Optional[dict[str, Any]] = None,
         **kw: Any,
     ) -> None:
         """Public event-ledger append (UC-02)."""
         self._append_event(task_id, event_type, payload, **kw)
 
-    def event_timeline(self, task_id: str) -> list[dict]:
+    def event_timeline(self, task_id: str) -> list[dict[str, Any]]:
         with self._conn() as conn:
             rows = conn.execute(
                 "SELECT * FROM task_events WHERE task_id = ? ORDER BY id",
@@ -777,13 +777,13 @@ class DurableTaskEngine:
                 (_iso(now),),
             )
             conn.commit()
-            return cur.rowcount
+            return int(cur.rowcount)
 
     # ------------------------------------------------------------------
     # Checkpoints (kill-anywhere resume)
     # ------------------------------------------------------------------
 
-    def save_checkpoint(self, task_id: str, phase: str, state: dict) -> None:
+    def save_checkpoint(self, task_id: str, phase: str, state: dict[str, Any]) -> None:
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO checkpoints (task_id, phase, state_payload, created_at) "
@@ -793,7 +793,7 @@ class DurableTaskEngine:
             conn.commit()
         self._append_event(task_id, "checkpoint_saved", {"phase": phase})
 
-    def latest_checkpoint(self, task_id: str) -> Optional[dict]:
+    def latest_checkpoint(self, task_id: str) -> Optional[dict[str, Any]]:
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT phase, state_payload FROM checkpoints WHERE task_id = ? "
@@ -811,7 +811,7 @@ class DurableTaskEngine:
                 (_iso(_now()), task_id, task_id),
             )
             conn.commit()
-        return state
+        return cast(dict[str, Any], state)
 
 
 __all__ = [

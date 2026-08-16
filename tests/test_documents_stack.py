@@ -62,7 +62,9 @@ def realistic_profile() -> UserProfile:
         compensation=CompensationDetails(notice_period_days=30),
         skills=["Python", "FastAPI", "Django", "PostgreSQL", "SQLite"],
         experiences=experiences,
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
 
 

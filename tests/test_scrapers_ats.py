@@ -1,7 +1,6 @@
 """Direct-API ATS family adapter tests (lever / ashby / smartrecruiters mappers)."""
 
 import asyncio
-import json
 import urllib.request
 
 import pytest

@@ -26,6 +26,7 @@ from __future__ import annotations
 import ipaddress
 import socket
 import urllib.request
+from typing import Any
 from urllib.parse import urlsplit
 
 _ALLOWED_SCHEMES = frozenset({"http", "https"})
@@ -74,7 +75,7 @@ def _resolved_hosts_are_internal(host: str) -> bool:
     except (socket.gaierror, OSError):
         return False
     for info in infos:
-        addr = info[4][0]
+        addr = str(info[4][0])
         try:
             ip = ipaddress.ip_address(addr.split("%")[0])
         except ValueError:
@@ -132,7 +133,7 @@ def safe_urlopen(
     timeout: float = 10.0,
     method: str | None = None,
     allow_private_hosts: bool = False,
-):
+) -> Any:
     """Validate-then-fetch: the only sanctioned way to urlopen in JoBot.
 
     Validation (scheme, host boundary, resolved-IP boundary) happens

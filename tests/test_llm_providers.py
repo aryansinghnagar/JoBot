@@ -2,7 +2,7 @@
 
 import sys
 from types import SimpleNamespace
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pytest
 
@@ -227,7 +227,10 @@ def test_pricing_table_loads_shipped_and_override(tmp_path, monkeypatch):
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     override = tmp_path / ".jobot" / "pricing.yaml"
     override.parent.mkdir(parents=True)
-    override.write_text("openai:\n  my-custom-model:\n    input_per_1k: 0.001\n    output_per_1k: 0.002\n", encoding="utf-8")
+    override.write_text(
+        "openai:\n  my-custom-model:\n    input_per_1k: 0.001\n    output_per_1k: 0.002\n",
+        encoding="utf-8",
+    )
     table = PricingTable()
     assert table.get("gemini", "gemini-2.5-flash").input_per_1k > 0
     assert table.get("openai", "my-custom-model") == ProviderPricing(
@@ -242,3 +245,111 @@ async def test_openai_provider_optional_tools(mock_post):
     resp = await provider.complete(_messages(), tools=[ToolSpec(name="lookup", description="d")])
     assert resp.text == "openai reply"
     assert mock_post[0]["payload"]["tools"][0]["function"]["name"] == "lookup"
+
+
+async def _fake_sse_stream(url, headers, payload, timeout_s=60.0):
+    if "anthropic" in url:
+        yield 'data: {"type": "content_block_delta", "delta": {"type": "text_delta", "text": "anthropic "}}'
+        yield 'data: {"type": "content_block_delta", "delta": {"type": "text_delta", "text": "stream"}}'
+        yield "data: [DONE]"
+    elif "cohere" in url:
+        yield 'data: {"type": "content-delta", "delta": {"message": {"content": {"text": "cohere "}}}}'
+        yield 'data: {"type": "content-delta", "delta": {"message": {"content": {"text": "stream"}}}}'
+        yield "data: [DONE]"
+    else:
+        yield 'data: {"choices": [{"delta": {"content": "stream "}}]}'
+        yield 'data: {"choices": [{"delta": {"content": "chunk"}}]}'
+        yield "data: [DONE]"
+
+
+@pytest.mark.asyncio
+async def test_openai_provider_stream(monkeypatch):
+    monkeypatch.setattr("jobot.llm.providers.http_post_sse_async", _fake_sse_stream)
+    provider = OpenAIProvider()
+    chunks = [chunk async for chunk in provider.stream(_messages())]
+    assert "".join(chunks) == "stream chunk"
+
+
+@pytest.mark.asyncio
+async def test_anthropic_provider_stream(monkeypatch):
+    monkeypatch.setattr("jobot.llm.providers.http_post_sse_async", _fake_sse_stream)
+    provider = AnthropicProvider()
+    chunks = [chunk async for chunk in provider.stream(_messages())]
+    assert "".join(chunks) == "anthropic stream"
+
+
+@pytest.mark.asyncio
+async def test_mistral_provider_stream(monkeypatch):
+    monkeypatch.setattr("jobot.llm.providers.http_post_sse_async", _fake_sse_stream)
+    provider = MistralProvider()
+    chunks = [chunk async for chunk in provider.stream(_messages())]
+    assert "".join(chunks) == "stream chunk"
+
+
+@pytest.mark.asyncio
+async def test_cohere_provider_stream(monkeypatch):
+    monkeypatch.setattr("jobot.llm.providers.http_post_sse_async", _fake_sse_stream)
+    provider = CohereProvider()
+    chunks = [chunk async for chunk in provider.stream(_messages())]
+    assert "".join(chunks) == "cohere stream"
+
+
+class _FakeGenaiStreamChunk:
+    def __init__(self, text: str):
+        self.text = text
+
+
+class _FakeGenaiStreamModels:
+    async def generate_content(self, *args: Any, **kwargs: Any) -> _FakeGenaiResponse:
+        return _FakeGenaiResponse()
+
+    async def generate_content_stream(self, *args: Any, **kwargs: Any):
+        for part in ["gemini ", "stream"]:
+            yield _FakeGenaiStreamChunk(part)
+
+
+@pytest.mark.asyncio
+async def test_gemini_provider_stream(monkeypatch):
+    fake_types = SimpleNamespace(
+        Content=lambda **kw: kw,
+        Part=lambda **kw: kw,
+        GenerateContentConfig=lambda **kw: SimpleNamespace(**kw),
+    )
+    fake_client = SimpleNamespace(
+        aio=SimpleNamespace(models=_FakeGenaiStreamModels()),
+    )
+    fake_genai = SimpleNamespace(Client=lambda **kw: fake_client, types=fake_types)
+    monkeypatch.setitem(sys.modules, "google", SimpleNamespace(genai=fake_genai))
+    monkeypatch.setitem(sys.modules, "google.genai", fake_genai)
+    monkeypatch.setitem(sys.modules, "google.genai.types", fake_types)
+    monkeypatch.setenv("GEMINI_API_KEY", "ai-test")
+
+    provider = GeminiProvider()
+    chunks = [chunk async for chunk in provider.stream(_messages())]
+    assert "".join(chunks) == "gemini stream"
+
+
+class _FakeBedrockStreamClient:
+    def converse(self, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "output": {"message": {"content": [{"text": "bedrock reply"}]}},
+            "usage": {"inputTokens": 20, "outputTokens": 6},
+        }
+
+    def converse_stream(self, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "stream": [
+                {"contentBlockDelta": {"delta": {"text": "bedrock "}}},
+                {"contentBlockDelta": {"delta": {"text": "stream"}}},
+            ]
+        }
+
+
+@pytest.mark.asyncio
+async def test_bedrock_provider_stream(monkeypatch):
+    monkeypatch.setitem(
+        sys.modules, "boto3", SimpleNamespace(client=lambda *a, **kw: _FakeBedrockStreamClient())
+    )
+    provider = BedrockProvider()
+    chunks = [chunk async for chunk in provider.stream(_messages())]
+    assert "".join(chunks) == "bedrock stream"

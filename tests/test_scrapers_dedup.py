@@ -1,6 +1,5 @@
 """DedupService tests (plan.md Phase 2: two-tier dedup + exit criterion ≥80% repost reduction)."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -116,9 +115,7 @@ def test_repost_reduction_meets_exit_criterion():
     for i in range(3):
         synthetic.append(
             (
-                make_posting(
-                    f"Marketing Manager - Growth {i}", "Acme", "Remote", job_id=f"mm-{i}"
-                ),
+                make_posting(f"Marketing Manager - Growth {i}", "Acme", "Remote", job_id=f"mm-{i}"),
                 False,
             )
         )

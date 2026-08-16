@@ -2,6 +2,13 @@ from typing import Any, Dict, cast
 from urllib.parse import urlsplit
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.cxs import (
+    AshbyAdapter,
+    BambooHRAdapter,
+    RecruiteeAdapter,
+    TeamtailorAdapter,
+    WorkableAdapter,
+)
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.adapters.indeed import IndeedAdapter
 from jobot.adapters.lever import LeverAdapter
@@ -24,11 +31,15 @@ from jobot.adapters.workday import WorkdayAdapter
 # Canonical site -> hostname suffixes. A URL matches only when its parsed
 # hostname IS the suffix or is a subdomain of it (exact/suffix match on the
 # netloc, never substring matching against the raw URL — see CodeQL
-# py/incomplete-url-substring-sanitization). Only sites with a registered
-# adapter are listed; "ashby" intentionally absent (no adapter registered).
-_SITE_HOST_SUFFIXES: Dict[str, tuple] = {
+# py/incomplete-url-substring-sanitization).
+_SITE_HOST_SUFFIXES: Dict[str, tuple[str, ...]] = {
     "lever": ("lever.co",),
     "greenhouse": ("greenhouse.io",),
+    "ashby": ("ashbyhq.com",),
+    "workable": ("workable.com",),
+    "recruitee": ("recruitee.com",),
+    "teamtailor": ("teamtailor.com",),
+    "bamboohr": ("bamboohr.com",),
     "linkedin": ("linkedin.com",),
     "naukri": ("naukri.com",),
     "indeed": ("indeed.com",),
@@ -99,6 +110,11 @@ class AdapterRegistry:
         "cutshort": CutshortAdapter,
         "wellfound": WellfoundAdapter,
         "smartrecruiters": SmartRecruitersAdapter,
+        "ashby": AshbyAdapter,
+        "workable": WorkableAdapter,
+        "recruitee": RecruiteeAdapter,
+        "teamtailor": TeamtailorAdapter,
+        "bamboohr": BambooHRAdapter,
         "mock_ats": MockATSAdapter,
     }
 

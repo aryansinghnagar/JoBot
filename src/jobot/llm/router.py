@@ -12,7 +12,7 @@ import os
 from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -230,6 +230,70 @@ class ModelRouter:
         )
         self._record_spend(response.estimated_cost_usd)
         return response
+
+    async def stream(
+        self,
+        messages: List[Message],
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        task: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        timeout_s: float = 60.0,
+    ) -> AsyncIterator[str]:
+        """Strategy-level streaming call to a single provider."""
+        override = self._resolve_task_override(task)
+        provider_name = provider or self.primary_provider.value
+        if override and override.get("provider"):
+            provider_name = str(override["provider"])
+        model = model or (override or {}).get("model")
+        inst = self.get_provider(provider_name)
+        if inst is None:
+            raise ValueError(f"Provider '{provider_name}' is not available")
+        if self._budget_exhausted(inst):
+            raise RuntimeError(f"Daily LLM budget (${self.daily_budget_usd:.2f}) exhausted")
+        async for chunk in inst.stream(
+            messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout_s=timeout_s,
+        ):
+            yield chunk
+
+    async def generate_text_stream(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        fallback_chain: Optional[List[Any]] = None,
+        task: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        """Generate text stream with fallback chain; yields degradation text on total failure."""
+        messages: List[Message] = []
+        if system_prompt:
+            messages.append(Message(role="system", content=system_prompt))
+        messages.append(Message(role="user", content=prompt))
+        chain = self._resolve_chain(fallback_chain, task)
+        for provider_name in chain:
+            try:
+                inst = self.get_provider(provider_name)
+                if inst is None or self._budget_exhausted(inst):
+                    continue
+                async for chunk in self.stream(
+                    messages,
+                    provider=provider_name,
+                    task=task,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                ):
+                    yield chunk
+                return
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("LLM provider %s stream failed: %s", provider_name, exc)
+        logger.error("All LLM providers failed stream for prompt %r", prompt[:60])
+        yield DEGRADATION_TEXT
 
     async def generate_text(
         self,

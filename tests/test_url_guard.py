@@ -51,9 +51,7 @@ class TestValidateFetchUrl:
             validate_fetch_url("https://user:pass@example.com/jobs")
 
     def test_allow_private_hosts_opt_in(self):
-        assert validate_fetch_url(
-            "http://127.0.0.1:5800/jobs", allow_private_hosts=True
-        )
+        assert validate_fetch_url("http://127.0.0.1:5800/jobs", allow_private_hosts=True)
 
     def test_public_host_passes(self):
         # Unresolvable TLD: DNS boundary check falls through (offline-safe),

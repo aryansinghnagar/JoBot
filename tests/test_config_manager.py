@@ -1,6 +1,5 @@
 """Config manager + profiles YAML tests (FakeKeyring; no real keyring writes)."""
 
-from pathlib import Path
 from typing import Dict, Optional
 
 import pytest
@@ -12,7 +11,7 @@ from jobot.config.profile import (
     load_profile_config,
     profile_config_path,
 )
-from jobot.secrets import get_secret, set_secret
+from jobot.secrets import get_secret
 
 
 class FakeKeyring:

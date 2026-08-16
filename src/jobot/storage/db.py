@@ -6,7 +6,15 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterator, List, Optional
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
+from jobot.models.domain import (
+    AnswerBankRecord,
+    Application,
+    ApplicationStatus,
+    CandidateFact,
+    FormFieldMemoryRecord,
+    JobPosting,
+    TrustLevel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -542,3 +550,219 @@ class DatabaseManager:
                     }
                 )
         return entries
+
+    # -------------------------------------------------------------------
+    # Candidate Facts (UC-21 — Grounding & Truth System)
+    # -------------------------------------------------------------------
+
+    def save_candidate_fact(self, fact: CandidateFact) -> int:
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO candidate_facts
+                (profile_id, fact_type, fact_value, source, source_path,
+                 confidence, verified, verified_at, verified_by, created_at, superseded_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    fact.profile_id,
+                    fact.fact_type,
+                    fact.fact_value,
+                    fact.source,
+                    fact.source_path,
+                    fact.confidence,
+                    1 if fact.verified else 0,
+                    fact.verified_at.isoformat() if fact.verified_at else None,
+                    fact.verified_by,
+                    fact.created_at.isoformat(),
+                    fact.superseded_by,
+                ),
+            )
+            return int(cur.lastrowid or 0)
+
+    def list_candidate_facts(
+        self,
+        profile_id: str = "default",
+        fact_type: Optional[str] = None,
+        verified_only: bool = False,
+    ) -> List[CandidateFact]:
+        query = "SELECT * FROM candidate_facts WHERE profile_id = ? AND superseded_by IS NULL"
+        params: List[Any] = [profile_id]
+        if fact_type:
+            query += " AND fact_type = ?"
+            params.append(fact_type)
+        if verified_only:
+            query += " AND verified = 1"
+        query += " ORDER BY id"
+        with self._get_connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+            return [
+                CandidateFact(
+                    id=r["id"],
+                    profile_id=r["profile_id"],
+                    fact_type=r["fact_type"],
+                    fact_value=r["fact_value"],
+                    source=r["source"],
+                    source_path=r["source_path"],
+                    confidence=r["confidence"],
+                    verified=bool(r["verified"]),
+                    verified_at=datetime.fromisoformat(r["verified_at"])
+                    if r["verified_at"]
+                    else None,
+                    verified_by=r["verified_by"],
+                    created_at=datetime.fromisoformat(r["created_at"])
+                    if r["created_at"]
+                    else datetime.now(timezone.utc),
+                    superseded_by=r["superseded_by"],
+                )
+                for r in rows
+            ]
+
+    def verify_candidate_fact(self, fact_id: int, verified_by: str = "human") -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                "UPDATE candidate_facts SET verified = 1, verified_at = ?, verified_by = ? WHERE id = ?",
+                (datetime.now(timezone.utc).isoformat(), verified_by, fact_id),
+            )
+
+    # -------------------------------------------------------------------
+    # Answer Bank Operations (UC-26 — Persistent QA Memory)
+    # -------------------------------------------------------------------
+
+    def save_answer_bank_entry(self, entry: AnswerBankRecord) -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO answer_bank
+                (profile_id, question_hash, question_text, answer, source, used_count, last_used_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    entry.profile_id,
+                    entry.question_hash,
+                    entry.question_text,
+                    entry.answer,
+                    entry.source,
+                    entry.used_count,
+                    entry.last_used_at.isoformat() if entry.last_used_at else None,
+                    entry.created_at.isoformat(),
+                ),
+            )
+
+    def get_answer_bank_entry(
+        self, profile_id: str, question_hash: str
+    ) -> Optional[AnswerBankRecord]:
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM answer_bank WHERE profile_id = ? AND question_hash = ?",
+                (profile_id, question_hash),
+            ).fetchone()
+            if not row:
+                return None
+            return AnswerBankRecord(
+                id=row["id"],
+                profile_id=row["profile_id"],
+                question_hash=row["question_hash"],
+                question_text=row["question_text"],
+                answer=row["answer"],
+                source=row["source"],
+                used_count=row["used_count"],
+                last_used_at=datetime.fromisoformat(row["last_used_at"])
+                if row["last_used_at"]
+                else None,
+                created_at=datetime.fromisoformat(row["created_at"])
+                if row["created_at"]
+                else datetime.now(timezone.utc),
+            )
+
+    def record_answer_bank_use(self, profile_id: str, question_hash: str) -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE answer_bank
+                SET used_count = used_count + 1, last_used_at = ?
+                WHERE profile_id = ? AND question_hash = ?
+                """,
+                (datetime.now(timezone.utc).isoformat(), profile_id, question_hash),
+            )
+
+    def search_answer_bank(
+        self, profile_id: str = "default", query: str = ""
+    ) -> List[AnswerBankRecord]:
+        with self._get_connection() as conn:
+            if query:
+                rows = conn.execute(
+                    "SELECT * FROM answer_bank WHERE profile_id = ? AND question_text LIKE ? ORDER BY used_count DESC",
+                    (profile_id, f"%{query}%"),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM answer_bank WHERE profile_id = ? ORDER BY used_count DESC",
+                    (profile_id,),
+                ).fetchall()
+            return [
+                AnswerBankRecord(
+                    id=r["id"],
+                    profile_id=r["profile_id"],
+                    question_hash=r["question_hash"],
+                    question_text=r["question_text"],
+                    answer=r["answer"],
+                    source=r["source"],
+                    used_count=r["used_count"],
+                    last_used_at=datetime.fromisoformat(r["last_used_at"])
+                    if r["last_used_at"]
+                    else None,
+                    created_at=datetime.fromisoformat(r["created_at"])
+                    if r["created_at"]
+                    else datetime.now(timezone.utc),
+                )
+                for r in rows
+            ]
+
+    # -------------------------------------------------------------------
+    # Form Field Memory Operations (UC-26 — Persistent Field Memory)
+    # -------------------------------------------------------------------
+
+    def save_form_field_memory(self, record: FormFieldMemoryRecord) -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO form_field_memory
+                (profile_id, adapter_id, field_selector, field_label, field_type, value, confidence, last_used_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.profile_id,
+                    record.adapter_id,
+                    record.field_selector,
+                    record.field_label,
+                    record.field_type,
+                    record.value,
+                    record.confidence,
+                    (record.last_used_at or datetime.now(timezone.utc)).isoformat(),
+                ),
+            )
+
+    def get_form_field_memory(
+        self, profile_id: str, adapter_id: str, field_selector: str
+    ) -> Optional[FormFieldMemoryRecord]:
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM form_field_memory WHERE profile_id = ? AND adapter_id = ? AND field_selector = ?",
+                (profile_id, adapter_id, field_selector),
+            ).fetchone()
+            if not row:
+                return None
+            return FormFieldMemoryRecord(
+                id=row["id"],
+                profile_id=row["profile_id"],
+                adapter_id=row["adapter_id"],
+                field_selector=row["field_selector"],
+                field_label=row["field_label"],
+                field_type=row["field_type"],
+                value=row["value"],
+                confidence=row["confidence"],
+                last_used_at=datetime.fromisoformat(row["last_used_at"])
+                if row["last_used_at"]
+                else None,
+            )

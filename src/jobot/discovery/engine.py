@@ -12,6 +12,7 @@ from jobot.scrapers.careers import CareerPageScanner
 from jobot.scrapers.dedup import DedupService
 from jobot.scrapers.jobspy import JOBS_BOARDS, JobSpyAdapter
 from jobot.storage.db import DatabaseManager
+from jobot.discovery.matching_ladder import MatchingLadder, MatchingLadderResult
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,7 @@ class JobDiscoveryEngine:
         self.db = db or DatabaseManager()
         self.dedup = dedup or DedupService(db=self.db)
         self.config = config or ConfigManager()
+        self.matching_ladder = MatchingLadder(skill_extractor=self.skill_extractor)
 
     def _scraper_for(self, portal: str, companies: List[str]) -> Any:
         if portal in JOBS_BOARDS:
@@ -178,3 +180,18 @@ class JobDiscoveryEngine:
 
         matched_jobs.sort(key=lambda r: r.match_score, reverse=True)
         return matched_jobs
+
+    async def evaluate_ladder(
+        self,
+        posting: JobPosting,
+        profile: UserProfile,
+        target_location: str = "",
+        include_llm_stage: bool = True,
+    ) -> MatchingLadderResult:
+        """Run the 4-stage matching ladder on a job posting."""
+        return await self.matching_ladder.evaluate_ladder(
+            posting=posting,
+            profile=profile,
+            target_location=target_location,
+            include_llm_stage=include_llm_stage,
+        )

@@ -24,7 +24,9 @@ def harness_url():
     from tests.mock_linkedin.app import app
 
     server = threading.Thread(
-        target=lambda: app.run(host="127.0.0.1", port=HARNESS_PORT, debug=False, use_reloader=False),
+        target=lambda: app.run(
+            host="127.0.0.1", port=HARNESS_PORT, debug=False, use_reloader=False
+        ),
         daemon=True,
     )
     server.start()

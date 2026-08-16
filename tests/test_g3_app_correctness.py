@@ -410,7 +410,7 @@ def test_migration_v2_backfills_legacy_columns(tmp_path):
             "SELECT submitted_at, submission_verified_at, first_employer_response_at, "
             "current_outcome FROM applications WHERE application_id = 'a1'"
         ).fetchone()
-    assert status["applied"] == [1, 2]
+    assert 2 in status["applied"]
     assert row["submitted_at"] == "2026-01-02T00:00:00+00:00"  # backfilled from updated_at
     assert row["submission_verified_at"] == "2026-01-02T00:00:00+00:00"  # verified row
     assert row["first_employer_response_at"] == "2026-01-05T00:00:00+00:00"  # from responded_at

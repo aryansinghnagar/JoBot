@@ -36,7 +36,9 @@ def make_profile() -> UserProfile:
                 description="Built REST APIs in Python.",
             )
         ],
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
 
 
@@ -77,7 +79,9 @@ def test_url_builder_deterministic():
     assert url.startswith("https://www.linkedin.com/search/results/people/")
     assert "keywords=Priya+Sharma" in url
     assert "currentCompany=Acme+Labs" in url
-    assert url == builder.build_for_contact("Priya Sharma", company="Acme Labs", role="Staff Engineer")
+    assert url == builder.build_for_contact(
+        "Priya Sharma", company="Acme Labs", role="Staff Engineer"
+    )
 
 
 def test_url_builder_escapes():
@@ -109,7 +113,9 @@ async def test_dm_generation_template_fallback():
 @pytest.mark.asyncio
 async def test_dm_grounding_rejects_invented_facts():
     gen = DMGenerator(
-        router=FakeRouter(reply="Hi Priya, I previously worked at SpaceX (contact: me@nowhere.example). Call me!")
+        router=FakeRouter(
+            reply="Hi Priya, I previously worked at SpaceX (contact: me@nowhere.example). Call me!"
+        )
     )
     dm = await gen.draft("faang_senior", CONTACT, make_profile())
     assert dm.grounded is False

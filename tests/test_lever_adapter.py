@@ -4,7 +4,7 @@ import json
 
 import pytest
 from jobot.adapters.lever import LeverAdapter
-from jobot.models.domain import Application, PersonalInfo, UserProfile
+from jobot.models.domain import Application
 
 LEVER_POSTING = {
     "id": "abc123",

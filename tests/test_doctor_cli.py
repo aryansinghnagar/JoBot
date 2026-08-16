@@ -1,13 +1,11 @@
 """`jobot doctor` + `jobot config` CLI end-to-end tests (FakeKeyring)."""
 
-from pathlib import Path
 from typing import Dict, Optional
 
 import pytest
 from typer.testing import CliRunner
 
 from jobot.cli.main import app
-from jobot.secrets import set_secret
 
 runner = CliRunner()
 
@@ -38,8 +36,13 @@ def fake_keyring(monkeypatch):
     monkeypatch.setattr(keyring, "set_password", backend.set_password)
     monkeypatch.setattr(keyring, "delete_password", backend.delete_password)
     for key in (
-        "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "MISTRAL_API_KEY",
-        "OPENROUTER_API_KEY", "COHERE_API_KEY", "GOOGLE_CLOUD_PROJECT",
+        "GEMINI_API_KEY",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "MISTRAL_API_KEY",
+        "OPENROUTER_API_KEY",
+        "COHERE_API_KEY",
+        "GOOGLE_CLOUD_PROJECT",
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("JOBOT_DEFAULT_LLM_PROVIDER", raising=False)

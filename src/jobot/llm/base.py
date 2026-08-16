@@ -74,6 +74,47 @@ def http_get_json(
         return cast(Dict[str, Any], json.loads(resp.read().decode("utf-8")))
 
 
+async def http_post_sse_async(
+    url: str,
+    headers: Dict[str, str],
+    payload: Dict[str, Any],
+    timeout_s: float = 60.0,
+) -> AsyncIterator[str]:
+    """POST JSON with stream=True and asynchronously yield raw text lines."""
+    loop = asyncio.get_running_loop()
+    q: asyncio.Queue[Optional[Any]] = asyncio.Queue()
+
+    def _reader() -> None:
+        try:
+            with safe_urlopen(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                timeout=timeout_s,
+                method="POST",
+            ) as resp:
+                for line in resp:
+                    text = line.decode("utf-8").strip()
+                    if text:
+                        loop.call_soon_threadsafe(q.put_nowait, text)
+        except Exception as exc:  # noqa: BLE001
+            loop.call_soon_threadsafe(q.put_nowait, exc)
+        finally:
+            loop.call_soon_threadsafe(q.put_nowait, None)
+
+    fut = loop.run_in_executor(None, _reader)
+    try:
+        while True:
+            item = await q.get()
+            if item is None:
+                break
+            if isinstance(item, Exception):
+                raise item
+            yield item
+    finally:
+        await fut
+
+
 def estimate_tokens(text: str) -> int:
     """Rough token estimate (whitespace split) for cost tracking."""
     return max(1, len(text.split()))
@@ -104,7 +145,16 @@ class LLMProvider(ABC):
     ) -> LLMResponse: ...
 
     @abstractmethod
-    async def stream(self, messages: List[Message], **kwargs: Any) -> AsyncIterator[str]: ...
+    def stream(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: Optional[List[ToolSpec]] = None,
+        timeout_s: float = 60.0,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]: ...
 
     @abstractmethod
     def estimate_cost(

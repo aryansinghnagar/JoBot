@@ -174,7 +174,9 @@ class StubQA:
 @pytest.mark.asyncio
 async def test_easy_apply_happy_path():
     browser = FakeBrowserSession()
-    saga = EasyApplySaga(browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp()))
+    saga = EasyApplySaga(
+        browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp())
+    )
     result = await saga.run("https://linkedin.com/jobs/view/1", _profile())
 
     assert result.success is True
@@ -189,7 +191,9 @@ async def test_easy_apply_happy_path():
 async def test_easy_apply_missing_button():
     browser = FakeBrowserSession()
     browser.page.visible["button.jobs-apply-button"] = False
-    saga = EasyApplySaga(browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp()))
+    saga = EasyApplySaga(
+        browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp())
+    )
     result = await saga.run("https://linkedin.com/jobs/view/2", _profile())
 
     assert result.success is False
@@ -202,7 +206,9 @@ async def test_easy_apply_unknown_modal_state():
     browser = FakeBrowserSession()
     browser.page.visible["form"] = True
     browser.page.visible["button.jobs-apply-button"] = False
-    saga = EasyApplySaga(browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp()))
+    saga = EasyApplySaga(
+        browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp())
+    )
     result = await saga.run("https://linkedin.com/jobs/view/3", _profile())
 
     assert result.success is False
@@ -212,7 +218,9 @@ async def test_easy_apply_unknown_modal_state():
 @pytest.mark.asyncio
 async def test_easy_apply_respects_answer_overrides():
     browser = FakeBrowserSession()
-    saga = EasyApplySaga(browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp()))
+    saga = EasyApplySaga(
+        browser, qa_engine=StubQA(), evidence_dir=Path(__import__("tempfile").mkdtemp())
+    )
     await saga.run(
         "https://linkedin.com/jobs/view/4",
         _profile(),

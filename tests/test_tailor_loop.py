@@ -40,7 +40,13 @@ DRAFT_JSON = json.dumps(
 
 REVIEW_PASS_JSON = json.dumps(
     {
-        "scores": {"accuracy": 5, "relevance": 5, "ats_friendliness": 5, "truthfulness": 5, "length": 4},
+        "scores": {
+            "accuracy": 5,
+            "relevance": 5,
+            "ats_friendliness": 5,
+            "truthfulness": 5,
+            "length": 4,
+        },
         "issues": [],
         "verdict": "PASS",
     }
@@ -48,7 +54,13 @@ REVIEW_PASS_JSON = json.dumps(
 
 REVIEW_REVISE_JSON = json.dumps(
     {
-        "scores": {"accuracy": 3, "relevance": 3, "ats_friendliness": 3, "truthfulness": 3, "length": 3},
+        "scores": {
+            "accuracy": 3,
+            "relevance": 3,
+            "ats_friendliness": 3,
+            "truthfulness": 3,
+            "length": 3,
+        },
         "issues": ["Add more quantifiable impact"],
         "verdict": "REVISE",
     }
@@ -61,7 +73,9 @@ class FakeRouter:
         self.reviews = list(reviews or [])
         self.calls = []
 
-    async def generate_text(self, prompt, system_prompt=None, fallback_chain=None, task=None, **kwargs):
+    async def generate_text(
+        self, prompt, system_prompt=None, fallback_chain=None, task=None, **kwargs
+    ):
         self.calls.append(task)
         if task == "resume_tailoring":
             return self.drafts.pop(0) if self.drafts else DRAFT_JSON
@@ -78,7 +92,15 @@ def profile(**overrides) -> UserProfile:
         ),
         compensation=CompensationDetails(notice_period_days=30),
         skills=["Python", "FastAPI", "SQLite"],
-        experiences=[WorkExperience(title="Senior Engineer", company="Acme", start_date="2021", end_date="Present", description="Built APIs in Python")],
+        experiences=[
+            WorkExperience(
+                title="Senior Engineer",
+                company="Acme",
+                start_date="2021",
+                end_date="Present",
+                description="Built APIs in Python",
+            )
+        ],
     )
     kwargs.update(overrides)
     return UserProfile(**kwargs)
@@ -94,7 +116,11 @@ async def test_tailor_loop_grounded_result():
     assert result.iteration_count == 1
     assert "Python" in result.highlighted_skills
     assert result.tailored_experience == [
-        {"company": "Acme", "title": "Senior Engineer", "bullets": ["Built REST APIs in Python with FastAPI."]}
+        {
+            "company": "Acme",
+            "title": "Senior Engineer",
+            "bullets": ["Built REST APIs in Python with FastAPI."],
+        }
     ]
     assert result.cover_letter_text
 
@@ -139,7 +165,9 @@ def test_verify_detects_email_mismatch():
 @pytest.mark.asyncio
 async def test_degradation_fallback_stays_truthful():
     class DegradedRouter(FakeRouter):
-        async def generate_text(self, prompt, system_prompt=None, fallback_chain=None, task=None, **kwargs):
+        async def generate_text(
+            self, prompt, system_prompt=None, fallback_chain=None, task=None, **kwargs
+        ):
             return DEGRADATION_TEXT
 
     tailor = DocumentTailor(router=DegradedRouter())

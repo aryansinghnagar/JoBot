@@ -5,7 +5,6 @@ import types
 
 import pytest
 
-from jobot.models.domain import JobPosting
 from jobot.scrapers.exceptions import JobSpyNotInstalledError
 from jobot.scrapers.jobspy import JOBS_BOARDS, JobSpyAdapter, _cell
 

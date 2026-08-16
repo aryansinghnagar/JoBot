@@ -137,6 +137,5 @@ def test_dependency_universe_is_consistent() -> None:
     assert _REQUIRED_DISTS, "no required dependencies parsed from pyproject.toml"
     assert _OPTIONAL_DISTS, "no optional dependencies parsed from pyproject.toml"
     assert not (_REQUIRED_DISTS & _OPTIONAL_DISTS), (
-        "distributions declared both required and optional: "
-        f"{_REQUIRED_DISTS & _OPTIONAL_DISTS}"
+        f"distributions declared both required and optional: {_REQUIRED_DISTS & _OPTIONAL_DISTS}"
     )

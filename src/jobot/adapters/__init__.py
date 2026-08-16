@@ -1,4 +1,11 @@
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.cxs import (
+    AshbyAdapter,
+    BambooHRAdapter,
+    RecruiteeAdapter,
+    TeamtailorAdapter,
+    WorkableAdapter,
+)
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.adapters.indeed import IndeedAdapter
 from jobot.adapters.lever import LeverAdapter
@@ -20,23 +27,28 @@ from jobot.adapters.registry import AdapterRegistry, infer_site
 from jobot.adapters.workday import WorkdayAdapter
 
 __all__ = [
-    "SiteAdapter",
     "AdapterRegistry",
-    "infer_site",
+    "AshbyAdapter",
+    "BambooHRAdapter",
+    "CutshortAdapter",
+    "FounditAdapter",
+    "GlassdoorAdapter",
+    "GreenhouseAdapter",
+    "HiristAdapter",
+    "IndeedAdapter",
+    "InstahyreAdapter",
+    "LeverAdapter",
+    "LinkedInAdapter",
     "MockATSAdapter",
     "NaukriAdapter",
-    "LinkedInAdapter",
-    "IndeedAdapter",
-    "GreenhouseAdapter",
-    "LeverAdapter",
-    "WorkdayAdapter",
-    "GlassdoorAdapter",
-    "ZipRecruiterAdapter",
+    "RecruiteeAdapter",
     "ShineAdapter",
-    "FounditAdapter",
-    "HiristAdapter",
-    "InstahyreAdapter",
-    "CutshortAdapter",
-    "WellfoundAdapter",
+    "SiteAdapter",
     "SmartRecruitersAdapter",
+    "TeamtailorAdapter",
+    "WellfoundAdapter",
+    "WorkableAdapter",
+    "WorkdayAdapter",
+    "ZipRecruiterAdapter",
+    "infer_site",
 ]

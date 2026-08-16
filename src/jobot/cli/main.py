@@ -103,6 +103,37 @@ def list_sites() -> None:
         console.print(f"  • {name}")
 
 
+@app.command("site-health")
+def site_health_cmd() -> None:
+    """Display real-time health and availability metrics for all supported job portals and ATS adapters (UC-13)."""
+    from jobot.stealth.site_health import SiteHealthMonitor
+
+    monitor = SiteHealthMonitor()
+    table = Table(title="JoBot Portal & ATS Site Health")
+    table.add_column("Portal", style="cyan bold")
+    table.add_column("Status", style="bold")
+    table.add_column("Total Requests", justify="right")
+    table.add_column("Success Rate", justify="right")
+    table.add_column("Consecutive Fails", justify="right")
+    table.add_column("Last Error", style="dim")
+
+    for site in AdapterRegistry.list_supported_sites():
+        st = monitor.get_status(site)
+        status_color = (
+            "green" if st.status == "HEALTHY" else ("yellow" if st.status == "DEGRADED" else "red")
+        )
+        table.add_row(
+            site,
+            f"[{status_color}]{st.status}[/{status_color}]",
+            str(st.total_requests),
+            f"{st.success_rate * 100:.1f}%",
+            str(st.consecutive_failures),
+            st.last_error or "None",
+        )
+
+    console.print(table)
+
+
 @app.command("setup")
 def setup() -> None:
     """Run initial setup wizard and system diagnostics."""
@@ -263,6 +294,40 @@ def profile_cmd(
         console.print(f"Skills: {', '.join(p.skills)}")
 
 
+@app.command("import-resume")
+def import_resume_cmd(
+    resume_file: str = typer.Argument(..., help="Path to resume file (PDF or text)"),
+    profile_id: str = typer.Option("default", "--profile-id", help="Profile ID to update"),
+    save_profile: bool = typer.Option(
+        True, "--save/--no-save", help="Save extracted profile to encrypted vault"
+    ),
+) -> None:
+    """Ingest a resume file, construct candidate UserProfile, and seed CandidateTruthStore (UC-25)."""
+    from jobot.documents.importer import ResumeImporter
+
+    importer = ResumeImporter()
+    path = Path(resume_file)
+    if not path.exists():
+        console.print(f"[bold red]Resume file not found: {path}[/bold red]")
+        raise typer.Exit(1)
+
+    console.print(f"[cyan]Ingesting resume from [bold]{path.name}[/bold]...[/cyan]")
+    profile, fact_count = asyncio.run(importer.import_and_seed(path, profile_id=profile_id))
+
+    if save_profile:
+        vault = CredentialVault()
+        profile_dir = Path.home() / ".jobot" / "profiles"
+        profile_path = profile_dir / f"{profile_id}.enc"
+        vault.save_encrypted_profile(profile, profile_path)
+        console.print(f"[green]Encrypted profile saved to {profile_path}[/green]")
+
+    console.print(
+        f"[bold green][OK] Ingested candidate profile ({profile.personal_info.first_name} {profile.personal_info.last_name}) "
+        f"and seeded {fact_count} ground truth facts into candidate_facts![/bold green]"
+    )
+    console.print(f"Skills: {', '.join(profile.skills[:10])}")
+
+
 @app.command("continuous-campaign")
 def continuous_campaign_cmd(
     goal: int = typer.Option(1000, "--goal", help="Target total applications goal (default: 1000)"),
@@ -374,11 +439,12 @@ def auto_apply_cmd(
                             str(approval_id), _AS.APPROVED, decided_by="cli-human"
                         )
                     asyncio.run(pipeline.submit_and_verify(app_res))
-                    if app_res.status in (ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED):
+                    final_status: ApplicationStatus = getattr(app_res, "status")
+                    if final_status in (ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED):
                         console.print(
                             f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n"
                         )
-                    elif app_res.status == ApplicationStatus.SUBMISSION_UNKNOWN:
+                    elif final_status == ApplicationStatus.SUBMISSION_UNKNOWN:
                         console.print(
                             "[bold yellow][!] Submission outcome UNKNOWN — reconciliation "
                             "will verify without re-submitting (jobot approval/tracker).[/bold yellow]\n"

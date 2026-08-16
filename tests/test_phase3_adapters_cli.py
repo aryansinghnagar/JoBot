@@ -2,7 +2,6 @@
 
 import base64
 import json
-import urllib.request
 
 import pytest
 from jobot.adapters.greenhouse import GreenhouseAdapter
@@ -65,7 +64,9 @@ async def test_greenhouse_submit_attaches_resume(monkeypatch, tmp_path):
 
     captured = {}
 
-    def fake_post(url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False):
+    def fake_post(
+        url, *, data=None, headers=None, timeout=10.0, method=None, allow_private_hosts=False
+    ):
         captured["body"] = json.loads(data.decode("utf-8"))
         return FakeResponse({"id": "gh_app_1"}, status=201)
 
@@ -83,8 +84,12 @@ async def test_greenhouse_submit_attaches_resume(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_linkedin_adapter_is_honest():
     adapter = LinkedInAdapter()
-    job = JobPosting(job_id="x", site="linkedin", url="https://linkedin.com/jobs/view/1", title="t", company="c")
-    profile = UserProfile(profile_id="p", personal_info=PersonalInfo(first_name="A", email="a@b.com"))
+    job = JobPosting(
+        job_id="x", site="linkedin", url="https://linkedin.com/jobs/view/1", title="t", company="c"
+    )
+    profile = UserProfile(
+        profile_id="p", personal_info=PersonalInfo(first_name="A", email="a@b.com")
+    )
 
     with pytest.raises(NotImplementedError):
         await adapter.parse_job_posting("https://linkedin.com/jobs/view/1")
@@ -163,7 +168,9 @@ def test_cli_resume_ats_check(tmp_path, monkeypatch):
                 description="Maintained tooling and reporting dashboards.",
             ),
         ],
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
     resumes_dir = tmp_path / ".jobot" / "resumes"
     ResumeExporter().export_resume_pdf(profile, engine="fallback", output_dir=resumes_dir)

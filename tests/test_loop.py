@@ -2,14 +2,12 @@
 
 import pytest
 from jobot.asp.orchestrator import ApplyResult
-from jobot.digest.generator import Digest
 from jobot.discovery.engine import JobMatchResult
 from jobot.models.domain import (
     CompensationDetails,
     Education,
     JobPosting,
     PersonalInfo,
-    TrustLevel,
     UserProfile,
     WorkExperience,
 )
@@ -37,7 +35,9 @@ def make_profile() -> UserProfile:
                 description="Built REST APIs in Python.",
             )
         ],
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
 
 

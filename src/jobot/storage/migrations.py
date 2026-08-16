@@ -20,7 +20,7 @@ import inspect
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable
+from typing import Any, Callable
 
 
 def _now() -> str:
@@ -274,6 +274,69 @@ def _apply_002(conn: sqlite3.Connection) -> None:
     )
 
 
+def _apply_003(conn: sqlite3.Connection) -> None:
+    """WS5 memory + candidate-truth tables (MASTER_PLAN_EXPANDED.md §13.2).
+
+    candidate_facts powers the grounding verifier (UC-21: no unsupported
+    claims in generated documents); answer_bank and form_field_memory give
+    the form-filling path persistent, deduplicated memory (UC-26).
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS candidate_facts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id TEXT NOT NULL,
+            fact_type TEXT NOT NULL,
+            fact_value TEXT NOT NULL,
+            source TEXT NOT NULL,
+            source_path TEXT,
+            confidence REAL DEFAULT 1.0,
+            verified INTEGER DEFAULT 0,
+            verified_at TEXT,
+            verified_by TEXT,
+            created_at TEXT,
+            superseded_by INTEGER
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_candidate_facts_profile "
+        "ON candidate_facts(profile_id, fact_type)"
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS answer_bank (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id TEXT NOT NULL,
+            question_hash TEXT NOT NULL,
+            question_text TEXT NOT NULL,
+            answer TEXT NOT NULL,
+            source TEXT NOT NULL,
+            used_count INTEGER DEFAULT 0,
+            last_used_at TEXT,
+            created_at TEXT,
+            UNIQUE(profile_id, question_hash)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS form_field_memory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id TEXT NOT NULL,
+            adapter_id TEXT NOT NULL,
+            field_selector TEXT NOT NULL,
+            field_label TEXT,
+            field_type TEXT,
+            value TEXT NOT NULL,
+            confidence REAL DEFAULT 1.0,
+            last_used_at TEXT,
+            UNIQUE(profile_id, adapter_id, field_selector)
+        )
+        """
+    )
+
+
 def _source_digest(func: Callable[[sqlite3.Connection], None]) -> str:
     """Formatting-independent digest of a migration's source.
 
@@ -303,6 +366,7 @@ class Migration:
 MIGRATIONS: tuple[Migration, ...] = (
     Migration(version=1, name="durable_execution_core", apply=_apply_001),
     Migration(version=2, name="application_timestamp_split", apply=_apply_002),
+    Migration(version=3, name="candidate_truth_and_answer_bank", apply=_apply_003),
 )
 
 
@@ -358,7 +422,7 @@ def run_migrations(conn: sqlite3.Connection) -> list[int]:
     return applied_now
 
 
-def migration_status(conn: sqlite3.Connection) -> dict:
+def migration_status(conn: sqlite3.Connection) -> dict[str, Any]:
     """Report applied/pending migrations for `jobot db status`."""
     applied = _applied_versions(conn)
     return {

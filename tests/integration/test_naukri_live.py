@@ -53,7 +53,9 @@ def harness_url():
         return DASHBOARD_HTML
 
     server = threading.Thread(
-        target=lambda: app.run(host="127.0.0.1", port=HARNESS_PORT, debug=False, use_reloader=False),
+        target=lambda: app.run(
+            host="127.0.0.1", port=HARNESS_PORT, debug=False, use_reloader=False
+        ),
         daemon=True,
     )
     server.start()
@@ -96,7 +98,9 @@ async def test_live_submit_no_button_fails_honestly(harness_url):
         return "<html><body><h1>Job expired</h1></body></html>"
 
     server = threading.Thread(
-        target=lambda: no_button.run(host="127.0.0.1", port=HARNESS_PORT + 1, debug=False, use_reloader=False),
+        target=lambda: no_button.run(
+            host="127.0.0.1", port=HARNESS_PORT + 1, debug=False, use_reloader=False
+        ),
         daemon=True,
     )
     server.start()

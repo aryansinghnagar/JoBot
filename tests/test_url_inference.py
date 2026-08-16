@@ -34,6 +34,11 @@ KNOWN_GOOD = [
     ("https://www.instahyre.com/search-jobs/", "instahyre"),
     ("https://cutshort.io/jobs", "cutshort"),
     ("https://wellfound.com/jobs", "wellfound"),
+    ("https://jobs.ashbyhq.com/acme/123", "ashby"),
+    ("https://apply.workable.com/spotify/j/123", "workable"),
+    ("https://hotjar.recruitee.com/o/123", "recruitee"),
+    ("https://jobs.teamtailor.com/jobs/123", "teamtailor"),
+    ("https://stripe.bamboohr.com/careers/123", "bamboohr"),
     # Scheme-less input that still looks like a host is retried with https://
     ("boards.greenhouse.io/acme/jobs/123", "greenhouse"),
     ("jobs.lever.co/acme/1234", "lever"),
@@ -54,6 +59,10 @@ ADVERSARIAL = [
     "https://greenhouse.io.evil.com/jobs",
     "https://fakelinkedin.com/jobs",
     "https://linkedin.com.evil.at/jobs",
+    "https://ashbyhq.com.evil.com/jobs",
+    "https://evil-workable.com/jobs",
+    "https://notrecruitee.com/jobs",
+    "https://bamboohr.com.attacker.com/careers",
     # suffix smuggled in the path or query
     "https://evil.com/jobs?next=https://jobs.lever.co",
     "https://evil.com/redirect/https%3A%2F%2Fboards.greenhouse.io",
@@ -65,7 +74,6 @@ ADVERSARIAL = [
     "https://jobs.lever.co.evil.com.acme.dev/jobs",
     "https://myworkdayjobs.com.evil.io/careers",
     # unknown-but-plausible hosts
-    "https://jobs.ashbyhq.com/acme/123",
     "https://example.com/careers",
     "https://myworkdays.com/jobs",
     # not a URL at all

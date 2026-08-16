@@ -1,8 +1,5 @@
 """Phase 4 WS4: CareerAnalytics — skill-gap + salary benchmarking."""
 
-import json
-import os
-
 import pytest
 from jobot.analytics.salary import SalaryBenchmarker
 from jobot.analytics.skill_gap import SkillGapAnalyzer
@@ -40,7 +37,9 @@ def make_profile() -> UserProfile:
                 description="Built REST APIs in Python.",
             )
         ],
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
 
 

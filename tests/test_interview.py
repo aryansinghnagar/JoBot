@@ -1,11 +1,9 @@
 """Phase 4 WS3: InterviewPrep — mock sessions, STAR coach, CLI."""
 
-import json
-
 import pytest
 from jobot.interview.banks import QuestionBank
 from jobot.interview.coach import MockInterviewer, STARCoach, _rule_based_score
-from jobot.interview.sessions import SessionStore, new_session
+from jobot.interview.sessions import SessionStore
 from jobot.llm.router import DEGRADATION_TEXT
 from jobot.models.domain import (
     CompensationDetails,
@@ -38,7 +36,9 @@ def make_profile() -> UserProfile:
                 description="Built REST APIs in Python with FastAPI.",
             )
         ],
-        education=[Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)],
+        education=[
+            Education(degree="B.Tech", field_of_study="CS", institution="IIT", start_year=2017)
+        ],
     )
 
 
@@ -90,7 +90,9 @@ async def test_mock_interviewer_session_flow(tmp_path):
     assert session.status == "active"
     assert store.load(session.session_id) is not None
 
-    turn = await interviewer.answer(session, "I led a migration of our API to FastAPI.", make_profile())
+    turn = await interviewer.answer(
+        session, "I led a migration of our API to FastAPI.", make_profile()
+    )
     assert turn.star_score > 0.5
     assert turn.question_id not in session.asked_ids[: session.asked_ids.index(turn.question_id)]
     saved = store.load(session.session_id)
@@ -110,7 +112,9 @@ async def test_star_coach_degrades_gracefully(tmp_path):
         coach=STARCoach(router=FakeRouter(degrade=True)),
     )
     session = interviewer.start("behavioral")
-    turn = await interviewer.answer(session, "I built a dashboard that reduced load time by half.", make_profile())
+    turn = await interviewer.answer(
+        session, "I built a dashboard that reduced load time by half.", make_profile()
+    )
     assert turn.star_score > 0.0
     assert turn.feedback
 
@@ -123,7 +127,9 @@ async def test_star_coach_grounding_gate_rejects_invented_facts(tmp_path):
         coach=STARCoach(router=FakeRouter()),
     )
     session = interviewer.start("behavioral")
-    turn = await interviewer.answer(session, "My email is fake@nowhere.example and I was CTO at SpaceX.", make_profile())
+    turn = await interviewer.answer(
+        session, "My email is fake@nowhere.example and I was CTO at SpaceX.", make_profile()
+    )
     assert turn.star_score == 0.0
     assert "grounding" in turn.feedback.lower()
 

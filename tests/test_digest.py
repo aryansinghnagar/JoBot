@@ -1,7 +1,6 @@
 """Phase 4 WS2: Weekly digest + shared email sender."""
 
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
 
 import pytest
 from jobot.digest.generator import DigestGenerator
