@@ -7,6 +7,9 @@ import { Apply } from "../src/views/Apply.jsx";
 import { Controls } from "../src/views/Controls.jsx";
 import { Settings } from "../src/views/Settings.jsx";
 
+import { Approvals } from "../src/views/Approvals.jsx";
+import { Health } from "../src/views/Health.jsx";
+
 function stubRpc() {
   return new Proxy(
     {},
@@ -26,6 +29,8 @@ describe("GUI shell", () => {
       "Dashboard",
       "Discover",
       "Apply",
+      "Approvals",
+      "Health",
       "Controls",
       "Settings",
     ]) {
@@ -63,6 +68,16 @@ describe("views render without a live sidecar", () => {
     const html = renderToString(<Apply rpc={stubRpc()} job={job} />);
     expect(html).toContain("Engineer");
     expect(html).toContain("Dry run");
+  });
+
+  it("Approvals", () => {
+    const html = renderToString(<Approvals rpc={stubRpc()} />);
+    expect(html).toContain("Pending Human Approvals");
+  });
+
+  it("Health", () => {
+    const html = renderToString(<Health rpc={stubRpc()} />);
+    expect(html).toContain("Portal &amp; ATS Site Health");
   });
 
   it("Controls", () => {

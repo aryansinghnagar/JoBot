@@ -184,6 +184,35 @@ def db_migrate() -> None:
         console.print("[green]Database is up to date.[/green]")
 
 
+@db_app.command("backup")
+def db_backup(
+    out: Optional[str] = typer.Option(None, "--out", help="Output path for backup database file"),
+) -> None:
+    """Create a hot backup of the SQLite database (UC-44)."""
+    db = DatabaseManager()
+    target = Path(out) if out else None
+    backup_path = db.backup(target)
+    console.print(
+        f"[bold green][OK] Database backed up to: [blue]{backup_path}[/blue][/bold green]"
+    )
+
+
+@db_app.command("restore")
+def db_restore(
+    source: str = typer.Argument(..., help="Path to backup database file"),
+) -> None:
+    """Restore SQLite database from a backup file (UC-44)."""
+    db = DatabaseManager()
+    src_path = Path(source)
+    if not src_path.exists():
+        console.print(f"[bold red]Backup file does not exist: {src_path}[/bold red]")
+        raise typer.Exit(1)
+    db.restore(src_path)
+    console.print(
+        f"[bold green][OK] Database restored successfully from: [blue]{src_path}[/blue][/bold green]"
+    )
+
+
 @task_app.command("list")
 def task_list(status: Optional[str] = None) -> None:
     """List durable tasks, optionally filtered by status."""

@@ -93,6 +93,12 @@ class StdioSidecarServer:
             "config_set": self._config_set,
             "config_unset": self._config_unset,
             "traces": self._traces,
+            "approvals_list": self._approvals_list,
+            "approvals_decide": self._approvals_decide,
+            "evidence_manifest": self._evidence_manifest,
+            "site_health": self._site_health,
+            "candidate_facts": self._candidate_facts,
+            "import_resume": self._import_resume,
         }
 
     # -- dependency resolution ----------------------------------------------
@@ -424,3 +430,118 @@ class StdioSidecarServer:
             if spans:
                 runs.append({"run_id": run_id, "span_count": len(spans), "spans": spans[:50]})
         return {"runs": runs}
+
+    def _approvals_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        from jobot.execution.engine import ApprovalStatus as _AS
+        from jobot.execution.engine import DurableTaskEngine as _DTE
+
+        db = self._get_db()
+        engine = _DTE(db)
+        status_str = str(params.get("status", "PENDING")).upper()
+        status_enum = _AS(status_str) if status_str in [s.value for s in _AS] else _AS.PENDING
+        approvals = engine.list_approvals(status=status_enum)
+        return {
+            "approvals": [
+                {
+                    "id": a.id,
+                    "task_id": a.task_id,
+                    "application_id": a.application_id,
+                    "action_type": a.action_type,
+                    "risk_level": a.risk_level,
+                    "requested_by": a.requested_by,
+                    "status": a.status.value,
+                    "requested_at": a.requested_at,
+                    "expires_at": a.expires_at,
+                    "decided_at": a.decided_at,
+                    "decided_by": a.decided_by,
+                    "decision_reason": a.decision_reason,
+                }
+                for a in approvals
+            ]
+        }
+
+    def _approvals_decide(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        from jobot.execution.engine import ApprovalStatus as _AS
+        from jobot.execution.engine import DurableTaskEngine as _DTE
+
+        approval_id = params.get("approval_id")
+        decision_str = str(params.get("decision", "APPROVED")).upper()
+        decided_by = params.get("decided_by", "gui-human")
+        reason = params.get("reason", "")
+        if not approval_id:
+            raise ValueError("Provide 'approval_id'")
+        decision = _AS(decision_str)
+        db = self._get_db()
+        engine = _DTE(db)
+        rec = engine.decide_approval(
+            str(approval_id), decision, decided_by=str(decided_by), reason=str(reason)
+        )
+        return {
+            "id": rec.id,
+            "status": rec.status.value,
+            "decided_at": rec.decided_at,
+            "decided_by": rec.decided_by,
+        }
+
+    def _evidence_manifest(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        app_id = params.get("application_id")
+        if not app_id:
+            raise ValueError("Provide 'application_id'")
+        manifest_file = Path.home() / ".jobot" / "evidence" / str(app_id) / "manifest.json"
+        if not manifest_file.exists():
+            return {"found": False, "manifest": None}
+        try:
+            data = json.loads(manifest_file.read_text(encoding="utf-8"))
+            return {"found": True, "manifest": data}
+        except Exception as exc:  # noqa: BLE001
+            return {"found": False, "error": str(exc)}
+
+    def _site_health(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        from jobot.stealth.site_health import SiteHealthMonitor
+
+        monitor = SiteHealthMonitor()
+        sites = AdapterRegistry.list_supported_sites()
+        return {
+            "sites": [
+                {
+                    "site": s,
+                    "status": monitor.get_status(s).status,
+                    "success_count": monitor.get_status(s).success_count,
+                    "failure_count": monitor.get_status(s).failure_count,
+                    "consecutive_failures": monitor.get_status(s).consecutive_failures,
+                    "success_rate": monitor.get_status(s).success_rate,
+                    "avg_latency_ms": monitor.get_status(s).avg_latency_ms,
+                    "last_error": monitor.get_status(s).last_error,
+                }
+                for s in sites
+            ]
+        }
+
+    def _candidate_facts(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        profile_id = params.get("profile_id", "default")
+        db = self._get_db()
+        facts = db.list_candidate_facts(profile_id=str(profile_id))
+        return {
+            "profile_id": profile_id,
+            "facts": [f.model_dump() for f in facts],
+        }
+
+    def _import_resume(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        file_path_str = params.get("file_path")
+        profile_id = params.get("profile_id", "default")
+        if not file_path_str:
+            raise ValueError("Provide 'file_path'")
+        from jobot.documents.importer import ResumeImporter
+
+        importer = ResumeImporter(db=self._get_db())
+        p = Path(file_path_str)
+        if not p.exists():
+            raise FileNotFoundError(f"Resume file not found: {p}")
+        profile, count = asyncio.run(importer.import_and_seed(p, profile_id=str(profile_id)))
+        return {
+            "profile_id": profile.profile_id,
+            "name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}",
+            "email": profile.personal_info.email,
+            "skills": profile.skills,
+            "facts_seeded": count,
+        }

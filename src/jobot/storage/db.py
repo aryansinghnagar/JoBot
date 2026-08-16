@@ -766,3 +766,29 @@ class DatabaseManager:
                 if row["last_used_at"]
                 else None,
             )
+
+    def backup(self, target_path: Optional[Path] = None) -> Path:
+        """Create an atomic hot backup of SQLite database via sqlite3 backup API (UC-44)."""
+        if target_path is None:
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            target_path = self.db_path.parent / f"jobot_backup_{ts}.db"
+        target_path = Path(target_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with self._get_connection() as src_conn:
+            dst_conn = sqlite3.connect(target_path)
+            try:
+                src_conn.backup(dst_conn)
+            finally:
+                dst_conn.close()
+        if os.name == "posix":
+            os.chmod(target_path, 0o600)
+        return target_path
+
+    def restore(self, source_path: Path) -> None:
+        """Restore SQLite database from backup file (UC-44)."""
+        source_path = Path(source_path)
+        if not source_path.exists():
+            raise FileNotFoundError(f"Backup file not found: {source_path}")
+        with sqlite3.connect(source_path) as src_conn:
+            with self._get_connection() as dst_conn:
+                src_conn.backup(dst_conn)

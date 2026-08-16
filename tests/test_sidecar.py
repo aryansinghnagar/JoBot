@@ -396,3 +396,16 @@ def test_sidecar_traces(monkeypatch, tmp_path):
     assert len(res["result"]["runs"]) == 1
     assert res["result"]["runs"][0]["run_id"] == "run_abc"
     assert res["result"]["runs"][0]["spans"][0]["name"] == "apply"
+
+
+def test_sidecar_site_health(monkeypatch, tmp_path):
+    server = _server(monkeypatch, tmp_path)
+    res = _call(server, "site_health", {})
+    assert "sites" in res["result"]
+    assert any(s["site"] == "greenhouse" for s in res["result"]["sites"])
+
+
+def test_sidecar_evidence_manifest(monkeypatch, tmp_path):
+    server = _server(monkeypatch, tmp_path)
+    res = _call(server, "evidence_manifest", {"application_id": "nonexistent_app"})
+    assert res["result"]["found"] is False
