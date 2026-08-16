@@ -64,10 +64,10 @@ def sidecar_cmd() -> None:
 @app.command("profile")
 def profile_cmd(
     action: str = typer.Argument("show", help="Action: 'show', 'init'"),
-    first_name: str = typer.Option("Rahul", "--first-name", help="Candidate First Name"),
-    last_name: str = typer.Option("Sharma", "--last-name", help="Candidate Last Name"),
-    email: str = typer.Option("rahul.sharma@example.com", "--email", help="Candidate Email"),
-    phone: str = typer.Option("+919876543210", "--phone", help="Candidate Phone"),
+    first_name: str = typer.Option("", "--first-name", help="Candidate First Name"),
+    last_name: str = typer.Option("", "--last-name", help="Candidate Last Name"),
+    email: str = typer.Option("", "--email", help="Candidate Email"),
+    phone: str = typer.Option("", "--phone", help="Candidate Phone"),
 ) -> None:
     """Manage candidate profile and vault encryption."""
     vault = CredentialVault()
@@ -131,15 +131,10 @@ def auto_apply_cmd(
     profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
 
     if not profile_path.exists():
-        console.print("[yellow]Profile missing. Creating default profile for discovery...[/yellow]")
-        p = UserProfile(
-            profile_id="default",
-            personal_info=PersonalInfo(first_name="Rahul", last_name="Sharma", email="rahul.sharma@example.com", phone="+919876543210"),
-            skills=["Python", "FastAPI", "SQLite", "REST API"],
-        )
-        vault.save_encrypted_profile(p, profile_path)
-    else:
-        p = vault.load_encrypted_profile(profile_path)
+        console.print("[bold red][ERROR] Candidate profile missing.[/bold red]")
+        console.print("[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]")
+        raise typer.Exit(code=1)
+    p = vault.load_encrypted_profile(profile_path)
 
     portal_list = [pt.strip() for pt in portals.split(",") if pt.strip()]
     discovery = JobDiscoveryEngine(active_portals=portal_list)
@@ -201,15 +196,10 @@ def run_cmd(
     profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
 
     if not profile_path.exists():
-        console.print("[yellow]Profile missing. Creating default profile for run...[/yellow]")
-        p = UserProfile(
-            profile_id="default",
-            personal_info=PersonalInfo(first_name="Rahul", last_name="Sharma", email="rahul.sharma@example.com", phone="+919876543210"),
-            compensation=CompensationDetails(current_ctc_inr=1200000, expected_ctc_inr=1800000, notice_period_days=30),
-        )
-        vault.save_encrypted_profile(p, profile_path)
-    else:
-        p = vault.load_encrypted_profile(profile_path)
+        console.print("[bold red][ERROR] Candidate profile missing.[/bold red]")
+        console.print("[yellow]Please initialize your candidate profile first using: [bold blue]jobot profile init[/bold blue][/yellow]")
+        raise typer.Exit(code=1)
+    p = vault.load_encrypted_profile(profile_path)
 
     try:
         adapter = get_adapter(site)
