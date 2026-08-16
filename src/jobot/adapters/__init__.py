@@ -16,12 +16,13 @@ from jobot.adapters.more_adapters import (
     ZipRecruiterAdapter,
 )
 from jobot.adapters.naukri import NaukriAdapter
-from jobot.adapters.registry import AdapterRegistry
+from jobot.adapters.registry import AdapterRegistry, infer_site
 from jobot.adapters.workday import WorkdayAdapter
 
 __all__ = [
     "SiteAdapter",
     "AdapterRegistry",
+    "infer_site",
     "MockATSAdapter",
     "NaukriAdapter",
     "LinkedInAdapter",

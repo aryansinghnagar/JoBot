@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.prompt import Confirm
 from rich.table import Table
 
-from jobot.adapters import AdapterRegistry, SiteAdapter
+from jobot.adapters import AdapterRegistry, SiteAdapter, infer_site
 from jobot.adapters.naukri.login import NaukriLoginFlow
 from jobot.ai.qa_engine import QAEngine
 from jobot.asp.orchestrator import ApplyOrchestrator
@@ -56,28 +56,6 @@ test_logger = ManualTestLogger()
 
 def get_adapter(site: str) -> SiteAdapter:
     return AdapterRegistry.get_adapter(site)
-
-
-def infer_site(url: str) -> str:
-    """Best-effort site inference from a job URL."""
-    lowered = url.lower()
-    if "lever.co" in lowered:
-        return "lever"
-    if "greenhouse.io" in lowered:
-        return "greenhouse"
-    if "linkedin.com" in lowered:
-        return "linkedin"
-    if "naukri.com" in lowered:
-        return "naukri"
-    if "indeed.com" in lowered:
-        return "indeed"
-    if "jobs.ashbyhq.com" in lowered:
-        return "ashby"
-    if "smartrecruiters.com" in lowered:
-        return "smartrecruiters"
-    if "boards.greenhouse.io" in lowered:
-        return "greenhouse"
-    return "greenhouse"
 
 
 def _resolve_job(
@@ -1696,118 +1674,45 @@ def config_cmd(
 @app.command("doctor")
 def doctor_cmd() -> None:
     """Diagnose environment: keyring, storage, profile, and LLM providers."""
-    checks: list[tuple[str, bool, str]] = []
-    all_ok = True
+    from jobot.doctor import run_doctor_checks
 
-    py_ok = sys.version_info >= (3, 11)
-    checks.append(("Python >= 3.11", py_ok, f"{sys.version.split()[0]}"))
-
-    try:
-        import keyring
-
-        backend = keyring.get_keyring()
-        backend_name = backend.__class__.__name__
-        keyring_ok = "fail" not in backend_name.lower() and "null" not in backend_name.lower()
-        checks.append(("OS keyring", keyring_ok, backend_name))
-    except Exception as exc:  # noqa: BLE001
-        checks.append(("OS keyring", False, str(exc)))
-
-    try:
-        db = DatabaseManager()
-        db_ok = True
-        checks.append(("SQLite database", db_ok, str(db.db_path)))
-    except Exception as exc:  # noqa: BLE001
-        checks.append(("SQLite database", False, str(exc)))
-
-    try:
-        vault = CredentialVault()
-        checks.append(("Encryption vault", True, str(vault.key_dir)))
-    except Exception as exc:  # noqa: BLE001
-        checks.append(("Encryption vault", False, str(exc)))
-
-    profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
-    profile_ok = profile_path.exists()
-    checks.append(
-        (
-            "Profile (encrypted)",
-            profile_ok,
-            str(profile_path) if profile_ok else "missing - run 'jobot profile init'",
-        )
-    )
-
-    engine_ok = tex_engine_available()
-    checks.append(
-        (
-            "LaTeX engine (lualatex/xelatex)",
-            True,
-            "available" if engine_ok else "not found - reportlab fallback will be used",
-        )
-    )
-    poppler_ok = pdftotext_available()
-    checks.append(
-        (
-            "pdftotext (poppler)",
-            True,
-            "available" if poppler_ok else "not found - pdfminer fallback will be used",
-        )
-    )
-    checks.append(("PDF rendering", True, "reportlab (pure python) always available"))
-
-    router = ModelRouter(daily_budget_usd=load_llm_settings().daily_cost_cap_usd)
-    provider_rows: list[tuple[str, bool, str]] = []
-    for name in PROVIDER_REGISTRY:
-        configured = name in router.list_configured_providers()
-        reachable = asyncio.run(router.health_check(name)) if configured else False
-        provider_rows.append(
-            (
-                name,
-                configured and reachable,
-                "configured + reachable"
-                if reachable
-                else ("configured" if configured else "not configured"),
-            )
-        )
-
-    any_provider = any(configured for _, configured, _ in provider_rows)
-    checks.append(
-        (
-            "LLM provider (>= 1 configured)",
-            any_provider,
-            f"{sum(1 for _, c, _ in provider_rows if c)}/{len(provider_rows)}",
-        )
-    )
+    report = run_doctor_checks()
+    checks = report.checks
+    provider_rows = report.providers
+    all_ok = report.all_ok
 
     table = Table(title="jobot doctor")
     table.add_column("Check", style="cyan")
     table.add_column("Status")
     table.add_column("Detail", style="dim")
-    for label, ok, detail in checks:
-        if label == "Profile (encrypted)":
+    for check in checks:
+        if check.warn:
             table.add_row(
-                label,
-                "[yellow]WARN[/yellow]" if not ok else "[bold green]PASS[/bold green]",
-                detail,
+                check.label,
+                "[yellow]WARN[/yellow]" if not check.ok else "[bold green]PASS[/bold green]",
+                check.detail,
             )
             continue
-        all_ok = all_ok and ok
         table.add_row(
-            label, "[bold green]PASS[/bold green]" if ok else "[bold red]FAIL[/bold red]", detail
+            check.label,
+            "[bold green]PASS[/bold green]" if check.ok else "[bold red]FAIL[/bold red]",
+            check.detail,
         )
     console.print(table)
 
-    if any_provider:
+    if any(row["ok"] for row in provider_rows):
         provider_table = Table(title="LLM Providers")
         provider_table.add_column("Provider", style="cyan")
         provider_table.add_column("Status")
-        for name, ok, detail in provider_rows:
+        for row in provider_rows:
             provider_table.add_row(
-                name,
+                row["name"],
                 "[bold green]PASS[/bold green]"
-                if ok
+                if row["ok"]
                 else "[yellow]SKIP[/yellow]"
-                if detail == "not configured"
+                if row["detail"] == "not configured"
                 else "[bold red]FAIL[/bold red]",
-                detail,
+                row["detail"],
             )
         console.print(provider_table)
 

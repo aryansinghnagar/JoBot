@@ -107,6 +107,10 @@ class JobDiscoveryEngine:
         logger.warning("Discovery: no scraper for portal '%s'; skipping", portal)
         return None
 
+    def scraper_for(self, portal: str, companies: List[str]) -> Any:
+        """Public scraper resolution for a portal (used by the GUI sidecar)."""
+        return self._scraper_for(portal, companies)
+
     def evaluate_match(self, posting: JobPosting, profile: UserProfile) -> JobMatchResult:
         """Compute matching score between candidate profile skills and job requisition skills."""
         extracted_skills = (

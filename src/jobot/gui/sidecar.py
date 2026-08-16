@@ -1,7 +1,33 @@
+"""Stdio JSON-RPC 2.0 GUI Sidecar Protocol Server (Layer A/B).
+
+Enables desktop UIs (Tauri 2.x) to execute JoBot commands via stdio
+JSON-RPC 2.0 messages. This is the single RPC surface the desktop shell
+speaks to; it reuses the same control-plane modules as the CLI so behavior
+stays in sync. Secrets are never returned (config values are masked).
+"""
+
+import asyncio
 import json
 import sys
-from typing import Any, Dict
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
 from pydantic import BaseModel
+
+from jobot.adapters import AdapterRegistry, infer_site
+from jobot.asp.orchestrator import ApplyOrchestrator
+from jobot.config.manager import ConfigManager
+from jobot.digest.generator import DigestGenerator
+from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.models.domain import JobPosting, UserProfile
+from jobot.scheduler import SchedulerManager
+from jobot.storage.db import DatabaseManager
+from jobot.storage.vault import CredentialVault
+from jobot.tracker.analytics import TrackerAnalytics
+from jobot.obs.tracing import TraceLogger
+
+RUNNER_STATE_PATH = Path.home() / ".jobot" / "runner_state.json"
 
 
 class JsonRpcRequest(BaseModel):
@@ -19,46 +45,143 @@ class JsonRpcResponse(BaseModel):
 
 
 class StdioSidecarServer:
-    """
-    Stdio JSON-RPC GUI Sidecar Protocol Server (Layer A/B).
-    Enables desktop UIs (Tauri 2.x) to execute JoBot commands via stdio JSON-RPC 2.0 messages.
-    """
+    """JSON-RPC sidecar with injectable dependencies (hermetic tests)."""
+
+    def __init__(
+        self,
+        db: Optional[DatabaseManager] = None,
+        vault: Optional[CredentialVault] = None,
+        analytics: Optional[TrackerAnalytics] = None,
+        scheduler: Optional[SchedulerManager] = None,
+        digest: Optional[DigestGenerator] = None,
+        engine: Optional[JobDiscoveryEngine] = None,
+        orchestrator: Optional[ApplyOrchestrator] = None,
+        config: Optional[ConfigManager] = None,
+        trace_logger: Optional[TraceLogger] = None,
+        profile_loader: Optional[Callable[[], UserProfile]] = None,
+    ) -> None:
+        self._db = db
+        self._vault = vault
+        self._analytics = analytics
+        self._scheduler = scheduler
+        self._digest = digest
+        self._engine = engine
+        self._orchestrator = orchestrator
+        self._config = config
+        self._trace_logger = trace_logger
+        self._profile_loader = profile_loader
+        self._handlers: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
+            "ping": self._ping,
+            "status": self._status,
+            "profile_info": self._profile_info,
+            "list_sites": self._list_sites,
+            "discover_jobs": self._discover_jobs,
+            "apply": self._apply,
+            "approve": self._approve,
+            "applications": self._applications,
+            "tracker_stats": self._tracker_stats,
+            "campaign_status": self._campaign_status,
+            "pause": self._pause,
+            "resume": self._resume,
+            "schedule_list": self._schedule_list,
+            "schedule_add": self._schedule_add,
+            "schedule_remove": self._schedule_remove,
+            "digest": self._digest_preview,
+            "doctor": self._doctor,
+            "config_show": self._config_show,
+            "config_get": self._config_get,
+            "config_set": self._config_set,
+            "config_unset": self._config_unset,
+            "traces": self._traces,
+        }
+
+    # -- dependency resolution ----------------------------------------------
+
+    def _get_db(self) -> DatabaseManager:
+        if self._db is None:
+            self._db = DatabaseManager()
+        return self._db
+
+    def _get_vault(self) -> CredentialVault:
+        if self._vault is None:
+            self._vault = CredentialVault()
+        return self._vault
+
+    def _get_analytics(self, db: DatabaseManager) -> TrackerAnalytics:
+        if self._analytics is None:
+            self._analytics = TrackerAnalytics(db)
+        return self._analytics
+
+    def _get_scheduler(self) -> SchedulerManager:
+        if self._scheduler is None:
+            self._scheduler = SchedulerManager()
+        return self._scheduler
+
+    def _get_digest(self, db: DatabaseManager) -> DigestGenerator:
+        if self._digest is None:
+            self._digest = DigestGenerator(db=db)
+        return self._digest
+
+    def _get_engine(self) -> JobDiscoveryEngine:
+        if self._engine is None:
+            self._engine = JobDiscoveryEngine()
+        return self._engine
+
+    def _get_orchestrator(self, db: DatabaseManager) -> ApplyOrchestrator:
+        if self._orchestrator is None:
+            self._orchestrator = ApplyOrchestrator(db)
+        return self._orchestrator
+
+    def _get_config(self) -> ConfigManager:
+        if self._config is None:
+            self._config = ConfigManager()
+        return self._config
+
+    def _get_trace_logger(self) -> TraceLogger:
+        if self._trace_logger is None:
+            self._trace_logger = TraceLogger()
+        return self._trace_logger
+
+    def _get_profile(self) -> UserProfile:
+        if self._profile_loader is not None:
+            return self._profile_loader()
+        profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
+        if not profile_path.exists():
+            raise FileNotFoundError(
+                f"Profile missing at {profile_path} — run 'jobot profile init' first."
+            )
+        return self._get_vault().load_encrypted_profile(profile_path)
+
+    # -- JSON-RPC plumbing ---------------------------------------------------
 
     def process_request(self, request_dict: Dict[str, Any]) -> Dict[str, Any]:
         req_id = request_dict.get("id")
         method = request_dict.get("method")
-        request_dict.get("params", {})
+        params = request_dict.get("params") or {}
 
-        if method == "ping":
+        handler = self._handlers.get(str(method))
+        if handler is None:
             return JsonRpcResponse(
-                id=req_id, result={"status": "pong", "version": "1.0.0"}
+                id=req_id, error={"code": -32601, "message": f"Method '{method}' not found"}
             ).model_dump()
-        elif method == "status":
-            from jobot.storage.db import DatabaseManager
-
-            db = DatabaseManager()
-            apps = db.list_applications(limit=10)
+        if not isinstance(params, dict):
             return JsonRpcResponse(
                 id=req_id,
-                result={"total_tracked": len(apps), "recent": [a.model_dump() for a in apps[:5]]},
+                error={"code": -32602, "message": "Params must be a JSON object"},
             ).model_dump()
-        elif method == "profile_info":
-            from pathlib import Path
-            from jobot.storage.vault import CredentialVault
-
-            vault = CredentialVault()
-            profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
-            if profile_path.exists():
-                p = vault.load_encrypted_profile(profile_path)
-                return JsonRpcResponse(id=req_id, result=p.model_dump()).model_dump()
-            return JsonRpcResponse(
-                id=req_id, error={"code": -32602, "message": "Profile not found"}
-            ).model_dump()
-        else:
+        try:
+            result = handler(params)
+        except ValueError as exc:
             return JsonRpcResponse(
                 id=req_id,
-                error={"code": -32601, "message": f"Method '{method}' not found"},
+                error={"code": -32602, "message": f"Invalid params: {exc}"},
             ).model_dump()
+        except Exception as exc:  # noqa: BLE001
+            return JsonRpcResponse(
+                id=req_id,
+                error={"code": -32603, "message": f"Internal error: {exc}"},
+            ).model_dump()
+        return JsonRpcResponse(id=req_id, result=result).model_dump()
 
     def run_loop(self) -> None:
         """Run continuous stdio loop processing JSON-RPC lines."""
@@ -70,9 +193,224 @@ class StdioSidecarServer:
                     res = self.process_request(req)
                     sys.stdout.write(json.dumps(res) + "\n")
                     sys.stdout.flush()
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     err_res = JsonRpcResponse(
                         id=None, error={"code": -32700, "message": f"Parse error: {e}"}
                     ).model_dump()
                     sys.stdout.write(json.dumps(err_res) + "\n")
                     sys.stdout.flush()
+
+    # -- RPC handlers ---------------------------------------------------------
+
+    def _ping(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {"status": "pong", "version": "2.0.0"}
+
+    def _status(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        db = self._get_db()
+        apps = db.list_applications(limit=10)
+        return {
+            "total_tracked": len(apps),
+            "recent": [a.model_dump() for a in apps[:5]],
+        }
+
+    def _profile_info(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            return self._get_profile().model_dump()
+        except FileNotFoundError as exc:
+            raise ValueError(str(exc))
+
+    def _list_sites(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {"sites": AdapterRegistry.list_supported_sites()}
+
+    def _discover_jobs(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        portal = str(params.get("portal", "linkedin"))
+        keywords = str(params.get("keywords", ""))
+        location = str(params.get("location", ""))
+        limit = int(params.get("limit", 25))
+        company = params.get("company")
+        companies = [str(company)] if company else []
+        engine = self._get_engine()
+        scraper = engine.scraper_for(portal, companies)
+        if scraper is None:
+            return {"postings": [], "note": f"No scraper for portal '{portal}'"}
+        postings = asyncio.run(
+            scraper.discover_jobs(
+                keywords=keywords, location=location, limit=limit, company=company
+            )
+        )
+        return {
+            "postings": [
+                {
+                    "job_id": p.job_id,
+                    "site": p.site,
+                    "title": p.title,
+                    "company": p.company,
+                    "location": p.location,
+                    "url": p.url,
+                    "description": (p.description or "")[:500],
+                }
+                for p in postings
+            ]
+        }
+
+    def _resolve_job(self, params: Dict[str, Any]) -> JobPosting:
+        db = self._get_db()
+        job_id = params.get("job_id")
+        url = params.get("url")
+        if job_id:
+            job = db.get_job_posting(str(job_id))
+            if job is None:
+                raise ValueError(f"No saved posting with job id '{job_id}'")
+            return job
+        if url:
+            site = params.get("site") or infer_site(str(url))
+            adapter = AdapterRegistry.get_adapter(site)
+            return asyncio.run(adapter.parse_job_posting(str(url)))
+        raise ValueError("Provide 'job_id' or 'url'")
+
+    def _apply(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        job = self._resolve_job(params)
+        profile = self._get_profile()
+        dry_run = bool(params.get("dry_run", True))
+        auto_approve = bool(params.get("auto_approve", False))
+        template = str(params.get("template", "default"))
+        tone = str(params.get("tone", "classic"))
+        engine = params.get("engine")
+        orchestrator = self._get_orchestrator(self._get_db())
+        result = asyncio.run(
+            orchestrator.apply(
+                job,
+                profile,
+                auto_approve=auto_approve,
+                dry_run=dry_run,
+                template=template,
+                engine=str(engine) if engine else None,
+                tone=tone,
+            )
+        )
+        return result.model_dump()
+
+    def _approve(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        db = self._get_db()
+        application_id = params.get("application_id")
+        if not application_id:
+            raise ValueError("Provide 'application_id'")
+        app = db.get_application(str(application_id))
+        if app is None:
+            raise ValueError(f"No application with id '{application_id}'")
+        orchestrator = self._get_orchestrator(db)
+        result = asyncio.run(orchestrator.submit_approved(app))
+        return result.model_dump()
+
+    def _applications(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        db = self._get_db()
+        limit = int(params.get("limit", 50))
+        return {"applications": db.get_applications_with_jobs(limit=limit)}
+
+    def _tracker_stats(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        db = self._get_db()
+        analytics = self._get_analytics(db)
+        limit = int(params.get("limit", 1000))
+        return {
+            "funnel": analytics.funnel(limit=limit),
+            "status_counts": analytics.status_counts(limit=limit),
+            "recent": db.get_applications_with_jobs(limit=10),
+        }
+
+    def _campaign_status(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        db = self._get_db()
+        state: Dict[str, Any] = {}
+        if RUNNER_STATE_PATH.exists():
+            try:
+                state = json.loads(RUNNER_STATE_PATH.read_text(encoding="utf-8"))
+            except Exception:  # noqa: BLE001
+                state = {"status": "UNKNOWN"}
+        schedules = self._get_scheduler().list_schedules()
+        return {
+            "runner": state,
+            "schedules": schedules,
+            "recent": db.get_applications_with_jobs(limit=5),
+        }
+
+    def _write_runner_state(self, status: str) -> Dict[str, Any]:
+        RUNNER_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        state = {"status": status, "updated_at": datetime.now().isoformat()}
+        RUNNER_STATE_PATH.write_text(json.dumps(state), encoding="utf-8")
+        return state
+
+    def _pause(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return self._write_runner_state("PAUSED")
+
+    def _resume(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return self._write_runner_state("RUNNING")
+
+    def _schedule_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {"schedules": self._get_scheduler().list_schedules()}
+
+    def _schedule_add(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        cron = params.get("cron")
+        command = params.get("command")
+        if not cron or not command:
+            raise ValueError("Provide 'cron' and 'command'")
+        return self._get_scheduler().add_schedule(str(cron), str(command))
+
+    def _schedule_remove(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        schedule_id = params.get("schedule_id")
+        if not schedule_id:
+            raise ValueError("Provide 'schedule_id'")
+        removed = self._get_scheduler().remove_schedule(str(schedule_id))
+        return {"removed": removed}
+
+    def _digest_preview(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        db = self._get_db()
+        period_days = int(params.get("period_days", 7))
+        digest = self._get_digest(db).generate(period_days=period_days)
+        return {"subject": digest.subject, "text": digest.text[:4000]}
+
+    def _doctor(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        from jobot.doctor import run_doctor_checks
+
+        report = run_doctor_checks()
+        return {
+            "checks": [c.model_dump() for c in report.checks],
+            "providers": report.providers,
+            "all_ok": report.all_ok,
+        }
+
+    def _config_show(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {"config": self._get_config().show_masked()}
+
+    def _config_get(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        key = params.get("key")
+        if not key:
+            raise ValueError("Provide 'key'")
+        value = self._get_config().get(str(key))
+        if value is None:
+            raise ValueError(f"Config key '{key}' not set")
+        return {"key": str(key), "value": value}
+
+    def _config_set(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        key = params.get("key")
+        value = params.get("value")
+        if key is None or value is None:
+            raise ValueError("Provide 'key' and 'value'")
+        self._get_config().set(str(key), str(value))
+        return {"set": str(key), "secret": ConfigManager.is_secret(str(key))}
+
+    def _config_unset(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        key = params.get("key")
+        if not key:
+            raise ValueError("Provide 'key'")
+        self._get_config().unset(str(key))
+        return {"unset": str(key)}
+
+    def _traces(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        logger = self._get_trace_logger()
+        trace_files = logger.list_traces()
+        runs: List[Dict[str, Any]] = []
+        for path in reversed(trace_files[-10:]):
+            run_id = path.stem
+            spans = logger.get_trace_spans(run_id)
+            if spans:
+                runs.append({"run_id": run_id, "span_count": len(spans), "spans": spans[:50]})
+        return {"runs": runs}

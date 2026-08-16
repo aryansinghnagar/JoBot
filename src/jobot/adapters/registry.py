@@ -20,6 +20,28 @@ from jobot.adapters.naukri import NaukriAdapter
 from jobot.adapters.workday import WorkdayAdapter
 
 
+def infer_site(url: str) -> str:
+    """Best-effort site inference from a job URL (shared by CLI and GUI sidecar)."""
+    lowered = url.lower()
+    if "lever.co" in lowered:
+        return "lever"
+    if "greenhouse.io" in lowered or "boards.greenhouse.io" in lowered:
+        return "greenhouse"
+    if "linkedin.com" in lowered:
+        return "linkedin"
+    if "naukri.com" in lowered:
+        return "naukri"
+    if "indeed.com" in lowered:
+        return "indeed"
+    if "jobs.ashbyhq.com" in lowered:
+        return "ashby"
+    if "smartrecruiters.com" in lowered:
+        return "smartrecruiters"
+    if "myworkdayjobs.com" in lowered:
+        return "workday"
+    return "greenhouse"
+
+
 class AdapterRegistry:
     """
     Unified SiteAdapter Registry (Layer 5).
@@ -56,3 +78,6 @@ class AdapterRegistry:
     @classmethod
     def list_supported_sites(cls) -> list[str]:
         return list(cls._registry.keys())
+
+
+__all__ = ["AdapterRegistry", "infer_site"]
