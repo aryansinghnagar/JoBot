@@ -1,6 +1,6 @@
 # NEXT QUEUE — Upcoming Tasks
 
-## P0 & P1 Remedial Tasks (JoBot_Refactor_Review_2.md)
+## P0 & P1 Remedial Tasks (docs/history/JoBot_Refactor_Review_2.md)
 
 - [x] P0.1: Fix missing `Dict` import in `src/jobot/obs/alerts.py`
 - [x] P0.2: Fix missing `json` and `datetime` imports in `src/jobot/cli/main.py`

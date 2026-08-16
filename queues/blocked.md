@@ -1,6 +1,6 @@
 # BLOCKED QUEUE — Active Impediments & Review 2 Findings
 
-Status of findings from `JoBot_Refactor_Review_2.md`:
+Status of findings from `docs/history/JoBot_Refactor_Review_2.md`:
 
 1. **[RESOLVED - P0.1] Missing `Dict` Import in `obs/alerts.py`** — Added `Dict` to typing imports.
 2. **[RESOLVED - P0.2] Missing `json`/`datetime` Imports in `cli/main.py`** — Added imports; `jobot pause`, `resume`, `export` verified.
