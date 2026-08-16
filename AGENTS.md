@@ -2,12 +2,12 @@
 
 ## System Identity & Doctrine
 
-`jobot` is a local-first, privacy-preserving, human-governed autonomous job application operating system. The authoritative specification is `unified_master_plan.md` (very large — grep it rather than reading end-to-end); the architect doctrine is `agent.md`. The repo is mid-refactor: `JoBot_Refactor_Plan.md` and `JoBot_Refactor_Review_2.md` define the current work; `worklog.md` logs completed tasks.
+`jobot` is a local-first, privacy-preserving, human-governed autonomous job application operating system. The current authoritative specification is the JoBot Merge Plan: `plan.md` (markdown) + `JoBot_Merge_Plan.pdf` + `SETUP.md`; see `docs/README.md` for the full docs index. Superseded planning docs (old master plan, architect doctrine, refactor plan/review) live in `docs/history/` — historical only, not authoritative. `worklog.md` logs completed tasks; task tracking lives in `queues/`.
 
 ## Non-Negotiable Core Mandates
 
 1. **Source of Truth**: Candidate profile facts are canonical. Never hallucinate facts, applicant data, or test credentials. Meaning may be formatted/tailored, but zero invented facts.
-2. **Deterministic Security**: Zero secrets in source, logs, or git commits (`.env` holds real API keys; gitignored). Profile encryption is Fernet AES-256 (`cryptography`) with the master key in the OS keyring — `src/jobot/storage/vault.py`. Not `age`, despite `operating_summary.md` and `.agents/agents.md` saying so; code is truth. Legacy keyring service `jobaut_vault` auto-migrates to `jobot_vault`.
+2. **Deterministic Security**: Zero secrets in source, logs, or git commits (`.env` holds real API keys; gitignored). Profile encryption is Fernet AES-256 (`cryptography`) with the master key in the OS keyring — `src/jobot/storage/vault.py`. Not `age`, despite `docs/history/operating_summary.md` and `.agents/agents.md` saying so; code is truth. Legacy keyring service `jobaut_vault` auto-migrates to `jobot_vault`.
 3. **Idempotent Actions**: Every submission carries an idempotency key / effect identity (`tests/test_dedup.py` enforces rejection of duplicates).
 4. **Reliability First**: 12-phase ASP pipeline (`src/jobot/asp/pipeline.py`) with per-phase DoD verification gates, circuit breakers, daily policy caps, and evidence capture.
 5. **Closed-Loop Execution**: Verify with the test suite before declaring work complete.

@@ -1,7 +1,7 @@
 # NOW QUEUE — Active Focus
 
 Current Version: `release-1.0-dev` (Post-Review 2 Remedial Refactor Phase)
-Current Status: Executing P0, P1, and P2 Remedial Fixes per `JoBot_Refactor_Review_2.md`
+Current Status: Executing P0, P1, and P2 Remedial Fixes per `docs/history/JoBot_Refactor_Review_2.md`; Phase 0 audit/cleanup per JoBot Merge Plan in progress
 
 ## Milestone Trajectory
 

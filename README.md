@@ -4,7 +4,7 @@ Local-First, Privacy-Preserving, Human-Governed Job Discovery and Application As
 
 ## Overview
 
-`jobot` is an agentic operating system designed to automate job application workflows. The system is undergoing an active refactor per `JoBot_Refactor_Plan.md` from a stub skeleton into a release-ready production engine.
+`jobot` is an agentic operating system designed to automate job application workflows. The current authoritative specification is the **JoBot Merge Plan** (`plan.md` + `JoBot_Merge_Plan.pdf` + `SETUP.md`, see `docs/README.md`); superseded planning docs live in `docs/history/`.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ Local-First, Privacy-Preserving, Human-Governed Job Discovery and Application As
 
 ## Refactor Progress
 
-- Currently refactoring core architecture per `JoBot_Refactor_Plan.md`.
+- Phase 0 audit/cleanup per the JoBot Merge Plan completed (see `worklog.md`).
 - See `worklog.md` for real-time task execution logs.
 
 ## License

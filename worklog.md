@@ -1,6 +1,6 @@
 # JoBot Refactor Worklog
 
-Authoritative record of all refactor tasks executed on JoBot per `JoBot_Refactor_Plan.md` and `JoBot_Refactor_Review_2.md`.
+Authoritative record of all refactor tasks executed on JoBot per `docs/history/JoBot_Refactor_Plan.md` and `docs/history/JoBot_Refactor_Review_2.md`. Phase 0 audit/cleanup tasks (T0.x) are per the JoBot Merge Plan (`plan.md`).
 
 | Timestamp (UTC)  | Task ID      | Title                                                                       | Status    | Files Touched                                                                                                                                                                         | Verification Output                                                                                                                         |
 | ---------------- | ------------ | --------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
