@@ -264,3 +264,9 @@ class DatabaseManager:
                 (site, f"{today_str}%"),
             ).fetchone()
             return row["count"] if row else 0
+
+    def clear_all_applications(self) -> int:
+        """Clear all applications from SQLite database."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("DELETE FROM applications")
+            return cursor.rowcount

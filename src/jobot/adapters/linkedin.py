@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from jobot.adapters.base import SiteAdapter
+from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
 
 
@@ -26,6 +27,8 @@ class LinkedInAdapter(SiteAdapter):
     async def parse_job_posting(self, url: str) -> JobPosting:
         await self._jitter_delay()
         job_id = url.split("/")[-1] if "/" in url else str(uuid.uuid4())
+        desc = "Require Software Engineering expertise in Python, FastAPI, React, Distributed Systems, Docker, and AWS Cloud Architecture."
+        skills = SkillExtractor().extract_skills_sync(desc)
         return JobPosting(
             job_id=job_id,
             site="linkedin",
@@ -34,8 +37,8 @@ class LinkedInAdapter(SiteAdapter):
             company="LinkedIn Partner Enterprise",
             location="Bangalore, India",
             experience_required="5-8 years",
-            description="Require Python, Distributed Systems, Cloud Architecture.",
-            parsed_skills=["Python", "Distributed Systems", "AWS"],
+            description=desc,
+            parsed_skills=skills,
             discovered_at=datetime.now(timezone.utc),
         )
 
