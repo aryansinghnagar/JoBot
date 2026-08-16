@@ -1,3 +1,4 @@
+from jobot.obs.application_md_logger import ApplicationMarkdownLogger
 from jobot.obs.manual_test_logger import ManualTestIssue, ManualTestLogger
 from jobot.obs.tracing import Incident, IncidentSeverity, TraceLogger, TraceSpan
 
@@ -8,4 +9,5 @@ __all__ = [
     "TraceSpan",
     "ManualTestLogger",
     "ManualTestIssue",
+    "ApplicationMarkdownLogger",
 ]

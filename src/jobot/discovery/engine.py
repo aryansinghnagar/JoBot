@@ -80,9 +80,13 @@ class JobDiscoveryEngine:
         )
 
     async def discover_matching_jobs(
-        self, profile: UserProfile, target_title: str = "Python Developer", limit_per_portal: int = 2
+        self,
+        profile: UserProfile,
+        target_title: str = "Python Developer",
+        limit_per_portal: int = 2,
+        min_match_threshold: float = 0.20,
     ) -> List[JobMatchResult]:
-        """Search across target portals for postings matching candidate skills."""
+        """Search across target portals for postings matching candidate skills (min_match_threshold=0.20)."""
         matched_jobs: List[JobMatchResult] = []
 
         for portal in self.active_portals:
@@ -93,7 +97,7 @@ class JobDiscoveryEngine:
                     sample_url = f"https://www.{portal}.com/job/{target_title.replace(' ', '-').lower()}-{i+101}"
                     job_posting = await adapter.parse_job_posting(sample_url)
                     match_res = self.evaluate_match(job_posting, profile)
-                    if match_res.recommendation in ["HIGH_FIT", "MEDIUM_FIT"]:
+                    if match_res.match_score >= min_match_threshold:
                         matched_jobs.append(match_res)
             except Exception as e:
                 logger.error(f"Discovery error on portal {portal}: {e}")
