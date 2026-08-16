@@ -2,24 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import List, Optional
-from jobot.adapters import (
-    CutshortAdapter,
-    FounditAdapter,
-    GlassdoorAdapter,
-    GreenhouseAdapter,
-    HiristAdapter,
-    IndeedAdapter,
-    InstahyreAdapter,
-    LeverAdapter,
-    LinkedInAdapter,
-    MockATSAdapter,
-    NaukriAdapter,
-    ShineAdapter,
-    SmartRecruitersAdapter,
-    WellfoundAdapter,
-    WorkdayAdapter,
-    ZipRecruiterAdapter,
-)
+from jobot.adapters import AdapterRegistry
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.obs.application_md_logger import ApplicationMarkdownLogger
@@ -30,25 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_adapter(site: str):
-    s = site.lower()
-    adapters = {
-        "linkedin": LinkedInAdapter(),
-        "indeed": IndeedAdapter(),
-        "greenhouse": GreenhouseAdapter(),
-        "lever": LeverAdapter(),
-        "workday": WorkdayAdapter(),
-        "glassdoor": GlassdoorAdapter(),
-        "ziprecruiter": ZipRecruiterAdapter(),
-        "shine": ShineAdapter(),
-        "foundit": FounditAdapter(),
-        "hirist": HiristAdapter(),
-        "instahyre": InstahyreAdapter(),
-        "cutshort": CutshortAdapter(),
-        "wellfound": WellfoundAdapter(),
-        "smartrecruiters": SmartRecruitersAdapter(),
-        "mock_ats": MockATSAdapter(),
-    }
-    return adapters.get(s, NaukriAdapter())
+    return AdapterRegistry.get_adapter(site)
 
 
 class ContinuousCampaignRunner:
