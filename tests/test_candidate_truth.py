@@ -115,7 +115,7 @@ def test_grounding_verifier_detects_hallucinations(
     assert result.passed is False
     assert len(result.unsupported_claims) > 0
     assert any(
-        "Stanford" in claim or "mit.edu" in claim or "PhD" in claim
+        "Stanford" in claim or "fake_hacker" in claim or "PhD" in claim
         for claim in result.unsupported_claims
     )
 

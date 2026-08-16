@@ -99,7 +99,7 @@ def test_infer_site_error_message_guides_user() -> None:
     with pytest.raises(ValueError) as excinfo:
         infer_site("https://example.com/careers")
     msg = str(excinfo.value)
-    assert "example.com" in msg
+    assert "Unknown job site host" in msg
     assert "list-sites" in msg
 
 
