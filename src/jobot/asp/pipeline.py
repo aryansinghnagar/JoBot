@@ -107,7 +107,7 @@ class ApplicationSubmissionPipeline:
 
         for phase in phases:
             success = await self._execute_phase(phase, app, profile, job_url, auto_approve)
-            if not success:
+            if not success or app.status == ApplicationStatus.PENDING_APPROVAL:
                 break
 
         if app.job_id and self.db.get_job_posting(app.job_id):
@@ -128,9 +128,15 @@ class ApplicationSubmissionPipeline:
             dod_result: DoDResult = await handler(app, profile, job_url, auto_approve)
 
             if not dod_result.passed:
-                if app.status != ApplicationStatus.PENDING_APPROVAL:
+                app.error_message = dod_result.reason
+                if app.status not in [
+                    ApplicationStatus.PENDING_APPROVAL,
+                    ApplicationStatus.CIRCUIT_OPEN,
+                    ApplicationStatus.DUPLICATE_SKIPPED,
+                    ApplicationStatus.REJECTED,
+                    ApplicationStatus.BLOCKED,
+                ]:
                     app.status = ApplicationStatus.FAILED
-                    app.error_message = dod_result.reason
                 self.alert_dispatcher.dispatch_alert(
                     title=f"ASP Phase Status ({phase.value})",
                     message=f"Application {app.application_id[:8]}: {dod_result.reason}",
@@ -152,13 +158,11 @@ class ApplicationSubmissionPipeline:
             return False
 
     async def _handle_phase_1_intent(self, app: Application, profile: UserProfile, *args) -> DoDResult:
-        """DoD: Profile must have first name, email, phone, and profile_id."""
+        """DoD: Profile must have first name or last name, and email."""
         if not profile.personal_info.first_name and not profile.personal_info.last_name:
             return DoDResult(passed=False, reason="Profile missing name")
         if not profile.personal_info.email:
             return DoDResult(passed=False, reason="Profile missing email")
-        if not profile.personal_info.phone:
-            return DoDResult(passed=False, reason="Profile missing phone")
         app.status = ApplicationStatus.INTENT
         return DoDResult(passed=True)
 
@@ -243,7 +247,7 @@ class ApplicationSubmissionPipeline:
         auto_approve = args[1] if len(args) > 1 else False
         if app.trust_level == TrustLevel.SUPERVISED and not auto_approve:
             app.status = ApplicationStatus.PENDING_APPROVAL
-            return DoDResult(passed=False, reason="Application paused for human approval")
+            return DoDResult(passed=True)
         return DoDResult(passed=True)
 
     async def _handle_phase_11_submit(self, app: Application, profile: UserProfile, *args) -> DoDResult:
@@ -258,10 +262,8 @@ class ApplicationSubmissionPipeline:
                 app.site, self.adapter.submit_application, app
             )
             if not submitted_ok:
-                self.circuit_breaker.record_failure(app.site)
                 return DoDResult(passed=False, reason="Adapter submit_application returned False")
         except Exception as exc:
-            self.circuit_breaker.record_failure(app.site)
             return DoDResult(passed=False, reason=f"Submission error: {exc}")
 
         # Log submission evidence
