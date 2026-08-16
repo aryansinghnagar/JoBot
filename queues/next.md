@@ -4,15 +4,16 @@
 
 - [x] WS1: Tracker analytics + dashboard HTML + responded_at/outcome cols
 - [x] WS2: Weekly digest + shared SMTP sender + 4-mode scheduler loop (`jobot loop`)
-- [ ] WS3: InterviewPrep module (mock session + STAR coach)
-- [ ] WS4: CareerAnalytics (salary + skill-gap)
-- [ ] WS5: Outreach module (URL gen + DM templates + SMTP)
-- [ ] WS6: PluginInstaller + PluginManifest schema + audit flow
-- [ ] WS7: Dockerfile (multi-stage) + docker-compose.yml + CI hardening (CodeQL, SBOM)
-- [ ] T4.x: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
-- [ ] T4.x: Naukri real submit/verify via Patchright (P1.1/P1.2 carryover)
-- [ ] T4.x: Live LinkedIn Easy Apply validation (needs `JOBOT_RUN_LIVE_BROWSER=1` + working LLM key)
-- [ ] T4.x: Tauri 2 + React Desktop GUI [RELEASE 2.0]
+- [x] WS3: InterviewPrep module (mock session + STAR coach)
+- [x] WS4: CareerAnalytics (salary + skill-gap)
+- [x] WS5: Outreach module (URL gen + DM templates + SMTP)
+- [x] WS6: PluginInstaller + PluginManifest schema + audit flow
+- [x] WS7: Dockerfile (multi-stage) + docker-compose.yml + CI hardening (CodeQL, SBOM)
+- [x] T4.1: Continuous campaign / runner integration with ApplyOrchestrator (cost-gated)
+- [x] P1.1/P1.2: Naukri real submit/verify via Patchright (no fabrication; live opt-in)
+- [ ] T4.2: Live LinkedIn Easy Apply validation (needs `JOBOT_RUN_LIVE_BROWSER=1` + working LLM key)
+- [ ] Release gates: sync SETUP/docs/contracts, `jobot doctor`, tag `release-1.0`
+- [ ] Tauri 2 + React Desktop GUI [RELEASE 2.0]
 
 ## P0 & P1 Remedial Tasks (docs/history/JoBot_Refactor_Review_2.md)
 
