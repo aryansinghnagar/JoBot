@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
+from jobot.ai.qa_engine import QAEngine
 from jobot.adapters.base import SiteAdapter
 from jobot.models.domain import Application, ApplicationStatus, EvidenceItem, JobPosting, TrustLevel, UserProfile
 from jobot.storage.db import DatabaseManager
@@ -15,13 +16,20 @@ class ApplicationSubmissionPipeline:
     and evidence logging.
     """
 
-    def __init__(self, adapter: SiteAdapter, db_manager: DatabaseManager, artifact_dir: Optional[Path] = None):
+    def __init__(
+        self,
+        adapter: SiteAdapter,
+        db_manager: DatabaseManager,
+        artifact_dir: Optional[Path] = None,
+        qa_engine: Optional[QAEngine] = None,
+    ):
         self.adapter = adapter
         self.db = db_manager
         if artifact_dir is None:
             artifact_dir = Path.home() / ".jobot" / "artifacts"
         self.artifact_dir = artifact_dir
         self.artifact_dir.mkdir(parents=True, exist_ok=True)
+        self.qa_engine = qa_engine or QAEngine()
 
     def _generate_idempotency_key(self, job_url: str, profile_id: str) -> str:
         raw = f"{job_url}::{profile_id}"
@@ -50,9 +58,18 @@ class ApplicationSubmissionPipeline:
         self.db.save_job_posting(job)
         app.status = ApplicationStatus.PARSED
 
-        # Phase 4 & 5: Matching -> Matched
+        # Phase 4 & 5: Q&A Extraction & Profile-Grounded Answering -> Matched
         app.status = ApplicationStatus.MATCHING
-        # Profile matching logic (score calculation)
+        form_questions = await self.adapter.extract_form_questions(job)
+        qa_answers: Dict[str, Any] = {}
+        for q in form_questions:
+            res = await self.qa_engine.answer_question(q, profile)
+            qa_answers[q] = res.answer
+            if res.requires_user_approval:
+                app.trust_level = TrustLevel.SUPERVISED
+        if app.form_values is None:
+            app.form_values = {}
+        app.form_values.update(qa_answers)
         app.status = ApplicationStatus.MATCHED
 
         # Phase 6 & 7: Form Filling -> Filled

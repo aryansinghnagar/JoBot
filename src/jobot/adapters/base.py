@@ -32,9 +32,16 @@ class SiteAdapter(ABC):
     @abstractmethod
     async def submit_application(self, application: Application) -> bool:
         """Execute submission action (supervised or autonomous based on trust level)."""
-        pass
-
     @abstractmethod
     async def verify_submission(self, application: Application) -> bool:
         """Verify that application was successfully received by external site/ATS."""
         pass
+
+    async def extract_form_questions(self, job: JobPosting) -> list[str]:
+        """Extract interactive form questions from job posting page."""
+        return ["What is your full name?", "What is your email address?", "What is your notice period?"]
+
+    async def capture_screenshot(self) -> Optional[bytes]:
+        """Capture screenshot of current page state for evidence recording."""
+        return None
+
