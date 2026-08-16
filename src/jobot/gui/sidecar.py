@@ -298,6 +298,16 @@ class StdioSidecarServer:
         app = db.get_application(str(application_id))
         if app is None:
             raise ValueError(f"No application with id '{application_id}'")
+        # Record the human decision on the durable approval before the
+        # gated submit (G3: approval decisions survive restarts).
+        approval_id = (app.form_values or {}).get("_approval_id")
+        if approval_id:
+            from jobot.execution.engine import ApprovalStatus as _AS
+            from jobot.execution.engine import DurableTaskEngine as _DTE
+
+            engine = _DTE(db)
+            if engine.get_approval(str(approval_id)) is not None:
+                engine.decide_approval(str(approval_id), _AS.APPROVED, decided_by="gui-human")
         orchestrator = self._get_orchestrator(db)
         result = asyncio.run(orchestrator.submit_approved(app))
         return result.model_dump()

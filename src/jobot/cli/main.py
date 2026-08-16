@@ -363,16 +363,42 @@ def auto_apply_cmd(
                     f"[bold green]Proceed with final submission to {job.company}?[/bold green]"
                 )
                 if user_approved:
+                    # Record the human decision on the durable approval so
+                    # submit_and_verify's gate passes across restarts (G3).
+                    approval_id = (app_res.form_values or {}).get("_approval_id")
+                    if approval_id:
+                        from jobot.execution.engine import ApprovalStatus as _AS
+                        from jobot.execution.engine import DurableTaskEngine as _DTE
+
+                        _DTE(db).decide_approval(
+                            str(approval_id), _AS.APPROVED, decided_by="cli-human"
+                        )
                     asyncio.run(pipeline.submit_and_verify(app_res))
                     if app_res.status in (ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED):
                         console.print(
                             f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n"
+                        )
+                    elif app_res.status == ApplicationStatus.SUBMISSION_UNKNOWN:
+                        console.print(
+                            "[bold yellow][!] Submission outcome UNKNOWN — reconciliation "
+                            "will verify without re-submitting (jobot approval/tracker).[/bold yellow]\n"
                         )
                     else:
                         console.print(
                             f"[bold red][ERROR] Submission failed: {app_res.error_message}[/bold red]\n"
                         )
                 else:
+                    approval_id = (app_res.form_values or {}).get("_approval_id")
+                    if approval_id:
+                        from jobot.execution.engine import ApprovalStatus as _AS
+                        from jobot.execution.engine import DurableTaskEngine as _DTE
+
+                        _DTE(db).decide_approval(
+                            str(approval_id),
+                            _AS.DENIED,
+                            decided_by="cli-human",
+                            reason="denied interactively",
+                        )
                     app_res.status = ApplicationStatus.CANCELLED
                     db.save_application(app_res)
                     console.print("[yellow]Submission skipped by user.[/yellow]\n")

@@ -146,3 +146,24 @@ Stage Summary:
 - G2 PASS_LOCAL (artifacts/gates/G2.json): kill-anywhere resume, no double lease, duplicate-effect impossible, approvals survive restart.
 - Full suite 593 passed / 16 skipped; ruff + format clean.
 - Next: WS3 application state machine + effect/approval wiring into the 12-phase ASP (timestamp split, SUBMISSION_UNKNOWN reconcile harness H7).
+
+---
+Task ID: WS3 (application correctness, gate G3)
+Agent: Zcode
+Task: Application protocol state machine + effect ledger/approvals wired into ASP + SUBMISSION_UNKNOWN & H7 reconcile + timestamp split
+
+Work Log:
+- models/domain.py: ApplicationStatus extended (submission_unknown, verification_unknown, outcome_tracking, interview, offer, withdrawn, expired, quarantined); Application gains submitted_at / submission_verified_at / first_employer_response_at / current_outcome.
+- applications/state_machine.py: §3.4 transition table over existing enum; transition_application validates edges, stamps split timestamps, idempotent on same-state (adapters pre-set statuses); cross-cutting failed/cancelled/paused; terminals frozen.
+- storage/migrations.py: migration v2 application_timestamp_split (guarded ALTERs + backfill updated_at->submitted_at/verified, responded_at->first_employer_response_at, outcome->current_outcome); digest normalization proved format-independent (ruff format pass did not invalidate local DB).
+- storage/db.py: applications round-trip extended to the four new columns.
+- asp/pipeline.py: execute() refuses re-runs over in-flight/committed apps (DUPLICATE_SKIPPED + reconcile hint); phase 10 creates durable ApprovalRequest (stored as _approval_id); phase 11 reserves the effect BEFORE submit, executes exactly once (breaker records outcome, retry removed — retry could double-submit), commits/UNKNOWNs the effect, maps post-send exceptions to SUBMISSION_UNKNOWN; phase 12 VERIFICATION_UNKNOWN semantics + effect COMMITTED on verify; submit_and_verify gated by durable approval (ApprovalRequiredError).
+- asp/orchestrator.py submit_approved + cli apply + sidecar approve: decide the stored approval (decision recorded in ledger) before the gated submit.
+- applications/reconcile.py (H7): async ReconciliationService — verify_submission ONLY (structurally submit-free), 3 ambiguous attempts -> QUARANTINED + alert, effect ledger updated to COMMITTED on reconciled verification.
+- Engine: _conn() now a closing context manager (Windows file-lock fix).
+- Tests: tests/test_g3_app_correctness.py (17) — crash-after-send never double-submits across pipeline re-run/gated submit/reconcile; approvals survive restart; quarantine-after-3; timestamp roundtrip; migration backfill. Circuit tests updated to the new contract (SUBMISSION_UNKNOWN, distinct job URLs, DUPLICATE_SKIPPED assertion).
+- Fixed during verify: submitted->submitted illegal transition (adapter pre-sets status -> idempotent transitions); un-awaited async reconcile; breaker triple-submit on raising adapters (G3 test caught a real double-submission vector).
+
+Stage Summary:
+- G3 PASS_LOCAL (artifacts/gates/G3.json); full suite 613 passed / 16 skipped; ruff + format clean.
+- Next: WS4 (browser reliability stack + adapter family + schemas) and WS5 (AI reliability) — parallelizable.

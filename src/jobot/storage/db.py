@@ -217,6 +217,7 @@ class DatabaseManager:
         def _dt(value: Optional[str]) -> Optional[datetime]:
             return datetime.fromisoformat(value) if value else None
 
+        keys = row.keys()
         return Application(
             application_id=row["application_id"],
             job_id=row["job_id"],
@@ -229,8 +230,18 @@ class DatabaseManager:
             error_message=row["error_message"],
             created_at=_dt(row["created_at"]) or datetime.now(timezone.utc),
             updated_at=_dt(row["updated_at"]) or datetime.now(timezone.utc),
-            responded_at=_dt(row["responded_at"]) if "responded_at" in row.keys() else None,
-            outcome=row["outcome"] if "outcome" in row.keys() else None,
+            responded_at=_dt(row["responded_at"]) if "responded_at" in keys else None,
+            outcome=row["outcome"] if "outcome" in keys else None,
+            submitted_at=_dt(row["submitted_at"]) if "submitted_at" in keys else None,
+            submission_verified_at=(
+                _dt(row["submission_verified_at"]) if "submission_verified_at" in keys else None
+            ),
+            first_employer_response_at=(
+                _dt(row["first_employer_response_at"])
+                if "first_employer_response_at" in keys
+                else None
+            ),
+            current_outcome=row["current_outcome"] if "current_outcome" in keys else None,
         )
 
     def get_application_by_idempotency_key(self, idempotency_key: str) -> Optional[Application]:
@@ -263,7 +274,9 @@ class DatabaseManager:
                     UPDATE applications
                     SET job_id = ?, site = ?, profile_id = ?, status = ?, trust_level = ?,
                         form_values = ?, error_message = ?, updated_at = ?,
-                        responded_at = ?, outcome = ?
+                        responded_at = ?, outcome = ?,
+                        submitted_at = ?, submission_verified_at = ?,
+                        first_employer_response_at = ?, current_outcome = ?
                     WHERE application_id = ?
                     """,
                     (
@@ -277,6 +290,18 @@ class DatabaseManager:
                         now,
                         responded_at.isoformat() if responded_at else None,
                         outcome,
+                        app.submitted_at.isoformat() if app.submitted_at else None,
+                        (
+                            app.submission_verified_at.isoformat()
+                            if app.submission_verified_at
+                            else None
+                        ),
+                        (
+                            app.first_employer_response_at.isoformat()
+                            if app.first_employer_response_at
+                            else None
+                        ),
+                        app.current_outcome,
                         app.application_id,
                     ),
                 )
@@ -287,8 +312,9 @@ class DatabaseManager:
                         INSERT INTO applications
                         (application_id, job_id, site, profile_id, status, idempotency_key,
                          trust_level, form_values, error_message, created_at, updated_at,
-                         responded_at, outcome)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         responded_at, outcome, submitted_at, submission_verified_at,
+                         first_employer_response_at, current_outcome)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             app.application_id,
@@ -304,6 +330,18 @@ class DatabaseManager:
                             now,
                             responded_at.isoformat() if responded_at else None,
                             outcome,
+                            app.submitted_at.isoformat() if app.submitted_at else None,
+                            (
+                                app.submission_verified_at.isoformat()
+                                if app.submission_verified_at
+                                else None
+                            ),
+                            (
+                                app.first_employer_response_at.isoformat()
+                                if app.first_employer_response_at
+                                else None
+                            ),
+                            app.current_outcome,
                         ),
                     )
                 except sqlite3.IntegrityError as err:

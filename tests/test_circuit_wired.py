@@ -34,15 +34,15 @@ async def test_circuit_breaker_opens_after_3_failures():
 
         # Attempt 1
         res1 = await pipeline.execute(job_url_1, profile, auto_approve=True)
-        assert res1.status == ApplicationStatus.FAILED
+        assert res1.status == ApplicationStatus.SUBMISSION_UNKNOWN
 
         # Attempt 2
         res2 = await pipeline.execute(job_url_2, profile, auto_approve=True)
-        assert res2.status == ApplicationStatus.FAILED
+        assert res2.status == ApplicationStatus.SUBMISSION_UNKNOWN
 
         # Attempt 3
         res3 = await pipeline.execute(job_url_3, profile, auto_approve=True)
-        assert res3.status == ApplicationStatus.FAILED
+        assert res3.status == ApplicationStatus.SUBMISSION_UNKNOWN
 
         # Circuit should now be OPEN
         assert cb.get_state("mock_ats") == "OPEN"

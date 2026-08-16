@@ -24,7 +24,15 @@ class ApplicationStatus(str, Enum):
     PENDING_APPROVAL = "pending_approval"
     SUBMITTING = "submitting"
     SUBMITTED = "submitted"
+    SUBMISSION_UNKNOWN = "submission_unknown"
+    VERIFICATION_UNKNOWN = "verification_unknown"
     VERIFIED = "verified"
+    OUTCOME_TRACKING = "outcome_tracking"
+    INTERVIEW = "interview"
+    OFFER = "offer"
+    WITHDRAWN = "withdrawn"
+    EXPIRED = "expired"
+    QUARANTINED = "quarantined"
     FAILED = "failed"
     PAUSED = "paused"
     REJECTED = "rejected"
@@ -167,6 +175,13 @@ class Application(BaseModel):
     error_message: Optional[str] = None
     responded_at: Optional[datetime] = None
     outcome: Optional[str] = None
+    # Timestamp semantics split (MASTER_PLAN_EXPANDED.md §3.4): submission,
+    # verification, and employer-response are distinct events and must never
+    # share a single "updated" timestamp.
+    submitted_at: Optional[datetime] = None
+    submission_verified_at: Optional[datetime] = None
+    first_employer_response_at: Optional[datetime] = None
+    current_outcome: Optional[str] = None
 
 
 # -------------------------------------------------------------------

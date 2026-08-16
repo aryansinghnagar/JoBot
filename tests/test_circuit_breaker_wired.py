@@ -26,15 +26,24 @@ async def test_circuit_breaker_opens_in_pipeline():
             personal_info=PersonalInfo(first_name="Aryan", email="cb@example.com"),
         )
 
-        job_url = "http://127.0.0.1:5800/jobs/1"
-        res1 = await pipeline.execute(job_url, profile, auto_approve=True)
-        assert res1.status == ApplicationStatus.FAILED
+        # Distinct job URLs per attempt: the G3 no-replay rule refuses to
+        # re-execute over an application left SUBMISSION_UNKNOWN (reconcile
+        # instead), so breaker-opening failures need separate applications.
+        job_url_1 = "http://127.0.0.1:5800/jobs/1"
+        res1 = await pipeline.execute(job_url_1, profile, auto_approve=True)
+        assert res1.status == ApplicationStatus.SUBMISSION_UNKNOWN
 
-        res2 = await pipeline.execute(job_url, profile, auto_approve=True)
-        assert res2.status == ApplicationStatus.FAILED
+        job_url_2 = "http://127.0.0.1:5800/jobs/2"
+        res2 = await pipeline.execute(job_url_2, profile, auto_approve=True)
+        assert res2.status == ApplicationStatus.SUBMISSION_UNKNOWN
+
+        # Re-running the SAME url is refused as a duplicate (no replay):
+        res_dupe = await pipeline.execute(job_url_1, profile, auto_approve=True)
+        assert res_dupe.status == ApplicationStatus.DUPLICATE_SKIPPED
 
         assert cb.get_state("mock_ats") == "OPEN"
 
-        res3 = await pipeline.execute(job_url, profile, auto_approve=True)
+        job_url_3 = "http://127.0.0.1:5800/jobs/3"
+        res3 = await pipeline.execute(job_url_3, profile, auto_approve=True)
         assert res3.status == ApplicationStatus.CIRCUIT_OPEN
         assert "OPEN" in (res3.error_message or "")

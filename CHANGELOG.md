@@ -13,6 +13,15 @@ Semantic Versioning will be adopted once a 1.0.0 release exists.
 
 ### Added
 
+- **WS3 — application correctness (gate G3).** Application protocol state
+  machine (`jobot.applications.state_machine`, §3.4 transition table with
+  first-class SUBMISSION_UNKNOWN / VERIFICATION_UNKNOWN / outcome states and
+  split-timestamp stamping); the 12-phase pipeline reserves an effect in the
+  idempotency ledger BEFORE submitting and maps post-send failures to
+  SUBMISSION_UNKNOWN (reconcile, never retry); durable approvals gate
+  `submit_and_verify` across restarts; H7 `ReconciliationService` is
+  structurally submit-free and quarantines after 3 ambiguous verification
+  attempts; migration v2 splits application timestamps with legacy backfill.
 - Expanded master plan (`MASTER_PLAN_EXPANDED.md`): gap matrix, decision
   register (D1-D24), verification doctrine (L1-L9, G0-G7), risk register, and
   a production-readiness workstream track (WS1-W8+).
@@ -37,6 +46,13 @@ Semantic Versioning will be adopted once a 1.0.0 release exists.
 ### Changed
 
 - `AGENTS.md` operating doctrine updated to match the expanded plan.
+- **Behavioral (G3 contract):** an adapter exception during submission now
+  leaves the application SUBMISSION_UNKNOWN (was FAILED) and the effect
+  UNKNOWN — reconciliation verifies, it never re-submits; re-running the
+  pipeline on the same job after an ambiguous or committed submission
+  returns DUPLICATE_SKIPPED; submissions execute exactly once through the
+  circuit breaker (outcome recorded, retry removed — the retry could
+  double-submit after a post-send failure).
 - **Security: URL inference is exact, not substring.** `infer_site()` now
   matches parsed hostnames against site suffixes and raises `ValueError` for
   unknown hosts instead of silently defaulting to the greenhouse adapter;

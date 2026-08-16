@@ -31,6 +31,7 @@ import json
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Optional
@@ -180,12 +181,21 @@ class DurableTaskEngine:
     # Connection helper
     # ------------------------------------------------------------------
 
-    def _conn(self) -> sqlite3.Connection:
+    @contextmanager
+    def _conn(self):
+        """Yield a configured connection that is ALWAYS closed on exit.
+
+        `with sqlite3.connect(...)` alone only manages transactions; on
+        Windows an unclosed handle keeps the database file locked.
+        """
         conn = sqlite3.connect(self.db.db_path)
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")
-        return conn
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            yield conn
+        finally:
+            conn.close()
 
     # ------------------------------------------------------------------
     # Task lifecycle (UC-01)

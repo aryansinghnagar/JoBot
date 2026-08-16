@@ -237,6 +237,43 @@ def _apply_001(conn: sqlite3.Connection) -> None:
     )
 
 
+def _apply_002(conn: sqlite3.Connection) -> None:
+    """WS3 timestamp semantics split (MASTER_PLAN_EXPANDED.md §3.4).
+
+    submitted_at / submission_verified_at / first_employer_response_at /
+    current_outcome become distinct columns; legacy responded_at / outcome
+    values are backfilled into the new semantics.
+    """
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(applications)")}
+    if "submitted_at" not in columns:
+        conn.execute("ALTER TABLE applications ADD COLUMN submitted_at TEXT")
+    if "submission_verified_at" not in columns:
+        conn.execute("ALTER TABLE applications ADD COLUMN submission_verified_at TEXT")
+    if "first_employer_response_at" not in columns:
+        conn.execute("ALTER TABLE applications ADD COLUMN first_employer_response_at TEXT")
+    if "current_outcome" not in columns:
+        conn.execute("ALTER TABLE applications ADD COLUMN current_outcome TEXT")
+    # Backfill: verified rows carry their submission time implicitly; any
+    # recorded employer response maps to the new first-response semantics.
+    conn.execute(
+        "UPDATE applications SET submitted_at = updated_at "
+        "WHERE submitted_at IS NULL AND status IN ('submitted', 'verified', "
+        "'submission_unknown', 'verification_unknown', 'duplicate_skipped')"
+    )
+    conn.execute(
+        "UPDATE applications SET submission_verified_at = updated_at "
+        "WHERE submission_verified_at IS NULL AND status = 'verified'"
+    )
+    conn.execute(
+        "UPDATE applications SET first_employer_response_at = responded_at "
+        "WHERE first_employer_response_at IS NULL AND responded_at IS NOT NULL"
+    )
+    conn.execute(
+        "UPDATE applications SET current_outcome = outcome "
+        "WHERE current_outcome IS NULL AND outcome IS NOT NULL"
+    )
+
+
 def _source_digest(func: Callable[[sqlite3.Connection], None]) -> str:
     """Formatting-independent digest of a migration's source.
 
@@ -265,6 +302,7 @@ class Migration:
 
 MIGRATIONS: tuple[Migration, ...] = (
     Migration(version=1, name="durable_execution_core", apply=_apply_001),
+    Migration(version=2, name="application_timestamp_split", apply=_apply_002),
 )
 
 

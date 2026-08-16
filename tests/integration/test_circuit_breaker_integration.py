@@ -33,10 +33,10 @@ async def test_integration_circuit_breaker_trips_to_open(live_mock_ats_server):
         )
 
         res1 = await pipeline.execute(f"{live_mock_ats_server}/jobs/1", profile, auto_approve=True)
-        assert res1.status == ApplicationStatus.FAILED
+        assert res1.status == ApplicationStatus.SUBMISSION_UNKNOWN
 
         res2 = await pipeline.execute(f"{live_mock_ats_server}/jobs/2", profile, auto_approve=True)
-        assert res2.status == ApplicationStatus.FAILED
+        assert res2.status == ApplicationStatus.SUBMISSION_UNKNOWN
 
         assert cb.get_state("mock_ats") == "OPEN"
 

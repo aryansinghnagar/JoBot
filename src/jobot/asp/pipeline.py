@@ -5,6 +5,11 @@ from typing import Any, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
 from jobot.ai.qa_engine import QAEngine
+from jobot.applications.state_machine import transition_application
+from jobot.execution.engine import (
+    ApprovalStatus as DurableApprovalStatus,
+)
+from jobot.execution.engine import DurableTaskEngine, DuplicateEffect, EffectStatus
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -20,6 +25,27 @@ from jobot.obs.tracing import TraceLogger
 from jobot.policy.engine import PolicyEngine
 from jobot.stealth.circuit_breaker import CircuitBreaker
 from jobot.storage.db import DatabaseManager
+
+
+class ApprovalRequiredError(Exception):
+    """Raised when a supervised submission is attempted without an approved
+    durable ApprovalRequest (G3: approvals are durable and enforced)."""
+
+
+# Application statuses that represent an in-flight or committed submission:
+# the pipeline must NEVER re-execute over these (reconcile instead).
+_INFLIGHT_OR_COMMITTED = frozenset(
+    {
+        ApplicationStatus.SUBMITTING,
+        ApplicationStatus.SUBMITTED,
+        ApplicationStatus.SUBMISSION_UNKNOWN,
+        ApplicationStatus.VERIFICATION_UNKNOWN,
+        ApplicationStatus.VERIFIED,
+        ApplicationStatus.OUTCOME_TRACKING,
+        ApplicationStatus.INTERVIEW,
+        ApplicationStatus.OFFER,
+    }
+)
 
 
 class ApplicationSubmissionPipeline:
@@ -53,6 +79,22 @@ class ApplicationSubmissionPipeline:
         self.trace_logger = trace_logger or TraceLogger()
         self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
         self._extra_form_data = extra_form_data or {}
+        self._engine_instance: Optional[DurableTaskEngine] = None
+
+    def _engine(self) -> DurableTaskEngine:
+        """Durable engine for effects/approvals (lazily shared per pipeline)."""
+        if self._engine_instance is None:
+            self._engine_instance = DurableTaskEngine(self.db)
+        return self._engine_instance
+
+    def _task_id(self, app: Application) -> str:
+        return f"asp_{app.application_id[:12]}"
+
+    def _request_hash(self, app: Application) -> str:
+        payload = {k: v for k, v in (app.form_values or {}).items() if not k.startswith("_")}
+        return hashlib.sha256(
+            f"{app.site}::{app.job_id}::{sorted(payload.keys())}".encode()
+        ).hexdigest()
 
     def _generate_idempotency_key(self, job_url: str, profile_id: str) -> str:
         raw = f"{job_url}::{profile_id}"
@@ -66,6 +108,15 @@ class ApplicationSubmissionPipeline:
 
         if existing_app and existing_app.status == ApplicationStatus.VERIFIED:
             existing_app.status = ApplicationStatus.DUPLICATE_SKIPPED
+            return existing_app
+
+        if existing_app and existing_app.status in _INFLIGHT_OR_COMMITTED:
+            # Never re-execute over an in-flight or committed submission —
+            # reconciliation is the only sanctioned follow-up (G3).
+            existing_app.status = ApplicationStatus.DUPLICATE_SKIPPED
+            existing_app.error_message = (
+                "application already submitted/committed; reconcile instead of re-running"
+            )
             return existing_app
 
         if existing_app:
@@ -137,6 +188,8 @@ class ApplicationSubmissionPipeline:
                     ApplicationStatus.DUPLICATE_SKIPPED,
                     ApplicationStatus.REJECTED,
                     ApplicationStatus.BLOCKED,
+                    ApplicationStatus.SUBMISSION_UNKNOWN,
+                    ApplicationStatus.VERIFICATION_UNKNOWN,
                 ]:
                     app.status = ApplicationStatus.FAILED
                 self.alert_dispatcher.dispatch_alert(
@@ -281,17 +334,47 @@ class ApplicationSubmissionPipeline:
     async def _handle_phase_10_approval(
         self, app: Application, profile: UserProfile, *args: Any
     ) -> DoDResult:
-        """DoD: Human approval gate — pause if supervised and not auto_approve."""
+        """DoD: Human approval gate — pause if supervised and not auto_approve.
+
+        WS3: pausing creates a durable ApprovalRequest that survives restarts;
+        its id is stored on the application so `submit_and_verify` (possibly
+        in a later process) can enforce the approved decision (G3)."""
         auto_approve = args[1] if len(args) > 1 else False
         if app.trust_level == TrustLevel.SUPERVISED and not auto_approve:
             app.status = ApplicationStatus.PENDING_APPROVAL
+            if not (app.form_values or {}).get("_approval_id"):
+                approval = self._engine().create_approval(
+                    self._task_id(app),
+                    "SUBMIT",
+                    risk_level=5,
+                    requested_by="asp",
+                    application_id=app.application_id,
+                )
+                if app.form_values is None:
+                    app.form_values = {}
+                app.form_values["_approval_id"] = approval.id
             return DoDResult(passed=True)
         return DoDResult(passed=True)
+
+    def _approval_is_approved(self, app: Application) -> bool:
+        approval_id = (app.form_values or {}).get("_approval_id")
+        if not approval_id:
+            # Legacy/autonomous path with no durable approval recorded.
+            return app.trust_level != TrustLevel.SUPERVISED
+        approval = self._engine().get_approval(str(approval_id))
+        return approval is not None and approval.status is DurableApprovalStatus.APPROVED
 
     async def _handle_phase_11_submit(
         self, app: Application, profile: UserProfile, *args: Any
     ) -> DoDResult:
-        """DoD: CircuitBreaker protected submission with evidence screenshot logging."""
+        """DoD: CircuitBreaker protected submission with evidence logging.
+
+        WS3 effect-ledger protocol (G3): reserve the effect under the
+        application's idempotency key BEFORE the external call; a duplicate
+        reservation reconciles instead of re-executing; an ambiguous
+        completion (crash/timeout after the call) lands in
+        SUBMISSION_UNKNOWN for the reconciliation service — never a blind
+        retry and never a second submission."""
         # Extra data (e.g. tailored resume path) is merged in right before submit,
         # so submit adapters see it without reordering pipeline phases.
         if self._extra_form_data:
@@ -304,14 +387,68 @@ class ApplicationSubmissionPipeline:
             return DoDResult(passed=False, reason=f"Circuit breaker is OPEN for site '{app.site}'")
 
         app.status = ApplicationStatus.SUBMITTING
+        engine = self._engine()
+
+        # 1) Reserve the effect (UNIQUE idempotency key = duplicate guard).
         try:
-            submitted_ok = await self.circuit_breaker.execute_with_retry(
-                app.site, self.adapter.submit_application, app
+            engine.reserve_effect(
+                self._task_id(app),
+                "SUBMIT",
+                app.idempotency_key,
+                request_hash=self._request_hash(app),
+                application_id=app.application_id,
             )
-            if not submitted_ok:
+        except DuplicateEffect:
+            existing = engine.get_effect(app.idempotency_key)
+            if existing is not None and existing.status is EffectStatus.COMMITTED:
+                # Already submitted (e.g. previous run crashed after commit):
+                # reconcile forward, never re-execute.
+                transition_application(
+                    app, ApplicationStatus.SUBMITTED, reason="reconciled: effect already COMMITTED"
+                )
+                return DoDResult(passed=True)
+            # PENDING/UNKNOWN reservation from a dead run: ambiguous — hand
+            # to the reconciliation service (verify-only).
+            transition_application(
+                app,
+                ApplicationStatus.SUBMISSION_UNKNOWN,
+                reason="effect reserved by an earlier run; awaiting reconciliation",
+            )
+            return DoDResult(passed=False, reason="submission ambiguous; reconciliation required")
+
+        # 2) Execute the external side effect EXACTLY once. The breaker
+        # records the outcome for trip-counting but never retries a submit —
+        # a retry after a post-send failure could double-submit (G3).
+        try:
+            submitted_ok = await self.adapter.submit_application(app)
+            if submitted_ok:
+                self.circuit_breaker.record_success(app.site)
+            else:
+                self.circuit_breaker.record_failure(app.site)
+                engine.update_effect(
+                    app.idempotency_key,
+                    EffectStatus.FAILED,
+                    task_id_for_events=self._task_id(app),
+                )
                 return DoDResult(passed=False, reason="Adapter submit_application returned False")
         except Exception as exc:
-            return DoDResult(passed=False, reason=f"Submission error: {exc}")
+            self.circuit_breaker.record_failure(app.site)
+            # The call may or may not have reached the ATS before dying:
+            # UNKNOWN, never FAILED-with-retry.
+            engine.update_effect(
+                app.idempotency_key, EffectStatus.UNKNOWN, task_id_for_events=self._task_id(app)
+            )
+            transition_application(
+                app, ApplicationStatus.SUBMISSION_UNKNOWN, reason=f"ambiguous submit: {exc}"
+            )
+            return DoDResult(passed=False, reason=f"Submission ambiguous (effect UNKNOWN): {exc}")
+
+        engine.update_effect(
+            app.idempotency_key,
+            EffectStatus.COMMITTED,
+            external_reference=str((app.form_values or {}).get("submission_id") or "") or None,
+            task_id_for_events=self._task_id(app),
+        )
 
         # Log submission evidence
         await self.adapter.capture_screenshot()
@@ -321,20 +458,30 @@ class ApplicationSubmissionPipeline:
             form_data_snapshot=app.form_values,
         )
         app.evidence.append(evidence_item)
-        app.status = ApplicationStatus.SUBMITTED
+        transition_application(app, ApplicationStatus.SUBMITTED)
         return DoDResult(passed=True)
 
     async def _handle_phase_12_verify(
         self, app: Application, profile: UserProfile, *args: Any
     ) -> DoDResult:
-        """DoD: Verify submission receipt with ATS server."""
+        """DoD: Verify submission receipt with ATS server.
+
+        WS3: a failed verification of a SUBMITTED application lands in
+        VERIFICATION_UNKNOWN; a SUBMISSION_UNKNOWN application stays there —
+        both are reconciliation territory, never retry-the-submit."""
         try:
             res = await self.circuit_breaker.execute_with_retry(
                 app.site, self.adapter.verify_submission, app
             )
             if hasattr(res, "success"):
                 if res.success:
-                    app.status = ApplicationStatus.VERIFIED
+                    transition_application(app, ApplicationStatus.VERIFIED)
+                    self._engine().update_effect(
+                        app.idempotency_key,
+                        EffectStatus.COMMITTED,
+                        external_reference=str(getattr(res, "confirmation_id", None) or ""),
+                        task_id_for_events=self._task_id(app),
+                    )
                     evidence_item = EvidenceItem(
                         evidence_id=str(uuid.uuid4()),
                         step_name="phase_12_verify",
@@ -346,11 +493,19 @@ class ApplicationSubmissionPipeline:
                     app.evidence.append(evidence_item)
                     return DoDResult(passed=True)
                 else:
+                    if app.status is ApplicationStatus.SUBMITTED:
+                        transition_application(
+                            app,
+                            ApplicationStatus.VERIFICATION_UNKNOWN,
+                            reason=getattr(res, "reason", "Verification failed"),
+                        )
+                    elif app.status is ApplicationStatus.SUBMISSION_UNKNOWN:
+                        app.error_message = getattr(res, "reason", "Verification failed")
                     return DoDResult(
                         passed=False, reason=getattr(res, "reason", "Verification failed")
                     )
             elif res:
-                app.status = ApplicationStatus.VERIFIED
+                transition_application(app, ApplicationStatus.VERIFIED)
                 evidence_item = EvidenceItem(
                     evidence_id=str(uuid.uuid4()),
                     step_name="phase_12_verify",
@@ -359,12 +514,29 @@ class ApplicationSubmissionPipeline:
                 app.evidence.append(evidence_item)
                 return DoDResult(passed=True)
             else:
+                if app.status is ApplicationStatus.SUBMITTED:
+                    transition_application(
+                        app,
+                        ApplicationStatus.VERIFICATION_UNKNOWN,
+                        reason="Submission verification returned False",
+                    )
                 return DoDResult(passed=False, reason="Submission verification returned False")
         except Exception as exc:
             return DoDResult(passed=False, reason=f"Verification error: {exc}")
 
     async def submit_and_verify(self, app: Application) -> Application:
-        """Direct Phase 11 & Phase 12 execution for approved applications."""
+        """Direct Phase 11 & Phase 12 execution for approved applications.
+
+        G3: a supervised application with a recorded durable approval is only
+        submitted after that approval is APPROVED (the approval row lives in
+        the database, so the decision survives restarts)."""
+        if not self._approval_is_approved(app):
+            app.error_message = (
+                "submission refused: durable approval not APPROVED "
+                "(jobot approval list / jobot approval decide <id> APPROVE)"
+            )
+            self.db.save_application(app)
+            raise ApprovalRequiredError(app.error_message)
         profile = UserProfile(profile_id=app.profile_id)
         await self._handle_phase_11_submit(app, profile)
         if app.status == ApplicationStatus.SUBMITTED:

@@ -229,11 +229,24 @@ class ApplyOrchestrator:
         saga.compensate(f"Submission failed: {app.error_message}")
 
     async def submit_approved(self, app: Application) -> ApplyResult:
-        """Execute phases 11-12 for a PENDING_APPROVAL application."""
+        """Execute phases 11-12 for a PENDING_APPROVAL application.
+
+        Calling this method IS the human approval act: a stored durable
+        approval still PENDING is decided APPROVED here so the pipeline's
+        G3 gate passes (the decision is recorded in the ledger)."""
         adapter = AdapterRegistry.get_adapter(app.site)
         pipeline = ApplicationSubmissionPipeline(adapter, self.db)
         if app.form_values is None:
             app.form_values = {}
+        approval_id = app.form_values.get("_approval_id")
+        if approval_id:
+            from jobot.execution.engine import ApprovalStatus as _AS
+            from jobot.execution.engine import DurableTaskEngine as _DTE
+
+            engine = _DTE(self.db)
+            approval = engine.get_approval(str(approval_id))
+            if approval is not None and approval.status is _AS.PENDING:
+                engine.decide_approval(str(approval_id), _AS.APPROVED, decided_by="submit_approved")
         submitted = await pipeline.submit_and_verify(app)
 
         saga_id = str((app.form_values or {}).get("_saga_id", ""))
