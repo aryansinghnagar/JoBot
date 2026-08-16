@@ -108,6 +108,24 @@ class DatabaseManager:
                 embedding TEXT NOT NULL,
                 added_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS saga_instances (
+                saga_id TEXT PRIMARY KEY,
+                job_id TEXT NOT NULL,
+                profile_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS saga_steps (
+                saga_id TEXT NOT NULL,
+                step_name TEXT NOT NULL,
+                status TEXT NOT NULL,
+                detail TEXT,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (saga_id, step_name)
+            );
             """)
 
     # -------------------------------------------------------------------
@@ -290,6 +308,66 @@ class DatabaseManager:
         with self._get_connection() as conn:
             cursor = conn.execute("DELETE FROM applications")
             return cursor.rowcount
+
+    # -------------------------------------------------------------------
+    # Saga Operations (Phase 3: ApplyOrchestrator checkpoint/compensation)
+    # -------------------------------------------------------------------
+
+    def create_saga(self, job_id: str, profile_id: str) -> str:
+        """Create a saga instance; returns its saga_id."""
+        import uuid
+
+        saga_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO saga_instances
+                (saga_id, job_id, profile_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (saga_id, job_id, profile_id, "RUNNING", now, now),
+            )
+        return saga_id
+
+    def update_saga_status(self, saga_id: str, status: str) -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                "UPDATE saga_instances SET status = ?, updated_at = ? WHERE saga_id = ?",
+                (status, datetime.now(timezone.utc).isoformat(), saga_id),
+            )
+
+    def save_saga_step(self, saga_id: str, step_name: str, status: str, detail: str = "") -> None:
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO saga_steps
+                (saga_id, step_name, status, detail, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (saga_id, step_name, status, detail, datetime.now(timezone.utc).isoformat()),
+            )
+
+    def get_saga(self, saga_id: str) -> Optional[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM saga_instances WHERE saga_id = ?", (saga_id,)
+            ).fetchone()
+            return dict(row) if row else None
+
+    def list_saga_steps(self, saga_id: str) -> List[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM saga_steps WHERE saga_id = ? ORDER BY created_at", (saga_id,)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def list_sagas(self, limit: int = 20) -> List[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM saga_instances ORDER BY created_at DESC LIMIT ?", (limit,)
+            ).fetchall()
+            return [dict(r) for r in rows]
 
     # -------------------------------------------------------------------
     # Job Dedup Cache Operations (scraper two-tier dedup)

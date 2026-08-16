@@ -39,6 +39,7 @@ class ApplicationSubmissionPipeline:
         circuit_breaker: Optional[CircuitBreaker] = None,
         trace_logger: Optional[TraceLogger] = None,
         alert_dispatcher: Optional[AlertDispatcher] = None,
+        extra_form_data: Optional[Dict[str, Any]] = None,
     ):
         self.adapter = adapter
         self.db = db_manager
@@ -51,6 +52,7 @@ class ApplicationSubmissionPipeline:
         self.circuit_breaker = circuit_breaker or CircuitBreaker()
         self.trace_logger = trace_logger or TraceLogger()
         self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
+        self._extra_form_data = extra_form_data or {}
 
     def _generate_idempotency_key(self, job_url: str, profile_id: str) -> str:
         raw = f"{job_url}::{profile_id}"
@@ -290,6 +292,13 @@ class ApplicationSubmissionPipeline:
         self, app: Application, profile: UserProfile, *args: Any
     ) -> DoDResult:
         """DoD: CircuitBreaker protected submission with evidence screenshot logging."""
+        # Extra data (e.g. tailored resume path) is merged in right before submit,
+        # so submit adapters see it without reordering pipeline phases.
+        if self._extra_form_data:
+            if app.form_values is None:
+                app.form_values = {}
+            app.form_values.update(self._extra_form_data)
+
         if self.circuit_breaker.get_state(app.site) == "OPEN":
             app.status = ApplicationStatus.CIRCUIT_OPEN
             return DoDResult(passed=False, reason=f"Circuit breaker is OPEN for site '{app.site}'")
