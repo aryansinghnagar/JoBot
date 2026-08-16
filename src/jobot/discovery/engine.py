@@ -23,12 +23,28 @@ class JobDiscoveryEngine:
     Discovers relevant job postings on configured portals and computes candidate fit scores.
     """
 
-    def __init__(self, active_portals: Optional[List[str]] = None, skill_extractor: Optional[SkillExtractor] = None) -> None:
+    def __init__(
+        self,
+        active_portals: Optional[List[str]] = None,
+        skill_extractor: Optional[SkillExtractor] = None,
+    ) -> None:
         if active_portals is None:
             active_portals = [
-                "naukri", "linkedin", "indeed", "greenhouse", "lever", 
-                "workday", "glassdoor", "instahyre", "cutshort", "wellfound",
-                "shine", "foundit", "hirist", "ziprecruiter", "smartrecruiters"
+                "naukri",
+                "linkedin",
+                "indeed",
+                "greenhouse",
+                "lever",
+                "workday",
+                "glassdoor",
+                "instahyre",
+                "cutshort",
+                "wellfound",
+                "shine",
+                "foundit",
+                "hirist",
+                "ziprecruiter",
+                "smartrecruiters",
             ]
         self.active_portals = active_portals
         self.skill_extractor = skill_extractor or SkillExtractor()
@@ -38,7 +54,11 @@ class JobDiscoveryEngine:
 
     def evaluate_match(self, posting: JobPosting, profile: UserProfile) -> JobMatchResult:
         """Compute matching score between candidate profile skills and job requisition skills."""
-        extracted_skills = self.skill_extractor.extract_skills_sync(posting.description) if posting.description else []
+        extracted_skills = (
+            self.skill_extractor.extract_skills_sync(posting.description)
+            if posting.description
+            else []
+        )
         combined_skills = list(dict.fromkeys(posting.parsed_skills + extracted_skills))
         skills_to_check = combined_skills if combined_skills else posting.parsed_skills
 
@@ -81,7 +101,7 @@ class JobDiscoveryEngine:
                 adapter = self._get_adapter(portal)
                 # Parse sample job postings for search query
                 for i in range(limit_per_portal):
-                    sample_url = f"https://www.{portal}.com/job/{target_title.replace(' ', '-').lower()}-{i+101}"
+                    sample_url = f"https://www.{portal}.com/job/{target_title.replace(' ', '-').lower()}-{i + 101}"
                     job_posting = await adapter.parse_job_posting(sample_url)
                     match_res = self.evaluate_match(job_posting, profile)
                     if match_res.match_score >= min_match_threshold:

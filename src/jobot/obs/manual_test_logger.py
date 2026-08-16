@@ -86,7 +86,9 @@ class ManualTestLogger:
         with open(self.markdown_report, "a", encoding="utf-8") as f:
             if header_needed:
                 f.write("# Manual Testing Diagnostic & Bug Log\n\n")
-                f.write("Log of errors, vulnerabilities, and issues recorded during manual testing sessions.\n\n")
+                f.write(
+                    "Log of errors, vulnerabilities, and issues recorded during manual testing sessions.\n\n"
+                )
                 f.write("| Issue ID | Type | Site | Summary | Timestamp |\n")
                 f.write("|----------|------|------|---------|-----------|\n")
 

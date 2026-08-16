@@ -29,10 +29,21 @@ class NaukriDiscoveryEngine:
             return f"{self.BASE_URL}/{slug}-jobs-in-{loc_slug}"
         return f"{self.BASE_URL}/{slug}-jobs"
 
-    def parse_search_results_html(self, html: str, target_title: str = "Developer") -> List[JobPosting]:
+    def parse_search_results_html(
+        self, html: str, target_title: str = "Developer"
+    ) -> List[JobPosting]:
         """Parse raw Naukri search results DOM HTML to extract JobPostings."""
         postings: List[JobPosting] = []
-        if any(token in html for token in ["srp-jobtuple", "jobTuple", "jd-header-title", "job-header", "job-description"]):
+        if any(
+            token in html
+            for token in [
+                "srp-jobtuple",
+                "jobTuple",
+                "jd-header-title",
+                "job-header",
+                "job-description",
+            ]
+        ):
             # DOM card parsing simulation / regex extraction
             job_id = f"nk_dom_{uuid.uuid4().hex[:8]}"
             desc = f"Requirement for {target_title} with expertise in Python, FastAPI, PostgreSQL, Docker, and Microservices."

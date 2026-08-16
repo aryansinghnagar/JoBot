@@ -59,7 +59,9 @@ class GreenhouseAdapter(SiteAdapter):
                     discovered_at=datetime.now(timezone.utc),
                 )
         except Exception as e:
-            logger.debug(f"[GREENHOUSE API] Could not fetch {api_url}: {e}. Returning parsed metadata.")
+            logger.debug(
+                f"[GREENHOUSE API] Could not fetch {api_url}: {e}. Returning parsed metadata."
+            )
 
         return JobPosting(
             job_id=job_id,
@@ -73,7 +75,9 @@ class GreenhouseAdapter(SiteAdapter):
             discovered_at=datetime.now(timezone.utc),
         )
 
-    async def discover_matching_jobs(self, board_token: str = "greenhouse", limit: int = 5) -> List[JobPosting]:
+    async def discover_matching_jobs(
+        self, board_token: str = "greenhouse", limit: int = 5
+    ) -> List[JobPosting]:
         """Fetch job postings for a specific Greenhouse board token via API."""
         api_url = f"{self.BASE_API_URL}/{board_token}/jobs?content=true"
         postings: List[JobPosting] = []
@@ -88,7 +92,10 @@ class GreenhouseAdapter(SiteAdapter):
                         JobPosting(
                             job_id=str(item.get("id")),
                             site="greenhouse",
-                            url=item.get("absolute_url", f"https://boards.greenhouse.io/{board_token}/jobs/{item.get('id')}"),
+                            url=item.get(
+                                "absolute_url",
+                                f"https://boards.greenhouse.io/{board_token}/jobs/{item.get('id')}",
+                            ),
                             title=item.get("title", "Software Engineer"),
                             company=board_token.capitalize(),
                             location=item.get("location", {}).get("name", "Remote"),

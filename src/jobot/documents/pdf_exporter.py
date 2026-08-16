@@ -36,7 +36,9 @@ class ResumeExporter:
         if profile.experiences:
             lines.append("--- WORK EXPERIENCE ---")
             for exp in profile.experiences:
-                lines.append(f"* {exp.title} at {exp.company} ({exp.start_date} - {exp.end_date or 'Present'})")
+                lines.append(
+                    f"* {exp.title} at {exp.company} ({exp.start_date} - {exp.end_date or 'Present'})"
+                )
                 if exp.description:
                     lines.append(f"  {exp.description}")
             lines.append("")
@@ -44,7 +46,9 @@ class ResumeExporter:
         if profile.education:
             lines.append("--- EDUCATION ---")
             for edu in profile.education:
-                lines.append(f"* {edu.degree} in {edu.field_of_study} - {edu.institution} ({edu.start_year})")
+                lines.append(
+                    f"* {edu.degree} in {edu.field_of_study} - {edu.institution} ({edu.start_year})"
+                )
 
         return "\n".join(lines)
 
@@ -70,14 +74,14 @@ class ResumeExporter:
   <h1>{p.first_name} {p.last_name}</h1>
   <div class="contact">
     {p.email} | {p.phone} | {p.location_city}, {p.location_country}<br>
-    LinkedIn: {p.linkedin_url or 'N/A'}
+    LinkedIn: {p.linkedin_url or "N/A"}
   </div>
 
   <div class="section-title">SKILLS</div>
   <div style="margin-top: 8px;">{skills_html}</div>
 
   <div class="section-title">SUMMARY</div>
-  <p>Notice Period: {profile.compensation.notice_period_days} Days | Expected CTC: {f'₹{profile.compensation.expected_ctc_inr:,.0f}' if profile.compensation.expected_ctc_inr is not None else 'Negotiable'}</p>
+  <p>Notice Period: {profile.compensation.notice_period_days} Days | Expected CTC: {f"₹{profile.compensation.expected_ctc_inr:,.0f}" if profile.compensation.expected_ctc_inr is not None else "Negotiable"}</p>
 </body>
 </html>"""
         return html

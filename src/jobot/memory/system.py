@@ -32,7 +32,7 @@ class EightTierMemorySystem:
 
     def add_episodic_record(self, key: str, content: Dict[str, Any]) -> MemoryRecord:
         rec = MemoryRecord(
-            memory_id=f"EP-{len(self.episodic_memory)+1}",
+            memory_id=f"EP-{len(self.episodic_memory) + 1}",
             tier="episodic",
             key=key,
             content=content,
@@ -42,7 +42,7 @@ class EightTierMemorySystem:
 
     def add_audit_record(self, key: str, content: Dict[str, Any]) -> MemoryRecord:
         rec = MemoryRecord(
-            memory_id=f"AUD-{len(self.audit_memory)+1}",
+            memory_id=f"AUD-{len(self.audit_memory) + 1}",
             tier="audit",
             key=key,
             content=content,

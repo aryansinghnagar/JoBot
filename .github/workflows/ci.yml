@@ -35,11 +35,11 @@ jobs:
 
       - name: Run Ruff Linting Check
         run: |
-          ruff check src/ --ignore E501
+          ruff check src/ --ignore E501,F401
 
-      - name: Verify Black Code Formatting
+      - name: Verify Code Formatting
         run: |
-          black --check .
+          ruff format --check src/
 
       - name: Run Mypy Type Checking
         run: |

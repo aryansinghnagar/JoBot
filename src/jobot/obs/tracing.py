@@ -46,7 +46,10 @@ class TraceLogger:
             trace_dir = Path.home() / ".jobot" / "traces"
         self.trace_dir = trace_dir
         self.trace_dir.mkdir(parents=True, exist_ok=True)
-        self.run_id = run_id or f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}"
+        self.run_id = (
+            run_id
+            or f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}"
+        )
         self.spans: List[TraceSpan] = []
         self.incidents: List[Incident] = []
 
@@ -67,15 +70,20 @@ class TraceLogger:
 
         trace_file = self.trace_dir / f"{self.run_id}.jsonl"
         with open(trace_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "span_id": span.span_id,
-                "run_id": self.run_id,
-                "name": span.name,
-                "start_time": span.start_time.isoformat(),
-                "end_time": span.end_time.isoformat(),
-                "duration_ms": duration_ms,
-                "attributes": span.attributes,
-            }) + "\n")
+            f.write(
+                json.dumps(
+                    {
+                        "span_id": span.span_id,
+                        "run_id": self.run_id,
+                        "name": span.name,
+                        "start_time": span.start_time.isoformat(),
+                        "end_time": span.end_time.isoformat(),
+                        "duration_ms": duration_ms,
+                        "attributes": span.attributes,
+                    }
+                )
+                + "\n"
+            )
 
     def raise_incident(
         self,
