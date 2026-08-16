@@ -41,6 +41,10 @@ htmlcov/
 ~/.jobaut/
 .jobaut/
 
+# Runtime / Campaign Artifacts (untracked on purpose)
+applications_export.json
+.freebuff/
+
 # Node Modules & NPM Caches
 node_modules/
 .npm/
