@@ -40,3 +40,7 @@ htmlcov/
 # Local User Data Directories
 ~/.jobaut/
 .jobaut/
+
+# Node Modules & NPM Caches
+node_modules/
+.npm/

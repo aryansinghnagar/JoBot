@@ -3,14 +3,16 @@
 **Document ID**: CONTRACT-DEV-0.1  
 **Version**: 1.0  
 **Status**: Active Contract  
-**Target Completion**: Milestone dev-0.1  
+**Target Completion**: Milestone dev-0.1
 
 ---
 
 ## 1. Objective
+
 Establish the core architectural substrate for AJOS (`jobot`), including project scaffolding, canonical directory structure, Pydantic domain models, SQLite control plane DB, CredentialVault (`age` encryption), 12-phase Application Submission Pipeline (ASP), Mock ATS server, Naukri SiteAdapter (supervised mode), and Typer CLI.
 
 ## 2. In Scope
+
 1. Repository Scaffolding:
    - Canonical directory structure: `src/jobot/`, `tests/`, `config/`, `queues/`
    - Build configuration: `pyproject.toml` with pinned dependencies
@@ -41,6 +43,7 @@ Establish the core architectural substrate for AJOS (`jobot`), including project
    - CLI commands: `setup`, `profile`, `run`, `status`, `pause`, `export`
 
 ## 3. Exit Criteria
+
 - [ ] All `dev-0.1` phases (0.1.0 through 0.1.6) implemented
 - [ ] End-to-end closed loop test passes on Mock ATS
 - [ ] End-to-end closed loop cassette test passes for Naukri
@@ -52,4 +55,5 @@ Establish the core architectural substrate for AJOS (`jobot`), including project
 - [ ] `ruff` and `mypy` pass with 0 errors
 
 ## 4. Sign-off Contract
+
 This contract is normative for `dev-0.1`. Implementation must not deviate from these boundaries without updating this contract.
