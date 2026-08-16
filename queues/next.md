@@ -15,8 +15,8 @@
 ## Active P1 Adapter Upgrades (In Progress)
 - [ ] P1.1: Naukri real `submit_application` driving Patchright browser context
 - [ ] P1.2: Naukri real `verify_submission` checking portal application history
-- [ ] P1.3: Naukri real `discover_jobs` scraping search results
-- [ ] P1.4: Dynamic `SkillExtractor` execution across all adapter job descriptions
+- [x] P1.3: Naukri real `discover_jobs` scraping search results
+- [x] P1.4: Dynamic `SkillExtractor` execution across all adapter job descriptions
 
 ## Release 2.0 Roadmap (Planned)
 - [ ] T4.1: Tauri 2 + React Desktop GUI Integration
