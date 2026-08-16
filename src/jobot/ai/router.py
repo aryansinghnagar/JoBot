@@ -122,9 +122,7 @@ class ModelRouter:
                     contents=prompt,
                 )
                 resp_text = response.text or ""
-                cost = self._estimate_cost(
-                    provider, len(prompt.split()), len(resp_text.split())
-                )
+                cost = self._estimate_cost(provider, len(prompt.split()), len(resp_text.split()))
                 self.current_spent_usd += cost
                 return resp_text
             except Exception as ex:
