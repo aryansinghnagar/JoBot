@@ -1,20 +1,17 @@
+from pathlib import Path
 import pytest
 from jobot.evals.harness import EvalCategory, EvalHarness, EvalScenario
 
 
-def test_eval_harness_execution():
+def test_eval_harness_scenarios_from_dir():
     harness = EvalHarness()
-    scenario = EvalScenario(
-        scenario_id="eval_001",
-        category=EvalCategory.CAPABILITY,
-        title="Form Fill Capability Test",
-        input_data={"job_url": "https://naukri.com/job/101"},
-        expected_output={"status": "verified"},
-    )
-    harness.load_scenario(scenario)
+    res = harness.run_eval_suite()
 
-    results = harness.run_eval_suite()
-    assert results["total"] == 1
-    assert results["passed"] == 1
-    assert results["pass_rate"] == 1.0
-    assert "capability" in results["category_scores"]
+    assert res["total"] >= 5
+    assert res["passed"] == res["total"]
+    assert res["pass_rate"] == 1.0
+    assert "regression" in res["category_scores"]
+    assert "adversarial" in res["category_scores"]
+    assert "capability" in res["category_scores"]
+    assert "behavioral" in res["category_scores"]
+    assert "long_horizon" in res["category_scores"]

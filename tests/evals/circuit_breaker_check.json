@@ -1,0 +1,12 @@
+{
+  "scenario_id": "eval_005",
+  "category": "long_horizon",
+  "title": "Circuit Breaker Tripping Check",
+  "input_data": {
+    "consecutive_failures": 5,
+    "failure_threshold": 5
+  },
+  "expected_output": {
+    "circuit_state": "OPEN"
+  }
+}

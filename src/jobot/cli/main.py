@@ -394,5 +394,31 @@ def alerts_cmd(
     console.print(table)
 
 
+from jobot.evals.harness import EvalHarness
+
+
+@app.command("evals")
+def evals_cmd(
+    action: str = typer.Argument("run", help="Action: 'run'"),
+) -> None:
+    """Run automated evaluation suite across 6 categories."""
+    harness = EvalHarness()
+    res = harness.run_eval_suite()
+
+    console.print(f"\n[bold cyan]=== JoBot Continuous Evaluation Results ===[/bold cyan]")
+    console.print(f"Scenarios Evaluated: [bold]{res['total']}[/bold]")
+    console.print(f"Scenarios Passed:    [bold green]{res['passed']}[/bold green]")
+    console.print(f"Overall Pass Rate:   [bold yellow]{int(res['pass_rate']*100)}%[/bold yellow]\n")
+
+    table = Table(title="Category Breakdown")
+    table.add_column("Category", style="cyan")
+    table.add_column("Passed / Total", style="green")
+
+    for cat, scores in res.get("category_scores", {}).items():
+        table.add_row(cat, f"{scores['passed']} / {scores['total']}")
+
+    console.print(table)
+
+
 if __name__ == "__main__":
     app()

@@ -1,0 +1,13 @@
+{
+  "scenario_id": "eval_004",
+  "category": "behavioral",
+  "title": "Profile Direct Q&A Answering",
+  "input_data": {
+    "question": "What is your mobile phone number?",
+    "phone": "+917827756669"
+  },
+  "expected_output": {
+    "question_type": "profile_direct",
+    "answer": "+917827756669"
+  }
+}
