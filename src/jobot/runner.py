@@ -1,17 +1,22 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional
+
 from jobot.adapters import AdapterRegistry, SiteAdapter
-from jobot.asp.pipeline import ApplicationSubmissionPipeline
+from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.discovery.engine import JobDiscoveryEngine
-from jobot.models.domain import Application, ApplicationStatus
+from jobot.llm.router import ModelRouter
+from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
 from jobot.obs.application_md_logger import ApplicationMarkdownLogger
 from jobot.policy.engine import PolicyEngine
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 
 logger = logging.getLogger(__name__)
+
+# Statuses that count toward the campaign goal (terminal success at submit).
+_SUCCESS_STATUSES = {"verified", "submitted"}
 
 
 def get_adapter(site: str) -> SiteAdapter:
@@ -20,11 +25,21 @@ def get_adapter(site: str) -> SiteAdapter:
 
 class ContinuousCampaignRunner:
     """
-    High-Throughput Round-Robin Continuous Campaign Runner.
-    Distributes applications evenly across 15 job portals with 20% match threshold.
+    Round-Robin Continuous Campaign Runner.
+
+    Composes the Phase 3 ApplyOrchestrator (saga + idempotency + grounding) —
+    the single source of truth for apply — with the discovery engine and the
+    PolicyEngine daily caps. Halts when the ModelRouter LLM daily cost budget
+    is exhausted (cost-gated campaign).
     """
 
-    def __init__(self, root_dir: Optional[Path] = None):
+    def __init__(
+        self,
+        root_dir: Optional[Path] = None,
+        orchestrator: Optional[ApplyOrchestrator] = None,
+        router: Optional[ModelRouter] = None,
+        discovery_factory: Optional[Callable[[str], Any]] = None,
+    ):
         if root_dir is None:
             root_dir = Path.cwd()
         self.root_dir = root_dir
@@ -32,12 +47,22 @@ class ContinuousCampaignRunner:
         self.db = DatabaseManager()
         self.vault = CredentialVault()
         self.policy_engine = PolicyEngine()
+        self.orchestrator = orchestrator or ApplyOrchestrator(self.db)
+        self.router = router or ModelRouter()
+        self.discovery_factory = discovery_factory or (
+            lambda portal: JobDiscoveryEngine(active_portals=[portal])
+        )
+
+    def _cost_gate_open(self) -> bool:
+        """True when the LLM daily budget is exhausted (local providers exempt)."""
+        return self.router.current_spent_usd >= self.router.daily_budget_usd
 
     async def run_continuous_campaign(
         self,
         goal_count: int = 1000,
         min_match: float = 0.20,
         auto_submit: bool = True,
+        max_iterations: int = 2000,
     ) -> int:
         profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
         if not profile_path.exists():
@@ -81,7 +106,23 @@ class ContinuousCampaignRunner:
             f"=== Starting JoBot High-Throughput Campaign (Goal: {goal_count}+ Apps | Min Match: {int(min_match * 100)}%) ==="
         )
 
-        while total_submitted < goal_count:
+        for _ in range(max_iterations):
+            if total_submitted >= goal_count:
+                break
+
+            # LLM cost gate: halt the campaign when today's LLM budget is spent.
+            if self._cost_gate_open():
+                logger.warning(
+                    "[COST GATE] LLM daily budget exhausted ($%.2f/$%.2f); halting campaign",
+                    self.router.current_spent_usd,
+                    self.router.daily_budget_usd,
+                )
+                print(
+                    f"\n[STOP] LLM daily cost budget exhausted "
+                    f"(${self.router.current_spent_usd:.2f}/${self.router.daily_budget_usd:.2f})."
+                )
+                break
+
             # Round-Robin Portal Selection
             selected_portal = portals[portal_index % len(portals)]
             portal_index += 1
@@ -90,7 +131,7 @@ class ContinuousCampaignRunner:
             title = target_titles[total_submitted % len(target_titles)]
 
             try:
-                discovery = JobDiscoveryEngine(active_portals=[selected_portal])
+                discovery = self.discovery_factory(selected_portal)
                 matches = await discovery.discover_matching_jobs(
                     p, target_title=title, limit_per_portal=1, min_match_threshold=min_match
                 )
@@ -108,46 +149,53 @@ class ContinuousCampaignRunner:
 
                 try:
                     job = match.posting
-                    adapter = get_adapter(job.site)
-                    pipeline = ApplicationSubmissionPipeline(adapter, self.db)
 
-                    # Policy Enforcement Check
+                    # Policy Enforcement Check (daily caps, truthfulness rules)
                     daily_count = self.db.get_daily_application_count(job.site)
                     intent_app = Application(
                         application_id="intent_check",
                         job_id=job.job_id,
                         site=job.site,
-                        profile_id=p.profile_id,
-                        status=ApplicationStatus.INTENT,
                         idempotency_key=f"intent_{job.job_id}",
+                        status=ApplicationStatus.INTENT,
+                        trust_level=TrustLevel.AUTONOMOUS if auto_submit else TrustLevel.SUPERVISED,
                     )
-                    policy_res = (
-                        self.policy_engine.check_application_policy(
-                            job, p, intent_app, daily_submitted_count=daily_count
-                        )
-                        if hasattr(self.policy_engine, "check_application_policy")
-                        else None
+                    policy_res = self.policy_engine.check_application_policy(
+                        job, p, intent_app, daily_submitted_count=daily_count
                     )
-
-                    if policy_res and not policy_res.allowed:
+                    if not policy_res.allowed:
                         logger.warning(
                             f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}"
                         )
                         continue
 
-                    auto_approve = auto_submit
-                    app_res = await pipeline.execute(job.url, p, auto_approve=auto_approve)
-                    if (
-                        app_res.status == ApplicationStatus.VERIFIED
-                        or app_res.status == ApplicationStatus.SUBMITTED
-                    ):
+                    # Apply via the orchestrator: saga + idempotency + grounding gate.
+                    apply_result = await self.orchestrator.apply(job, p, auto_approve=auto_submit)
+                    status = (apply_result.app_status or "").lower()
+                    if status in _SUCCESS_STATUSES:
                         total_submitted += 1
 
-                    # Maintain log.md at project root
-                    self.md_logger.log_submission(app_res, job, match_score=match.match_score)
+                    # Audit record: log.md at project root.
+                    app = None
+                    if apply_result.application_id:
+                        app = self.db.get_application(apply_result.application_id)
+                    if app is None:
+                        app = Application(
+                            application_id=apply_result.application_id or "unknown",
+                            job_id=job.job_id,
+                            site=job.site,
+                            idempotency_key=f"runner-{job.job_id}",
+                            status=ApplicationStatus[status.upper()]
+                            if status
+                            else ApplicationStatus.SUBMITTED,
+                            trust_level=TrustLevel.AUTONOMOUS
+                            if auto_submit
+                            else TrustLevel.SUPERVISED,
+                        )
+                    self.md_logger.log_submission(app, job, match_score=match.match_score)
 
                     print(
-                        f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score * 100)}% -> {app_res.status.value.upper()}"
+                        f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score * 100)}% -> {status.upper()}"
                     )
                 except Exception as exc:
                     logger.error(
