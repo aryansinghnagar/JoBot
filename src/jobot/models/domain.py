@@ -165,6 +165,8 @@ class Application(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     error_message: Optional[str] = None
+    responded_at: Optional[datetime] = None
+    outcome: Optional[str] = None
 
 
 # -------------------------------------------------------------------

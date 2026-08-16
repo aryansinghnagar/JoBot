@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JoBot — Application Dashboard</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 2rem; color: #1a1a1a; }
+    h1 { border-bottom: 2px solid #e5e7eb; padding-bottom: .5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+    .card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: .5rem; padding: 1rem; }
+    .num { font-size: 2rem; font-weight: 700; color: #2563eb; }
+    .label { color: #6b7280; font-size: .8rem; text-transform: uppercase; letter-spacing:.05em; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1.5rem; }
+    th, td { text-align: left; border-bottom: 1px solid #e5e7eb; padding: .5rem .6rem; font-size: .85rem; }
+    .status-submitted { color: #2563eb; font-weight: 600; }
+    .status-verified { color: #059669; font-weight: 600; }
+    .status-rejected { color: #dc2626; font-weight: 600; }
+    .status-failed { color: #7c3aed; font-weight: 600; }
+    .muted { color: #9ca3af; font-size:.8rem; }
+  </style>
+</head>
+<body>
+  <h1>JoBot Application Dashboard</h1>
+  <p class="muted">Generated {{ generated }}</p>
+
+  <div class="grid">
+    <div class="card"><div class="num">{{ funnel.total }}</div><div class="label">Total Applications</div></div>
+    <div class="card"><div class="num">{{ funnel.pending_approval }}</div><div class="label">Pending Approval</div></div>
+    <div class="card"><div class="num">{{ funnel.submitted }}</div><div class="label">Submitted</div></div>
+    <div class="card"><div class="num">{{ funnel.verified }}</div><div class="label">Verified</div></div>
+    <div class="card"><div class="num">{{ funnel.rejected }}</div><div class="label">Rejected</div></div>
+    <div class="card"><div class="num">{{ funnel.failed }}</div><div class="label">Failed</div></div>
+  </div>
+
+  <p>Response rate: <strong>{{ "%.0f"|format(response_rate * 100) }}%</strong>
+     &middot; Rejection latency: avg {{ rejection_latency.avg_days }} days over {{ rejection_latency.count }} responses</p>
+
+  <h2>By Board</h2>
+  <table>
+    <tr><th>Board</th><th>Total</th><th>Verified</th><th>Rejected</th><th>Failed</th></tr>
+    {% for b in by_board %}
+    <tr>
+      <td>{{ b.site }}</td><td>{{ b.total }}</td>
+      <td>{{ b.verified or 0 }}</td><td>{{ b.rejected or 0 }}</td><td>{{ b.failed or 0 }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h2>Recent Applications</h2>
+  <table>
+    <tr><th>#</th><th>Site</th><th>Title</th><th>Company</th><th>Status</th><th>Created</th><th>Responded</th></tr>
+    {% for r in recent %}
+    <tr>
+      <td>{{ loop.index }}</td><td>{{ r.site }}</td><td>{{ r.title }}</td>
+      <td>{{ r.company }}</td>
+      <td class="status-{{ r.status }}">{{ r.status }}</td>
+      <td>{{ r.created_at[:16] }}</td><td>{{ r.responded_at[:16] if r.responded_at else '' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

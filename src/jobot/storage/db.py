@@ -96,6 +96,8 @@ class DatabaseManager:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 error_message TEXT,
+                responded_at TEXT,
+                outcome TEXT,
                 FOREIGN KEY (job_id) REFERENCES job_postings (job_id)
             );
 
@@ -125,8 +127,28 @@ class DatabaseManager:
                 detail TEXT,
                 created_at TEXT NOT NULL,
                 PRIMARY KEY (saga_id, step_name)
-            );
+             );
             """)
+        self.migrate()
+
+    @contextmanager
+    def _migrate_conn(self):
+        with self._get_connection() as conn:
+            yield conn
+
+    @staticmethod
+    def _columns(conn: sqlite3.Connection, table: str) -> set:
+        return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+
+    def _ensure_column(self, conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+        if column not in self._columns(conn, table):
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+    def migrate(self) -> None:
+        """Idempotent additive schema migrations for existing databases."""
+        with self._get_connection() as conn:
+            self._ensure_column(conn, "applications", "responded_at", "TEXT")
+            self._ensure_column(conn, "applications", "outcome", "TEXT")
 
     # -------------------------------------------------------------------
     # JobPosting Operations
@@ -174,38 +196,69 @@ class DatabaseManager:
     # Application Operations
     # -------------------------------------------------------------------
 
+    # Statuses that represent a (terminal) employer response. Applications
+    # reaching one of these for the first time are stamped `responded_at`.
+    _RESPONSE_STATUSES = {
+        ApplicationStatus.SUBMITTED,
+        ApplicationStatus.VERIFIED,
+        ApplicationStatus.REJECTED,
+        ApplicationStatus.FAILED,
+        ApplicationStatus.CANCELLED,
+        ApplicationStatus.CIRCUIT_OPEN,
+        ApplicationStatus.BLOCKED,
+    }
+
+    def _row_to_application(self, row: sqlite3.Row) -> Application:
+        def _dt(value: Optional[str]) -> Optional[datetime]:
+            return datetime.fromisoformat(value) if value else None
+
+        return Application(
+            application_id=row["application_id"],
+            job_id=row["job_id"],
+            site=row["site"],
+            profile_id=row["profile_id"],
+            status=ApplicationStatus(row["status"]),
+            idempotency_key=row["idempotency_key"],
+            trust_level=TrustLevel(row["trust_level"]),
+            form_values=json.loads(row["form_values"]) if row["form_values"] else {},
+            error_message=row["error_message"],
+            created_at=_dt(row["created_at"]) or datetime.now(timezone.utc),
+            updated_at=_dt(row["updated_at"]) or datetime.now(timezone.utc),
+            responded_at=_dt(row["responded_at"]) if "responded_at" in row.keys() else None,
+            outcome=row["outcome"] if "outcome" in row.keys() else None,
+        )
+
     def get_application_by_idempotency_key(self, idempotency_key: str) -> Optional[Application]:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM applications WHERE idempotency_key = ?", (idempotency_key,)
             ).fetchone()
-            if not row:
-                return None
-            return Application(
-                application_id=row["application_id"],
-                job_id=row["job_id"],
-                site=row["site"],
-                profile_id=row["profile_id"],
-                status=ApplicationStatus(row["status"]),
-                idempotency_key=row["idempotency_key"],
-                trust_level=TrustLevel(row["trust_level"]),
-                form_values=json.loads(row["form_values"]) if row["form_values"] else {},
-                error_message=row["error_message"],
-                created_at=datetime.fromisoformat(row["created_at"]),
-                updated_at=datetime.fromisoformat(row["updated_at"]),
-            )
+            return self._row_to_application(row) if row else None
 
     def application_exists(self, idempotency_key: str) -> bool:
         return self.get_application_by_idempotency_key(idempotency_key) is not None
 
     def save_application(self, app: Application) -> None:
         existing = self.get_application(app.application_id)
+        responded_at = getattr(app, "responded_at", None)
+        outcome = getattr(app, "outcome", None)
+        now = datetime.now(timezone.utc).isoformat()
+        # Stamp the first response time when crossing into a response status.
+        if app.status in self._RESPONSE_STATUSES and responded_at is None:
+            responded_at = app.updated_at if app.updated_at else datetime.now(timezone.utc)
+            outcome = app.status.value
+        if existing and existing.status != app.status and app.status in self._RESPONSE_STATUSES:
+            if existing.responded_at is None:
+                responded_at = app.updated_at if app.updated_at else datetime.now(timezone.utc)
+                outcome = app.status.value
         with self._get_connection() as conn:
             if existing:
                 conn.execute(
                     """
                     UPDATE applications
-                    SET job_id = ?, site = ?, profile_id = ?, status = ?, trust_level = ?, form_values = ?, error_message = ?, updated_at = ?
+                    SET job_id = ?, site = ?, profile_id = ?, status = ?, trust_level = ?,
+                        form_values = ?, error_message = ?, updated_at = ?,
+                        responded_at = ?, outcome = ?
                     WHERE application_id = ?
                     """,
                     (
@@ -216,7 +269,9 @@ class DatabaseManager:
                         app.trust_level.value,
                         json.dumps(app.form_values),
                         app.error_message,
-                        app.updated_at.isoformat(),
+                        now,
+                        responded_at.isoformat() if responded_at else None,
+                        outcome,
                         app.application_id,
                     ),
                 )
@@ -225,8 +280,10 @@ class DatabaseManager:
                     conn.execute(
                         """
                         INSERT INTO applications
-                        (application_id, job_id, site, profile_id, status, idempotency_key, trust_level, form_values, error_message, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        (application_id, job_id, site, profile_id, status, idempotency_key,
+                         trust_level, form_values, error_message, created_at, updated_at,
+                         responded_at, outcome)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             app.application_id,
@@ -239,7 +296,9 @@ class DatabaseManager:
                             json.dumps(app.form_values),
                             app.error_message,
                             app.created_at.isoformat(),
-                            app.updated_at.isoformat(),
+                            now,
+                            responded_at.isoformat() if responded_at else None,
+                            outcome,
                         ),
                     )
                 except sqlite3.IntegrityError as err:
@@ -249,50 +308,66 @@ class DatabaseManager:
                         ) from err
                     raise
 
+    def set_application_status(self, application_id: str, status: ApplicationStatus) -> bool:
+        """Transition an application to a new status (stamps response time on terminal)."""
+        app = self.get_application(application_id)
+        if app is None:
+            return False
+        if app.status == status:
+            return True
+        app.status = status
+        app.updated_at = datetime.now(timezone.utc)
+        self.save_application(app)
+        return True
+
     def get_application(self, application_id: str) -> Optional[Application]:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM applications WHERE application_id = ?", (application_id,)
             ).fetchone()
-            if not row:
-                return None
-            return Application(
-                application_id=row["application_id"],
-                job_id=row["job_id"],
-                site=row["site"],
-                profile_id=row["profile_id"],
-                status=ApplicationStatus(row["status"]),
-                idempotency_key=row["idempotency_key"],
-                trust_level=row["trust_level"],
-                form_values=json.loads(row["form_values"] or "{}"),
-                error_message=row["error_message"],
-                created_at=row["created_at"],
-                updated_at=row["updated_at"],
-            )
+            return self._row_to_application(row) if row else None
 
     def list_applications(self, limit: int = 50) -> List[Application]:
         with self._get_connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM applications ORDER BY created_at DESC LIMIT ?", (limit,)
             ).fetchall()
-            apps = []
+            return [self._row_to_application(row) for row in rows]
+
+    def get_applications_with_jobs(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Applications joined with their job posting (for dashboards/analytics)."""
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT a.*, j.title as job_title, j.company as job_company,
+                       j.location as job_location, j.url as job_url
+                FROM applications a
+                LEFT JOIN job_postings j ON a.job_id = j.job_id
+                ORDER BY a.created_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+            results: List[Dict[str, Any]] = []
             for row in rows:
-                apps.append(
-                    Application(
-                        application_id=row["application_id"],
-                        job_id=row["job_id"],
-                        site=row["site"],
-                        profile_id=row["profile_id"],
-                        status=ApplicationStatus(row["status"]),
-                        idempotency_key=row["idempotency_key"],
-                        trust_level=row["trust_level"],
-                        form_values=json.loads(row["form_values"] or "{}"),
-                        error_message=row["error_message"],
-                        created_at=row["created_at"],
-                        updated_at=row["updated_at"],
-                    )
+                app = self._row_to_application(row)
+                results.append(
+                    {
+                        "application_id": app.application_id,
+                        "job_id": app.job_id,
+                        "site": app.site,
+                        "company": row["job_company"] or app.site,
+                        "title": row["job_title"] or "(unknown)",
+                        "location": row["job_location"] or "",
+                        "url": row["job_url"] or "",
+                        "status": app.status.value,
+                        "outcome": app.outcome,
+                        "created_at": app.created_at.isoformat(),
+                        "updated_at": app.updated_at.isoformat(),
+                        "responded_at": app.responded_at.isoformat() if app.responded_at else None,
+                    }
                 )
-            return apps
+            return results
 
     def get_daily_application_count(self, site: str) -> int:
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")

@@ -43,6 +43,8 @@ from jobot.secrets import mask
 from jobot.stealth.browser import BrowserSession
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
+from jobot.tracker.analytics import TrackerAnalytics
+from jobot.tracker.render import TrackerRenderer
 
 app = typer.Typer(name="jobot", help="Autonomous Job Application Operating System CLI")
 console = Console()
@@ -966,6 +968,48 @@ def schedule_cmd(
         for s in schedules:
             table.add_row(s.get("schedule_id"), s.get("cron"), s.get("command"))
         console.print(table)
+
+
+@app.command("tracker")
+def tracker_cmd(
+    action: str = typer.Argument(
+        "list", help="Action: 'list', 'show', 'dashboard', 'dashboard-html'"
+    ),
+    target: Optional[str] = typer.Argument(None, help="Application id ('show') or html path ('dashboard-html')"),
+) -> None:
+    """Application Tracking System — list, inspect, and dashboard applications."""
+    db = DatabaseManager()
+    analytics = TrackerAnalytics(db)
+    renderer = TrackerRenderer(analytics)
+
+    if action == "list":
+        renderer.render_terminal(console, limit=20)
+        return
+
+    if action == "show":
+        if not target:
+            console.print("[bold red]Usage: jobot tracker show <application-id>[/bold red]")
+            raise typer.Exit(code=1)
+        row = db.get_applications_with_jobs(limit=1000)
+        match = next((r for r in row if r["application_id"] == target), None)
+        if not match:
+            console.print(f"[red]No application with id '{target}'.[/red]")
+            raise typer.Exit(code=1)
+        console.print_json(data=match)
+        return
+
+    if action == "dashboard":
+        renderer.render_terminal(console, limit=20)
+        return
+
+    if action == "dashboard-html":
+        out = Path(target) if target else Path.home() / ".jobot" / "reports" / "dashboard.html"
+        path = renderer.render_html_file(out, limit=1000)
+        console.print(f"[bold green][OK] Dashboard HTML written to {path}[/bold green]")
+        return
+
+    console.print(f"[bold red]Unknown tracker action '{action}'.[/bold red]")
+    raise typer.Exit(code=1)
 
 
 @app.command("traces")
