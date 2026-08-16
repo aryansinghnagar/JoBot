@@ -121,11 +121,12 @@ class ModelRouter:
                     model="gemini-2.5-flash",
                     contents=prompt,
                 )
+                resp_text = response.text or ""
                 cost = self._estimate_cost(
-                    provider, len(prompt.split()), len(response.text.split())
+                    provider, len(prompt.split()), len(resp_text.split())
                 )
                 self.current_spent_usd += cost
-                return response.text
+                return resp_text
             except Exception as ex:
                 logger.debug(f"Gemini API call failed: {ex}")
                 return None
@@ -153,7 +154,7 @@ class ModelRouter:
                 )
                 with urllib.request.urlopen(req, timeout=15) as resp:
                     res_data = json.loads(resp.read().decode("utf-8"))
-                    text = res_data["choices"][0]["message"]["content"]
+                    text = str(res_data["choices"][0]["message"]["content"])
                     cost = self._estimate_cost(provider, len(prompt.split()), len(text.split()))
                     self.current_spent_usd += cost
                     return text
@@ -174,7 +175,7 @@ class ModelRouter:
                 req = urllib.request.Request(
                     "https://api.anthropic.com/v1/messages",
                     headers={
-                        "x-api-key": api_key,
+                        "x-api-key": api_key or "",
                         "anthropic-version": "2023-06-01",
                         "Content-Type": "application/json",
                     },
@@ -183,7 +184,7 @@ class ModelRouter:
                 )
                 with urllib.request.urlopen(req, timeout=15) as resp:
                     res_data = json.loads(resp.read().decode("utf-8"))
-                    text = res_data["content"][0]["text"]
+                    text = str(res_data["content"][0]["text"])
                     cost = self._estimate_cost(provider, len(prompt.split()), len(text.split()))
                     self.current_spent_usd += cost
                     return text
@@ -208,7 +209,7 @@ class ModelRouter:
                 )
                 with urllib.request.urlopen(req, timeout=10) as resp:
                     res_data = json.loads(resp.read().decode("utf-8"))
-                    return res_data.get("response", "")
+                    return str(res_data.get("response", ""))
             except Exception as ex:
                 logger.debug(f"Ollama local API call failed: {ex}")
                 return None

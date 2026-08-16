@@ -55,45 +55,45 @@ class GenericPortalAdapter(SiteAdapter):
 
 
 class GlassdoorAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("glassdoor")
 
 
 class ZipRecruiterAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("ziprecruiter")
 
 
 class ShineAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("shine")
 
 
 class FounditAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("foundit")
 
 
 class HiristAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("hirist")
 
 
 class InstahyreAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("instahyre")
 
 
 class CutshortAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("cutshort")
 
 
 class WellfoundAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("wellfound")
 
 
 class SmartRecruitersAdapter(GenericPortalAdapter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("smartrecruiters")

@@ -12,7 +12,7 @@ class NaukriSubmitter:
     Submits application form, captures evidence, and handles navigation responses.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.mimicry = BehavioralMimicry()
 
     async def submit(self, application: Application, page: Optional[Any] = None) -> bool:
