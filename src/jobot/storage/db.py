@@ -32,8 +32,9 @@ class DatabaseManager:
     def _get_connection(self) -> Generator[sqlite3.Connection, None, None]:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
-        # Enable WAL mode and foreign keys
+        # Enable WAL mode, normal synchronous, and foreign keys
         conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
         conn.execute("PRAGMA foreign_keys=ON;")
         try:
             yield conn

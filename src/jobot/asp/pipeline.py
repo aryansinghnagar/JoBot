@@ -177,12 +177,13 @@ class ApplicationSubmissionPipeline:
         job_url = args[0]
         app.status = ApplicationStatus.PARSING
         job: JobPosting = await self.adapter.parse_job_posting(job_url)
+        if job.job_id:
+            app.job_id = job.job_id
+            self.db.save_job_posting(job)
         if not job.title:
             return DoDResult(passed=False, reason="Job posting missing title")
         if not job.job_id:
             return DoDResult(passed=False, reason="Job posting missing job_id")
-        app.job_id = job.job_id
-        self.db.save_job_posting(job)
         app.status = ApplicationStatus.PARSED
         return DoDResult(passed=True)
 

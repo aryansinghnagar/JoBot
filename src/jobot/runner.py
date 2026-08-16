@@ -89,57 +89,68 @@ class ContinuousCampaignRunner:
             # Select target role for this iteration
             title = target_titles[total_submitted % len(target_titles)]
 
-            discovery = JobDiscoveryEngine(active_portals=[selected_portal])
-            matches = await discovery.discover_matching_jobs(
-                p, target_title=title, limit_per_portal=1, min_match_threshold=min_match
-            )
+            try:
+                discovery = JobDiscoveryEngine(active_portals=[selected_portal])
+                matches = await discovery.discover_matching_jobs(
+                    p, target_title=title, limit_per_portal=1, min_match_threshold=min_match
+                )
+            except Exception as exc:
+                logger.error(f"[DISCOVERY ERROR] Error searching portal {selected_portal}: {exc}")
+                matches = []
+
+            if not matches:
+                await asyncio.sleep(0.1)
+                continue
 
             for match in matches:
                 if total_submitted >= goal_count:
                     break
 
-                job = match.posting
-                adapter = get_adapter(job.site)
-                pipeline = ApplicationSubmissionPipeline(adapter, self.db)
+                try:
+                    job = match.posting
+                    adapter = get_adapter(job.site)
+                    pipeline = ApplicationSubmissionPipeline(adapter, self.db)
 
-                # Policy Enforcement Check
-                daily_count = self.db.get_daily_application_count(job.site)
-                intent_app = Application(
-                    application_id="intent_check",
-                    job_id=job.job_id,
-                    site=job.site,
-                    profile_id=p.profile_id,
-                    status=ApplicationStatus.INTENT,
-                    idempotency_key=f"intent_{job.job_id}",
-                )
-                policy_res = (
-                    self.policy_engine.check_application_policy(
-                        job, p, intent_app, daily_submitted_count=daily_count
+                    # Policy Enforcement Check
+                    daily_count = self.db.get_daily_application_count(job.site)
+                    intent_app = Application(
+                        application_id="intent_check",
+                        job_id=job.job_id,
+                        site=job.site,
+                        profile_id=p.profile_id,
+                        status=ApplicationStatus.INTENT,
+                        idempotency_key=f"intent_{job.job_id}",
                     )
-                    if hasattr(self.policy_engine, "check_application_policy")
-                    else None
-                )
-
-                if policy_res and not policy_res.allowed:
-                    logger.warning(
-                        f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}"
+                    policy_res = (
+                        self.policy_engine.check_application_policy(
+                            job, p, intent_app, daily_submitted_count=daily_count
+                        )
+                        if hasattr(self.policy_engine, "check_application_policy")
+                        else None
                     )
-                    continue
 
-                auto_approve = auto_submit
-                app_res = await pipeline.execute(job.url, p, auto_approve=auto_approve)
-                if (
-                    app_res.status == ApplicationStatus.VERIFIED
-                    or app_res.status == ApplicationStatus.SUBMITTED
-                ):
-                    total_submitted += 1
+                    if policy_res and not policy_res.allowed:
+                        logger.warning(
+                            f"[POLICY BLOCKED] Skipping {job.title} at {job.company}: {policy_res.blocking_reason}"
+                        )
+                        continue
 
-                # Maintain log.md at project root
-                self.md_logger.log_submission(app_res, job, match_score=match.match_score)
+                    auto_approve = auto_submit
+                    app_res = await pipeline.execute(job.url, p, auto_approve=auto_approve)
+                    if (
+                        app_res.status == ApplicationStatus.VERIFIED
+                        or app_res.status == ApplicationStatus.SUBMITTED
+                    ):
+                        total_submitted += 1
 
-                print(
-                    f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score * 100)}% -> {app_res.status.value.upper()}"
-                )
+                    # Maintain log.md at project root
+                    self.md_logger.log_submission(app_res, job, match_score=match.match_score)
+
+                    print(
+                        f"[{total_submitted}/{goal_count}] [{job.site.upper()}] {job.title} at {job.company} | Match: {int(match.match_score * 100)}% -> {app_res.status.value.upper()}"
+                    )
+                except Exception as exc:
+                    logger.error(f"[RUNNER ERROR] Failed processing match for portal {selected_portal}: {exc}")
 
                 await asyncio.sleep(0.05)  # Fast continuous loop throughput
 

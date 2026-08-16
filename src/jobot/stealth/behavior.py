@@ -13,6 +13,9 @@ class BehavioralMimicry:
         start: Tuple[int, int], end: Tuple[int, int], control_points_count: int = 2
     ) -> List[Tuple[int, int]]:
         """Generate Cubic Bezier curve points with human-like jitter between start and end coordinates."""
+        if start == end:
+            return [start]
+
         x1, y1 = start
         x2, y2 = end
 
@@ -45,7 +48,7 @@ class BehavioralMimicry:
             if 0 < i < steps:
                 x += random.uniform(-1.5, 1.5)
                 y += random.uniform(-1.5, 1.5)
-            points.append((int(x), int(y)))
+            points.append((max(0, int(x)), max(0, int(y))))
         return points
 
     @staticmethod

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Type, cast
+from typing import Any, Dict, cast
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.adapters.indeed import IndeedAdapter
