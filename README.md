@@ -12,7 +12,7 @@
 
 `jobot` is an agentic operating system designed to automate end-to-end job discovery, resume tailoring, and multi-portal application workflows with strict non-repudiation evidence logging, zero-hallucination candidate truth verification, and durable human-in-the-loop governance.
 
-The authoritative specification is **`MASTER_PLAN_EXPANDED.md` / `Plan2.md`**.
+The authoritative specification is **[`docs/dev/master-plan.md`](file:///c:/Users/Aryan/OneDrive/Desktop/Coding%20Projects/4-JobAppAgent/docs/dev/master-plan.md)** (with technical architecture in **[`docs/dev/architecture.md`](file:///c:/Users/Aryan/OneDrive/Desktop/Coding%20Projects/4-JobAppAgent/docs/dev/architecture.md)**).
 
 ---
 
