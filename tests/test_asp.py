@@ -35,7 +35,7 @@ async def test_asp_closed_loop_autonomous(mock_ats_server):
             personal_info=PersonalInfo(
                 first_name="Aryan",
                 last_name="Nagar",
-                email="aryan@example.com",
+                email="asp_test@example.com",
                 phone="+919876543210",
             ),
         )
@@ -43,7 +43,7 @@ async def test_asp_closed_loop_autonomous(mock_ats_server):
         app_result = await pipeline.execute(f"{mock_ats_server}/jobs/1", profile, auto_approve=True)
 
         assert app_result.status == ApplicationStatus.VERIFIED
-        assert app_result.form_values["email"] == "aryan@example.com"
+        assert app_result.form_values["email"] == "asp_test@example.com"
         assert len(app_result.evidence) > 0
 
 
