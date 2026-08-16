@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 from jobot.models.domain import Application, ApplicationStatus
 from jobot.stealth.behavior import BehavioralMimicry
 
