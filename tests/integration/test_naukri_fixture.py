@@ -12,10 +12,14 @@ from jobot.storage.db import DatabaseManager
 async def test_naukri_adapter_fixture_execution():
     fixture_html = Path("tests/fixtures/naukri/job_page.html")
     assert fixture_html.exists()
+    html_content = fixture_html.read_text(encoding="utf-8")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         db = DatabaseManager(Path(tmpdir) / "nk_fixture.db")
         adapter = NaukriAdapter()
+        parsed_from_html = adapter.discovery_engine.parse_search_results_html(html_content)
+        assert len(parsed_from_html) > 0
+
         pipeline = ApplicationSubmissionPipeline(adapter, db)
 
         profile = UserProfile(
