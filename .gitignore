@@ -56,3 +56,11 @@ node_modules/
 # Tauri / Rust build artifacts
 gui/src-tauri/target/
 gui/src-tauri/gen/
+gui/src-tauri/binaries/
+
+# OS & Filesystem Metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
