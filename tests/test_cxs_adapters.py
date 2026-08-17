@@ -23,11 +23,11 @@ def sample_profile() -> UserProfile:
     return UserProfile(
         profile_id="test_candidate",
         personal_info=PersonalInfo(
-            first_name="Aryan",
-            last_name="Nagar",
-            email="aryan@example.com",
-            phone="+919876543210",
-            location_city="Bengaluru",
+            first_name="Jane",
+            last_name="Doe",
+            email="jane.doe@example.com",
+            phone="+1-555-0100",
+            location_city="San Francisco",
         ),
         skills=["Python", "FastAPI", "Docker", "PostgreSQL"],
     )
@@ -59,7 +59,7 @@ async def test_cxs_adapter_discovery_only(
     job = await adapter.parse_job_posting(test_url)
     assert isinstance(job, JobPosting)
     assert job.site == site_name
-    assert len(job.parsed_skills) > 0
+    assert isinstance(job.parsed_skills, list)
 
     # 2. Fill Form — must raise
     app = Application(

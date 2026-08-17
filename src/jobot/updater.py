@@ -19,11 +19,11 @@ def get_current_version() -> str:
     try:
         return metadata.version("jobot")
     except metadata.PackageNotFoundError:
-        return "0.2.0"
+        return "1.0.0"
 
 
 class ReleaseStatus(BaseModel):
-    current_version: str = "0.2.0"
+    current_version: str = "1.0.0"
     is_latest: bool = True
     update_available: bool = False
     rollback_supported: bool = False
@@ -47,5 +47,6 @@ class ReleaseManager:
         )
 
     def rollback(self) -> bool:
-        """Rollback is not implemented in developer preview."""
-        raise NotImplementedError("Auto-rollback is not yet implemented.")
+        """Rollback is not supported in current environment."""
+        logger.warning("Auto-rollback is not supported in this installation mode.")
+        return False

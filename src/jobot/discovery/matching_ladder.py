@@ -50,6 +50,43 @@ class MatchingLadder:
     ) -> None:
         self.router = router or ModelRouter()
         self.skill_extractor = skill_extractor or SkillExtractor()
+        self._candidate_vec_cache: dict[str, List[float]] = {}
+        self._candidate_skills_cache: dict[str, set[str]] = {}
+        self._candidate_years_cache: dict[str, int] = {}
+
+    def _get_candidate_years(self, profile: UserProfile) -> int:
+        p_key = f"{profile.profile_id}:{profile.version}"
+        if p_key in self._candidate_years_cache:
+            return self._candidate_years_cache[p_key]
+        candidate_years = 0
+        for exp in profile.experiences:
+            try:
+                start_year = int(exp.start_date.split("-")[0])
+                end_year = int(exp.end_date.split("-")[0]) if exp.end_date else 2026
+                candidate_years += max(0, end_year - start_year)
+            except (ValueError, IndexError):
+                candidate_years += 2
+        self._candidate_years_cache[p_key] = candidate_years
+        return candidate_years
+
+    def _get_candidate_skills_lower(self, profile: UserProfile) -> set[str]:
+        p_key = f"{profile.profile_id}:{profile.version}"
+        if p_key not in self._candidate_skills_cache:
+            self._candidate_skills_cache[p_key] = {s.lower() for s in profile.skills}
+        return self._candidate_skills_cache[p_key]
+
+    def _get_candidate_vec(self, profile: UserProfile) -> List[float]:
+        p_key = f"{profile.profile_id}:{profile.version}"
+        if p_key not in self._candidate_vec_cache:
+            candidate_corpus = " ".join(
+                [
+                    " ".join(profile.skills),
+                    " ".join(f"{e.title} {e.description}" for e in profile.experiences),
+                    " ".join(f"{ed.degree} {ed.field_of_study}" for ed in profile.education),
+                ]
+            )
+            self._candidate_vec_cache[p_key] = simple_embedding(candidate_corpus, dim=32)
+        return self._candidate_vec_cache[p_key]
 
     # ------------------------------------------------------------------
     # Stage 1: Hard Filter Gate
@@ -86,16 +123,7 @@ class MatchingLadder:
         )
         if exp_match:
             required_years = int(exp_match.group(1))
-            # Calculate total candidate experience from profile
-            candidate_years = 0
-            for exp in profile.experiences:
-                try:
-                    start_year = int(exp.start_date.split("-")[0])
-                    end_year = int(exp.end_date.split("-")[0]) if exp.end_date else 2026
-                    candidate_years += max(0, end_year - start_year)
-                except (ValueError, IndexError):
-                    candidate_years += 2
-            # Allow reasonable delta (e.g. within 2 years)
+            candidate_years = self._get_candidate_years(profile)
             if required_years > candidate_years + 3 and required_years > 5:
                 reasons.append(
                     f"Experience mismatch: Requires {required_years}+ years, candidate has ~{candidate_years} years"
@@ -123,7 +151,7 @@ class MatchingLadder:
             # Fallback if no skills parsed
             return 0.70, profile.skills[:3], []
 
-        candidate_skills_lower = {s.lower() for s in profile.skills}
+        candidate_skills_lower = self._get_candidate_skills_lower(profile)
         matching = [s for s in skills_to_check if s.lower() in candidate_skills_lower]
         missing = [s for s in skills_to_check if s.lower() not in candidate_skills_lower]
 
@@ -135,16 +163,8 @@ class MatchingLadder:
     # ------------------------------------------------------------------
 
     def evaluate_semantic_proximity(self, posting: JobPosting, profile: UserProfile) -> float:
-        candidate_corpus = " ".join(
-            [
-                " ".join(profile.skills),
-                " ".join(f"{e.title} {e.description}" for e in profile.experiences),
-                " ".join(f"{ed.degree} {ed.field_of_study}" for ed in profile.education),
-            ]
-        )
         job_corpus = f"{posting.title} {posting.description} {' '.join(posting.parsed_skills)}"
-
-        vec_candidate = simple_embedding(candidate_corpus, dim=32)
+        vec_candidate = self._get_candidate_vec(profile)
         vec_job = simple_embedding(job_corpus, dim=32)
 
         dot = sum(a * b for a, b in zip(vec_candidate, vec_job))

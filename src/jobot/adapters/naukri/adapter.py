@@ -67,12 +67,12 @@ class NaukriAdapter(SiteAdapter):
             job_id=job_id,
             site="naukri",
             url=url,
-            title="Senior Backend Engineer",
+            title="Naukri Job Opportunity",
             company="Naukri Hiring Partner",
-            location="Bangalore / Hybrid",
-            experience_required="3-6 years",
-            description="Require Python, Django/FastAPI, PostgreSQL expertise.",
-            parsed_skills=["Python", "FastAPI", "PostgreSQL", "System Design"],
+            location="Remote / Hybrid",
+            experience_required="",
+            description="",
+            parsed_skills=[],
             discovered_at=datetime.now(timezone.utc),
         )
 

@@ -1,3 +1,3 @@
-from jobot.memory.system import EightTierMemorySystem, MemoryRecord
+from jobot.memory.vector import VectorMemory
 
-__all__ = ["EightTierMemorySystem", "MemoryRecord"]
+__all__ = ["VectorMemory"]

@@ -10,7 +10,6 @@ description = "Global allowlist: vendored deps, build artifacts, local state"
 paths = [
   '''(^|/)\.venv/''',
   '''(^|/)node_modules/''',
-  '''(^|/)state/''',
   '''(?i)\.db$''',
   '''(^|/)gui/src-tauri/target/''',
 ]

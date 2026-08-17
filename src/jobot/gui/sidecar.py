@@ -371,7 +371,24 @@ class StdioSidecarServer:
         command = params.get("command")
         if not cron or not command:
             raise ValueError("Provide 'cron' and 'command'")
-        return self._get_scheduler().add_schedule(str(cron), str(command))
+        cmd_str = str(command).strip()
+        allowed_cmds = {
+            "digest",
+            "continuous-campaign",
+            "auto-apply",
+            "scrape",
+            "status",
+            "doctor",
+            "run",
+        }
+        first_token = cmd_str.split()[0].lower() if cmd_str else ""
+        if first_token == "jobot":
+            tokens = cmd_str.split()
+            if len(tokens) > 1 and tokens[1].lower() not in allowed_cmds:
+                raise ValueError(f"Disallowed schedule subcommand '{tokens[1]}'")
+        elif first_token not in allowed_cmds:
+            raise ValueError(f"Disallowed schedule command '{cmd_str}'")
+        return self._get_scheduler().add_schedule(str(cron), cmd_str)
 
     def _schedule_remove(self, params: Dict[str, Any]) -> Dict[str, Any]:
         schedule_id = params.get("schedule_id")
@@ -409,10 +426,15 @@ class StdioSidecarServer:
         key = params.get("key")
         if not key:
             raise ValueError("Provide 'key'")
-        value = self._get_config().get(str(key))
+        str_key = str(key)
+        value = self._get_config().get(str_key)
         if value is None:
-            raise ValueError(f"Config key '{key}' not set")
-        return {"key": str(key), "value": value}
+            raise ValueError(f"Config key '{str_key}' not set")
+        if ConfigManager.is_secret(str_key):
+            from jobot.secrets import mask
+
+            return {"key": str_key, "value": mask(str(value)), "is_secret": True}
+        return {"key": str_key, "value": value, "is_secret": False}
 
     def _config_set(self, params: Dict[str, Any]) -> Dict[str, Any]:
         key = params.get("key")

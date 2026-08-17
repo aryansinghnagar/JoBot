@@ -41,12 +41,16 @@ class DatabaseManager:
 
     @contextmanager
     def _get_connection(self) -> Generator[sqlite3.Connection, None, None]:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=10.0)
         conn.row_factory = sqlite3.Row
-        # Enable WAL mode, normal synchronous, and foreign keys
+        # Enable WAL mode, normal synchronous, foreign keys, and high-performance memory pragmas
         conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA synchronous=NORMAL;")
         conn.execute("PRAGMA foreign_keys=ON;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        conn.execute("PRAGMA cache_size=-64000;")
+        conn.execute("PRAGMA temp_store=MEMORY;")
+        conn.execute("PRAGMA mmap_size=268435456;")
         try:
             yield conn
             conn.commit()
@@ -79,6 +83,7 @@ class DatabaseManager:
                 parsed_skills TEXT, -- JSON array
                 discovered_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_job_postings_site_discovered ON job_postings(site, discovered_at);
 
             CREATE TABLE IF NOT EXISTS applications (
                 application_id TEXT PRIMARY KEY,
@@ -98,6 +103,8 @@ class DatabaseManager:
                 outcome TEXT,
                 FOREIGN KEY (job_id) REFERENCES job_postings (job_id)
             );
+            CREATE INDEX IF NOT EXISTS idx_applications_site_status ON applications(site, status);
+            CREATE INDEX IF NOT EXISTS idx_applications_job_id ON applications(job_id);
 
             CREATE TABLE IF NOT EXISTS job_dedup_cache (
                 dedup_hash TEXT PRIMARY KEY,
@@ -146,24 +153,33 @@ class DatabaseManager:
     # -------------------------------------------------------------------
 
     def save_job_posting(self, job: JobPosting) -> None:
+        self.save_job_postings_batch([job])
+
+    def save_job_postings_batch(self, jobs: List[JobPosting]) -> None:
+        if not jobs:
+            return
+        params = [
+            (
+                job.job_id,
+                job.site,
+                job.url,
+                job.title,
+                job.company,
+                job.location,
+                job.description,
+                json.dumps(job.parsed_skills),
+                job.discovered_at.isoformat(),
+            )
+            for job in jobs
+        ]
         with self._get_connection() as conn:
-            conn.execute(
+            conn.executemany(
                 """
                 INSERT OR REPLACE INTO job_postings
                 (job_id, site, url, title, company, location, description, parsed_skills, discovered_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    job.job_id,
-                    job.site,
-                    job.url,
-                    job.title,
-                    job.company,
-                    job.location,
-                    job.description,
-                    json.dumps(job.parsed_skills),
-                    job.discovered_at.isoformat(),
-                ),
+                params,
             )
 
     def get_job_posting(self, job_id: str) -> Optional[JobPosting]:

@@ -14,9 +14,6 @@ Covers:
 """
 
 import pytest
-import sqlite3
-import tempfile
-from pathlib import Path
 from cryptography.fernet import InvalidToken
 
 from jobot.adapters.cxs import AshbyAdapter

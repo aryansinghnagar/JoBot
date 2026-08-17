@@ -82,19 +82,29 @@ class ModelRouter:
     # -- dotenv + keyring ---------------------------------------------------
 
     def _load_dotenv(self) -> None:
-        env_paths = [Path.cwd() / ".env", Path.home() / ".jobot" / ".env"]
-        for p in env_paths:
-            if p.exists():
-                try:
-                    for line in p.read_text(encoding="utf-8").splitlines():
-                        line = line.strip()
-                        if line and not line.startswith("#") and "=" in line:
-                            k, v = line.split("=", 1)
-                            k, v = k.strip(), v.strip()
-                            if k and v and k not in os.environ:
-                                os.environ[k] = v
-                except Exception as exc:  # noqa: BLE001
-                    logger.debug("Failed to read .env at %s: %s", p, exc)
+        env_path = Path.home() / ".jobot" / ".env"
+        if env_path.exists():
+            try:
+                for line in env_path.read_text(encoding="utf-8").splitlines():
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip()
+                        if "#" in v and not (
+                            (v.startswith('"') and v.endswith('"'))
+                            or (v.startswith("'") and v.endswith("'"))
+                        ):
+                            v = v.split("#", 1)[0].strip()
+                        if len(v) >= 2 and (
+                            (v.startswith('"') and v.endswith('"'))
+                            or (v.startswith("'") and v.endswith("'"))
+                        ):
+                            v = v[1:-1]
+                        if k and v and k not in os.environ:
+                            os.environ[k] = v
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("Failed to read .env at %s: %s", env_path, exc)
 
     def _api_key_for(self, provider_name: str) -> Optional[str]:
         env_name = f"{provider_name.upper()}_API_KEY"
@@ -131,6 +141,8 @@ class ModelRouter:
         return self._spend.get(self.today_key, 0.0)
 
     def _record_spend(self, amount: float) -> None:
+        if amount <= 0.0:
+            return
         self._spend[self.today_key] = self.current_spent_usd + amount
         self._save_spend()
 

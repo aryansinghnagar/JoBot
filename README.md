@@ -68,7 +68,7 @@ JoBot strictly separates real submission capabilities from job discovery:
 ### 4. 🖥️ Desktop Cockpit & Real-Time Monitoring
 - **Tauri 2 + React Desktop Cockpit**: Native desktop application communicating via high-speed stdio JSON-RPC 2.0 sidecar.
 - **Interactive Approval Inbox**: Review drafted form values, tailored resumes, and cover letters before authorizing one-click submission.
-- **Atomic Database Disaster Recovery**: Hot backup and restore commands (`jobot db backup`, `jobot db restore`) with zero-downtime WAL checkpointing.
+- **Diagnostic System Health**: Run comprehensive health checks and manage SQLite control plane state (`jobot doctor`, `jobot reset-db`).
 
 ---
 
@@ -133,8 +133,8 @@ patchright install chromium
 ### 2. Configure Profile & Credentials
 
 ```bash
-# Initialize your encrypted candidate vault
-jobot profile init
+# View and configure candidate profile
+jobot profile
 
 # Import your existing resume (PDF or text) to seed candidate facts
 jobot import-resume path/to/your/resume.pdf
@@ -157,7 +157,7 @@ jobot doctor
 jobot scrape greenhouse --companies stripe,airbnb,cloudflare --save
 
 # Review matches on the 4-stage matching ladder
-jobot match-jobs
+jobot auto-apply --dry-run
 
 # Apply with human approval
 jobot apply <JOB_ID> --approve

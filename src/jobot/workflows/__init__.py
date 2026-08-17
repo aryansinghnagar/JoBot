@@ -1,3 +1,3 @@
-from jobot.workflows.application import ApplicationWorkflow
+from jobot.asp.orchestrator import ApplyOrchestrator
 
-__all__ = ["ApplicationWorkflow"]
+__all__ = ["ApplyOrchestrator"]

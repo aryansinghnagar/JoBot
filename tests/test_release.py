@@ -65,5 +65,4 @@ def test_security_auditor_and_release_manager():
     rel_mgr = ReleaseManager()
     status = rel_mgr.check_for_updates()
     assert status.current_version in ("0.1.0", "0.2.0", "1.0.0")
-    with pytest.raises(NotImplementedError, match="Auto-rollback"):
-        rel_mgr.rollback()
+    assert rel_mgr.rollback() is False

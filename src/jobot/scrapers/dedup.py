@@ -43,13 +43,22 @@ class DedupResult:
 
 
 class DedupService:
-    """Persistent two-tier duplicate-posting detector."""
+    """Persistent two-tier duplicate-posting detector with in-memory vector cache."""
 
     def __init__(
         self, db: Optional[DatabaseManager] = None, threshold: float = DEFAULT_VECTOR_THRESHOLD
     ) -> None:
         self.db = db or DatabaseManager()
         self.threshold = threshold
+        self._cached_hashes: Optional[set[str]] = None
+        self._cached_embeddings: Optional[List[List[float]]] = None
+
+    def _ensure_cache(self) -> Tuple[set[str], List[List[float]]]:
+        if self._cached_hashes is None or self._cached_embeddings is None:
+            entries = self.db.list_dedup_entries()
+            self._cached_hashes = {e["dedup_hash"] for e in entries}
+            self._cached_embeddings = [e["embedding"] for e in entries]
+        return self._cached_hashes, self._cached_embeddings
 
     @staticmethod
     def normalize(text: str) -> str:
@@ -72,25 +81,30 @@ class DedupService:
         return dot  # both vectors are unit-normalized
 
     def is_duplicate(self, posting: JobPosting) -> bool:
-        if self.db.dedup_hash_exists(
-            self.exact_hash(posting.title, posting.company, posting.location)
-        ):
+        h = self.exact_hash(posting.title, posting.company, posting.location)
+        cached_hashes, cached_embeddings = self._ensure_cache()
+        if h in cached_hashes:
             return True
         candidate = self._embed(posting)
-        for entry in self.db.list_dedup_entries():
-            if self.cosine(candidate, entry["embedding"]) >= self.threshold:
+        for vec in cached_embeddings:
+            if self.cosine(candidate, vec) >= self.threshold:
                 return True
         return False
 
     def record(self, posting: JobPosting) -> None:
+        h = self.exact_hash(posting.title, posting.company, posting.location)
+        emb = self._embed(posting)
         self.db.save_dedup_entry(
-            self.exact_hash(posting.title, posting.company, posting.location),
+            h,
             posting.job_id,
             posting.title,
             posting.company,
             posting.location,
-            self._embed(posting),
+            emb,
         )
+        cached_hashes, cached_embeddings = self._ensure_cache()
+        cached_hashes.add(h)
+        cached_embeddings.append(emb)
 
     def filter_unique(self, postings: List[JobPosting]) -> DedupResult:
         """Record and keep first-seen postings; reject exact or near duplicates."""

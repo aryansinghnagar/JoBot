@@ -1,3 +1,4 @@
+import html
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -59,13 +60,20 @@ class ResumeExporter:
     def compile_html_resume(self, profile: UserProfile) -> str:
         """Compile profile into single-page styled HTML resume for PDF rendering."""
         p = profile.personal_info
-        skills_html = "".join([f"<span class='tag'>{s}</span>" for s in profile.skills])
+        first_name = html.escape(str(p.first_name))
+        last_name = html.escape(str(p.last_name))
+        email = html.escape(str(p.email))
+        phone = html.escape(str(p.phone))
+        city = html.escape(str(p.location_city))
+        country = html.escape(str(p.location_country))
+        linkedin = html.escape(str(p.linkedin_url or "N/A"))
+        skills_html = "".join([f"<span class='tag'>{html.escape(str(s))}</span>" for s in profile.skills])
 
-        html = f"""<!DOCTYPE html>
+        html_doc = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Resume - {p.first_name} {p.last_name}</title>
+<title>Resume - {first_name} {last_name}</title>
 <style>
   body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; line-height: 1.5; }}
   h1 {{ margin-bottom: 5px; color: #111; }}
@@ -75,10 +83,10 @@ class ResumeExporter:
 </style>
 </head>
 <body>
-  <h1>{p.first_name} {p.last_name}</h1>
+  <h1>{first_name} {last_name}</h1>
   <div class="contact">
-    {p.email} | {p.phone} | {p.location_city}, {p.location_country}<br>
-    LinkedIn: {p.linkedin_url or "N/A"}
+    {email} | {phone} | {city}, {country}<br>
+    LinkedIn: {linkedin}
   </div>
 
   <div class="section-title">SKILLS</div>
@@ -88,7 +96,7 @@ class ResumeExporter:
   <p>Notice Period: {profile.compensation.notice_period_days} Days | Expected CTC: {f"₹{profile.compensation.expected_ctc_inr:,.0f}" if profile.compensation.expected_ctc_inr is not None else "Negotiable"}</p>
 </body>
 </html>"""
-        return html
+        return html_doc
 
     def export_resume_files(self, profile: UserProfile, output_dir: Optional[Path] = None) -> Path:
         """Export text and HTML resume files to disk."""

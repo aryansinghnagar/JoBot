@@ -2,17 +2,16 @@ import pytest
 from jobot.security.pii_masker import PIIMasker
 from jobot.memory.vector import VectorMemory
 from jobot.stealth.http_client import StealthHTTPClient
-from jobot.storage.models import ApplicationRecord
-from jobot.workflows.application import ApplicationWorkflow
+from jobot.models.domain import Application, ApplicationStatus
 
 
 def test_pii_masker_email_and_phone():
     masker = PIIMasker()
-    text = "Contact Aryan at auricwings13@gmail.com or +917827756669 for details."
+    text = "Contact Jane at jane.doe@example.com or +15551234567 for details."
     masked, mapping = masker.mask(text)
 
-    assert "auricwings13@gmail.com" not in masked
-    assert "+917827756669" not in masked
+    assert "jane.doe@example.com" not in masked
+    assert "+15551234567" not in masked
     assert "[EMAIL_0]" in masked or "[PHONE_0]" in masked
 
     unmasked = masker.unmask(masked, mapping)
@@ -37,23 +36,14 @@ async def test_stealth_http_client_get():
     assert "User-Agent" in client.default_headers
 
 
-def test_sqlmodel_application_record():
-    rec = ApplicationRecord(
+def test_domain_application_record():
+    rec = Application(
         application_id="app_123",
         job_id="job_456",
+        user_profile_id="default",
         site="naukri",
-        status="verified",
+        status=ApplicationStatus.VERIFIED,
         idempotency_key="hash_789",
     )
     assert rec.application_id == "app_123"
-    assert rec.status == "verified"
-
-
-def test_workflow_signal_approval():
-    class DummyPipeline:
-        pass
-
-    wf = ApplicationWorkflow(pipeline=DummyPipeline())
-    assert wf._approval_received is False
-    wf.signal_approval()
-    assert wf._approval_received is True
+    assert rec.status == ApplicationStatus.VERIFIED

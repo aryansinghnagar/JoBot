@@ -64,6 +64,17 @@ class SkillExtractor:
         "graphql",
     ]
 
+    KEYWORD_MAP = {
+        kw.lower(): (kw.title() if len(kw) <= 4 else kw.capitalize())
+        for kw in COMMON_TECH_KEYWORDS
+    }
+    _COMBINED_PATTERN = re.compile(
+        r"\b(?:"
+        + "|".join(re.escape(k) for k in sorted(COMMON_TECH_KEYWORDS, key=len, reverse=True))
+        + r")\b",
+        re.IGNORECASE,
+    )
+
     def __init__(self, router: Optional[ModelRouter] = None):
         self.router = router or ModelRouter()
 
@@ -113,13 +124,9 @@ class SkillExtractor:
         return normalized
 
     def _rule_based_extraction(self, description: str) -> List[str]:
-        """Rule-based keyword matching fallback when LLM is unavailable."""
-        extracted = []
-        lower_desc = description.lower()
-
-        for kw in self.COMMON_TECH_KEYWORDS:
-            pattern = r"\b" + re.escape(kw) + r"\b"
-            if re.search(pattern, lower_desc):
-                extracted.append(kw.title() if len(kw) <= 4 else kw.capitalize())
-
+        """Fast single-pass pre-compiled keyword extraction."""
+        if not description:
+            return []
+        matches = self._COMBINED_PATTERN.findall(description)
+        extracted = [self.KEYWORD_MAP.get(m.lower(), m.title()) for m in matches]
         return self._normalize_skills(extracted)

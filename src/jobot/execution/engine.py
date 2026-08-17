@@ -36,6 +36,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Generator, Optional, cast
 
+from jobot.models.domain import TaskStatus
 from jobot.storage.db import DatabaseManager
 
 
@@ -45,21 +46,6 @@ def _now() -> datetime:
 
 def _iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat()
-
-
-class TaskStatus(str, Enum):
-    PENDING = "PENDING"
-    READY = "READY"
-    CLAIMED = "CLAIMED"
-    RUNNING = "RUNNING"
-    WAITING = "WAITING"
-    RETRYING = "RETRYING"
-    VERIFYING = "VERIFYING"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    QUARANTINED = "QUARANTINED"
-    UNKNOWN = "UNKNOWN"
-    CANCELLED = "CANCELLED"
 
 
 class EffectStatus(str, Enum):

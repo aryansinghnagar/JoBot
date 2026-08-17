@@ -4,7 +4,7 @@ import json
 import pytest
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.asp.saga import ApplySaga, SagaStatus
-from jobot.models.domain import Application, ApplicationStatus, JobPosting, PersonalInfo, UserProfile
+from jobot.models.domain import JobPosting, PersonalInfo, UserProfile
 from jobot.storage.db import DatabaseManager
 
 

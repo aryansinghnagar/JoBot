@@ -61,15 +61,30 @@ class PluginInstaller:
         index = self._load_index()
         return [dict(value, name=name) for name, value in index.items()]
 
-    # -- install ------------------------------------------------------------
+    ALLOWED_SCHEMES = frozenset({"http", "https", "ssh", "git", "file"})
 
-    @staticmethod
-    def _as_git_url(url: str) -> str:
-        if url.startswith("file:") or "://" in url:
-            return url
-        if ":" in url[:3] or "\\" in url:  # windows-style path
-            return "file:///" + url.replace("\\", "/").replace(" ", "%20")
-        return url
+    @classmethod
+    def _as_git_url(cls, url: str) -> str:
+        raw = url.strip()
+        if raw.startswith("ext::") or "::" in raw:
+            raise ValueError(f"Unsupported or unsafe git transport protocol in '{url}'")
+
+        if raw.startswith("git@"):
+            return raw
+
+        if "://" in raw:
+            scheme = raw.split("://", 1)[0].lower()
+            if scheme not in cls.ALLOWED_SCHEMES:
+                raise ValueError(f"Disallowed git URL scheme '{scheme}' in '{url}'")
+            return raw
+
+        if raw.startswith("file:"):
+            return raw
+
+        if ":" in raw[:3] or "\\" in raw:  # windows-style path
+            return "file:///" + raw.replace("\\", "/").replace(" ", "%20")
+
+        return raw
 
     def install(self, url: str) -> PluginManifest:
         with tempfile.TemporaryDirectory(prefix="jobot-plugin-") as tmp:
@@ -95,7 +110,17 @@ class PluginInstaller:
             return manifest
 
     def _git_clone(self, url: str, dest: Path) -> None:
-        cmd = ["git", "clone", "--depth", "1", self._as_git_url(url), str(dest)]
+        git_url = self._as_git_url(url)
+        cmd = [
+            "git",
+            "-c",
+            "protocol.ext.allow=never",
+            "clone",
+            "--depth",
+            "1",
+            git_url,
+            str(dest),
+        ]
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         if proc.returncode != 0:
             raise ValueError(f"git clone failed for '{url}': {proc.stderr.strip()[:300]}")

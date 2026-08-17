@@ -8,6 +8,7 @@ they enter LLM prompts.
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import List, Tuple
 
 INJECTION_PATTERNS: List[Tuple[str, str]] = [
@@ -31,12 +32,20 @@ INJECTION_PATTERNS: List[Tuple[str, str]] = [
 ]
 
 
+def _normalize_text(text: str) -> str:
+    if not text:
+        return ""
+    norm = unicodedata.normalize("NFKC", text)
+    return re.sub(r"[\u200b-\u200f\ufeff\u202a-\u202e]", "", norm)
+
+
 def contains_prompt_injection(text: str) -> bool:
     """Check if the text contains any known prompt injection patterns."""
     if not text:
         return False
+    norm_text = _normalize_text(text)
     for pattern, _ in INJECTION_PATTERNS:
-        if re.search(pattern, text, flags=re.IGNORECASE):
+        if re.search(pattern, norm_text, flags=re.IGNORECASE):
             return True
     return False
 
@@ -45,9 +54,10 @@ def find_prompt_injections(text: str) -> List[str]:
     """Return all detected injection match strings from text."""
     if not text:
         return []
+    norm_text = _normalize_text(text)
     matches: List[str] = []
     for pattern, _ in INJECTION_PATTERNS:
-        found = re.findall(pattern, text, flags=re.IGNORECASE)
+        found = re.findall(pattern, norm_text, flags=re.IGNORECASE)
         if found:
             matches.extend(str(m) for m in found)
     return matches
@@ -57,7 +67,7 @@ def sanitize_llm_input(text: str) -> str:
     """Sanitize external untrusted text before interpolation into LLM prompts."""
     if not text:
         return ""
-    sanitized = text
+    sanitized = _normalize_text(text)
     for pattern, replacement in INJECTION_PATTERNS:
         sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
     return sanitized

@@ -54,13 +54,10 @@ This extracts:
 ### Inspecting Profile & Answer Bank
 ```bash
 # View active profile
-jobot profile show
+jobot profile
 
-# View immutable candidate facts
-jobot truth facts
-
-# Search learned form field answers
-jobot answer-bank search "years of python experience"
+# Test QA engine answer generation
+jobot qa --question "How many years of Python experience do you have?"
 ```
 
 ---
@@ -117,13 +114,10 @@ Rather than wasting LLM tokens on every posting, JoBot evaluates jobs through a 
 [Stage 4: LLM Fit Reasoning] (Structured Pros/Cons Analysis & Score ≥ 80%)
 ```
 
-### Running the Matching Ladder
+### Running Batch Matching & Application
 ```bash
-# Evaluate all newly scraped jobs
-jobot match-jobs
-
-# Filter by minimum match score
-jobot match-jobs --min-score 85 --json
+# Run auto-apply batch pipeline with filtering
+jobot auto-apply --min-match 0.80 --dry-run
 ```
 
 ---
@@ -137,14 +131,11 @@ JoBot customizes resumes and cover letters using a **Two-Pass Drafter-Reviewer L
 
 ### Tailoring Documents
 ```bash
-# Tailor resume for a specific job
-jobot resume tailor <JOB_ID> --template modern --engine reportlab
+# Dry run application (tailors resume, checks ATS score, drafts cover letter)
+jobot apply <JOB_ID> --dry-run
 
 # Generate a tailored cover letter (Tones: professional, conversational, confident, technical)
-jobot coverletter generate <JOB_ID> --tone professional
-
-# Check ATS compatibility score (requires ≥ 0.85 to pass)
-jobot resume ats-check <JOB_ID>
+jobot coverletter <JOB_ID> --tone professional
 ```
 
 ---
@@ -198,17 +189,11 @@ When running with `--approve` (or in supervised campaign mode), applications ent
 
 ### Reviewing & Approving via CLI
 ```bash
-# List all pending approval requests
-jobot approvals list
+# Supervised application run awaiting interactive human approval
+jobot apply <JOB_ID> --approve
 
-# Inspect detailed draft values for an application
-jobot approvals inspect <REQUEST_ID>
-
-# Approve and dispatch submission
-jobot approvals decide <REQUEST_ID> --approve
-
-# Reject application
-jobot approvals decide <REQUEST_ID> --deny --reason "Not interested in hybrid model"
+# Single-run execution with approval prompt
+jobot run --url "https://jobs.lever.co/example/12345" --approve
 ```
 
 ---
@@ -221,9 +206,13 @@ For every submitted application, JoBot generates a permanent, non-repudiation au
 - `confirmation.png`: Full-page confirmation screenshot.
 - `manifest.json`: Contains timestamps, external confirmation IDs, and SHA256 cryptographic hashes of all snapshot files.
 
-### Inspecting Evidence
+### Inspecting Traces & Status
 ```bash
-jobot evidence show <APPLICATION_ID>
+# Inspect pipeline status
+jobot status
+
+# Inspect execution traces
+jobot traces list
 ```
 
 ---
@@ -233,11 +222,12 @@ jobot evidence show <APPLICATION_ID>
 Campaign mode runs continuous discovery, matching, and submission loops within user-defined rate limits and daily safety caps.
 
 ```bash
-# Run campaign mode with a maximum of 20 applications per day
-jobot campaign run --daily-cap 20 --interval-min 45 --supervised
+# Run continuous campaign loop
+jobot continuous-campaign --target-title "Senior Backend Engineer" --locations "Remote,Bengaluru"
 
-# View active campaign statistics
-jobot campaign stats
+# Configure scheduled cron automation
+jobot schedule list
+jobot schedule add --cron "0 9 * * 1-5" --command "jobot continuous-campaign"
 ```
 
 ---
@@ -247,11 +237,11 @@ jobot campaign stats
 JoBot continuously tracks the availability, latency, and error rates of each job portal. If a portal experiences repeated failures or Cloudflare blocks, its circuit breaker trips to `TRIPPED`, temporarily pausing submissions to that portal while allowing other portals to continue.
 
 ```bash
-# View live site health dashboard
+# View live site health and circuit breaker states
 jobot site-health
 
-# Reset a tripped circuit breaker
-jobot site-health reset greenhouse
+# Check adapter registry and capability flags
+jobot list-sites
 ```
 
 ---
@@ -274,20 +264,11 @@ npm run tauri dev
 
 ## 12. Disaster Recovery, Backups & Maintenance
 
-### Hot Backups (Zero-Downtime SQLite Backup)
+### Database Management & Health Checks
 ```bash
-# Create immediate hot backup
-jobot db backup --out ~/.jobot/backups/backup_$(date +%Y%m%d).db
+# Run comprehensive diagnostic doctor checks
+jobot doctor
 
-# Restore from a backup file
-jobot db restore ~/.jobot/backups/backup_20260816.db
-```
-
-### System Cleanup & Compaction
-```bash
-# Vacuum and optimize SQLite database indexes
-jobot db optimize
-
-# Clean up stale screenshot artifacts older than 90 days
-jobot clean --older-than 90d
+# Reset database schema and migrations if needed
+jobot reset-db --confirm
 ```

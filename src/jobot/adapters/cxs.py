@@ -18,7 +18,6 @@ from typing import Any, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
-from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import (
     Application,
     JobPosting,
@@ -37,7 +36,6 @@ class AshbyAdapter(SiteAdapter):
 
     def __init__(self, site_name: str = "ashby") -> None:
         super().__init__(site_name)
-        self.skill_extractor = SkillExtractor()
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         return True  # Public API requires no pre-login
@@ -46,20 +44,17 @@ class AshbyAdapter(SiteAdapter):
         validate_fetch_url(url)
         match = re.search(r"jobs\.ashbyhq\.com/([^/]+)/([a-f0-9-]+)", url)
         job_id = match.group(2) if match else url.rstrip("/").split("/")[-1]
-        company = match.group(1).capitalize() if match else "Ashby Company"
-
-        desc = f"Software Engineering position at {company}. Experience with Python, distributed systems, and API design required."
-        skills = self.skill_extractor.extract_skills_sync(desc)
+        company = match.group(1).capitalize() if match else "Ashby Employer"
 
         return JobPosting(
             job_id=job_id,
             site=self.site_name,
             url=url,
-            title=f"Engineer at {company}",
+            title=f"Position at {company}",
             company=company,
             location="Remote / Hybrid",
-            description=desc,
-            parsed_skills=skills,
+            description="",
+            parsed_skills=[],
             discovered_at=datetime.now(timezone.utc),
         )
 
@@ -90,7 +85,6 @@ class WorkableAdapter(SiteAdapter):
 
     def __init__(self, site_name: str = "workable") -> None:
         super().__init__(site_name)
-        self.skill_extractor = SkillExtractor()
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         return True
@@ -101,18 +95,15 @@ class WorkableAdapter(SiteAdapter):
         company = match.group(1).capitalize() if match else "Workable Employer"
         job_id = match.group(2) if match else url.rstrip("/").split("/")[-1]
 
-        desc = f"Technical opportunity at {company}. Strong background in Python, backend development, and databases."
-        skills = self.skill_extractor.extract_skills_sync(desc)
-
         return JobPosting(
             job_id=job_id,
             site=self.site_name,
             url=url,
-            title=f"Developer at {company}",
+            title=f"Position at {company}",
             company=company,
             location="Flexible",
-            description=desc,
-            parsed_skills=skills,
+            description="",
+            parsed_skills=[],
             discovered_at=datetime.now(timezone.utc),
         )
 
@@ -143,7 +134,6 @@ class RecruiteeAdapter(SiteAdapter):
 
     def __init__(self, site_name: str = "recruitee") -> None:
         super().__init__(site_name)
-        self.skill_extractor = SkillExtractor()
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         return True
@@ -155,18 +145,16 @@ class RecruiteeAdapter(SiteAdapter):
         if match:
             company = match.group(1).capitalize()
         job_id = url.rstrip("/").split("/")[-1]
-        desc = f"Join {company} team. Looking for skilled Python and Cloud engineers."
-        skills = self.skill_extractor.extract_skills_sync(desc)
 
         return JobPosting(
             job_id=job_id,
             site=self.site_name,
             url=url,
-            title=f"Engineer at {company}",
+            title=f"Position at {company}",
             company=company,
             location="Hybrid",
-            description=desc,
-            parsed_skills=skills,
+            description="",
+            parsed_skills=[],
             discovered_at=datetime.now(timezone.utc),
         )
 
@@ -197,7 +185,6 @@ class TeamtailorAdapter(SiteAdapter):
 
     def __init__(self, site_name: str = "teamtailor") -> None:
         super().__init__(site_name)
-        self.skill_extractor = SkillExtractor()
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         return True
@@ -206,18 +193,16 @@ class TeamtailorAdapter(SiteAdapter):
         validate_fetch_url(url)
         company = "Teamtailor Partner"
         job_id = url.rstrip("/").split("/")[-1]
-        desc = f"Opportunity at {company}. Python and modern API development."
-        skills = self.skill_extractor.extract_skills_sync(desc)
 
         return JobPosting(
             job_id=job_id,
             site=self.site_name,
             url=url,
-            title=f"Software Engineer at {company}",
+            title=f"Position at {company}",
             company=company,
             location="Remote",
-            description=desc,
-            parsed_skills=skills,
+            description="",
+            parsed_skills=[],
             discovered_at=datetime.now(timezone.utc),
         )
 
@@ -248,7 +233,6 @@ class BambooHRAdapter(SiteAdapter):
 
     def __init__(self, site_name: str = "bamboohr") -> None:
         super().__init__(site_name)
-        self.skill_extractor = SkillExtractor()
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
         return True
@@ -260,18 +244,16 @@ class BambooHRAdapter(SiteAdapter):
         if match:
             company = match.group(1).capitalize()
         job_id = url.rstrip("/").split("/")[-1]
-        desc = f"Position at {company}. Strong backend coding skills in Python and SQL."
-        skills = self.skill_extractor.extract_skills_sync(desc)
 
         return JobPosting(
             job_id=job_id,
             site=self.site_name,
             url=url,
-            title=f"Engineer at {company}",
+            title=f"Position at {company}",
             company=company,
             location="India / Remote",
-            description=desc,
-            parsed_skills=skills,
+            description="",
+            parsed_skills=[],
             discovered_at=datetime.now(timezone.utc),
         )
 

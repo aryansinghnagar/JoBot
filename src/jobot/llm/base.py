@@ -116,8 +116,10 @@ async def http_post_sse_async(
 
 
 def estimate_tokens(text: str) -> int:
-    """Rough token estimate (whitespace split) for cost tracking."""
-    return max(1, len(text.split()))
+    """Token estimate (~4 chars per token) for robust budget/cost tracking."""
+    if not text:
+        return 0
+    return max(1, (len(text) + 3) // 4)
 
 
 class LLMProvider(ABC):

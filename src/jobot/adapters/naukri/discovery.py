@@ -70,26 +70,5 @@ class NaukriDiscoveryEngine:
         """Discover matching jobs for target role on Naukri."""
         search_url = self.construct_search_url(target_title)
         logger.info(f"[NAUKRI DISCOVERY] Searching {search_url} (limit={limit})")
-
-        postings: List[JobPosting] = []
-        for i in range(1, limit + 1):
-            req_token = uuid.uuid4().hex[:6]
-            job_id = f"nk_{target_title.lower().replace(' ', '_')}_{i}_{req_token}"
-            job_url = f"{self.BASE_URL}/job-listings-{job_id}"
-            desc = f"Requirement for {target_title} with expertise in Python, FastAPI, PostgreSQL, and System Design."
-            skills = self.skill_extractor.extract_skills_sync(desc)
-            postings.append(
-                JobPosting(
-                    job_id=job_id,
-                    site="naukri",
-                    url=job_url,
-                    title=f"{target_title} (Role #{i})",
-                    company=f"Naukri Hiring Partner #{i}",
-                    location="Bangalore / Hybrid",
-                    experience_required="3-6 years",
-                    description=desc,
-                    parsed_skills=skills,
-                    discovered_at=datetime.now(timezone.utc),
-                )
-            )
-        return postings
+        # In offline / test mode without real HTML input, return empty list rather than fabricating jobs
+        return []

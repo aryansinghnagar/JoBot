@@ -16,6 +16,14 @@ from jobot.models.domain import CandidateFact, UserProfile
 from jobot.storage.db import DatabaseManager
 
 
+_TOKEN_RE = re.compile(r"\b[A-Za-z0-9+#.-]{2,}\b")
+_SPLIT_STMT_RE = re.compile(r"[.\n;]")
+_EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+_DIGITS_ONLY_RE = re.compile(r"[^\d]")
+_NON_DIGIT_SPACE_RE = re.compile(r"[^\d\s]")
+_PHONE_10_RE = re.compile(r"\b\d{10,}\b")
+
+
 class GroundingCheckResult(BaseModel):
     passed: bool
     score: float = 1.0  # 0.0 to 1.0
@@ -213,31 +221,31 @@ class CandidateGroundingVerifier:
 
         known_tokens = set()
         for f in facts:
-            for token in re.findall(r"\b[A-Za-z0-9+#.-]{2,}\b", f.fact_value.lower()):
+            for token in _TOKEN_RE.findall(f.fact_value.lower()):
                 known_tokens.add(token)
 
         # Extract sentences / statements
-        statements = [s.strip() for s in re.split(r"[.\n;]", text) if len(s.strip()) > 5]
+        statements = [s.strip() for s in _SPLIT_STMT_RE.split(text) if len(s.strip()) > 5]
         supported: List[str] = []
         unsupported: List[str] = []
 
         # PII / Metric Hallucination Checks:
         # Check for ungrounded emails
-        emails_in_text = re.findall(r"[\w.+-]+@[\w-]+\.[\w.-]+", text)
+        emails_in_text = _EMAIL_RE.findall(text)
         known_emails = {f.fact_value.lower() for f in facts if f.fact_type == "email"}
         for email in emails_in_text:
             if known_emails and email.lower() not in known_emails:
                 unsupported.append(f"Ungrounded email address: {email}")
 
         # Check for ungrounded phone numbers (10+ digits)
-        phones_in_text = re.findall(r"\b\d{10,}\b", re.sub(r"[^\d\s]", "", text))
-        known_phones = {re.sub(r"[^\d]", "", f.fact_value) for f in facts if f.fact_type == "phone"}
+        phones_in_text = _PHONE_10_RE.findall(_NON_DIGIT_SPACE_RE.sub("", text))
+        known_phones = {_DIGITS_ONLY_RE.sub("", f.fact_value) for f in facts if f.fact_type == "phone"}
         for phone in phones_in_text:
             if known_phones and phone not in known_phones:
                 unsupported.append(f"Ungrounded phone number: {phone}")
 
         for stmt in statements:
-            stmt_tokens = set(re.findall(r"\b[A-Za-z0-9+#.-]{2,}\b", stmt.lower()))
+            stmt_tokens = set(_TOKEN_RE.findall(stmt.lower()))
             if not stmt_tokens:
                 continue
 

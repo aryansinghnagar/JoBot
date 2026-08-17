@@ -5,9 +5,28 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
+from functools import lru_cache
+
 logger = logging.getLogger(__name__)
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
+
+
+@lru_cache(maxsize=8192)
+def _cached_embedding(text: str, dim: int = 16) -> tuple[float, ...]:
+    norm = _NON_ALNUM.sub(" ", text.lower()).strip()
+    vec = [0.0] * dim
+    if not norm:
+        return tuple(vec)
+    padded = f" {norm} "
+    grams = {padded[i : i + 2] for i in range(len(padded) - 1)}
+    grams.discard("  ")
+    for gram in grams:
+        val = sum(ord(c) for c in gram)
+        for k in (1, 3):
+            vec[(val * k) % dim] += math.sin(val) / 2
+    norm_len = math.sqrt(sum(x * x for x in vec)) or 1.0
+    return tuple(x / norm_len for x in vec)
 
 
 def simple_embedding(text: str, dim: int = 16) -> List[float]:
@@ -17,19 +36,7 @@ def simple_embedding(text: str, dim: int = 16) -> List[float]:
     Order- and punctuation-insensitive, so near-duplicate phrasing maps to
     nearly identical vectors (used by memory retrieval and dedup tier 2).
     """
-    norm = _NON_ALNUM.sub(" ", text.lower()).strip()
-    vec = [0.0] * dim
-    if not norm:
-        return vec
-    padded = f" {norm} "
-    grams = {padded[i : i + 2] for i in range(len(padded) - 1)}
-    grams.discard("  ")
-    for gram in grams:
-        val = sum(ord(c) for c in gram)
-        for k in (1, 3):
-            vec[(val * k) % dim] += math.sin(val) / 2
-    norm_len = math.sqrt(sum(x * x for x in vec)) or 1.0
-    return [x / norm_len for x in vec]
+    return list(_cached_embedding(text, dim))
 
 
 class VectorPoint(BaseModel):

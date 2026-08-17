@@ -1,6 +1,6 @@
 from jobot.failure.catalog import FailureMode
 from jobot.stealth.circuit_breaker import CircuitBreaker
-from jobot.memory.system import EightTierMemorySystem
+from jobot.memory.vector import VectorMemory
 from jobot.obs.tracing import IncidentSeverity, TraceLogger
 
 
@@ -40,16 +40,9 @@ def test_trace_logger_and_incidents():
     assert inc.is_open is True
 
 
-def test_eight_tier_memory_system():
-    mem = EightTierMemorySystem()
-
-    mem.set_working_memory("form_step", "filling_contact")
-    assert mem.working_memory["form_step"] == "filling_contact"
-
-    rec = mem.add_episodic_record("app_1", {"status": "submitted"})
-    assert rec.tier == "episodic"
-    assert len(mem.episodic_memory) == 1
-
-    audit_rec = mem.add_audit_record("secret_accessed", {"vault": "master_key"})
-    assert audit_rec.tier == "audit"
-    assert len(mem.audit_memory) == 1
+def test_vector_memory_integration():
+    mem = VectorMemory(collection_name="dev2_test")
+    mem.store_answer("dev_p1", "What is your primary language?", "Python", site="generic")
+    results = mem.retrieve_similar("primary language", top_k=1)
+    assert len(results) >= 1
+    assert results[0]["answer"] == "Python"

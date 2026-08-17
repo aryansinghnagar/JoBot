@@ -55,11 +55,11 @@ patchright install chromium
 
 JoBot uses an encrypted, local-first candidate vault (`~/.jobot/vault.enc`) locked with symmetric Fernet encryption (`AES-128-CBC` + `HMAC-SHA256`) and file permissions strictly set to `0600`.
 
-### Step 1: Initialize Candidate Profile
+### Step 1: Manage Candidate Profile
 ```bash
-jobot profile init
+jobot profile
 ```
-This prompts for your basic candidate information (Name, Email, Phone, Location, Work Authorization) and securely creates your vault.
+This displays and manages your candidate information (Name, Email, Phone, Location, Work Authorization) and securely creates or updates your vault.
 
 ### Step 2: Seed Candidate Truth Facts (Resume Ingestion)
 To enable the zero-hallucination grounding verifier, import your resume (PDF or plain text):
@@ -68,13 +68,9 @@ jobot import-resume path/to/your/resume.pdf
 ```
 This automatically parses your work experience, education, skills, and certifications directly into the `CandidateTruthStore` and `answer_bank`.
 
-### Step 3: Verify Profile & Truth Ledger
+### Step 3: Test Grounded QA Engine
 ```bash
-# View active profile summary
-jobot profile show
-
-# View immutable candidate facts
-jobot truth facts
+jobot qa --question "How many years of Python experience do you have?"
 ```
 
 ---
@@ -174,21 +170,16 @@ Example healthy output:
 
 ---
 
-## 8. Database Management & Disaster Recovery
+## 8. Database Management & Diagnostics
 
-### Run Migrations
+### Run Diagnostic Health Check
 ```bash
-jobot db migrate
+jobot doctor
 ```
 
-### Create Atomic Hot Backup
+### Reset Database Schema
 ```bash
-jobot db backup --out ~/.jobot/backups/jobot_backup_$(date +%Y%m%d).db
-```
-
-### Restore Database
-```bash
-jobot db restore ~/.jobot/backups/jobot_backup_20260816.db
+jobot reset-db --confirm
 ```
 
 ---

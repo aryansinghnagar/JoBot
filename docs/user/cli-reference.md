@@ -8,9 +8,9 @@ Comprehensive command-line reference for the `jobot` Autonomous Job Application 
 
 Run initial setup diagnostics, verify Python version (3.11+), and ensure local encryption directory structure is initialized (`~/.jobot/`).
 
-### `jobot profile init`
+### `jobot profile`
 
-Interactively initialize candidate profile facts (`profile.yaml`) and encrypt using `age` into `~/.jobot/profiles/default.enc`.
+Manage candidate profile facts (`profile.yaml`), showing stored facts, compensation expectations, and skills.
 
 ### `jobot login <portal>`
 
@@ -20,11 +20,17 @@ Interactively log into target portal using browser automation and save session c
 - `jobot login --status`: Show list of active portal session directories.
 - `jobot login --logout <portal>`: Clear session cookies for specified portal.
 
-### `jobot discover`
+### `jobot scrape <portal>`
 
 Search active portals for matching job requisitions based on candidate profile skills.
 
-- Options: `--portal <name>`, `--title <query>`, `--limit <int>`
+- Options: `--keywords <query>`, `--location <city>`, `--limit <int>`, `--save`
+
+### `jobot apply`
+
+Execute 12-Phase Application Submission Pipeline for a target job ID or URL.
+
+- Options: `<job_id>`, `--url <link>`, `--site <adapter>`, `--approve`, `--dry-run`
 
 ### `jobot run`
 

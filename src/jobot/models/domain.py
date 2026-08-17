@@ -114,6 +114,7 @@ class Education(BaseModel):
 class CompensationDetails(BaseModel):
     current_ctc_inr: Optional[float] = None
     expected_ctc_inr: Optional[float] = None
+    minimum_annual_base_usd: Optional[float] = None
     notice_period_days: int = 30
     negotiable_notice_period: bool = False
 
@@ -190,11 +191,19 @@ class Application(BaseModel):
 
 
 class TaskStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    BLOCKED = "blocked"
+    PENDING = "PENDING"
+    READY = "READY"
+    CLAIMED = "CLAIMED"
+    RUNNING = "RUNNING"
+    WAITING = "WAITING"
+    RETRYING = "RETRYING"
+    VERIFYING = "VERIFYING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    QUARANTINED = "QUARANTINED"
+    UNKNOWN = "UNKNOWN"
+    CANCELLED = "CANCELLED"
+    BLOCKED = "BLOCKED"
 
 
 class Task(BaseModel):
