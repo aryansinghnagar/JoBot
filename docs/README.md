@@ -20,9 +20,3 @@ Welcome to the technical and user documentation for **JoBot**.
 - **[`contracts.md`](contracts.md)** — Subsystem contract interfaces and freeze invariants.
 - **[`../ATTRIBUTION.md`](../ATTRIBUTION.md)** — Open-source citations, design patterns, and dependency license matrix.
 - **[`../SECURITY.md`](../SECURITY.md)** — Security architecture, SSRF protections, vault hardening, and vulnerability disclosures.
-
----
-
-## 3. Quality, Testing & Verification
-
-- **[`quality/production-readiness.md`](quality/production-readiness.md)** — Production readiness scorecard, automated verification gates, and chaos testing benchmarks.
