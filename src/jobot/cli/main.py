@@ -1939,7 +1939,9 @@ def config_cmd(
 
 @app.command("doctor")
 def doctor_cmd(
-    export: bool = typer.Option(False, "--export", "-e", help="Export redacted diagnostic zip archive"),
+    export: bool = typer.Option(
+        False, "--export", "-e", help="Export redacted diagnostic zip archive"
+    ),
 ) -> None:
     """Diagnose environment: keyring, storage, profile, and LLM providers."""
     from jobot.doctor import export_diagnostic_bundle, run_doctor_checks

@@ -15,14 +15,16 @@ from jobot.models.domain import Application
 
 # Adapters that have real submission capability (API or browser).
 # These are the ONLY adapters that should NOT raise on submit_application().
-REAL_SUBMIT_SITES = frozenset({
-    "greenhouse",   # Real HTTP POST to boards-api.greenhouse.io
-    "lever",        # Real HTTP POST to api.lever.co
-    "workday",      # Real browser submit via Patchright
-    "linkedin",     # Real browser submit via EasyApplySaga
-    "naukri",       # Real browser submit via Patchright
-    "mock_ats",     # Test-only adapter for local Flask server
-})
+REAL_SUBMIT_SITES = frozenset(
+    {
+        "greenhouse",  # Real HTTP POST to boards-api.greenhouse.io
+        "lever",  # Real HTTP POST to api.lever.co
+        "workday",  # Real browser submit via Patchright
+        "linkedin",  # Real browser submit via EasyApplySaga
+        "naukri",  # Real browser submit via Patchright
+        "mock_ats",  # Test-only adapter for local Flask server
+    }
+)
 
 
 def _dummy_app(site: str) -> Application:
@@ -35,9 +37,9 @@ def _dummy_app(site: str) -> Application:
     )
 
 
-@pytest.mark.parametrize("site", sorted(
-    set(AdapterRegistry.list_supported_sites()) - REAL_SUBMIT_SITES
-))
+@pytest.mark.parametrize(
+    "site", sorted(set(AdapterRegistry.list_supported_sites()) - REAL_SUBMIT_SITES)
+)
 @pytest.mark.asyncio
 async def test_discovery_only_adapter_refuses_submit(site: str):
     """Discovery-only adapters must raise on submit_application()."""
@@ -48,9 +50,9 @@ async def test_discovery_only_adapter_refuses_submit(site: str):
         await adapter.submit_application(app)
 
 
-@pytest.mark.parametrize("site", sorted(
-    set(AdapterRegistry.list_supported_sites()) - REAL_SUBMIT_SITES
-))
+@pytest.mark.parametrize(
+    "site", sorted(set(AdapterRegistry.list_supported_sites()) - REAL_SUBMIT_SITES)
+)
 @pytest.mark.asyncio
 async def test_discovery_only_adapter_refuses_verify(site: str):
     """Discovery-only adapters must raise on verify_submission()."""
@@ -61,9 +63,9 @@ async def test_discovery_only_adapter_refuses_verify(site: str):
         await adapter.verify_submission(app)
 
 
-@pytest.mark.parametrize("site", sorted(
-    set(AdapterRegistry.list_supported_sites()) - REAL_SUBMIT_SITES
-))
+@pytest.mark.parametrize(
+    "site", sorted(set(AdapterRegistry.list_supported_sites()) - REAL_SUBMIT_SITES)
+)
 def test_discovery_only_adapter_declares_no_submit_capability(site: str):
     """Discovery-only adapters must NOT have SUBMIT_API or SUBMIT_BROWSER capability."""
     adapter = AdapterRegistry.get_adapter(site)

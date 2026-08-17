@@ -38,6 +38,7 @@ from jobot.storage.vault import CredentialVault
 # 1. PROMPT INJECTION FALSIFICATION
 # ===========================================================================
 
+
 def test_prompt_guard_real_sanitization_and_detection():
     """Verify that prompt guard genuinely strips attack vectors and detects jailbreaks."""
     jailbreaks = [
@@ -59,7 +60,9 @@ def test_prompt_guard_real_sanitization_and_detection():
         assert "<system>" not in cleaned
 
     # Clean input must be preserved without false-positive mangling
-    clean_text = "I have 5 years of experience building Python microservices with Docker and Kubernetes."
+    clean_text = (
+        "I have 5 years of experience building Python microservices with Docker and Kubernetes."
+    )
     assert contains_prompt_injection(clean_text) is False
     assert sanitize_llm_input(clean_text) == clean_text
 
@@ -67,6 +70,7 @@ def test_prompt_guard_real_sanitization_and_detection():
 # ===========================================================================
 # 2. VAULT ENCRYPTION & CIPHERTEXT INTEGRITY FALSIFICATION
 # ===========================================================================
+
 
 def test_vault_real_aes256_encryption_and_tamper_resistance(tmp_path):
     """Verify that stored profiles are real ciphertext and fail immediately upon bit-flipping."""
@@ -110,6 +114,7 @@ def test_vault_real_aes256_encryption_and_tamper_resistance(tmp_path):
 # 3. CANDIDATE TRUTH GROUNDING FALSIFICATION
 # ===========================================================================
 
+
 def test_candidate_truth_grounding_rejects_hallucinations(tmp_path):
     """Verify that GroundingVerifier approves true claims and rejects fabricated claims."""
     db_path = tmp_path / "truth_test.db"
@@ -119,7 +124,9 @@ def test_candidate_truth_grounding_rejects_hallucinations(tmp_path):
     # Seed verified facts
     truth_store.record_fact("skill", "Python 3.12", profile_id="cand_1", confidence=1.0)
     truth_store.record_fact("skill", "PostgreSQL", profile_id="cand_1", confidence=1.0)
-    truth_store.record_fact("experience", "Senior Backend Engineer at Acme Corp", profile_id="cand_1", confidence=1.0)
+    truth_store.record_fact(
+        "experience", "Senior Backend Engineer at Acme Corp", profile_id="cand_1", confidence=1.0
+    )
 
     verifier = CandidateGroundingVerifier(store=truth_store)
 
@@ -140,6 +147,7 @@ def test_candidate_truth_grounding_rejects_hallucinations(tmp_path):
 # ===========================================================================
 # 4. ADAPTER CAPABILITY SAFETY GATE FALSIFICATION
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_discovery_adapter_strictly_refuses_submission():
@@ -180,6 +188,7 @@ async def test_linkedin_adapter_strictly_refuses_live_submission_without_flag(mo
 # ===========================================================================
 # 5. STATE MACHINE TRANSITION INTEGRITY FALSIFICATION
 # ===========================================================================
+
 
 def test_state_machine_strictly_enforces_legal_transition_graph():
     """Verify state machine allows legal flow and raises on illegal jumps."""
@@ -228,12 +237,15 @@ def test_state_machine_strictly_enforces_legal_transition_graph():
 # 6. DATABASE IDEMPOTENCY & CONSTRAINT FALSIFICATION
 # ===========================================================================
 
+
 def test_database_strictly_prevents_duplicate_applications(tmp_path):
     """Verify SQLite UNIQUE constraint on idempotency_key prevents duplicate applications."""
     db = DatabaseManager(db_path=tmp_path / "idem.db")
 
     # Save base posting first
-    posting = JobPosting(job_id="job_uniq", site="mock_ats", url="http://mock.test/1", title="Eng", company="Corp")
+    posting = JobPosting(
+        job_id="job_uniq", site="mock_ats", url="http://mock.test/1", title="Eng", company="Corp"
+    )
     db.save_job_posting(posting)
 
     app1 = Application(
@@ -259,16 +271,17 @@ def test_database_strictly_prevents_duplicate_applications(tmp_path):
 # 7. SSRF GUARD BOUNDARY DEFENSE FALSIFICATION
 # ===========================================================================
 
+
 def test_ssrf_guard_strictly_blocks_internal_and_metadata_addresses():
     """Verify URL guard blocks AWS metadata, loopback, and private subnet targets."""
     forbidden_targets = [
         "http://169.254.169.254/latest/meta-data/",  # Cloud Instance Metadata
-        "http://127.0.0.1:8080/admin",              # Localhost Loopback
-        "http://localhost:5000/keys",               # Localhost Name
-        "http://10.0.0.1/internal",                 # RFC 1918 Private
-        "http://192.168.1.1/router",                # RFC 1918 Private
-        "file:///etc/passwd",                       # File URI
-        "ftp://internal.ftp.local/dump",            # Non-HTTP Scheme
+        "http://127.0.0.1:8080/admin",  # Localhost Loopback
+        "http://localhost:5000/keys",  # Localhost Name
+        "http://10.0.0.1/internal",  # RFC 1918 Private
+        "http://192.168.1.1/router",  # RFC 1918 Private
+        "file:///etc/passwd",  # File URI
+        "ftp://internal.ftp.local/dump",  # Non-HTTP Scheme
     ]
 
     for target in forbidden_targets:

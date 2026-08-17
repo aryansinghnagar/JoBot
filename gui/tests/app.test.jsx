@@ -95,7 +95,9 @@ describe("views render without a live sidecar", () => {
 
   it("Onboarding", async () => {
     const { Onboarding } = await import("../src/views/Onboarding.jsx");
-    const html = renderToString(<Onboarding rpc={stubRpc()} onComplete={() => {}} />);
+    const html = renderToString(
+      <Onboarding rpc={stubRpc()} onComplete={() => {}} />,
+    );
     expect(html).toContain("Welcome to JoBot");
     expect(html).toContain("Candidate Personal Details");
   });

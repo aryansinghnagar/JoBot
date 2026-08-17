@@ -44,6 +44,7 @@ class QAEngine:
     def sanitize_input(self, text: str) -> str:
         """Strip malicious prompt injection vectors from input string."""
         from jobot.security.prompt_guard import sanitize_llm_input
+
         return sanitize_llm_input(text)
 
     def classify_question(self, question: str) -> QuestionType:

@@ -14,7 +14,9 @@ export function Onboarding({ rpc, onComplete }) {
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [skills, setSkills] = useState("Python, SQL, React");
-  const [targetRoles, setTargetRoles] = useState("Software Engineer, Backend Developer");
+  const [targetRoles, setTargetRoles] = useState(
+    "Software Engineer, Backend Developer",
+  );
   const [yearsExp, setYearsExp] = useState("3");
   const [minSalary, setMinSalary] = useState("100000");
 
@@ -40,7 +42,9 @@ export function Onboarding({ rpc, onComplete }) {
       }
       if (res.email) setEmail(res.email);
       if (res.skills && res.skills.length > 0) setSkills(res.skills.join(", "));
-      setSuccessMsg(`Resume parsed successfully (${res.facts_seeded} facts extracted).`);
+      setSuccessMsg(
+        `Resume parsed successfully (${res.facts_seeded} facts extracted).`,
+      );
     } catch (err) {
       setError(err?.message || "Failed to import resume");
     } finally {
@@ -61,7 +65,9 @@ export function Onboarding({ rpc, onComplete }) {
         await rpc.configSet(`api_keys.${llmProvider}`, apiKey);
       }
       setAiTested(true);
-      setSuccessMsg(`${llmProvider.toUpperCase()} provider connected & configured.`);
+      setSuccessMsg(
+        `${llmProvider.toUpperCase()} provider connected & configured.`,
+      );
     } catch (err) {
       setError(err?.message || "AI configuration failed");
     } finally {
@@ -99,13 +105,24 @@ export function Onboarding({ rpc, onComplete }) {
   };
 
   return (
-    <section className="view" style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem" }}>
+    <section
+      className="view"
+      style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem" }}
+    >
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <h1>Welcome to JoBot</h1>
         <p className="muted">
-          Set up your encrypted candidate truth profile and AI preferences to get started.
+          Set up your encrypted candidate truth profile and AI preferences to
+          get started.
         </p>
-        <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginTop: "1rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "0.5rem",
+            marginTop: "1rem",
+          }}
+        >
           {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
@@ -113,7 +130,8 @@ export function Onboarding({ rpc, onComplete }) {
                 width: "32px",
                 height: "32px",
                 borderRadius: "50%",
-                background: step === s ? "#4f46e5" : step > s ? "#10b981" : "#222",
+                background:
+                  step === s ? "#4f46e5" : step > s ? "#10b981" : "#222",
                 color: "#fff",
                 display: "flex",
                 alignItems: "center",
@@ -128,59 +146,135 @@ export function Onboarding({ rpc, onComplete }) {
         </div>
       </div>
 
-      {error && <div className="card error-box" style={{ marginBottom: "1rem" }}>{error}</div>}
-      {successMsg && <div className="card success-box" style={{ marginBottom: "1rem" }}>{successMsg}</div>}
+      {error && (
+        <div className="card error-box" style={{ marginBottom: "1rem" }}>
+          {error}
+        </div>
+      )}
+      {successMsg && (
+        <div className="card success-box" style={{ marginBottom: "1rem" }}>
+          {successMsg}
+        </div>
+      )}
 
       {step === 1 && (
         <div className="card">
           <h2>Step 1: Candidate Personal Details</h2>
-          <p className="muted">Your personal facts will be encrypted locally in your OS keyring vault.</p>
+          <p className="muted">
+            Your personal facts will be encrypted locally in your OS keyring
+            vault.
+          </p>
 
-          <div style={{ background: "#1a1a24", padding: "1rem", borderRadius: "6px", marginBottom: "1.5rem", border: "1px solid #333" }}>
-            <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem" }}>Have an existing resume file?</h3>
+          <div
+            style={{
+              background: "#1a1a24",
+              padding: "1rem",
+              borderRadius: "6px",
+              marginBottom: "1.5rem",
+              border: "1px solid #333",
+            }}
+          >
+            <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem" }}>
+              Have an existing resume file?
+            </h3>
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <input
                 placeholder="C:/Users/You/Documents/Resume.pdf"
                 value={resumePath}
                 onChange={(e) => setResumePath(e.target.value)}
               />
-              <button className="btn btn-secondary" onClick={handleImportResume} disabled={busy}>
+              <button
+                className="btn btn-secondary"
+                onClick={handleImportResume}
+                disabled={busy}
+              >
                 {busy ? "Parsing…" : "Autofill from Resume"}
               </button>
             </div>
           </div>
 
-          <form className="form" onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(2);
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+              }}
+            >
               <label>
                 First Name *
-                <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Jane" />
+                <input
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="e.g. Jane"
+                />
               </label>
               <label>
                 Last Name
-                <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g. Doe" />
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="e.g. Doe"
+                />
               </label>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+              }}
+            >
               <label>
                 Email Address *
-                <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jane@example.com"
+                />
               </label>
               <label>
                 Phone Number
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 415 555 0199" />
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 415 555 0199"
+                />
               </label>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+              }}
+            >
               <label>
                 City
-                <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="San Francisco" />
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="San Francisco"
+                />
               </label>
               <label>
                 Country
-                <input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="USA" />
+                <input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="USA"
+                />
               </label>
             </div>
 
@@ -196,9 +290,17 @@ export function Onboarding({ rpc, onComplete }) {
       {step === 2 && (
         <div className="card">
           <h2>Step 2: Skills &amp; Job Search Preferences</h2>
-          <p className="muted">These facts anchor the AI grounding engine and matching ladder.</p>
+          <p className="muted">
+            These facts anchor the AI grounding engine and matching ladder.
+          </p>
 
-          <form className="form" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(3);
+            }}
+          >
             <label>
               Technical &amp; Domain Skills (comma-separated)
               <input
@@ -217,7 +319,13 @@ export function Onboarding({ rpc, onComplete }) {
               />
             </label>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+              }}
+            >
               <label>
                 Years of Relevant Experience
                 <input
@@ -240,8 +348,18 @@ export function Onboarding({ rpc, onComplete }) {
               </label>
             </div>
 
-            <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between" }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setStep(1)}>
+            <div
+              style={{
+                marginTop: "1.5rem",
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={() => setStep(1)}
+              >
                 ← Back
               </button>
               <button className="btn btn-primary" type="submit">
@@ -256,17 +374,36 @@ export function Onboarding({ rpc, onComplete }) {
         <div className="card">
           <h2>Step 3: Connect AI Provider</h2>
           <p className="muted">
-            JoBot uses LLMs for resume tailoring and cover letter drafting with candidate grounding.
+            JoBot uses LLMs for resume tailoring and cover letter drafting with
+            candidate grounding.
           </p>
 
-          <form className="form" onSubmit={(e) => { e.preventDefault(); setStep(4); }}>
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStep(4);
+            }}
+          >
             <label>
               LLM Provider
-              <select value={llmProvider} onChange={(e) => { setLlmProvider(e.target.value); setAiTested(false); }}>
-                <option value="gemini">Google Gemini (Recommended / Fast)</option>
+              <select
+                value={llmProvider}
+                onChange={(e) => {
+                  setLlmProvider(e.target.value);
+                  setAiTested(false);
+                }}
+              >
+                <option value="gemini">
+                  Google Gemini (Recommended / Fast)
+                </option>
                 <option value="openai">OpenAI (GPT-4o)</option>
-                <option value="anthropic">Anthropic Claude (Claude 3.5 Sonnet)</option>
-                <option value="ollama">Local Ollama (Zero Cloud / Offline)</option>
+                <option value="anthropic">
+                  Anthropic Claude (Claude 3.5 Sonnet)
+                </option>
+                <option value="ollama">
+                  Local Ollama (Zero Cloud / Offline)
+                </option>
               </select>
             </label>
 
@@ -277,7 +414,10 @@ export function Onboarding({ rpc, onComplete }) {
                   type="password"
                   placeholder={`Enter your ${llmProvider} API key`}
                   value={apiKey}
-                  onChange={(e) => { setApiKey(e.target.value); setAiTested(false); }}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    setAiTested(false);
+                  }}
                 />
               </label>
             )}
@@ -291,11 +431,25 @@ export function Onboarding({ rpc, onComplete }) {
               >
                 {busy ? "Testing…" : "Save & Verify Connection"}
               </button>
-              {aiTested && <span style={{ marginLeft: "0.5rem", color: "#10b981" }}>✓ Verified</span>}
+              {aiTested && (
+                <span style={{ marginLeft: "0.5rem", color: "#10b981" }}>
+                  ✓ Verified
+                </span>
+              )}
             </div>
 
-            <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between" }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setStep(2)}>
+            <div
+              style={{
+                marginTop: "1.5rem",
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={() => setStep(2)}
+              >
                 ← Back
               </button>
               <button className="btn btn-primary" type="submit">
@@ -309,42 +463,73 @@ export function Onboarding({ rpc, onComplete }) {
       {step === 4 && (
         <div className="card">
           <h2>Step 4: Confirmation &amp; Launch</h2>
-          <p className="muted">Review your configuration before opening the JoBot cockpit.</p>
+          <p className="muted">
+            Review your configuration before opening the JoBot cockpit.
+          </p>
 
           <table style={{ width: "100%", marginBottom: "1.5rem" }}>
             <tbody>
               <tr>
-                <td><strong>Candidate Name:</strong></td>
-                <td>{firstName} {lastName}</td>
+                <td>
+                  <strong>Candidate Name:</strong>
+                </td>
+                <td>
+                  {firstName} {lastName}
+                </td>
               </tr>
               <tr>
-                <td><strong>Email:</strong></td>
+                <td>
+                  <strong>Email:</strong>
+                </td>
                 <td>{email}</td>
               </tr>
               <tr>
-                <td><strong>Location:</strong></td>
-                <td>{city || "Remote"}{country ? `, ${country}` : ""}</td>
+                <td>
+                  <strong>Location:</strong>
+                </td>
+                <td>
+                  {city || "Remote"}
+                  {country ? `, ${country}` : ""}
+                </td>
               </tr>
               <tr>
-                <td><strong>Skills:</strong></td>
-                <td><code>{skills}</code></td>
+                <td>
+                  <strong>Skills:</strong>
+                </td>
+                <td>
+                  <code>{skills}</code>
+                </td>
               </tr>
               <tr>
-                <td><strong>Target Roles:</strong></td>
+                <td>
+                  <strong>Target Roles:</strong>
+                </td>
                 <td>{targetRoles}</td>
               </tr>
               <tr>
-                <td><strong>AI Provider:</strong></td>
-                <td><code>{llmProvider}</code></td>
+                <td>
+                  <strong>AI Provider:</strong>
+                </td>
+                <td>
+                  <code>{llmProvider}</code>
+                </td>
               </tr>
             </tbody>
           </table>
 
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <button className="btn btn-secondary" type="button" onClick={() => setStep(3)}>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={() => setStep(3)}
+            >
               ← Back
             </button>
-            <button className="btn btn-primary" onClick={handleFinish} disabled={busy}>
+            <button
+              className="btn btn-primary"
+              onClick={handleFinish}
+              disabled={busy}
+            >
               {busy ? "Saving Profile…" : "Complete Setup & Launch Dashboard"}
             </button>
           </div>

@@ -15,12 +15,15 @@ export function Controls({ rpc }) {
     [rpc],
   );
   const [busy, setBusy] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState(SCHEDULE_PRESETS[0].cron);
+  const [selectedPreset, setSelectedPreset] = useState(
+    SCHEDULE_PRESETS[0].cron,
+  );
   const [customCron, setCustomCron] = useState("0 9 * * 1-5");
   const [command, setCommand] = useState("run");
   const [message, setMessage] = useState(null);
 
-  const effectiveCron = selectedPreset === "custom" ? customCron : selectedPreset;
+  const effectiveCron =
+    selectedPreset === "custom" ? customCron : selectedPreset;
 
   const act = async (fn, ok) => {
     setBusy(true);
@@ -44,7 +47,11 @@ export function Controls({ rpc }) {
   };
 
   const removeSchedule = (id) => {
-    if (!window.confirm("Are you sure you want to remove this scheduled campaign run?")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to remove this scheduled campaign run?",
+      )
+    ) {
       return;
     }
     act(async () => {
@@ -66,7 +73,10 @@ export function Controls({ rpc }) {
         <p>
           Status: <strong>{data?.runner?.status || "IDLE"}</strong>
         </p>
-        <div className="row" style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
+        <div
+          className="row"
+          style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}
+        >
           <button
             className="btn btn-secondary"
             onClick={() => act(rpc.pause, "Campaign paused.")}
@@ -91,7 +101,9 @@ export function Controls({ rpc }) {
         {!loading && !error && data && (
           <>
             {data.schedules.length === 0 ? (
-              <p className="muted">No scheduled jobs configured. Add a schedule below.</p>
+              <p className="muted">
+                No scheduled jobs configured. Add a schedule below.
+              </p>
             ) : (
               <table style={{ width: "100%", marginBottom: "1.5rem" }}>
                 <thead>
@@ -106,11 +118,19 @@ export function Controls({ rpc }) {
                 <tbody>
                   {data.schedules.map((s) => (
                     <tr key={s.schedule_id}>
-                      <td><code>{s.schedule_id}</code></td>
-                      <td><code>{s.cron}</code></td>
-                      <td>{s.command === "run" ? "Discover & Match" : s.command}</td>
                       <td>
-                        <span className={`badge ${s.active ? "badge-success" : "badge-secondary"}`}>
+                        <code>{s.schedule_id}</code>
+                      </td>
+                      <td>
+                        <code>{s.cron}</code>
+                      </td>
+                      <td>
+                        {s.command === "run" ? "Discover & Match" : s.command}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${s.active ? "badge-success" : "badge-secondary"}`}
+                        >
                           {s.active ? "Active" : "Disabled"}
                         </span>
                       </td>
@@ -131,7 +151,14 @@ export function Controls({ rpc }) {
 
             <h3 style={{ marginTop: "1rem" }}>Add New Schedule</h3>
             <form className="form" onSubmit={addSchedule}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                  marginBottom: "1rem",
+                }}
+              >
                 <label>
                   Frequency Preset
                   <select
@@ -152,7 +179,9 @@ export function Controls({ rpc }) {
                     value={command}
                     onChange={(e) => setCommand(e.target.value)}
                   >
-                    <option value="run">Run discovery and match pipeline</option>
+                    <option value="run">
+                      Run discovery and match pipeline
+                    </option>
                     <option value="scrape">Scrape new postings only</option>
                   </select>
                 </label>

@@ -96,4 +96,6 @@ def test_saga_compensation_on_failure(temp_db: DatabaseManager):
     assert saga.status == SagaStatus.COMPENSATED.value
 
     steps_after_comp = saga.steps()
-    assert any(s["step_name"] == "submit" and s["status"] == "COMPENSATED" for s in steps_after_comp)
+    assert any(
+        s["step_name"] == "submit" and s["status"] == "COMPENSATED" for s in steps_after_comp
+    )

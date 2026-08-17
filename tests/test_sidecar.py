@@ -380,7 +380,9 @@ def test_sidecar_config_show_and_set(monkeypatch, tmp_path):
     assert set_res["result"]["set"] == "llm.default_provider"
     assert set_res["result"]["secret"] is False
 
-    set_secret = _call(server, "config_set", {"key": "llm.api_key.gemini", "value": "AIzaTESTSECRET12345"})
+    set_secret = _call(
+        server, "config_set", {"key": "llm.api_key.gemini", "value": "AIzaTESTSECRET12345"}
+    )
     assert set_secret["result"]["secret"] is True
 
     got_secret = _call(server, "config_get", {"key": "llm.api_key.gemini"})
@@ -470,5 +472,3 @@ def test_sidecar_export_diagnostics(monkeypatch, tmp_path):
     assert res.get("error") is None
     assert res["result"]["status"] == "exported"
     assert res["result"]["path"].endswith(".zip")
-
-

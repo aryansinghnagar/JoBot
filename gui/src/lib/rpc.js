@@ -78,7 +78,10 @@ export class JobotRpc {
     return this.client.call("profile_save", profileData);
   }
   importResume(filePath, profileId = "default") {
-    return this.client.call("import_resume", { file_path: filePath, profile_id: profileId });
+    return this.client.call("import_resume", {
+      file_path: filePath,
+      profile_id: profileId,
+    });
   }
   listSites() {
     return this.client.call("list_sites");

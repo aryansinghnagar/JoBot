@@ -47,7 +47,9 @@ def test_cli_reference_commands_exist():
     assert len(documented) > 0
 
     unregistered = documented - registered
-    assert not unregistered, f"cli-reference.md references non-existent CLI commands: {unregistered}"
+    assert not unregistered, (
+        f"cli-reference.md references non-existent CLI commands: {unregistered}"
+    )
 
 
 def test_readme_commands_exist():

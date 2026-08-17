@@ -12,4 +12,3 @@ __all__ = [
     "find_prompt_injections",
     "sanitize_llm_input",
 ]
-

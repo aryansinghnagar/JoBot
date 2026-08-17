@@ -78,7 +78,9 @@ def test_prompt_injection_patterns_detected_and_sanitized(
 
 
 def test_benign_text_not_flagged():
-    benign_text = "Looking for a Senior Python Developer with experience in distributed systems and FastAPI."
+    benign_text = (
+        "Looking for a Senior Python Developer with experience in distributed systems and FastAPI."
+    )
     assert contains_prompt_injection(benign_text) is False
     assert find_prompt_injections(benign_text) == []
     assert sanitize_llm_input(benign_text) == benign_text

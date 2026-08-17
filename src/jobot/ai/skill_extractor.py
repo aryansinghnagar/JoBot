@@ -65,8 +65,7 @@ class SkillExtractor:
     ]
 
     KEYWORD_MAP = {
-        kw.lower(): (kw.title() if len(kw) <= 4 else kw.capitalize())
-        for kw in COMMON_TECH_KEYWORDS
+        kw.lower(): (kw.title() if len(kw) <= 4 else kw.capitalize()) for kw in COMMON_TECH_KEYWORDS
     }
     _COMBINED_PATTERN = re.compile(
         r"\b(?:"

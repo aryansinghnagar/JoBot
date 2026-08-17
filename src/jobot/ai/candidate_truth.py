@@ -239,7 +239,9 @@ class CandidateGroundingVerifier:
 
         # Check for ungrounded phone numbers (10+ digits)
         phones_in_text = _PHONE_10_RE.findall(_NON_DIGIT_SPACE_RE.sub("", text))
-        known_phones = {_DIGITS_ONLY_RE.sub("", f.fact_value) for f in facts if f.fact_type == "phone"}
+        known_phones = {
+            _DIGITS_ONLY_RE.sub("", f.fact_value) for f in facts if f.fact_type == "phone"
+        }
         for phone in phones_in_text:
             if known_phones and phone not in known_phones:
                 unsupported.append(f"Ungrounded phone number: {phone}")

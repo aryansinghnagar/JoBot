@@ -169,4 +169,3 @@ def export_diagnostic_bundle(output_path: Path | None = None) -> Path:
         zf.writestr("system_info.json", json.dumps(system_info, indent=2))
 
     return output_path
-

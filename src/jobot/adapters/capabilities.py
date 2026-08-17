@@ -15,12 +15,12 @@ from enum import Flag, auto
 class AdapterCapability(Flag):
     """Bit-flag enum describing what an adapter can *actually* do."""
 
-    DISCOVERY = auto()       # Can discover / list real job postings
-    PARSE = auto()           # Can parse real job details from a URL
-    FILL_FORM = auto()       # Can map profile data to form fields
-    SUBMIT_API = auto()      # Can submit via direct HTTP API
+    DISCOVERY = auto()  # Can discover / list real job postings
+    PARSE = auto()  # Can parse real job details from a URL
+    FILL_FORM = auto()  # Can map profile data to form fields
+    SUBMIT_API = auto()  # Can submit via direct HTTP API
     SUBMIT_BROWSER = auto()  # Can submit via browser automation
-    VERIFY = auto()          # Can verify submission externally
+    VERIFY = auto()  # Can verify submission externally
 
     # Convenience composites
     FULL_API = DISCOVERY | PARSE | FILL_FORM | SUBMIT_API | VERIFY
@@ -35,10 +35,7 @@ class AdapterCapabilityError(NotImplementedError):
     def __init__(self, adapter_name: str, operation: str, hint: str = "") -> None:
         self.adapter_name = adapter_name
         self.operation = operation
-        msg = (
-            f"{adapter_name} does not support '{operation}'. "
-            f"This adapter is discovery-only."
-        )
+        msg = f"{adapter_name} does not support '{operation}'. This adapter is discovery-only."
         if hint:
             msg += f" {hint}"
         super().__init__(msg)

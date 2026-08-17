@@ -59,9 +59,7 @@ async def test_chaos_network_crash_after_submit_send(tmp_path, sample_candidate)
         "jobot.adapters.mock_ats.MockATSAdapter.submit_application",
         side_effect=ConnectionResetError("Simulated TCP Reset"),
     ):
-        res = await orchestrator.apply(
-            job, sample_candidate, auto_approve=True, dry_run=False
-        )
+        res = await orchestrator.apply(job, sample_candidate, auto_approve=True, dry_run=False)
 
     # Must NOT fabricate success; must land safely in SUBMISSION_UNKNOWN, rejected, or failed
     assert res.app_status in ["submission_unknown", "failed", "intent", "rejected", None]

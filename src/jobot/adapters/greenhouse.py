@@ -186,7 +186,9 @@ class GreenhouseAdapter(SiteAdapter):
                         collector.record_api_evidence(
                             application_id=application.application_id,
                             site=self.site_name,
-                            confirmation_id=application.form_values.get("_greenhouse_confirmation_id"),
+                            confirmation_id=application.form_values.get(
+                                "_greenhouse_confirmation_id"
+                            ),
                             request_payload=req_data,
                             response_status=resp.status,
                         )

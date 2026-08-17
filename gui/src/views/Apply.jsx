@@ -145,22 +145,33 @@ export function Apply({ rpc, job }) {
       {result && (
         <div className="card" style={{ marginTop: "1.5rem" }}>
           <h2>Application Summary</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "0.75rem",
+            }}
+          >
             <span>Status:</span>
-            <span className={`badge ${
-              result.app_status === "submitted" || result.app_status === "verified"
-                ? "badge-success"
-                : result.app_status === "pending_approval"
-                ? "badge-warning"
-                : "badge-secondary"
-            }`}>
+            <span
+              className={`badge ${
+                result.app_status === "submitted" ||
+                result.app_status === "verified"
+                  ? "badge-success"
+                  : result.app_status === "pending_approval"
+                    ? "badge-warning"
+                    : "badge-secondary"
+              }`}
+            >
               {result.dry_run
                 ? "Dry Run / Preview Complete"
                 : result.app_status === "pending_approval"
-                ? "Awaiting Human Approval"
-                : result.app_status === "submitted" || result.app_status === "verified"
-                ? "Submitted Successfully"
-                : result.app_status || "Completed"}
+                  ? "Awaiting Human Approval"
+                  : result.app_status === "submitted" ||
+                      result.app_status === "verified"
+                    ? "Submitted Successfully"
+                    : result.app_status || "Completed"}
             </span>
           </div>
 
@@ -173,21 +184,36 @@ export function Apply({ rpc, job }) {
           )}
 
           {result.artifacts && result.artifacts.resume_pdf && (
-            <p className="muted">Generated Resume: <code>{result.artifacts.resume_pdf}</code></p>
+            <p className="muted">
+              Generated Resume: <code>{result.artifacts.resume_pdf}</code>
+            </p>
           )}
 
-          {result.app_status === "pending_approval" && result.application_id && (
-            <div style={{ marginTop: "1rem" }}>
-              <button className="btn btn-primary" onClick={approve} disabled={busy}>
-                {busy ? "Submitting..." : "Approve & Submit Now"}
-              </button>
-            </div>
-          )}
+          {result.app_status === "pending_approval" &&
+            result.application_id && (
+              <div style={{ marginTop: "1rem" }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={approve}
+                  disabled={busy}
+                >
+                  {busy ? "Submitting..." : "Approve & Submit Now"}
+                </button>
+              </div>
+            )}
 
-          <details style={{ marginTop: "1rem", fontSize: "0.8rem", color: "#888" }}>
-            <summary style={{ cursor: "pointer" }}>Technical identifiers</summary>
-            <p style={{ margin: "0.25rem 0" }}>Application ID: <code>{result.application_id || "N/A"}</code></p>
-            <p style={{ margin: "0.25rem 0" }}>Saga ID: <code>{result.saga_id || "N/A"}</code></p>
+          <details
+            style={{ marginTop: "1rem", fontSize: "0.8rem", color: "#888" }}
+          >
+            <summary style={{ cursor: "pointer" }}>
+              Technical identifiers
+            </summary>
+            <p style={{ margin: "0.25rem 0" }}>
+              Application ID: <code>{result.application_id || "N/A"}</code>
+            </p>
+            <p style={{ margin: "0.25rem 0" }}>
+              Saga ID: <code>{result.saga_id || "N/A"}</code>
+            </p>
           </details>
         </div>
       )}

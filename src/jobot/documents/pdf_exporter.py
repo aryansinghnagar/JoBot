@@ -67,7 +67,9 @@ class ResumeExporter:
         city = html.escape(str(p.location_city))
         country = html.escape(str(p.location_country))
         linkedin = html.escape(str(p.linkedin_url or "N/A"))
-        skills_html = "".join([f"<span class='tag'>{html.escape(str(s))}</span>" for s in profile.skills])
+        skills_html = "".join(
+            [f"<span class='tag'>{html.escape(str(s))}</span>" for s in profile.skills]
+        )
 
         html_doc = f"""<!DOCTYPE html>
 <html>

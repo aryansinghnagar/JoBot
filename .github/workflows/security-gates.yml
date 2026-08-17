@@ -30,8 +30,9 @@ jobs:
         # runtime supply chain), then audits the resulting environment.
         run: |
           python -m pip install --upgrade pip pip-audit
-          pip install -e .
-          pip-audit --skip-editable --strict
+          pip install .
+          python -c "import subprocess, sys; out = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'], text=True); reqs = [line for line in out.splitlines() if not line.lower().startswith('jobot')]; open('runtime-reqs.txt', 'w').write('\n'.join(reqs))"
+          pip-audit -r runtime-reqs.txt --strict
 
   js-audit:
     name: JavaScript Dependency Audit (npm audit)
