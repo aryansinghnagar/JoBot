@@ -274,6 +274,8 @@ class CandidateGroundingVerifier:
             else:
                 if any(char.isdigit() for char in stmt) and len(stmt_tokens) > 4:
                     unsupported.append(f"Unsubstantiated numerical metric: {stmt}")
+                elif overlap_ratio == 0.0 and len(stmt_tokens) >= 5:
+                    unsupported.append(f"Ungrounded substantive claim: {stmt}")
                 else:
                     supported.append(stmt)
 
