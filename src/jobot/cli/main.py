@@ -97,10 +97,34 @@ def _resolve_job(
 
 @app.command("list-sites")
 def list_sites() -> None:
-    """List all registered job-site adapters."""
-    console.print("[bold]Supported job sites[/bold]")
-    for name in AdapterRegistry.list_supported_sites():
-        console.print(f"  • {name}")
+    """List all registered job-site adapters and their capability tiers."""
+    from jobot.adapters.capabilities import AdapterCapability
+
+    table = Table(title="Supported Job Portals & ATS Adapters")
+    table.add_column("Portal / Site", style="cyan bold")
+    table.add_column("Capability Tier", style="bold")
+    table.add_column("Apply Supported", justify="center")
+    table.add_column("Mechanism", style="dim")
+
+    for site_name, caps in AdapterRegistry.list_supported_sites_with_capabilities():
+        can_submit = bool(caps & (AdapterCapability.SUBMIT_API | AdapterCapability.SUBMIT_BROWSER))
+        if caps & AdapterCapability.SUBMIT_API:
+            tier = "[green]Real API[/green]"
+            mech = "Direct HTTP POST API"
+        elif caps & AdapterCapability.SUBMIT_BROWSER:
+            tier = "[yellow]Live Browser[/yellow]"
+            mech = "Patchright (JOBOT_RUN_LIVE_BROWSER=1)"
+        elif caps & AdapterCapability.PARSE:
+            tier = "[blue]Discovery + Parse[/blue]"
+            mech = "Public JSON API / Scraper"
+        else:
+            tier = "[dim]Discovery Only[/dim]"
+            mech = "Scraper Engine (JobSpy)"
+
+        apply_badge = "[green]Yes[/green]" if can_submit else "[dim]No[/dim]"
+        table.add_row(site_name, tier, apply_badge, mech)
+
+    console.print(table)
 
 
 @app.command("site-health")
@@ -1914,9 +1938,16 @@ def config_cmd(
 
 
 @app.command("doctor")
-def doctor_cmd() -> None:
+def doctor_cmd(
+    export: bool = typer.Option(False, "--export", "-e", help="Export redacted diagnostic zip archive"),
+) -> None:
     """Diagnose environment: keyring, storage, profile, and LLM providers."""
-    from jobot.doctor import run_doctor_checks
+    from jobot.doctor import export_diagnostic_bundle, run_doctor_checks
+
+    if export:
+        bundle_path = export_diagnostic_bundle()
+        console.print(f"[bold green][OK] Diagnostic bundle exported to:[/bold green] {bundle_path}")
+        return
 
     report = run_doctor_checks()
     checks = report.checks

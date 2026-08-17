@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Sync the canonical package version from pyproject.toml to every manifest.
 
-Source of truth: pyproject.toml [project] version. Consumers: root
-package.json, gui/package.json, gui/src-tauri/tauri.conf.json.
+Source of truth: pyproject.toml [project] version.
+Consumers: root package.json, gui/package.json, gui/src-tauri/tauri.conf.json,
+gui/src-tauri/Cargo.toml.
 
 Usage:
     python scripts/sync_versions.py           # write versions into consumers
@@ -16,17 +17,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
-CONSUMERS = [
+JSON_CONSUMERS = [
     REPO_ROOT / "package.json",
     REPO_ROOT / "gui" / "package.json",
     REPO_ROOT / "gui" / "src-tauri" / "tauri.conf.json",
 ]
+CARGO_TOML = REPO_ROOT / "gui" / "src-tauri" / "Cargo.toml"
 
 
 def canonical_version() -> str:
@@ -40,22 +43,39 @@ def canonical_version() -> str:
 
 def read_consumer_versions() -> dict[Path, str | None]:
     versions: dict[Path, str | None] = {}
-    for path in CONSUMERS:
+    for path in JSON_CONSUMERS:
         if not path.exists():
             versions[path] = None
             continue
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
         versions[path] = data.get("version")
+
+    if CARGO_TOML.exists():
+        with CARGO_TOML.open("rb") as f:
+            data = tomllib.load(f)
+        versions[CARGO_TOML] = data.get("package", {}).get("version")
+    else:
+        versions[CARGO_TOML] = None
+
     return versions
 
 
 def write_consumer_version(path: Path, version: str) -> None:
+    if path == CARGO_TOML:
+        content = path.read_text(encoding="utf-8")
+        updated = re.sub(
+            r'(?m)^version\s*=\s*"[^"]*"',
+            f'version = "{version}"',
+            content,
+            count=1,
+        )
+        path.write_text(updated, encoding="utf-8", newline="\n")
+        return
+
     with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
     data["version"] = version
-    # 2-space indent + trailing newline matches prettier formatting of these
-    # JSON manifests (npm run lint enforces it).
     with path.open("w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, indent=2)
         f.write("\n")

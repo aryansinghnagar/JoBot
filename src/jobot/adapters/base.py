@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import Application, JobPosting, UserProfile, VerificationResult
 
 
@@ -7,7 +8,14 @@ class SiteAdapter(ABC):
     """
     Abstract Base Class for Portal & ATS Adapters (Layer F).
     Each adapter encapsulates login, posting parsing, form filling, submission, and verification.
+
+    Subclasses MUST set ``capabilities`` to accurately reflect what the adapter
+    can actually do.  The default is ``FULL_API`` for backward compatibility
+    with real HTTP-based adapters (Greenhouse, Lever).  Discovery-only adapters
+    MUST override this to ``AdapterCapability.DISCOVERY_ONLY``.
     """
+
+    capabilities: AdapterCapability = AdapterCapability.FULL_API
 
     def __init__(self, site_name: str):
         self.site_name = site_name

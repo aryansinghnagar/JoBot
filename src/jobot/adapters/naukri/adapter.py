@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.adapters.naukri.discovery import NaukriDiscoveryEngine
 from jobot.adapters.naukri.form_fill import NaukriFormFiller
 from jobot.adapters.naukri.login import NaukriLoginFlow
@@ -26,6 +27,8 @@ class NaukriAdapter(SiteAdapter):
     P1.1/P1.2: submit and verify drive a real browser page and refuse to
     fabricate results. Live browser runs are opt-in via JOBOT_RUN_LIVE_BROWSER=1.
     """
+
+    capabilities = AdapterCapability.FULL_BROWSER
 
     def __init__(self) -> None:
         super().__init__("naukri")

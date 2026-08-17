@@ -1,6 +1,6 @@
 {
   "name": "jobot-gui",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "JoBot Desktop GUI (Tauri 2 + React) - thin wrapper delegating tooling to the repo root",
   "private": true,
   "scripts": {

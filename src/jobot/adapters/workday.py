@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -299,6 +300,8 @@ class WorkdayVerifier:
 
 class WorkdayAdapter(SiteAdapter):
     """Honest Workday ATS adapter: cxs-API discovery/parse, Patchright submit/verify."""
+
+    capabilities = AdapterCapability.FULL_BROWSER
 
     def __init__(self) -> None:
         super().__init__("workday")

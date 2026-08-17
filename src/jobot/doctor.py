@@ -120,3 +120,53 @@ def run_doctor_checks() -> DoctorReport:
 
     all_ok = all(check.ok for check in checks if not check.warn)
     return DoctorReport(checks=checks, providers=provider_rows, all_ok=all_ok)
+
+
+def export_diagnostic_bundle(output_path: Path | None = None) -> Path:
+    """Create a redacted diagnostic zip archive for troubleshooting."""
+    import json
+    import platform
+    import zipfile
+    from datetime import datetime, timezone
+    from jobot.stealth.site_health import SiteHealthMonitor
+    from jobot.adapters import AdapterRegistry
+
+    if output_path is None:
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        export_dir = Path.home() / ".jobot" / "exports"
+        export_dir.mkdir(parents=True, exist_ok=True)
+        output_path = export_dir / f"jobot_diagnostics_{timestamp}.zip"
+    else:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    report = run_doctor_checks()
+    monitor = SiteHealthMonitor()
+    sites = AdapterRegistry.list_supported_sites()
+
+    site_health_data = [
+        {
+            "site": s,
+            "status": monitor.get_status(s).status,
+            "success_count": monitor.get_status(s).success_count,
+            "failure_count": monitor.get_status(s).failure_count,
+            "success_rate": monitor.get_status(s).success_rate,
+            "avg_latency_ms": monitor.get_status(s).avg_latency_ms,
+        }
+        for s in sites
+    ]
+
+    system_info = {
+        "os": platform.system(),
+        "release": platform.release(),
+        "machine": platform.machine(),
+        "python_version": sys.version.split()[0],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("doctor_report.json", json.dumps(report.model_dump(), indent=2))
+        zf.writestr("site_health.json", json.dumps(site_health_data, indent=2))
+        zf.writestr("system_info.json", json.dumps(system_info, indent=2))
+
+    return output_path
+

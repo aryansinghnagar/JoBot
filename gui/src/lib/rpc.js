@@ -74,6 +74,12 @@ export class JobotRpc {
   profileInfo() {
     return this.client.call("profile_info");
   }
+  profileSave(profileData) {
+    return this.client.call("profile_save", profileData);
+  }
+  importResume(filePath, profileId = "default") {
+    return this.client.call("import_resume", { file_path: filePath, profile_id: profileId });
+  }
   listSites() {
     return this.client.call("list_sites");
   }
@@ -130,6 +136,22 @@ export class JobotRpc {
   }
   traces() {
     return this.client.call("traces");
+  }
+  exportDiagnostics() {
+    return this.client.call("export_diagnostics");
+  }
+  siteHealth() {
+    return this.client.call("site_health");
+  }
+  candidateFacts(profileId = "default") {
+    return this.client.call("candidate_facts", { profile_id: profileId });
+  }
+  recordCandidateFact(factType, factValue, profileId = "default") {
+    return this.client.call("record_candidate_fact", {
+      fact_type: factType,
+      fact_value: factValue,
+      profile_id: profileId,
+    });
   }
 }
 

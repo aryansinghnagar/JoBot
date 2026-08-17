@@ -1,4 +1,5 @@
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.adapters.cxs import (
     AshbyAdapter,
     BambooHRAdapter,
@@ -27,6 +28,8 @@ from jobot.adapters.registry import AdapterRegistry, infer_site
 from jobot.adapters.workday import WorkdayAdapter
 
 __all__ = [
+    "AdapterCapability",
+    "AdapterCapabilityError",
     "AdapterRegistry",
     "AshbyAdapter",
     "BambooHRAdapter",

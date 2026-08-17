@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -33,6 +34,8 @@ class LinkedInAdapter(SiteAdapter):
     runs enabled, submit/verify drive the Easy Apply saga; otherwise they
     raise explicit errors instead of fabricating results.
     """
+
+    capabilities = AdapterCapability.FULL_BROWSER
 
     def __init__(
         self,
@@ -72,7 +75,13 @@ class LinkedInAdapter(SiteAdapter):
         return self._vault.load_encrypted_profile(profile_path)
 
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
-        return True
+        if not self._live_enabled():
+            raise NotImplementedError(
+                "LinkedIn login requires JOBOT_RUN_LIVE_BROWSER=1 and a "
+                "real Patchright browser session."
+            )
+        browser = await self._browser_session()
+        return browser is not None
 
     async def parse_job_posting(self, url: str) -> JobPosting:
         raise NotImplementedError(

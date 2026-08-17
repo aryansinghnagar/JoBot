@@ -41,6 +41,12 @@ class FakeDB:
     def get_applications_with_jobs(self, limit: int = 50):
         return self.job_rows[:limit]
 
+    def save_candidate_fact(self, fact):
+        return 123
+
+    def list_candidate_facts(self, profile_id="default", fact_type=None, verified_only=False):
+        return []
+
 
 class FakeScraper:
     def __init__(self, postings: list):
@@ -409,3 +415,54 @@ def test_sidecar_evidence_manifest(monkeypatch, tmp_path):
     server = _server(monkeypatch, tmp_path)
     res = _call(server, "evidence_manifest", {"application_id": "nonexistent_app"})
     assert res["result"]["found"] is False
+
+
+def test_sidecar_profile_save(monkeypatch, tmp_path):
+    db = FakeDB()
+    server = _server(monkeypatch, tmp_path, db=db)
+    res = _call(
+        server,
+        "profile_save",
+        {
+            "first_name": "Dev",
+            "last_name": "Tester",
+            "email": "dev.tester@example.com",
+            "phone": "+1234567890",
+            "location_city": "Austin",
+            "location_country": "USA",
+            "skills": ["Python", "FastAPI", "React"],
+            "target_roles": ["Software Engineer", "Backend Developer"],
+            "min_salary": 120000,
+        },
+    )
+    assert res.get("error") is None
+    assert res["result"]["status"] == "saved"
+    assert res["result"]["name"] == "Dev Tester"
+    assert "Python" in res["result"]["skills"]
+
+
+def test_sidecar_record_candidate_fact(monkeypatch, tmp_path):
+    db = FakeDB()
+    server = _server(monkeypatch, tmp_path, db=db)
+    res = _call(
+        server,
+        "record_candidate_fact",
+        {
+            "fact_type": "skill",
+            "fact_value": "Python 3.12, Asyncio, Distributed Systems",
+            "profile_id": "default",
+        },
+    )
+    assert res.get("error") is None
+    assert res["result"]["status"] == "recorded"
+    assert res["result"]["fact"]["fact_type"] == "skill"
+
+
+def test_sidecar_export_diagnostics(monkeypatch, tmp_path):
+    server = _server(monkeypatch, tmp_path)
+    res = _call(server, "export_diagnostics", {})
+    assert res.get("error") is None
+    assert res["result"]["status"] == "exported"
+    assert res["result"]["path"].endswith(".zip")
+
+

@@ -43,17 +43,9 @@ class QAEngine:
         self.grounding_verifier = CandidateGroundingVerifier(self.truth_store)
 
     def sanitize_input(self, text: str) -> str:
-        """Strip malicious prompt injection vectors from input question string."""
-        injection_patterns = [
-            r"ignore\s+(previous|all)\s+instructions",
-            r"system\s+prompt",
-            r"override\s+policy",
-            r"forget\s+rules",
-        ]
-        sanitized = text
-        for pattern in injection_patterns:
-            sanitized = re.sub(pattern, "[REDACTED_INJECTION]", sanitized, flags=re.IGNORECASE)
-        return sanitized
+        """Strip malicious prompt injection vectors from input string."""
+        from jobot.security.prompt_guard import sanitize_llm_input
+        return sanitize_llm_input(text)
 
     def classify_question(self, question: str) -> QuestionType:
         q_lower = question.lower()

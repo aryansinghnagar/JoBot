@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 from jobot.ai.router import ModelRouter
 from jobot.models.domain import JobPosting, UserProfile
+from jobot.security.prompt_guard import sanitize_llm_input
 
 TONE_PRESETS: Dict[str, Dict[str, object]] = {
     "classic": {
@@ -102,15 +103,21 @@ class CoverLetterGenerator:
                 f"- {exp.title} at {exp.company} ({exp.start_date} - {exp.end_date or 'Present'})"
                 for exp in profile.experiences
             )
+        job_title = sanitize_llm_input(job.title)
+        job_company = sanitize_llm_input(job.company)
+        job_location = sanitize_llm_input(job.location)
+        clean_skills = [sanitize_llm_input(s) for s in skills]
+        clean_extra = sanitize_llm_input(extra_prompt) if extra_prompt else ""
+
         prompt = (
-            f"Job Title: {job.title}\n"
-            f"Company: {job.company}\n"
-            f"Location: {job.location}\n\n"
+            f"Job Title: {job_title}\n"
+            f"Company: {job_company}\n"
+            f"Location: {job_location}\n\n"
             f"Candidate Profile Facts:\n{facts}\n\n"
-            f"Relevant skills to highlight: {', '.join(skills)}\n"
+            f"Relevant skills to highlight: {', '.join(clean_skills)}\n"
         )
-        if extra_prompt:
-            prompt += f"Additional instructions: {extra_prompt}\n"
+        if clean_extra:
+            prompt += f"Additional instructions: {clean_extra}\n"
         prompt += "\nWrite the cover letter now."
 
         letter = await self.router.generate_text(

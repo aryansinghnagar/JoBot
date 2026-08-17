@@ -20,7 +20,7 @@ from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.config.manager import ConfigManager
 from jobot.digest.generator import DigestGenerator
 from jobot.discovery.engine import JobDiscoveryEngine
-from jobot.models.domain import JobPosting, UserProfile
+from jobot.models.domain import CompensationDetails, JobPosting, PersonalInfo, UserProfile
 from jobot.scheduler import SchedulerManager
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
@@ -98,7 +98,10 @@ class StdioSidecarServer:
             "evidence_manifest": self._evidence_manifest,
             "site_health": self._site_health,
             "candidate_facts": self._candidate_facts,
+            "record_candidate_fact": self._record_candidate_fact,
             "import_resume": self._import_resume,
+            "profile_save": self._profile_save,
+            "export_diagnostics": self._export_diagnostics,
         }
 
     # -- dependency resolution ----------------------------------------------
@@ -393,6 +396,12 @@ class StdioSidecarServer:
             "all_ok": report.all_ok,
         }
 
+    def _export_diagnostics(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        from jobot.doctor import export_diagnostic_bundle
+
+        path = export_diagnostic_bundle()
+        return {"status": "exported", "path": str(path)}
+
     def _config_show(self, params: Dict[str, Any]) -> Dict[str, Any]:
         return {"config": self._get_config().show_masked()}
 
@@ -526,6 +535,30 @@ class StdioSidecarServer:
             "facts": [f.model_dump() for f in facts],
         }
 
+    def _record_candidate_fact(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        fact_type = str(params.get("fact_type", "")).strip()
+        fact_value = str(params.get("fact_value", "")).strip()
+        profile_id = str(params.get("profile_id", "default")).strip() or "default"
+        source = str(params.get("source", "user_gui")).strip()
+        if not fact_type or not fact_value:
+            raise ValueError("Both 'fact_type' and 'fact_value' are required.")
+
+        from jobot.ai.candidate_truth import CandidateTruthStore
+
+        truth_store = CandidateTruthStore(self._get_db())
+        fact = truth_store.record_fact(
+            fact_type=fact_type,
+            fact_value=fact_value,
+            profile_id=profile_id,
+            source=source,
+            verified=True,
+            verified_by="gui_user",
+        )
+        return {
+            "status": "recorded",
+            "fact": fact.model_dump(),
+        }
+
     def _import_resume(self, params: Dict[str, Any]) -> Dict[str, Any]:
         file_path_str = params.get("file_path")
         profile_id = params.get("profile_id", "default")
@@ -544,4 +577,76 @@ class StdioSidecarServer:
             "email": profile.personal_info.email,
             "skills": profile.skills,
             "facts_seeded": count,
+        }
+
+    def _profile_save(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Create or update encrypted UserProfile and seed CandidateTruthStore."""
+        first_name = str(params.get("first_name", "")).strip()
+        last_name = str(params.get("last_name", "")).strip()
+        email = str(params.get("email", "")).strip()
+        if not first_name or not email:
+            raise ValueError("First name and email are required.")
+
+        profile_id = str(params.get("profile_id", "default")).strip() or "default"
+        phone = str(params.get("phone", "")).strip()
+        location_city = str(params.get("location_city", "")).strip()
+        location_country = str(params.get("location_country", "")).strip()
+
+        skills_raw = params.get("skills", [])
+        if isinstance(skills_raw, str):
+            skills = [s.strip() for s in skills_raw.split(",") if s.strip()]
+        elif isinstance(skills_raw, list):
+            skills = [str(s).strip() for s in skills_raw if str(s).strip()]
+        else:
+            skills = []
+
+        target_roles = params.get("target_roles", "")
+        if isinstance(target_roles, list):
+            target_roles = ", ".join(str(r) for r in target_roles)
+
+        min_salary = float(params.get("min_salary", 0.0) or 0.0)
+        notice_days = int(params.get("notice_period_days", 30) or 30)
+
+        personal_info = PersonalInfo(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            location_city=location_city,
+            location_country=location_country,
+        )
+
+        custom_qa = {}
+        if target_roles:
+            custom_qa["Target Titles"] = str(target_roles)
+        if params.get("years_experience"):
+            custom_qa["Years of Experience"] = str(params.get("years_experience"))
+
+        profile = UserProfile(
+            profile_id=profile_id,
+            personal_info=personal_info,
+            skills=skills,
+            compensation=CompensationDetails(
+                minimum_annual_base_usd=min_salary if min_salary > 0 else None,
+                notice_period_days=notice_days,
+            ),
+            custom_qa_answers=custom_qa,
+        )
+
+        vault = self._get_vault()
+        vault.save_encrypted_profile(profile)
+
+        # Seed candidate truth store
+        from jobot.ai.candidate_truth import CandidateTruthStore
+
+        truth_store = CandidateTruthStore(self._get_db())
+        facts = truth_store.seed_from_profile(profile)
+
+        return {
+            "status": "saved",
+            "profile_id": profile.profile_id,
+            "name": f"{first_name} {last_name}".strip(),
+            "email": email,
+            "skills": profile.skills,
+            "facts_seeded": len(facts),
         }

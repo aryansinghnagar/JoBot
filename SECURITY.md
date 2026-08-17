@@ -8,7 +8,7 @@ the project.
 ## Supported Versions
 
 JoBot has **not shipped a stable release**. The package version in
-`pyproject.toml` is `0.1.0` and everything on the main branch is pre-release
+`pyproject.toml` is `0.2.0` and everything on the main branch is pre-release
 development. Security fixes land on main only; there are no backport branches.
 
 | Version | Supported |
@@ -125,24 +125,29 @@ Secrets handling in JoBot is layered; keep it that way:
   auto-submit modes exist but are opt-in and capped by the policy engine.
   Prefer `--dry-run` while evaluating the system.
 
-## Prompt-Injection Surface
-
-Job descriptions, search results, scraped page content, and any text sourced
-from third-party sites are **untrusted content**. They are passed through
-LLM-powered tailoring, matching, and question-answering steps. Treat their
-content as data, not instructions:
-
-- The system never executes commands found in scraped content; LLM output is
-  constrained to documents/answers and passes a truthfulness grounding gate
-  before use in generated materials (`src/jobot/asp/`, cover-letter/resume
-  tailoring path).
-- Users should still review generated cover letters, resumes, and answers
-  before submission — a job description can attempt to steer generated text
-  (for example, "include a link to X" or exfiltration-style instructions).
-- Never place secrets inside prompts; provider API keys are injected
-  server-side by the provider adapters, not embedded in content.
-- If you find a prompt-injection payload that makes JoBot take an unintended
-  external action, report it through the private vulnerability channel above.
+## Prompt-Injection Surface & Input Sanitization
+ 
+ Job descriptions, search results, scraped page content, and any text sourced
+ from third-party sites are **untrusted content**. They are passed through
+ LLM-powered tailoring, matching, and question-answering steps.
+ 
+1. **Active Prompt Guard (`src/jobot/security/prompt_guard.py`)**:
+   All external text (job titles, descriptions, candidate questions) passes through
+   regular expression sanitizers that neutralize instruction overrides, role-switch attempts
+   (e.g., `you are now a...`, `act as a...`), prompt exfiltration queries, and delimiter tags
+   before entering LLM prompts.
+2. **Candidate Grounding Gate (`CandidateGroundingVerifier`)**:
+   LLM output is strictly validated against the candidate's truth ledger before inclusion
+   in resumes or cover letters. Unverified skills, employers, or dates cause immediate rejection.
+3. **Candidate Data Flow & PII Disclosure**:
+   - During resume tailoring and cover letter generation, candidate name, contact info,
+     experience descriptions, education, and skills are sent to the configured LLM provider.
+   - API keys are injected server-side by HTTP provider classes and never embedded in prompt bodies.
+   - Users can choose local inference (via Ollama) if zero cloud PII transmission is required.
+4. **Human Review Before Submission**:
+   Users should review generated materials and form fields in the Approval Inbox before
+   authorizing submission. If an adversarial job description bypasses sanitization, human
+   verification ensures no unauthorized claims are submitted.
 
 ## Supply-Chain Policy
 

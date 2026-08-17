@@ -1,6 +1,12 @@
-"""Unit tests for CXS and ATS adapter family (UC-15 & UC-16)."""
+"""Unit tests for CXS and ATS adapter family — post-audit discovery-only contract.
+
+After the safety audit, CXS adapters (Ashby, Workable, Recruitee, Teamtailor,
+BambooHR) are discovery/parse-only.  submit_application() and
+verify_submission() must raise AdapterCapabilityError.
+"""
 
 import pytest
+from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.adapters.cxs import (
     AshbyAdapter,
     BambooHRAdapter,
@@ -38,7 +44,7 @@ def sample_profile() -> UserProfile:
     ],
 )
 @pytest.mark.asyncio
-async def test_cxs_adapter_lifecycle(
+async def test_cxs_adapter_discovery_only(
     adapter_cls, site_name: str, test_url: str, sample_profile: UserProfile
 ):
     # Verify adapter registration and site inference
@@ -46,13 +52,16 @@ async def test_cxs_adapter_lifecycle(
     adapter = AdapterRegistry.get_adapter(site_name)
     assert isinstance(adapter, adapter_cls)
 
-    # 1. Parse Job Posting
+    # Verify capabilities are declared as discovery-only
+    assert adapter.capabilities == AdapterCapability.DISCOVERY_PARSE
+
+    # 1. Parse Job Posting — still works (URL metadata extraction)
     job = await adapter.parse_job_posting(test_url)
     assert isinstance(job, JobPosting)
     assert job.site == site_name
     assert len(job.parsed_skills) > 0
 
-    # 2. Fill Form
+    # 2. Fill Form — must raise
     app = Application(
         application_id=f"app_{site_name}_001",
         job_id=job.job_id,
@@ -60,16 +69,13 @@ async def test_cxs_adapter_lifecycle(
         site=site_name,
         idempotency_key=f"idem_{site_name}_001",
     )
-    filled = await adapter.fill_form(job, sample_profile, app)
-    assert filled is not None
-    assert app.status.value == "filled"
+    with pytest.raises(AdapterCapabilityError, match="fill_form"):
+        await adapter.fill_form(job, sample_profile, app)
 
-    # 3. Submit
-    submitted = await adapter.submit_application(app)
-    assert submitted is True
-    assert app.status.value == "submitted"
+    # 3. Submit — must raise
+    with pytest.raises(AdapterCapabilityError, match="submit_application"):
+        await adapter.submit_application(app)
 
-    # 4. Verify
-    verif = await adapter.verify_submission(app)
-    assert verif.success is True
-    assert verif.confirmation_id is not None
+    # 4. Verify — must raise
+    with pytest.raises(AdapterCapabilityError, match="verify_submission"):
+        await adapter.verify_submission(app)

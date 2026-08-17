@@ -1,12 +1,19 @@
-import asyncio
-import uuid
-from datetime import datetime, timezone
+"""Generic job-portal adapters — DISCOVERY ONLY.
+
+These adapters exist as placeholders for platforms where JoBot has no
+real submission integration.  Calling ``submit_application`` or
+``verify_submission`` raises ``AdapterCapabilityError``.
+
+Real job discovery for these platforms is handled by the scraper layer
+(``jobot.scrapers.jobspy``) which uses the python-jobspy library.
+"""
+
 from typing import Any, Dict, Optional
+
 from jobot.adapters.base import SiteAdapter
-from jobot.ai.skill_extractor import SkillExtractor
+from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.models.domain import (
     Application,
-    ApplicationStatus,
     JobPosting,
     UserProfile,
     VerificationResult,
@@ -14,6 +21,10 @@ from jobot.models.domain import (
 
 
 class GenericPortalAdapter(SiteAdapter):
+    """Base for portal adapters that support discovery only (no real submission)."""
+
+    capabilities = AdapterCapability.DISCOVERY_ONLY
+
     def __init__(self, site_name: str):
         super().__init__(site_name)
 
@@ -21,48 +32,30 @@ class GenericPortalAdapter(SiteAdapter):
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
-        await asyncio.sleep(0.1)
-        desc = f"Requirement for Software Engineer on {self.site_name.capitalize()} with expertise in Python, FastAPI, React, PostgreSQL, Docker, and CI/CD."
-        skills = SkillExtractor().extract_skills_sync(desc)
-        return JobPosting(
-            job_id=str(uuid.uuid4()),
-            site=self.site_name,
-            url=url,
-            title=f"Engineer on {self.site_name.capitalize()}",
-            company=f"{self.site_name.capitalize()} Hiring Partner",
-            location="India",
-            description=desc,
-            parsed_skills=skills,
-            discovered_at=datetime.now(timezone.utc),
+        raise AdapterCapabilityError(
+            self.site_name,
+            "parse_job_posting",
+            f"Use 'jobot scrape {self.site_name}' for real job discovery.",
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        await asyncio.sleep(0.3)
-        filled = {
-            "name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}",
-            "email": profile.personal_info.email,
-            "phone": profile.personal_info.phone,
-        }
-        application.form_values = filled
-        application.status = ApplicationStatus.FILLED
-        return filled
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        await asyncio.sleep(0.3)
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            f"{self.site_name.capitalize()} submission is not implemented.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        await asyncio.sleep(0.2)
-        application.status = ApplicationStatus.VERIFIED
-        confirmation_id = f"{self.site_name.upper()}_CONF_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=confirmation_id,
-            reason=f"{self.site_name.capitalize()} submission receipt verified",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            f"{self.site_name.capitalize()} verification is not implemented "
+            "— no confirmation to verify.",
         )
 
 

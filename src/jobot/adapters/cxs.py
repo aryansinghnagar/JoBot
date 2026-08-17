@@ -1,11 +1,12 @@
-"""Candidate Experience API (CXS) & ATS Adapter Family (UC-15 & UC-16).
+"""Candidate Experience API (CXS) & ATS Adapter Family — DISCOVERY ONLY.
 
-Implements type-safe direct API integrations for modern ATS platforms:
-- Ashby (direct REST posting & candidate submission)
-- Workable (JSON application endpoint)
-- Recruitee (offers & application submission)
-- Teamtailor (public job application endpoint)
-- BambooHR (careers application API)
+These adapters can extract minimal job metadata from URLs on Ashby, Workable,
+Recruitee, Teamtailor, and BambooHR.  They do NOT have real submission or
+verification capabilities — calling submit or verify will raise
+``AdapterCapabilityError``.
+
+Real job discovery for these platforms is handled by the scraper layer
+(``jobot.scrapers.ats``) which hits their public JSON APIs.
 """
 
 from __future__ import annotations
@@ -16,10 +17,10 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import (
     Application,
-    ApplicationStatus,
     JobPosting,
     UserProfile,
     VerificationResult,
@@ -30,7 +31,9 @@ logger = logging.getLogger(__name__)
 
 
 class AshbyAdapter(SiteAdapter):
-    """Ashby direct API adapter for job discovery and application submission."""
+    """Ashby adapter — discovery and URL parsing only."""
+
+    capabilities = AdapterCapability.DISCOVERY_PARSE
 
     def __init__(self, site_name: str = "ashby") -> None:
         super().__init__(site_name)
@@ -41,7 +44,6 @@ class AshbyAdapter(SiteAdapter):
 
     async def parse_job_posting(self, url: str) -> JobPosting:
         validate_fetch_url(url)
-        # Extract company handle & job ID from URL (e.g., https://jobs.ashbyhq.com/company/uuid)
         match = re.search(r"jobs\.ashbyhq\.com/([^/]+)/([a-f0-9-]+)", url)
         job_id = match.group(2) if match else url.rstrip("/").split("/")[-1]
         company = match.group(1).capitalize() if match else "Ashby Company"
@@ -64,33 +66,27 @@ class AshbyAdapter(SiteAdapter):
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        filled = {
-            "name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}",
-            "email": profile.personal_info.email,
-            "phone": profile.personal_info.phone,
-            "location": profile.personal_info.location_city,
-            "resume_path": (application.form_values or {}).get("resume_path", ""),
-        }
-        application.form_values = filled
-        application.status = ApplicationStatus.FILLED
-        return filled
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            "Use 'jobot scrape ashby' for job discovery only.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        cid = f"ASHBY_APP_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=cid,
-            reason="Ashby candidate record created and acknowledged",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            "Ashby submission is not implemented — no confirmation to verify.",
         )
 
 
 class WorkableAdapter(SiteAdapter):
-    """Workable ATS REST API adapter."""
+    """Workable adapter — discovery and URL parsing only."""
+
+    capabilities = AdapterCapability.DISCOVERY_PARSE
 
     def __init__(self, site_name: str = "workable") -> None:
         super().__init__(site_name)
@@ -123,32 +119,27 @@ class WorkableAdapter(SiteAdapter):
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        filled = {
-            "firstname": profile.personal_info.first_name,
-            "lastname": profile.personal_info.last_name,
-            "email": profile.personal_info.email,
-            "phone": profile.personal_info.phone,
-        }
-        application.form_values = filled
-        application.status = ApplicationStatus.FILLED
-        return filled
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            "Use 'jobot scrape workable' for job discovery only.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        cid = f"WRK_CONF_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=cid,
-            reason="Workable candidate payload committed",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            "Workable submission is not implemented — no confirmation to verify.",
         )
 
 
 class RecruiteeAdapter(SiteAdapter):
-    """Recruitee API adapter."""
+    """Recruitee adapter — discovery and URL parsing only."""
+
+    capabilities = AdapterCapability.DISCOVERY_PARSE
 
     def __init__(self, site_name: str = "recruitee") -> None:
         super().__init__(site_name)
@@ -182,31 +173,27 @@ class RecruiteeAdapter(SiteAdapter):
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        filled = {
-            "name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}",
-            "email": profile.personal_info.email,
-            "phone": profile.personal_info.phone,
-        }
-        application.form_values = filled
-        application.status = ApplicationStatus.FILLED
-        return filled
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            "Use 'jobot scrape recruitee' for job discovery only.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        cid = f"REC_CONF_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=cid,
-            reason="Recruitee candidate offer application verified",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            "Recruitee submission is not implemented — no confirmation to verify.",
         )
 
 
 class TeamtailorAdapter(SiteAdapter):
-    """Teamtailor careers API adapter."""
+    """Teamtailor adapter — discovery and URL parsing only."""
+
+    capabilities = AdapterCapability.DISCOVERY_PARSE
 
     def __init__(self, site_name: str = "teamtailor") -> None:
         super().__init__(site_name)
@@ -237,32 +224,27 @@ class TeamtailorAdapter(SiteAdapter):
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        filled = {
-            "first_name": profile.personal_info.first_name,
-            "last_name": profile.personal_info.last_name,
-            "email": profile.personal_info.email,
-            "phone": profile.personal_info.phone,
-        }
-        application.form_values = filled
-        application.status = ApplicationStatus.FILLED
-        return filled
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            "Use 'jobot scrape teamtailor' for job discovery only.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        cid = f"TT_CONF_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=cid,
-            reason="Teamtailor application confirmed",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            "Teamtailor submission is not implemented — no confirmation to verify.",
         )
 
 
 class BambooHRAdapter(SiteAdapter):
-    """BambooHR careers adapter."""
+    """BambooHR adapter — discovery and URL parsing only."""
+
+    capabilities = AdapterCapability.DISCOVERY_PARSE
 
     def __init__(self, site_name: str = "bamboohr") -> None:
         super().__init__(site_name)
@@ -296,27 +278,20 @@ class BambooHRAdapter(SiteAdapter):
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        filled = {
-            "firstName": profile.personal_info.first_name,
-            "lastName": profile.personal_info.last_name,
-            "email": profile.personal_info.email,
-            "phone": profile.personal_info.phone,
-        }
-        application.form_values = filled
-        application.status = ApplicationStatus.FILLED
-        return filled
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            "Use 'jobot scrape bamboohr' for job discovery only.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        cid = f"BHR_CONF_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=cid,
-            reason="BambooHR applicant record created",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            "BambooHR submission is not implemented — no confirmation to verify.",
         )
 
 

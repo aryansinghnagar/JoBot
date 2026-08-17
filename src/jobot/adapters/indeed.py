@@ -1,12 +1,16 @@
-import asyncio
-import random
-import uuid
-from datetime import datetime, timezone
+"""Indeed Portal Adapter — DISCOVERY ONLY.
+
+Real job discovery for Indeed is handled by the scraper layer
+(``jobot.scrapers.jobspy``).  This adapter has no real submission
+or verification capability.
+"""
+
 from typing import Any, Dict, Optional
+
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.models.domain import (
     Application,
-    ApplicationStatus,
     JobPosting,
     UserProfile,
     VerificationResult,
@@ -14,60 +18,38 @@ from jobot.models.domain import (
 
 
 class IndeedAdapter(SiteAdapter):
-    """
-    Indeed Portal Adapter.
-    """
+    """Indeed adapter — discovery only, no submission capability."""
+
+    capabilities = AdapterCapability.DISCOVERY_ONLY
 
     def __init__(self) -> None:
         super().__init__("indeed")
 
-    async def _jitter_delay(self) -> None:
-        await asyncio.sleep(random.uniform(1.5, 3.5))
-
     async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
-        await self._jitter_delay()
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
-        await self._jitter_delay()
-        return JobPosting(
-            job_id=str(uuid.uuid4()),
-            site="indeed",
-            url=url,
-            title="Senior Python Developer",
-            company="Indeed Employer",
-            location="Remote / India",
-            description="Looking for Python, SQL, REST APIs.",
-            parsed_skills=["Python", "SQL", "REST API"],
-            discovered_at=datetime.now(timezone.utc),
+        raise AdapterCapabilityError(
+            self.site_name,
+            "parse_job_posting",
+            "Use 'jobot scrape indeed' for real job discovery.",
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
     ) -> Dict[str, Any]:
-        await self._jitter_delay()
-        filled_data = {
-            "applicant_name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}",
-            "applicant_email": profile.personal_info.email,
-            "phone_number": profile.personal_info.phone,
-            "resume_attached": True,
-        }
-        application.form_values = filled_data
-        application.status = ApplicationStatus.FILLED
-        return filled_data
+        raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
-        await self._jitter_delay()
-        application.status = ApplicationStatus.SUBMITTED
-        return True
+        raise AdapterCapabilityError(
+            self.site_name,
+            "submit_application",
+            "Indeed submission is not implemented.",
+        )
 
     async def verify_submission(self, application: Application) -> VerificationResult:
-        await self._jitter_delay()
-        application.status = ApplicationStatus.VERIFIED
-        confirmation_id = f"INDEED_CONF_{application.application_id[:8].upper()}"
-        return VerificationResult(
-            success=True,
-            confidence=0.95,
-            confirmation_id=confirmation_id,
-            reason="Indeed submission receipt verified via application confirmation page",
+        raise AdapterCapabilityError(
+            self.site_name,
+            "verify_submission",
+            "Indeed verification is not implemented — no confirmation to verify.",
         )

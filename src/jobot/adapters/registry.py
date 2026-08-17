@@ -1,7 +1,8 @@
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, Tuple, cast
 from urllib.parse import urlsplit
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.adapters.cxs import (
     AshbyAdapter,
     BambooHRAdapter,
@@ -129,6 +130,25 @@ class AdapterRegistry:
     @classmethod
     def list_supported_sites(cls) -> list[str]:
         return list(cls._registry.keys())
+
+    @classmethod
+    def list_supported_sites_with_capabilities(cls) -> List[Tuple[str, AdapterCapability]]:
+        """Return each site name with its declared capability flags."""
+        result: List[Tuple[str, AdapterCapability]] = []
+        for site_name, adapter_cls in cls._registry.items():
+            caps = getattr(adapter_cls, "capabilities", AdapterCapability.FULL_API)
+            result.append((site_name, caps))
+        return result
+
+    @classmethod
+    def can_submit(cls, site: str) -> bool:
+        """Check whether the adapter for *site* supports real submission."""
+        s = site.lower().strip()
+        adapter_cls = cls._registry.get(s)
+        if adapter_cls is None:
+            return False
+        caps = getattr(adapter_cls, "capabilities", AdapterCapability.FULL_API)
+        return bool(caps & (AdapterCapability.SUBMIT_API | AdapterCapability.SUBMIT_BROWSER))
 
 
 __all__ = ["AdapterRegistry", "infer_site"]

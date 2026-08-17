@@ -33,6 +33,7 @@ describe("GUI shell", () => {
       "Health",
       "Controls",
       "Settings",
+      "Help &amp; Guide",
     ]) {
       expect(html).toContain(label);
     }
@@ -55,7 +56,7 @@ describe("views render without a live sidecar", () => {
       <Discover rpc={stubRpc()} onApply={() => {}} />,
     );
     expect(html).toContain("Discover Jobs");
-    expect(html).toContain("Mock ATS (local test)");
+    expect(html).toContain("Greenhouse (API Apply)");
   });
 
   it("Apply (with a selected job)", () => {
@@ -89,6 +90,19 @@ describe("views render without a live sidecar", () => {
   it("Settings", () => {
     const html = renderToString(<Settings rpc={stubRpc()} />);
     expect(html).toContain("Settings &amp; Diagnostics");
-    expect(html).toContain("Doctor");
+    expect(html).toContain("System Diagnostics");
+  });
+
+  it("Onboarding", async () => {
+    const { Onboarding } = await import("../src/views/Onboarding.jsx");
+    const html = renderToString(<Onboarding rpc={stubRpc()} onComplete={() => {}} />);
+    expect(html).toContain("Welcome to JoBot");
+    expect(html).toContain("Candidate Personal Details");
+  });
+
+  it("Profile & Truth Ledger", async () => {
+    const { Profile } = await import("../src/views/Profile.jsx");
+    const html = renderToString(<Profile rpc={stubRpc()} />);
+    expect(html).toContain("Candidate Truth Ledger");
   });
 });

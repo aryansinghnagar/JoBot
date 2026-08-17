@@ -21,6 +21,7 @@ from jobot.ai.router import ModelRouter
 from jobot.documents.cover import CoverLetterGenerator
 from jobot.llm.router import DEGRADATION_TEXT
 from jobot.models.domain import JobPosting, UserProfile
+from jobot.security.prompt_guard import sanitize_llm_input
 
 logger = logging.getLogger(__name__)
 
@@ -208,9 +209,13 @@ class Drafter:
             facts += "Education:\n"
             for edu in profile.education:
                 facts += f"- {edu.degree} in {edu.field_of_study} at {edu.institution} ({edu.start_year})\n"
+        job_title = sanitize_llm_input(job.title)
+        job_company = sanitize_llm_input(job.company)
+        job_location = sanitize_llm_input(job.location)
+        job_skills = [sanitize_llm_input(s) for s in (job.parsed_skills or [])]
         return (
-            f"Target Job: {job.title} at {job.company} ({job.location})\n"
-            f"Job skills required: {', '.join(job.parsed_skills)}\n\n"
+            f"Target Job: {job_title} at {job_company} ({job_location})\n"
+            f"Job skills required: {', '.join(job_skills)}\n\n"
             f"Candidate Profile Facts (only these are true):\n{facts}\n\n"
             "Now produce the tailored resume JSON."
         )
@@ -288,9 +293,12 @@ class Reviewer:
     async def review(
         self, job: JobPosting, profile: UserProfile, draft: Dict[str, Any]
     ) -> RubricScores:
+        job_title = sanitize_llm_input(job.title)
+        job_company = sanitize_llm_input(job.company)
+        job_skills = [sanitize_llm_input(s) for s in (job.parsed_skills or [])]
         prompt = (
-            f"Target Job: {job.title} at {job.company}\n"
-            f"Job skills required: {', '.join(job.parsed_skills)}\n"
+            f"Target Job: {job_title} at {job_company}\n"
+            f"Job skills required: {', '.join(job_skills)}\n"
             f"Profile skills (ground truth): {', '.join(profile.skills)}\n"
             f"Profile experience: "
             + ", ".join(f"{exp.title} at {exp.company}" for exp in (profile.experiences or []))

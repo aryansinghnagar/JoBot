@@ -2,15 +2,14 @@ import { useState } from "react";
 import { useAsync } from "../lib/useAsync.js";
 
 const DEFAULT_PORTALS = [
-  ["linkedin", "LinkedIn"],
-  ["indeed", "Indeed"],
-  ["lever", "Lever"],
-  ["ashby", "Ashby"],
-  ["smartrecruiters", "SmartRecruiters"],
-  ["greenhouse", "Greenhouse"],
-  ["careers", "Careers pages"],
-  ["mock_ats", "Mock ATS (local test)"],
-  ["workday", "Workday (company tenant)"],
+  ["greenhouse", "Greenhouse (API Apply)"],
+  ["lever", "Lever (API Apply)"],
+  ["linkedin", "LinkedIn (Easy Apply)"],
+  ["workday", "Workday (Browser Apply)"],
+  ["indeed", "Indeed (Search Only)"],
+  ["ashby", "Ashby (Search Only)"],
+  ["smartrecruiters", "SmartRecruiters (Search Only)"],
+  ["careers", "Company Careers (Search Only)"],
 ];
 
 export function Discover({ rpc, onApply }) {

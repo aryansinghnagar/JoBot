@@ -23,7 +23,7 @@ Welcome to the **JoBot User Guide**. This document covers every feature, workflo
 ## 1. Core Philosophy & Architecture
 
 JoBot is built upon three foundational tenets:
-1. **Zero Hallucination**: AI generation is strictly anchored to an immutable fact store (`CandidateTruthStore`). If an achievement, degree, or skill is not in your profile, the AI is blocked by software gates from asserting it.
+1. **Candidate Grounding Verification**: AI generation is anchored to an immutable fact store (`CandidateTruthStore`). Profile facts are verified using heuristic token overlap and entity checks to prevent ungrounded claims.
 2. **Reconcile-Never-Replay**: Network side-effects are tracked in an append-only effect ledger (`external_effects`). Ambiguous network drops transition into a `SUBMISSION_UNKNOWN` state resolved only via read-only confirmation polling—never double-submitted.
 3. **Local-First Cryptographic Security**: All credentials, resumes, and personal facts reside encrypted in your local OS storage (`~/.jobot/vault.enc`) under strict `0600` permissions.
 
@@ -166,6 +166,18 @@ Applications follow a deterministic **12-Phase Application Submission Pipeline (
 11. **Idempotent Effect Reservation**: Registers reservation in `external_effects` table.
 12. **Dispatch, Evidence Capture & Verification**: Submits form, records SHA256 DOM proof, and confirms submission ID.
 
+### Platform Support Matrix & Submission Tiers
+
+| Platform | Mode | Submission Method | Notes |
+|---|---|---|---|
+| **Greenhouse** | Real API | Direct HTTP POST | Server-confirmed application ID |
+| **Lever** | Real API | Direct HTTP POST | Server-confirmed application ID |
+| **Workday** | Browser | Patchright Browser Automation | Requires `JOBOT_RUN_LIVE_BROWSER=1` |
+| **LinkedIn Easy Apply** | Browser | EasyApplySaga / Patchright | Requires `JOBOT_RUN_LIVE_BROWSER=1` |
+| **Naukri** | Browser | Patchright Browser Automation | Requires `JOBOT_RUN_LIVE_BROWSER=1` |
+| **Ashby, Workable, BambooHR, etc.** | Discovery Only | Not Supported | Raises `AdapterCapabilityError` on apply |
+| **Indeed, Glassdoor, ZipRecruiter** | Discovery Only | Not Supported | Raises `AdapterCapabilityError` on apply |
+
 ### Applying to a Job
 ```bash
 # Dry run: compiles documents and prepares form answers without submitting
@@ -174,7 +186,7 @@ jobot apply <JOB_ID> --dry-run
 # Supervised apply: pauses at Phase 10 for human approval
 jobot apply <JOB_ID> --approve
 
-# Autonomous apply (for trusted direct-API portals)
+# Autonomous apply (for direct-API portals like Greenhouse / Lever)
 jobot apply <JOB_ID>
 ```
 

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -23,6 +24,8 @@ class GreenhouseAdapter(SiteAdapter):
     Leverages Greenhouse Public Boards API (boards-api.greenhouse.io) for job parsing,
     board discovery, and direct API POST application submissions.
     """
+
+    capabilities = AdapterCapability.FULL_API
 
     BASE_API_URL = "https://boards-api.greenhouse.io/v1/boards"
 
@@ -176,6 +179,20 @@ class GreenhouseAdapter(SiteAdapter):
                             application.form_values["_greenhouse_confirmation_id"] = str(
                                 confirmation
                             )
+                    try:
+                        from jobot.obs.evidence import BrowserEvidenceCollector
+
+                        collector = BrowserEvidenceCollector()
+                        collector.record_api_evidence(
+                            application_id=application.application_id,
+                            site=self.site_name,
+                            confirmation_id=application.form_values.get("_greenhouse_confirmation_id"),
+                            request_payload=req_data,
+                            response_status=resp.status,
+                        )
+                    except Exception as ev_err:  # noqa: BLE001
+                        logger.debug("Failed recording greenhouse API evidence: %s", ev_err)
+
                     application.status = ApplicationStatus.SUBMITTED
                     return True
                 else:

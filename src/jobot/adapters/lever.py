@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from jobot.adapters.base import SiteAdapter
+from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -31,6 +32,8 @@ class LeverAdapter(SiteAdapter):
     Lever ATS Adapter (direct API). Zero fabrication: every method either
     returns real API data or raises an explicit error.
     """
+
+    capabilities = AdapterCapability.FULL_API
 
     def __init__(self) -> None:
         super().__init__("lever")
@@ -141,6 +144,20 @@ class LeverAdapter(SiteAdapter):
             confirmation = body.get("id") if isinstance(body, dict) else None
             if confirmation:
                 application.form_values["_lever_confirmation_id"] = str(confirmation)
+            try:
+                from jobot.obs.evidence import BrowserEvidenceCollector
+
+                collector = BrowserEvidenceCollector()
+                collector.record_api_evidence(
+                    application_id=application.application_id,
+                    site=self.site_name,
+                    confirmation_id=application.form_values.get("_lever_confirmation_id"),
+                    request_payload=json.dumps(payload).encode("utf-8"),
+                    response_status=status,
+                )
+            except Exception as ev_err:  # noqa: BLE001
+                logger.debug("Failed recording lever API evidence: %s", ev_err)
+
             application.status = ApplicationStatus.SUBMITTED
             return True
         except Exception as exc:  # noqa: BLE001

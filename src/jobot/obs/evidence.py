@@ -25,6 +25,8 @@ class EvidenceManifest(BaseModel):
     post_submit_dom_hash: Optional[str] = None
     post_submit_screenshot: Optional[str] = None
     confirmation_id: Optional[str] = None
+    api_request_payload_hash: Optional[str] = None
+    api_response_status: Optional[int] = None
     timestamp_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -41,6 +43,34 @@ class BrowserEvidenceCollector:
         app_dir = self.base_dir / application_id
         app_dir.mkdir(parents=True, exist_ok=True)
         return app_dir
+
+    def record_api_evidence(
+        self,
+        application_id: str,
+        site: str,
+        confirmation_id: Optional[str] = None,
+        request_payload: Optional[bytes] = None,
+        response_status: Optional[int] = None,
+    ) -> EvidenceManifest:
+        """Record non-repudiation manifest for direct HTTP API submissions."""
+        app_dir = self.get_app_dir(application_id)
+        req_hash = (
+            hashlib.sha256(request_payload).hexdigest() if request_payload is not None else None
+        )
+        if request_payload is not None:
+            (app_dir / "api_request.json").write_bytes(request_payload)
+
+        manifest = EvidenceManifest(
+            application_id=application_id,
+            site=site,
+            confirmation_id=confirmation_id,
+            api_request_payload_hash=req_hash,
+            api_response_status=response_status,
+        )
+
+        manifest_file = app_dir / "manifest.json"
+        manifest_file.write_text(json.dumps(manifest.model_dump(), indent=2), encoding="utf-8")
+        return manifest
 
     async def capture_pre_submit(self, page: Any, application_id: str, site: str) -> Dict[str, str]:
         """Capture pre-submit screenshot and DOM snapshot."""
