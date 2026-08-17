@@ -11,7 +11,7 @@ from jobot.storage.db import DatabaseManager
 @pytest.fixture
 def temp_db(tmp_path):
     db_file = tmp_path / "test_recovery.db"
-    return DatabaseManager(db_path=str(db_file))
+    return DatabaseManager(db_path=db_file)
 
 
 @pytest.fixture

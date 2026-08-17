@@ -31,12 +31,12 @@ class DatabaseManager:
     Configures WAL mode and 0600 file permissions for security.
     """
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Optional[Path | str] = None):
         if db_path is None:
             home_dir = Path.home() / ".jobot" / "db"
             home_dir.mkdir(parents=True, exist_ok=True)
             db_path = home_dir / "jobot.db"
-        self.db_path = db_path
+        self.db_path = Path(db_path)
         self._init_db()
 
     @contextmanager
