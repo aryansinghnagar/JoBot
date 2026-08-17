@@ -77,13 +77,15 @@ export function Help() {
             </tr>
             <tr>
               <td>
-                <strong>Indeed / Glassdoor / Ashby / Workable</strong>
+                <strong>
+                  Indeed / Glassdoor / Ashby / Workable / BambooHR
+                </strong>
               </td>
-              <td>Job Discovery &amp; Search Scraping</td>
+              <td>Job Discovery, Tailoring, Assisted Web Apply</td>
               <td>
-                <span className="badge badge-secondary">Discovery Only</span>
+                <span className="badge badge-secondary">🔗 Assisted Apply</span>
               </td>
-              <td>Submissions raise capability error</td>
+              <td>Tailors resume, copies text, opens portal with 1-click</td>
             </tr>
           </tbody>
         </table>

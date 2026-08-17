@@ -198,24 +198,65 @@ export function Profile({ rpc }) {
             Re-parse your latest PDF or Word resume to refresh ground truth
             facts.
           </p>
+          <div
+            style={{
+              border: "2px dashed #4f46e5",
+              borderRadius: "8px",
+              padding: "1rem",
+              textAlign: "center",
+              background: "#1e1e2e",
+              cursor: "pointer",
+              marginBottom: "0.75rem",
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={async (e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                const f = e.dataTransfer.files[0];
+                const path = f.path || f.name;
+                setResumePath(path);
+                setBusyResume(true);
+                setError(null);
+                try {
+                  const res = await rpc.importResume(path);
+                  setSuccess(
+                    `Extracted ${res.facts_seeded} truth facts from ${f.name}!`,
+                  );
+                  await loadData();
+                } catch (err) {
+                  setError(
+                    err?.user_message ||
+                      err?.message ||
+                      "Failed to parse resume",
+                  );
+                } finally {
+                  setBusyResume(false);
+                }
+              }
+            }}
+          >
+            <div style={{ fontSize: "1.5rem" }}>📄</div>
+            <strong style={{ fontSize: "0.85rem" }}>
+              Drop new Resume PDF here
+            </strong>
+          </div>
           <form className="form" onSubmit={handleResumeSync}>
-            <label>
-              Resume File Path
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <input
-                placeholder="C:/Users/You/Documents/Resume.pdf"
+                placeholder="Or enter file path (e.g. C:/Resume.pdf)"
                 value={resumePath}
                 onChange={(e) => setResumePath(e.target.value)}
+                style={{ fontSize: "0.85rem" }}
               />
-            </label>
-            <button
-              className="btn btn-secondary"
-              type="submit"
-              disabled={busyResume || !resumePath.trim()}
-            >
-              {busyResume
-                ? "Extracting Truth Facts…"
-                : "Sync Truth Ledger from Resume"}
-            </button>
+              <button
+                className="btn btn-secondary"
+                type="submit"
+                disabled={busyResume || !resumePath.trim()}
+                style={{ fontSize: "0.85rem" }}
+              >
+                {busyResume ? "Syncing…" : "Sync"}
+              </button>
+            </div>
           </form>
         </div>
       </div>
