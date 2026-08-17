@@ -86,15 +86,49 @@ export function Approvals({ rpc }) {
             </div>
           )}
           {resumePath && (
-            <div style={{ gridColumn: "1 / -1" }}>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               <strong>Resume:</strong> <code>{resumePath}</code>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ fontSize: "0.75rem", padding: "2px 8px" }}
+                onClick={() => rpc.openPath(resumePath)}
+              >
+                📄 Open PDF
+              </button>
             </div>
           )}
         </div>
 
         {coverLetter && (
           <div style={{ marginBottom: "0.75rem" }}>
-            <strong>Tailored Cover Letter:</strong>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <strong>Tailored Cover Letter:</strong>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ fontSize: "0.75rem", padding: "2px 8px" }}
+                onClick={() => {
+                  navigator.clipboard?.writeText(coverLetter);
+                  alert("Copied cover letter to clipboard!");
+                }}
+              >
+                📋 Copy Text
+              </button>
+            </div>
             <div
               style={{
                 background: "#1a1a24",

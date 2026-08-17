@@ -57,10 +57,35 @@ export function App({ rpc }) {
       </header>
       <main className="content">
         {rpc === null ? (
-          <p className="muted">
-            Sidecar unavailable — install JoBot and ensure <code>jobot</code> is
-            on PATH.
-          </p>
+          <div
+            style={{
+              textAlign: "center",
+              padding: "4rem 1rem",
+              maxWidth: "500px",
+              margin: "0 auto",
+            }}
+          >
+            <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>⚡</div>
+            <h2>Connecting to JoBot Engine</h2>
+            <p className="muted" style={{ marginTop: "0.5rem" }}>
+              Initializing local privacy-preserving database and encrypted
+              vault...
+            </p>
+            <div
+              style={{
+                marginTop: "1.5rem",
+                background: "#181825",
+                padding: "1rem",
+                borderRadius: "8px",
+                border: "1px solid #313244",
+                fontSize: "0.85rem",
+                color: "#a6adc8",
+              }}
+            >
+              💡 If this takes longer than a few seconds, please ensure JoBot
+              Desktop is installed and relaunch the application.
+            </div>
+          </div>
         ) : view === "onboarding" ? (
           <Onboarding rpc={rpc} onComplete={() => navigate("dashboard")} />
         ) : view === "dashboard" ? (

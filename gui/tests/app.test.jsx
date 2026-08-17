@@ -39,9 +39,9 @@ describe("GUI shell", () => {
     }
   });
 
-  it("shows the sidecar-unavailable message when rpc is null", () => {
+  it("shows the connecting message when rpc is null", () => {
     const html = renderToString(<App rpc={null} />);
-    expect(html).toContain("Sidecar unavailable");
+    expect(html).toContain("Connecting to JoBot Engine");
   });
 });
 

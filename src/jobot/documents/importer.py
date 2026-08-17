@@ -49,14 +49,34 @@ class ResumeImporter:
         self.skill_extractor = SkillExtractor()
 
     def extract_text_from_file(self, file_path: Path) -> str:
-        """Extract text from PDF or plain text files."""
+        """Extract text from PDF, Word (.docx), or plain text files."""
         p = Path(file_path)
         if not p.exists():
             raise FileNotFoundError(f"Resume file not found: {p}")
 
-        if p.suffix.lower() == ".pdf":
+        ext = p.suffix.lower()
+        if ext == ".pdf":
             return extract_pdf_text(p)
+        elif ext == ".docx":
+            return self._extract_docx_text(p)
         return p.read_text(encoding="utf-8", errors="ignore")
+
+    def _extract_docx_text(self, path: Path) -> str:
+        """Extract text from a Microsoft Word .docx file using standard library zip and xml."""
+        import xml.etree.ElementTree as ET
+        import zipfile
+
+        try:
+            with zipfile.ZipFile(path) as z:
+                xml_content = z.read("word/document.xml")
+                tree = ET.fromstring(xml_content)
+                namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+                nodes = tree.findall(".//w:t", namespaces)
+                texts = [n.text for n in nodes if n.text]
+                return "\n".join(texts)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to parse .docx file (%s); falling back to raw read", exc)
+            return path.read_text(encoding="utf-8", errors="ignore")
 
     async def parse_resume_text(self, text: str, profile_id: str = "default") -> UserProfile:
         """Parse raw resume text into a structured UserProfile."""

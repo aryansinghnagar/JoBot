@@ -165,6 +165,9 @@ export class JobotRpc {
   setupBrowser() {
     return this.client.call("setup_browser");
   }
+  openPath(path) {
+    return this.client.call("open_path", { path });
+  }
 }
 
 // Node/stdio transport: spawns a process and exchanges newline-delimited

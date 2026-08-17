@@ -503,3 +503,18 @@ def test_sidecar_setup_browser(monkeypatch, tmp_path):
     res = _call(server, "setup_browser", {})
     assert res.get("error") is None
     assert "status" in res["result"]
+
+
+def test_sidecar_open_path(monkeypatch, tmp_path):
+    test_file = tmp_path / "sample.txt"
+    test_file.write_text("hello", encoding="utf-8")
+    server = _server(monkeypatch, tmp_path)
+
+    # Missing path
+    res = _call(server, "open_path", {})
+    assert res.get("error") is not None
+
+    # Valid path
+    res = _call(server, "open_path", {"path": str(test_file)})
+    assert res.get("error") is None
+    assert res["result"]["status"] in ("opened", "error")

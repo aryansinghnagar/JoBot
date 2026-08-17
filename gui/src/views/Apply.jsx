@@ -296,9 +296,33 @@ export function Apply({ rpc, job }) {
           )}
 
           {result.artifacts && result.artifacts.resume_pdf && (
-            <p className="muted">
-              Generated Resume: <code>{result.artifacts.resume_pdf}</code>
-            </p>
+            <div style={{ margin: "0.75rem 0" }}>
+              <p className="muted" style={{ marginBottom: "0.4rem" }}>
+                Generated Resume: <code>{result.artifacts.resume_pdf}</code>
+              </p>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ fontSize: "0.85rem" }}
+                  onClick={() => rpc.openPath(result.artifacts.resume_pdf)}
+                >
+                  📄 Open Resume PDF
+                </button>
+                {result.artifacts.cover_letter_txt && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ fontSize: "0.85rem" }}
+                    onClick={() =>
+                      rpc.openPath(result.artifacts.cover_letter_txt)
+                    }
+                  >
+                    ✉️ Open Cover Letter
+                  </button>
+                )}
+              </div>
+            </div>
           )}
 
           {result.app_status === "pending_approval" &&

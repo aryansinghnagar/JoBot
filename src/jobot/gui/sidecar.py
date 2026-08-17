@@ -104,6 +104,7 @@ class StdioSidecarServer:
             "profile_save": self._profile_save,
             "export_diagnostics": self._export_diagnostics,
             "setup_browser": self._setup_browser,
+            "open_path": self._open_path,
         }
 
     # -- dependency resolution ----------------------------------------------
@@ -699,3 +700,26 @@ class StdioSidecarServer:
                 "status": "error",
                 "message": f"Browser setup encountered an issue: {exc}",
             }
+
+    def _open_path(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Open a local artifact file or directory in the OS default application."""
+        import os
+        import subprocess
+
+        raw_path = params.get("path")
+        if not raw_path:
+            raise ValueError("Provide 'path'")
+        target = Path(raw_path).expanduser().resolve()
+        if not target.exists():
+            raise FileNotFoundError(f"Path does not exist: {target}")
+
+        try:
+            if sys.platform == "win32":
+                os.startfile(str(target))  # type: ignore # noqa: S606
+            elif sys.platform == "darwin":
+                subprocess.run(["open", str(target)], check=False)
+            else:
+                subprocess.run(["xdg-open", str(target)], check=False)
+            return {"status": "opened", "path": str(target)}
+        except Exception as exc:  # noqa: BLE001
+            return {"status": "error", "message": f"Failed to open path: {exc}"}
