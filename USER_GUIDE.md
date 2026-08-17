@@ -43,7 +43,7 @@ This command initializes your candidate profile vault. You will be prompted for:
 ### Seeding Truth Facts via Resume Ingestion
 JoBot can parse PDF or text resumes and populate your candidate ground truth ledger automatically:
 ```bash
-jobot import-resume ~/Documents/Aryan_Resume.pdf
+jobot import-resume ~/Documents/Resume.pdf
 ```
 This extracts:
 - Educational credentials (Institutions, Degrees, GPAs, Graduation Years)
