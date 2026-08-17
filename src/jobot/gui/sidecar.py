@@ -714,8 +714,8 @@ class StdioSidecarServer:
             raise FileNotFoundError(f"Path does not exist: {target}")
 
         try:
-            if sys.platform == "win32":
-                os.startfile(str(target))  # type: ignore # noqa: S606
+            if sys.platform == "win32" and hasattr(os, "startfile"):
+                getattr(os, "startfile")(str(target))
             elif sys.platform == "darwin":
                 subprocess.run(["open", str(target)], check=False)
             else:
