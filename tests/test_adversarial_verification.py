@@ -51,7 +51,7 @@ def test_prompt_guard_real_sanitization_and_detection():
     for attack in jailbreaks:
         # 1. Detection must be positive
         assert contains_prompt_injection(attack) is True, f"Failed to detect attack: {attack}"
-        
+
         # 2. Sanitization must neutralize the payload
         cleaned = sanitize_llm_input(attack)
         assert "[REDACTED_INJECTION_" in cleaned
@@ -231,7 +231,7 @@ def test_state_machine_strictly_enforces_legal_transition_graph():
 def test_database_strictly_prevents_duplicate_applications(tmp_path):
     """Verify SQLite UNIQUE constraint on idempotency_key prevents duplicate applications."""
     db = DatabaseManager(db_path=tmp_path / "idem.db")
-    
+
     # Save base posting first
     posting = JobPosting(job_id="job_uniq", site="mock_ats", url="http://mock.test/1", title="Eng", company="Corp")
     db.save_job_posting(posting)
