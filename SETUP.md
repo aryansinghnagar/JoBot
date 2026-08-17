@@ -62,7 +62,7 @@ jobot profile
 This displays and manages your candidate information (Name, Email, Phone, Location, Work Authorization) and securely creates or updates your vault.
 
 ### Step 2: Seed Candidate Truth Facts (Resume Ingestion)
-To enable the zero-hallucination grounding verifier, import your resume (PDF or plain text):
+To enable the zero-hallucination grounding verifier, import your resume (PDF, Word `.docx`, or plain text):
 ```bash
 jobot import-resume path/to/your/resume.pdf
 ```

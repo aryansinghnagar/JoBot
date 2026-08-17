@@ -248,17 +248,49 @@ jobot list-sites
 
 ## 11. Desktop GUI Cockpit Walkthrough
 
-Launch the desktop cockpit:
+JoBot includes a modern, high-speed native desktop cockpit powered by Tauri 2 and React 19.
+
+### Launching the Desktop Cockpit
 ```bash
 npm run tauri dev
 ```
+*(Or launch the standalone installer executable `JoBot.exe` / `JoBot.dmg`)*
 
-### GUI Views:
-- **Dashboard**: High-level metrics, active applications count, success rates, and campaign status.
-- **Approvals Inbox (`Approvals.jsx`)**: Card-by-card human review interface showing match scores, tailored cover letters, and one-click *Approve & Submit* buttons.
-- **Discover**: Visual job feed search with live filters and matching ladder badges.
-- **Site Health (`Health.jsx`)**: Real-time status table showing portal latency, success rates, and circuit state.
-- **Settings**: LLM provider switching, rate limit adjustments, and vault management.
+### Core Desktop Views & Features:
+1. **Guided Onboarding Wizard (`Onboarding.jsx`)**:
+   - **Drag-and-Drop Dropzone**: Ingests `.pdf`, `.docx`, and `.txt` resumes directly.
+   - **Visual Fact Verification**: Instant badge chips showing extracted skills, contact info, and roles.
+   - **AI Provider Cards**: 1-click setup for Google Gemini (Free Tier), Anthropic Claude, OpenAI, and Local Ollama with live connection testing.
+
+2. **Application Cockpit & Kanban Board (`Dashboard.jsx`)**:
+   - **5-Column Kanban Pipeline**: Visual swimlanes (`Discovered` ➔ `In Review` ➔ `Applied` ➔ `Interviewing` ➔ `Offered 🎉`).
+   - **Productivity Metrics**: Real-time tracker calculating total applications and estimated **Time Saved (Hours)**.
+   - **Table / Kanban Toggle**: Switch between visual cards and detailed tabular views.
+
+3. **Job Discovery & ATS Badging (`Discover.jsx`)**:
+   - **Transparent Capability Badging**: Distinguishes `[⚡ 1-Click Auto-Apply]` (Greenhouse, Lever, Workday, LinkedIn, Naukri) from `[🔗 Assisted Apply]` (Ashby, BambooHR, Indeed, Workable).
+   - Real-time search by keyword, role, location, or target company.
+
+4. **1-Click Apply & Assisted Mode (`Apply.jsx`)**:
+   - **Supervised Co-Pilot**: Watch the bot safely fill forms with stealth browser physics.
+   - **Assisted Apply Mode**: Automatically tailors the resume, copies the cover letter to clipboard, and launches the employer's portal in 1-click.
+   - **1-Click Artifact Launching**: Open generated PDF resumes and cover letters in your OS default viewer with a single click.
+
+5. **Approvals Inbox & Zero-Fabrication Governance (`Approvals.jsx`)**:
+   - Card-by-card human review showing tailored cover letters, matched scores, and attached resumes before granting submission permission.
+   - **Clipboard & File Helpers**: 1-click copy for tailored text and 1-click PDF preview.
+
+6. **Candidate Truth Ledger (`Profile.jsx`)**:
+   - Manage your locally encrypted ground truth facts, certified skills, and custom Q&A answers.
+   - Drag-and-drop resume sync dropzone to refresh facts at any time.
+
+7. **Site Health & Browser Engine Provisioning (`Health.jsx`)**:
+   - Real-time health metrics, success rates, latency, and circuit breaker status.
+   - **⚡ 1-Click Browser Engine Installer**: Download and verify stealth Chromium binaries with zero CLI commands.
+
+8. **Campaign Controls & Settings (`Controls.jsx` & `Settings.jsx`)**:
+   - Visual schedule presets (e.g. *Weekdays at 9:00 AM*, *Every 2 hours*) with 1-click Pause/Resume.
+   - Live AI provider configuration, API key testing, and diagnostic data export.
 
 ---
 

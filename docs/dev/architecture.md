@@ -16,3 +16,5 @@
 - **Layer 10 (Observability & Tracing)**: OpenTelemetry-compatible `TraceLogger` JSONL span persistence and `AlertDispatcher` operational notifications.
 - **Layer 11 (Evaluation Harness)**: `EvalHarness` running continuous benchmark scenarios across 6 core categories.
 - **Layer 12 (Interface & CLI)**: Rich-rendered Typer CLI application (`jobot`).
+- **Layer 13 (Desktop Cockpit & Sidecar Bridge)**: High-speed native Tauri 2 desktop shell running React 19 frontend over line-delimited JSON-RPC 2.0 stdio transport (`JobotRpc`).
+- **Layer 14 (Humanized Error Shield)**: `error_shield.py` translating internal database, adapter, rate limit, and validation exceptions into plain-English user explanations and actionable next steps.
