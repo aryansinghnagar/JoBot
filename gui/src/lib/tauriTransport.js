@@ -6,7 +6,12 @@ import { Command, EventEmitter } from "@tauri-apps/plugin-shell";
 import { RpcClient, JobotRpc } from "./rpc.js";
 
 export function tauriTransport() {
-  const command = Command.create("jobot", ["sidecar"]);
+  let command;
+  try {
+    command = Command.sidecar("binaries/jobot-sidecar");
+  } catch {
+    command = Command.create("jobot", ["sidecar"]);
+  }
   const emitter = new EventEmitter();
   const encoder = new TextEncoder();
 

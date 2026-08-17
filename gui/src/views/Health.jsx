@@ -103,6 +103,77 @@ export function Health({ rpc }) {
           </table>
         </div>
       )}
+
+      <BrowserProvisionCard rpc={rpc} />
     </section>
+  );
+}
+
+function BrowserProvisionCard({ rpc }) {
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [msg, setMsg] = useState(null);
+
+  const handleInstall = async () => {
+    setBusy(true);
+    setMsg("Downloading and verifying stealth Chromium browser engine...");
+    setStatus(null);
+    try {
+      const res = await rpc.setupBrowser();
+      if (res.status === "installed") {
+        setStatus("success");
+        setMsg(
+          "✓ Chromium browser engine is installed and ready for live automation!",
+        );
+      } else {
+        setStatus("error");
+        setMsg(res.message || "Failed to download browser engine");
+      }
+    } catch (err) {
+      setStatus("error");
+      setMsg(
+        err?.user_message || err?.message || "Failed to provision browser",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{ marginTop: "1.5rem" }}>
+      <h2>Stealth Browser Automation Engine</h2>
+      <p className="muted">
+        Required for automated application submissions on LinkedIn, Workday, and
+        Naukri.
+      </p>
+      <div style={{ marginTop: "1rem" }}>
+        <button
+          className="btn btn-secondary"
+          onClick={handleInstall}
+          disabled={busy}
+          style={{ fontSize: "0.85rem" }}
+        >
+          {busy
+            ? "Downloading Chromium Engine (1-2 mins)…"
+            : "⚡ Verify / Install Browser Engine (1-Click)"}
+        </button>
+        {msg && (
+          <p
+            style={{
+              marginTop: "0.5rem",
+              fontSize: "0.85rem",
+              color:
+                status === "success"
+                  ? "#10b981"
+                  : status === "error"
+                    ? "#ea868f"
+                    : "#f9e2af",
+            }}
+          >
+            {msg}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

@@ -162,6 +162,9 @@ export class JobotRpc {
       profile_id: profileId,
     });
   }
+  setupBrowser() {
+    return this.client.call("setup_browser");
+  }
 }
 
 // Node/stdio transport: spawns a process and exchanges newline-delimited

@@ -9,6 +9,10 @@
       "identifier": "shell:allow-spawn",
       "allow": [
         {
+          "name": "binaries/jobot-sidecar",
+          "sidecar": true
+        },
+        {
           "name": "jobot",
           "cmd": "jobot",
           "args": [{ "validator": "^sidecar$" }]
@@ -18,6 +22,10 @@
     {
       "identifier": "shell:allow-execute",
       "allow": [
+        {
+          "name": "binaries/jobot-sidecar",
+          "sidecar": true
+        },
         {
           "name": "jobot",
           "cmd": "jobot",

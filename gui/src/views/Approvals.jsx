@@ -137,9 +137,30 @@ export function Approvals({ rpc }) {
     <section className="view">
       <h2>Pending Human Approvals</h2>
       <p className="muted">
-        Review generated materials and confirm application details before
-        submission.
+        Review tailored responses and attached resumes before granting 1-click
+        submission permission.
       </p>
+
+      <div
+        style={{
+          background: "#181825",
+          border: "1px solid #313244",
+          padding: "0.75rem 1rem",
+          borderRadius: "8px",
+          marginBottom: "1.25rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+        }}
+      >
+        <span style={{ fontSize: "1.25rem" }}>🛡️</span>
+        <span style={{ fontSize: "0.85rem", color: "#cdd6f4" }}>
+          <strong>Zero-Fabrication Guarantee:</strong> JoBot never submits
+          applications behind your back or invents facts. Review the drafted
+          answers below and click <strong>Approve &amp; Submit</strong> when
+          ready.
+        </span>
+      </div>
 
       {error && <div className="card error-box">{error}</div>}
 

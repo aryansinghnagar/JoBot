@@ -103,6 +103,7 @@ class StdioSidecarServer:
             "import_resume": self._import_resume,
             "profile_save": self._profile_save,
             "export_diagnostics": self._export_diagnostics,
+            "setup_browser": self._setup_browser,
         }
 
     # -- dependency resolution ----------------------------------------------
@@ -674,3 +675,27 @@ class StdioSidecarServer:
             "skills": profile.skills,
             "facts_seeded": len(facts),
         }
+
+    def _setup_browser(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Download and verify Patchright Chromium browser engine binaries."""
+        import subprocess
+
+        try:
+            res = subprocess.run(
+                [sys.executable, "-m", "patchright", "install", "chromium"],
+                capture_output=True,
+                text=True,
+                timeout=180,
+                check=False,
+            )
+            return {
+                "status": "installed" if res.returncode == 0 else "failed",
+                "message": "Chromium engine ready"
+                if res.returncode == 0
+                else (res.stderr or res.stdout),
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "status": "error",
+                "message": f"Browser setup encountered an issue: {exc}",
+            }

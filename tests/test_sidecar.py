@@ -496,3 +496,10 @@ def test_error_shield_mappings():
     # Validation
     err = humanize_exception(ValueError("First name is required"))
     assert err.category == "validation_error"
+
+
+def test_sidecar_setup_browser(monkeypatch, tmp_path):
+    server = _server(monkeypatch, tmp_path)
+    res = _call(server, "setup_browser", {})
+    assert res.get("error") is None
+    assert "status" in res["result"]
