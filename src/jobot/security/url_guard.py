@@ -33,6 +33,8 @@ _ALLOWED_SCHEMES = frozenset({"http", "https"})
 
 
 def _is_private_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        return _is_private_ip(ip.ipv4_mapped)
     return (
         ip.is_private
         or ip.is_loopback
@@ -80,6 +82,8 @@ def _resolved_hosts_are_internal(host: str) -> bool:
             ip = ipaddress.ip_address(addr.split("%")[0])
         except ValueError:
             continue
+        if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
         if ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast:
             return True
     return False

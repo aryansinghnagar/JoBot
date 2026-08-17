@@ -36,6 +36,9 @@ class TestValidateFetchUrl:
             "https://127.0.0.1/jobs",
             "https://localhost/jobs",
             "http://[::1]/jobs",
+            "http://[::ffff:127.0.0.1]/jobs",
+            "http://[::ffff:169.254.169.254]/latest/meta-data",
+            "http://[::ffff:10.0.0.5]/internal",
             "http://169.254.169.254/latest/meta-data",  # cloud metadata
             "http://10.0.0.5/internal",
             "http://192.168.1.10/admin",

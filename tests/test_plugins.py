@@ -134,6 +134,13 @@ def test_remove_plugin(plugin_repo, tmp_path, monkeypatch):
     assert installer.remove("hello-bot") is False
 
 
+def test_remove_plugin_rejects_invalid_name(tmp_path, monkeypatch):
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+    installer = PluginInstaller()
+    with pytest.raises(ValueError, match="Invalid plugin name"):
+        installer.remove("../../../etc/passwd")
+
+
 def test_auditor_passes_good_plugin(plugin_repo):
     report = PluginAuditor().audit(plugin_repo)
     assert report.passed is True

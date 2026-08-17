@@ -105,6 +105,8 @@ class DatabaseManager:
             );
             CREATE INDEX IF NOT EXISTS idx_applications_site_status ON applications(site, status);
             CREATE INDEX IF NOT EXISTS idx_applications_job_id ON applications(job_id);
+            CREATE INDEX IF NOT EXISTS idx_applications_profile_id ON applications(profile_id);
+            CREATE INDEX IF NOT EXISTS idx_applications_created_at ON applications(created_at);
 
             CREATE TABLE IF NOT EXISTS job_dedup_cache (
                 dedup_hash TEXT PRIMARY KEY,
@@ -115,6 +117,7 @@ class DatabaseManager:
                 embedding TEXT NOT NULL,
                 added_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_job_dedup_cache_added_at ON job_dedup_cache(added_at);
 
             CREATE TABLE IF NOT EXISTS saga_instances (
                 saga_id TEXT PRIMARY KEY,
@@ -124,6 +127,8 @@ class DatabaseManager:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_saga_instances_job_id ON saga_instances(job_id);
+            CREATE INDEX IF NOT EXISTS idx_saga_instances_status ON saga_instances(status);
 
             CREATE TABLE IF NOT EXISTS saga_steps (
                 saga_id TEXT NOT NULL,

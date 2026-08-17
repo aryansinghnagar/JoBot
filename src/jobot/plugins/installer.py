@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -125,9 +126,9 @@ class PluginInstaller:
         if proc.returncode != 0:
             raise ValueError(f"git clone failed for '{url}': {proc.stderr.strip()[:300]}")
 
-    # -- remove -------------------------------------------------------------
-
     def remove(self, name: str) -> bool:
+        if not re.match(r"^[a-z0-9][a-z0-9_-]{1,63}$", name):
+            raise ValueError(f"Invalid plugin name '{name}'")
         dest = self.plugins_dir / name
         index = self._load_index()
         if name not in index:
