@@ -244,7 +244,9 @@ def test_sidecar_profile_info_missing(monkeypatch, tmp_path):
 
     server = _server(monkeypatch, tmp_path, profile_loader=missing)
     res = _call(server, "profile_info", {})
-    assert res["error"]["code"] == -32602
+    assert res["error"]["code"] == -32002
+    assert "profile" in res["error"]["message"].lower()
+    assert res["error"]["data"]["category"] == "missing_profile"
 
 
 def test_sidecar_discover_jobs(monkeypatch, tmp_path):
@@ -401,7 +403,8 @@ def test_sidecar_config_show_and_set(monkeypatch, tmp_path):
 def test_sidecar_config_get_missing(monkeypatch, tmp_path):
     server = _server(monkeypatch, tmp_path)
     res = _call(server, "config_get", {"key": "llm.api_key.nonexistent"})
-    assert res["error"]["code"] == -32602
+    assert res["error"]["code"] == -32004
+    assert res["error"]["data"]["category"] == "ai_auth_error"
 
 
 def test_sidecar_traces(monkeypatch, tmp_path):
@@ -472,3 +475,24 @@ def test_sidecar_export_diagnostics(monkeypatch, tmp_path):
     assert res.get("error") is None
     assert res["result"]["status"] == "exported"
     assert res["result"]["path"].endswith(".zip")
+
+
+def test_error_shield_mappings():
+    from jobot.gui.error_shield import humanize_exception
+
+    # Adapter capability
+    err = humanize_exception(RuntimeError("Workday adapter does not support direct submission"))
+    assert err.category == "adapter_unsupported"
+    assert "Assisted Apply" in err.action_hint
+
+    # File not found
+    err = humanize_exception(FileNotFoundError("Resume file not found: /resume.pdf"))
+    assert err.category == "file_not_found"
+
+    # AI rate limit
+    err = humanize_exception(RuntimeError("HTTP 429: Resource has been exhausted (rate limit)"))
+    assert err.category == "rate_limit"
+
+    # Validation
+    err = humanize_exception(ValueError("First name is required"))
+    assert err.category == "validation_error"

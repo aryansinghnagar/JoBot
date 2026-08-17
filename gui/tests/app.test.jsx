@@ -48,7 +48,8 @@ describe("GUI shell", () => {
 describe("views render without a live sidecar", () => {
   it("Dashboard", () => {
     const html = renderToString(<Dashboard rpc={stubRpc()} />);
-    expect(html).toContain("Application Dashboard");
+    expect(html).toContain("Application Cockpit");
+    expect(html).toContain("Kanban Board");
   });
 
   it("Discover", () => {
@@ -68,7 +69,8 @@ describe("views render without a live sidecar", () => {
     };
     const html = renderToString(<Apply rpc={stubRpc()} job={job} />);
     expect(html).toContain("Engineer");
-    expect(html).toContain("Dry run");
+    expect(html).toContain("Review First (Dry Run)");
+    expect(html).toContain("1-Click Auto-Apply");
   });
 
   it("Approvals", () => {
@@ -89,8 +91,9 @@ describe("views render without a live sidecar", () => {
 
   it("Settings", () => {
     const html = renderToString(<Settings rpc={stubRpc()} />);
-    expect(html).toContain("Settings &amp; Diagnostics");
+    expect(html).toContain("Settings &amp; Preferences");
     expect(html).toContain("System Diagnostics");
+    expect(html).toContain("AI Intelligence &amp; Provider Settings");
   });
 
   it("Onboarding", async () => {

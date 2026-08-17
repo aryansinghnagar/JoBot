@@ -20,6 +20,7 @@ from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.config.manager import ConfigManager
 from jobot.digest.generator import DigestGenerator
 from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.gui.error_shield import humanize_exception
 from jobot.models.domain import CompensationDetails, JobPosting, PersonalInfo, UserProfile
 from jobot.scheduler import SchedulerManager
 from jobot.storage.db import DatabaseManager
@@ -180,15 +181,16 @@ class StdioSidecarServer:
             ).model_dump()
         try:
             result = handler(params)
-        except ValueError as exc:
-            return JsonRpcResponse(
-                id=req_id,
-                error={"code": -32602, "message": f"Invalid params: {exc}"},
-            ).model_dump()
         except Exception as exc:  # noqa: BLE001
+            human_err = humanize_exception(exc)
+            err_dict = human_err.to_dict()
             return JsonRpcResponse(
                 id=req_id,
-                error={"code": -32603, "message": f"Internal error: {exc}"},
+                error={
+                    "code": err_dict["code"],
+                    "message": err_dict["message"],
+                    "data": err_dict["data"],
+                },
             ).model_dump()
         return JsonRpcResponse(id=req_id, result=result).model_dump()
 

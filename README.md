@@ -40,7 +40,7 @@ JoBot strictly separates real submission capabilities from job discovery:
 | **BambooHR** | Level 2 — Discovery | ✅ Public JSON API | ✅ Minimal URL Parse | ❌ Discovery Only | — |
 | **Indeed / Glassdoor / ZipRecruiter / etc.** | Level 2 — Discovery | ✅ JobSpy Scraper | ❌ Discovery Only | ❌ Discovery Only | — |
 
-> **Note on Discovery-Only Adapters:** Discovery-only adapters will cleanly raise `AdapterCapabilityError` if application submission is attempted, preventing any simulated or false success reporting.
+> **Note on Discovery-Only Adapters:** Discovery-only boards activate **Assisted Apply Mode**: JoBot tailors your resume, drafts your cover letter, copies your tailored facts to your clipboard, and launches the employer's application portal in 1-click so you can submit with zero repetitive typing.
 
 ---
 

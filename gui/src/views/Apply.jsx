@@ -3,6 +3,14 @@ import { useState } from "react";
 const TEMPLATES = ["default", "modern", "classic"];
 const TONES = ["classic", "concise", "technical", "warm", "assertive"];
 
+const AUTO_APPLY_SITES = [
+  "greenhouse",
+  "lever",
+  "linkedin",
+  "workday",
+  "naukri",
+];
+
 export function Apply({ rpc, job }) {
   const [jobId, setJobId] = useState("");
   const [url, setUrl] = useState(job ? job.url : "");
@@ -13,12 +21,18 @@ export function Apply({ rpc, job }) {
   const [showBrowser, setShowBrowser] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+  const [errorObj, setErrorObj] = useState(null);
+
+  const isAuto = job
+    ? AUTO_APPLY_SITES.includes((job.site || "").toLowerCase())
+    : site
+      ? AUTO_APPLY_SITES.includes(site.toLowerCase())
+      : true;
 
   const run = async (e) => {
     e.preventDefault();
     setBusy(true);
-    setError(null);
+    setErrorObj(null);
     setResult(null);
     const params = {
       dry_run: dryRun,
@@ -34,7 +48,12 @@ export function Apply({ rpc, job }) {
       params.url = url;
       if (site) params.site = site;
     } else {
-      setError("Provide a saved job id or a posting URL.");
+      setErrorObj({
+        user_message:
+          "Please select a job from Discover or enter a job posting URL.",
+        action_hint:
+          "Go to the Discover tab to search for jobs, or paste a link from LinkedIn/Workday.",
+      });
       setBusy(false);
       return;
     }
@@ -42,7 +61,11 @@ export function Apply({ rpc, job }) {
       const res = await rpc.apply(params);
       setResult(res);
     } catch (err) {
-      setError(String((err && err.message) || err));
+      setErrorObj({
+        user_message: err?.user_message || err?.message || String(err),
+        action_hint: err?.action_hint || "",
+        category: err?.category || "general",
+      });
     } finally {
       setBusy(false);
     }
@@ -51,12 +74,15 @@ export function Apply({ rpc, job }) {
   const approve = async () => {
     if (!result || !result.application_id) return;
     setBusy(true);
-    setError(null);
+    setErrorObj(null);
     try {
       const res = await rpc.approve(result.application_id);
       setResult(res);
     } catch (err) {
-      setError(String((err && err.message) || err));
+      setErrorObj({
+        user_message: err?.user_message || err?.message || String(err),
+        action_hint: err?.action_hint || "",
+      });
     } finally {
       setBusy(false);
     }
@@ -64,17 +90,58 @@ export function Apply({ rpc, job }) {
 
   return (
     <section>
-      <h1>Apply</h1>
+      <h1>Apply Cockpit</h1>
       {job ? (
-        <div className="card">
-          <strong>{job.title}</strong>
-          <span className="muted">
-            {" "}
-            — {job.company} ({job.site})
-          </span>
+        <div className="card" style={{ marginBottom: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <strong style={{ fontSize: "1.05rem" }}>{job.title}</strong>
+              <div
+                className="muted"
+                style={{ fontSize: "0.85rem", marginTop: "0.2rem" }}
+              >
+                {job.company} — {job.location || "Remote"} ({job.site})
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                padding: "0.2rem 0.5rem",
+                borderRadius: "4px",
+                background: isAuto ? "#1e3a2f" : "#2d2a1e",
+                color: isAuto ? "#a6e3a1" : "#f9e2af",
+                border: `1px solid ${isAuto ? "#3d6d53" : "#635832"}`,
+              }}
+            >
+              {isAuto ? "⚡ 1-Click Auto-Apply" : "🔗 Assisted Apply"}
+            </span>
+          </div>
+
+          {!isAuto && (
+            <div
+              style={{
+                marginTop: "0.75rem",
+                background: "#181825",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "6px",
+                fontSize: "0.8rem",
+                color: "#f9e2af",
+              }}
+            >
+              ℹ️ <strong>Assisted Apply Mode:</strong> JoBot will tailor your
+              resume and cover letter. We will copy your tailored text to your
+              clipboard and open the application link with 1 click.
+            </div>
+          )}
         </div>
       ) : (
-        <p className="muted">
+        <p className="muted" style={{ marginBottom: "1rem" }}>
           Pick a job from Discover, or enter a saved job id / posting URL below.
         </p>
       )}
@@ -83,49 +150,71 @@ export function Apply({ rpc, job }) {
         {!job && (
           <>
             <label>
-              Saved job id
-              <input value={jobId} onChange={(e) => setJobId(e.target.value)} />
+              Saved Job ID (Optional)
+              <input
+                value={jobId}
+                onChange={(e) => setJobId(e.target.value)}
+                placeholder="e.g. job_123"
+              />
             </label>
             <label>
-              Job URL
-              <input value={url} onChange={(e) => setUrl(e.target.value)} />
+              Job Posting URL
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://boards.greenhouse.io/acme/jobs/101"
+              />
             </label>
             <label>
-              Site (inferred if blank)
-              <input value={site} onChange={(e) => setSite(e.target.value)} />
+              Job Board Site (Auto-detected if blank)
+              <input
+                value={site}
+                onChange={(e) => setSite(e.target.value)}
+                placeholder="e.g. greenhouse, linkedin, workday"
+              />
             </label>
           </>
         )}
-        <label>
-          Resume template
-          <select
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
-          >
-            {TEMPLATES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Cover letter tone
-          <select value={tone} onChange={(e) => setTone(e.target.value)}>
-            {TONES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+          }}
+        >
+          <label>
+            Resume Template Style
+            <select
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+            >
+              {TEMPLATES.map((t) => (
+                <option key={t} value={t}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Cover Letter Tone
+            <select value={tone} onChange={(e) => setTone(e.target.value)}>
+              {TONES.map((t) => (
+                <option key={t} value={t}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <label className="check">
           <input
             type="checkbox"
             checked={dryRun}
             onChange={(e) => setDryRun(e.target.checked)}
           />
-          Dry run (produce artifacts, no submission)
+          <strong>Review First (Dry Run):</strong> Tailor resume and draft
+          materials without submitting immediately.
         </label>
         <label className="check">
           <input
@@ -133,14 +222,37 @@ export function Apply({ rpc, job }) {
             checked={showBrowser}
             onChange={(e) => setShowBrowser(e.target.checked)}
           />
-          Supervised Co-Pilot (Show visible browser window during application)
+          <strong>Supervised Co-Pilot:</strong> Keep browser visible on your
+          screen during submission.
         </label>
-        <button type="submit" disabled={busy}>
-          {busy ? "Working…" : dryRun ? "Preview" : "Apply"}
-        </button>
+
+        <div style={{ marginTop: "0.5rem" }}>
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            {busy
+              ? "Working on Application…"
+              : dryRun
+                ? "Tailor & Preview Draft"
+                : "Apply to Job"}
+          </button>
+        </div>
       </form>
 
-      {error && <p className="error">{error}</p>}
+      {errorObj && (
+        <div className="card error-box" style={{ marginTop: "1rem" }}>
+          <strong>{errorObj.user_message}</strong>
+          {errorObj.action_hint && (
+            <p
+              style={{
+                marginTop: "0.4rem",
+                fontSize: "0.85rem",
+                color: "#f9e2af",
+              }}
+            >
+              💡 {errorObj.action_hint}
+            </p>
+          )}
+        </div>
+      )}
 
       {result && (
         <div className="card" style={{ marginTop: "1.5rem" }}>

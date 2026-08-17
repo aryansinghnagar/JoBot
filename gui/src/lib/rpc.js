@@ -3,10 +3,14 @@
 // without a browser, a Tauri runtime, or a real `jobot` process.
 
 export class RpcError extends Error {
-  constructor(code, message) {
+  constructor(code, message, data = {}) {
     super(message);
     this.name = "RpcError";
     this.code = code;
+    this.data = data;
+    this.user_message = data.user_message || message;
+    this.action_hint = data.action_hint || "";
+    this.category = data.category || "general";
   }
 }
 
@@ -31,7 +35,9 @@ export class RpcClient {
     if (!entry) return;
     this.pending.delete(msg.id);
     if (msg.error) {
-      entry.reject(new RpcError(msg.error.code, msg.error.message));
+      entry.reject(
+        new RpcError(msg.error.code, msg.error.message, msg.error.data || {}),
+      );
     } else {
       entry.resolve(msg.result);
     }

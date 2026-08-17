@@ -12,6 +12,14 @@ const DEFAULT_PORTALS = [
   ["careers", "Company Careers (Search Only)"],
 ];
 
+const AUTO_APPLY_SITES = [
+  "greenhouse",
+  "lever",
+  "linkedin",
+  "workday",
+  "naukri",
+];
+
 export function Discover({ rpc, onApply }) {
   const [portal, setPortal] = useState("linkedin");
   const [keywords, setKeywords] = useState("");
@@ -44,7 +52,7 @@ export function Discover({ rpc, onApply }) {
       <h1>Discover Jobs</h1>
       <form className="form" onSubmit={run}>
         <label>
-          Portal
+          Portal / Job Board
           <select value={portal} onChange={(e) => setPortal(e.target.value)}>
             {DEFAULT_PORTALS.map(([key, label]) => (
               <option key={key} value={key}>
@@ -61,10 +69,11 @@ export function Discover({ rpc, onApply }) {
           </select>
         </label>
         <label>
-          Keywords
+          Keywords / Role
           <input
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
+            placeholder="e.g. Software Engineer, React"
           />
         </label>
         <label>
@@ -72,10 +81,11 @@ export function Discover({ rpc, onApply }) {
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. Remote, New York, London"
           />
         </label>
         <label>
-          Company / tenant
+          Company / Tenant (Optional)
           <input
             value={company}
             onChange={(e) => setCompany(e.target.value)}
@@ -83,7 +93,7 @@ export function Discover({ rpc, onApply }) {
           />
         </label>
         <label>
-          Limit
+          Result Limit
           <input
             type="number"
             min="1"
@@ -92,44 +102,100 @@ export function Discover({ rpc, onApply }) {
             onChange={(e) => setLimit(e.target.value)}
           />
         </label>
-        <button type="submit" disabled={loading}>
-          {loading ? "Searching…" : "Search"}
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? "Searching Jobs…" : "Search Jobs"}
         </button>
       </form>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <div className="card error-box" style={{ marginTop: "1rem" }}>
+          {error}
+        </div>
+      )}
+
       {data && data.postings && (
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Company</th>
-              <th>Location</th>
-              <th>Site</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {data.postings.map((job, i) => (
-              <tr key={i}>
-                <td>{job.title}</td>
-                <td>{job.company}</td>
-                <td>{job.location}</td>
-                <td>{job.site}</td>
-                <td>
-                  <button onClick={() => onApply(job)}>Apply</button>
-                </td>
-              </tr>
-            ))}
-            {data.postings.length === 0 && (
+        <div style={{ marginTop: "1.5rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "0.5rem",
+            }}
+          >
+            <h2>Search Results ({data.postings.length})</h2>
+            <div style={{ fontSize: "0.8rem", color: "#a6adc8" }}>
+              <span style={{ marginRight: "1rem" }}>
+                ⚡ <strong>1-Click:</strong> Auto-submission supported
+              </span>
+              <span>
+                🔗 <strong>Assisted:</strong> Tailored helper supported
+              </span>
+            </div>
+          </div>
+
+          <table>
+            <thead>
               <tr>
-                <td colSpan={5} className="muted">
-                  {data.note || "No postings returned."}
-                </td>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Capability</th>
+                <th style={{ textAlign: "right" }}>Action</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.postings.map((job, i) => {
+                const isAuto = AUTO_APPLY_SITES.includes(
+                  (job.site || "").toLowerCase(),
+                );
+                return (
+                  <tr key={i}>
+                    <td>
+                      <strong>{job.title}</strong>
+                    </td>
+                    <td>{job.company}</td>
+                    <td>{job.location || "Remote / Unspecified"}</td>
+                    <td>
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "0.2rem 0.5rem",
+                          borderRadius: "4px",
+                          background: isAuto ? "#1e3a2f" : "#2d2a1e",
+                          color: isAuto ? "#a6e3a1" : "#f9e2af",
+                          border: `1px solid ${isAuto ? "#3d6d53" : "#635832"}`,
+                        }}
+                      >
+                        {isAuto ? "⚡ 1-Click Auto-Apply" : "🔗 Assisted Apply"}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <button
+                        className={`btn ${isAuto ? "btn-primary" : "btn-secondary"}`}
+                        style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
+                        onClick={() => onApply(job)}
+                      >
+                        {isAuto ? "Apply" : "Tailor & Assist"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {data.postings.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="muted"
+                    style={{ textAlign: "center", padding: "2rem" }}
+                  >
+                    {data.note || "No postings found matching your query."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

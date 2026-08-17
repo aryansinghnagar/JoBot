@@ -9,10 +9,13 @@ export function Settings({ rpc }) {
 
   return (
     <section>
-      <h1>Settings &amp; Diagnostics</h1>
+      <h1>Settings &amp; Preferences</h1>
       <p className="muted">
-        Inspect environment health, active configuration, and telemetry.
+        Manage your AI connections, verify system health, and review activity
+        digests.
       </p>
+
+      <AiConfigCard rpc={rpc} onUpdate={config.reload} />
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
         <h2>System Diagnostics</h2>
@@ -196,6 +199,143 @@ function ExportBundleButton({ rpc }) {
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+function AiConfigCard({ rpc, onUpdate }) {
+  const [provider, setProvider] = useState("gemini");
+  const [apiKey, setApiKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!apiKey && provider !== "ollama") {
+      setError(`Please provide an API key for ${provider}.`);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+    try {
+      await rpc.configSet("llm.default_provider", provider);
+      if (apiKey) {
+        await rpc.configSet(`api_keys.${provider}`, apiKey);
+      }
+      setMsg(`✓ ${provider.toUpperCase()} provider connected & active.`);
+      setApiKey("");
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setError(
+        err?.user_message || err?.message || "Failed to update AI settings",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{ marginBottom: "1.5rem" }}>
+      <h2>AI Intelligence &amp; Provider Settings</h2>
+      <p className="muted">
+        Configure the LLM engine used for tailoring resumes and generating
+        grounded responses.
+      </p>
+
+      <form
+        onSubmit={handleSave}
+        className="form"
+        style={{ marginTop: "1rem" }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+          }}
+        >
+          <label>
+            Active AI Provider
+            <select
+              value={provider}
+              onChange={(e) => {
+                setProvider(e.target.value);
+                setMsg(null);
+                setError(null);
+              }}
+            >
+              <option value="gemini">
+                Google Gemini (Recommended / Free Tier)
+              </option>
+              <option value="anthropic">
+                Anthropic Claude (High Precision)
+              </option>
+              <option value="openai">OpenAI (GPT-4o)</option>
+              <option value="ollama">Local Ollama (Offline / Private)</option>
+            </select>
+          </label>
+
+          {provider !== "ollama" && (
+            <label>
+              Update API Key
+              <input
+                type="password"
+                placeholder={`Paste new ${provider} API key`}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+            </label>
+          )}
+        </div>
+
+        {provider === "gemini" && (
+          <p
+            className="muted"
+            style={{ fontSize: "0.8rem", margin: "0.25rem 0 0.75rem 0" }}
+          >
+            Need a key?{" "}
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#89b4fa", textDecoration: "underline" }}
+            >
+              Get a free Gemini API key from Google AI Studio
+            </a>
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={busy}
+          style={{ fontSize: "0.85rem" }}
+        >
+          {busy ? "Saving…" : "Save & Activate Provider"}
+        </button>
+
+        {msg && (
+          <p
+            style={{
+              color: "#10b981",
+              marginTop: "0.5rem",
+              fontSize: "0.85rem",
+            }}
+          >
+            {msg}
+          </p>
+        )}
+        {error && (
+          <p
+            className="error"
+            style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}
+          >
+            {error}
+          </p>
+        )}
+      </form>
     </div>
   );
 }
