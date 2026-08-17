@@ -10,6 +10,7 @@ Welcome to the technical and user documentation for **JoBot**.
 - **[`../SETUP.md`](../SETUP.md)** — Step-by-step setup, dependencies, API keys, OS keyring vault, and desktop GUI compilation.
 - **[`../USER_GUIDE.md`](../USER_GUIDE.md)** — Exhaustive user manual covering candidate truth profiles, scraping, document tailoring, approvals, and campaigns.
 - **[`user/cli-reference.md`](user/cli-reference.md)** — Full command-line interface specification and arguments guide.
+- **[`runbooks/naukri_apply.md`](runbooks/naukri_apply.md)** — Example portal execution runbook.
 
 ---
 
