@@ -144,6 +144,8 @@ class FallbackPdfRenderer(PdfRenderer):
             story.append(Paragraph(f"LinkedIn: {esc(data.linkedin)}", center_style))
 
         if data.summary:
+            story.append(Paragraph("<b>SUMMARY</b>", heading_style))
+            story.append(HRFlowable(width="100%", thickness=0.6))
             story.append(Paragraph(esc(data.summary), styles["Normal"]))
             story.append(Spacer(1, 4))
 
