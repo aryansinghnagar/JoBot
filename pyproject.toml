@@ -81,6 +81,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:google.genai.*",
+]
 markers = [
     "integration: tests that require live external services (opt-in)",
     "scrapers: live scraper tests (opt-in via JOBOT_RUN_LIVE_SCRAPE=1)",

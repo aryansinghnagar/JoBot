@@ -810,6 +810,9 @@ class DatabaseManager:
         source_path = Path(source_path)
         if not source_path.exists():
             raise FileNotFoundError(f"Backup file not found: {source_path}")
-        with sqlite3.connect(source_path) as src_conn:
+        src_conn = sqlite3.connect(source_path)
+        try:
             with self._get_connection() as dst_conn:
                 src_conn.backup(dst_conn)
+        finally:
+            src_conn.close()

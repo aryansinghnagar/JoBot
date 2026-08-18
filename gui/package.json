@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "JoBot Desktop GUI (Tauri 2 + React) - thin wrapper delegating tooling to the repo root",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.js",
     "build": "vite build",

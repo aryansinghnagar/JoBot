@@ -95,6 +95,7 @@ def test_legacy_database_upgrades(tmp_path):
     assert "schema_migrations" in tables
     assert "task_leases" in tables
     # legacy tasks table was replaced by the durable schema
-    cols = {r[1] for r in sqlite3.connect(path).execute("PRAGMA table_info(tasks)")}
+    with db._get_connection() as conn:  # noqa: SLF001
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(tasks)")}
     assert "definition_of_done" in cols
     assert "task_id" not in cols

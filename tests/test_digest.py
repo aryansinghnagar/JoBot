@@ -51,7 +51,7 @@ def seeded_db(tmp_path):
                 outcome=st.value,
             )
         )
-    return db
+    yield db
 
 
 def test_digest_generates_content(seeded_db):
@@ -133,7 +133,8 @@ def test_email_sender_sends_with_fake_factory():
     assert called["port"] == 587
 
 
-def test_cli_digest_dry_run(seeded_db):
+def test_cli_digest_dry_run(seeded_db, monkeypatch):
+    monkeypatch.setattr("jobot.cli.main.DatabaseManager", lambda *args, **kwargs: seeded_db)
     runner = CliRunner()
     result = runner.invoke(app, ["digest", "--dry-run"])
     assert result.exit_code == 0
