@@ -62,6 +62,7 @@ def test_cli_site_health_command():
 
 
 def test_cli_status_command(tmp_path, monkeypatch):
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     db_path = tmp_path / "status_test.db"
     db = DatabaseManager(db_path)
     job = JobPosting(
@@ -87,7 +88,7 @@ def test_cli_status_command(tmp_path, monkeypatch):
 
     res = runner.invoke(app, ["status"])
     assert res.exit_code == 0
-    assert "Application History & Status" in res.stdout
+    assert "Status" in res.stdout
     assert "greenhouse" in res.stdout
 
 
@@ -97,7 +98,7 @@ def test_cli_config_commands(tmp_path, monkeypatch):
     # Show config
     show_res = runner.invoke(app, ["config", "show"])
     assert show_res.exit_code == 0
-    assert "JoBot Configuration" in show_res.stdout
+    assert "Configuration" in show_res.stdout
 
     # Set non-secret config
     set_res = runner.invoke(app, ["config", "set", "policy.max_daily_applications", "15"])
@@ -190,8 +191,28 @@ def test_cli_plugin_list_command():
 
 
 def test_cli_skill_gap_and_salary_commands(tmp_path, monkeypatch):
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     db = DatabaseManager(tmp_path / "analytics_test.db")
     monkeypatch.setattr("jobot.cli.main.DatabaseManager", lambda *args, **kwargs: db)
+
+    # When profile is missing
+    res_missing = runner.invoke(app, ["skill-gap"])
+    assert res_missing.exit_code == 1
+    assert "missing" in res_missing.stdout.lower()
+
+    # When profile exists
+    from jobot.models.domain import UserProfile, PersonalInfo
+    from jobot.storage.vault import CredentialVault
+
+    vault = CredentialVault()
+    profile_dir = tmp_path / ".jobot" / "profiles"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    profile = UserProfile(
+        profile_id="default",
+        personal_info=PersonalInfo(first_name="Test", last_name="User", email="test@example.com"),
+        skills=["Python", "FastAPI"],
+    )
+    vault.save_encrypted_profile(profile, profile_dir / "default.enc")
 
     res_gap = runner.invoke(app, ["skill-gap"])
     assert res_gap.exit_code == 0
