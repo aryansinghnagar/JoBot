@@ -19,8 +19,8 @@ failure never produces a second submit call.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.applications.state_machine import transition_application
@@ -49,7 +49,7 @@ class ReconciliationService:
         self,
         db: DatabaseManager,
         adapter: SiteAdapter,
-        alert_dispatcher: Optional[AlertDispatcher] = None,
+        alert_dispatcher: AlertDispatcher | None = None,
         max_attempts: int = MAX_RECONCILE_ATTEMPTS,
     ) -> None:
         self.db = db
@@ -150,7 +150,7 @@ class ReconciliationService:
                 app, ApplicationStatus.VERIFICATION_UNKNOWN, reason=app.error_message
             )
         else:
-            app.updated_at = datetime.now(timezone.utc)
+            app.updated_at = datetime.now(UTC)
         self.db.save_application(app)
         return app
 

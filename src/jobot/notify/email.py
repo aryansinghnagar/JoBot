@@ -3,7 +3,7 @@
 import smtplib
 import ssl
 from email.message import EmailMessage
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from jobot.config.manager import ConfigManager
 
@@ -18,7 +18,7 @@ class EmailSender:
 
     def __init__(
         self,
-        config: Optional[ConfigManager] = None,
+        config: ConfigManager | None = None,
         smtp_factory: Any = None,
     ) -> None:
         self.config = config or ConfigManager()
@@ -35,8 +35,8 @@ class EmailSender:
         self,
         subject: str,
         body_html: str,
-        body_text: Optional[str] = None,
-    ) -> Tuple[bool, str]:
+        body_text: str | None = None,
+    ) -> tuple[bool, str]:
         if not self.is_configured():
             return False, "SMTP not configured (set smtp.host/port/user/password/from/recipient)"
 

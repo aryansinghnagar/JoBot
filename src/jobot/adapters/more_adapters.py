@@ -8,7 +8,7 @@ Real job discovery for these platforms is handled by the scraper layer
 (``jobot.scrapers.jobspy``) which uses the python-jobspy library.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
@@ -28,7 +28,7 @@ class GenericPortalAdapter(SiteAdapter):
     def __init__(self, site_name: str):
         super().__init__(site_name)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
@@ -40,7 +40,7 @@ class GenericPortalAdapter(SiteAdapter):
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:

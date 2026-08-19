@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
+
 from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import Application, JobPosting, UserProfile, VerificationResult
 
@@ -21,7 +22,7 @@ class SiteAdapter(ABC):
         self.site_name = site_name
 
     @abstractmethod
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         """Authenticate with the site using existing session or vault credentials."""
         pass
 
@@ -33,7 +34,7 @@ class SiteAdapter(ABC):
     @abstractmethod
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Map profile facts to form fields and perform non-submitting form fill."""
         pass
 
@@ -54,6 +55,6 @@ class SiteAdapter(ABC):
             "What is your notice period?",
         ]
 
-    async def capture_screenshot(self) -> Optional[bytes]:
+    async def capture_screenshot(self) -> bytes | None:
         """Capture screenshot of current page state for evidence recording."""
         return None

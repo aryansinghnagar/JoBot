@@ -10,7 +10,6 @@ Persistence: `job_dedup_cache` table in the SQLite control plane DB.
 import hashlib
 import logging
 import re
-from typing import List, Optional, Tuple
 
 from jobot.memory.vector import simple_embedding
 from jobot.models.domain import JobPosting
@@ -26,7 +25,7 @@ _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 class DedupResult:
     """Outcome of a dedup pass over a batch of postings."""
 
-    def __init__(self, unique: List[JobPosting], rejected: int) -> None:
+    def __init__(self, unique: list[JobPosting], rejected: int) -> None:
         self.unique = unique
         self.rejected = rejected
 
@@ -46,14 +45,14 @@ class DedupService:
     """Persistent two-tier duplicate-posting detector with in-memory vector cache."""
 
     def __init__(
-        self, db: Optional[DatabaseManager] = None, threshold: float = DEFAULT_VECTOR_THRESHOLD
+        self, db: DatabaseManager | None = None, threshold: float = DEFAULT_VECTOR_THRESHOLD
     ) -> None:
         self.db = db or DatabaseManager()
         self.threshold = threshold
-        self._cached_hashes: Optional[set[str]] = None
-        self._cached_embeddings: Optional[List[List[float]]] = None
+        self._cached_hashes: set[str] | None = None
+        self._cached_embeddings: list[list[float]] | None = None
 
-    def _ensure_cache(self) -> Tuple[set[str], List[List[float]]]:
+    def _ensure_cache(self) -> tuple[set[str], list[list[float]]]:
         if self._cached_hashes is None or self._cached_embeddings is None:
             entries = self.db.list_dedup_entries()
             self._cached_hashes = {e["dedup_hash"] for e in entries}
@@ -70,13 +69,13 @@ class DedupService:
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def _embed(posting: JobPosting) -> List[float]:
+    def _embed(posting: JobPosting) -> list[float]:
         # Title only: the exact-hash tier already keys on title|company|location,
         # and shared company/location text would drown the vector-tier signal.
         return simple_embedding(posting.title, dim=64)
 
     @staticmethod
-    def cosine(a: List[float], b: List[float]) -> float:
+    def cosine(a: list[float], b: list[float]) -> float:
         dot = sum(x * y for x, y in zip(a, b))
         return dot  # both vectors are unit-normalized
 
@@ -106,9 +105,9 @@ class DedupService:
         cached_hashes.add(h)
         cached_embeddings.append(emb)
 
-    def filter_unique(self, postings: List[JobPosting]) -> DedupResult:
+    def filter_unique(self, postings: list[JobPosting]) -> DedupResult:
         """Record and keep first-seen postings; reject exact or near duplicates."""
-        unique: List[JobPosting] = []
+        unique: list[JobPosting] = []
         rejected = 0
         for posting in postings:
             if self.is_duplicate(posting):
@@ -119,7 +118,7 @@ class DedupService:
         return DedupResult(unique=unique, rejected=rejected)
 
     @staticmethod
-    def repost_reduction(synthetic: List[Tuple[JobPosting, bool]]) -> float:
+    def repost_reduction(synthetic: list[tuple[JobPosting, bool]]) -> float:
         """Score a synthetic corpus: fraction of true duplicates the service rejected."""
         import tempfile
         from pathlib import Path

@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -18,7 +18,7 @@ class TrackerRenderer:
             autoescape=select_autoescape(["html", "j2"]),
         )
 
-    def terminal_rows(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def terminal_rows(self, limit: int = 20) -> list[dict[str, Any]]:
         return self.analytics.recent(limit=limit)
 
     def render_terminal(self, console: Any, limit: int = 20) -> None:
@@ -69,7 +69,7 @@ class TrackerRenderer:
         template = self._env.get_template("dashboard.html.j2")
         data = self.analytics.summary()
         data["recent"] = self.analytics.recent(limit=limit)
-        generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        generated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         return template.render(generated=generated, **data)
 
     def render_html_file(self, out_path: Path, limit: int = 1000) -> Path:

@@ -1,4 +1,11 @@
-"""Phase 4 WS6: plugins — manifest, installer (file:// git), auditor, CLI."""
+"""Phase 4 WS6: plugins — manifest, installer (file:// git), auditor, CLI.
+
+Audit fix JOB-SEC-003: the ``file://`` scheme was removed from the default
+``ALLOWED_SCHEMES`` in ``PluginInstaller``. Tests opt in to local installs via
+the ``JOBOT_ALLOW_LOCAL_PLUGIN_INSTALL=1`` env var, which is set by the
+``allow_local_plugin_install`` fixture below. Production users never see this
+env var, so ``file://`` URLs are refused at runtime.
+"""
 
 import subprocess
 from pathlib import Path
@@ -74,6 +81,17 @@ def plugin_repo(tmp_path):
     return repo
 
 
+@pytest.fixture
+def allow_local_plugin_install(monkeypatch):
+    """Allow ``file://`` plugin installs for tests (audit fix JOB-SEC-003).
+
+    Tests need to install from a local ``git init`` fixture. Production users
+    cannot set this env var (it is a Python-level monkeypatch only), so the
+    security boundary is preserved at runtime.
+    """
+    monkeypatch.setenv("JOBOT_ALLOW_LOCAL_PLUGIN_INSTALL", "1")
+
+
 def repo_url(repo: Path) -> str:
     return repo.as_uri()
 
@@ -97,7 +115,7 @@ def test_manifest_rejects_bad_permission(tmp_path):
         load_manifest(tmp_path)
 
 
-def test_install_via_file_url(plugin_repo, tmp_path, monkeypatch):
+def test_install_via_file_url(plugin_repo, allow_local_plugin_install, tmp_path, monkeypatch):
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     installer = PluginInstaller()
     manifest = installer.install(repo_url(plugin_repo))
@@ -108,7 +126,16 @@ def test_install_via_file_url(plugin_repo, tmp_path, monkeypatch):
     assert installer.list_plugins()[0]["name"] == "hello-bot"
 
 
-def test_install_rejects_duplicate(plugin_repo, tmp_path, monkeypatch):
+def test_install_rejects_file_url_in_production(plugin_repo, tmp_path, monkeypatch):
+    """Audit fix JOB-SEC-003: ``file://`` is refused without the env-var opt-in."""
+    monkeypatch.delenv("JOBOT_ALLOW_LOCAL_PLUGIN_INSTALL", raising=False)
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+    installer = PluginInstaller()
+    with pytest.raises(ValueError, match="file:"):
+        installer.install(repo_url(plugin_repo))
+
+
+def test_install_rejects_duplicate(plugin_repo, allow_local_plugin_install, tmp_path, monkeypatch):
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     installer = PluginInstaller()
     installer.install(repo_url(plugin_repo))
@@ -116,7 +143,7 @@ def test_install_rejects_duplicate(plugin_repo, tmp_path, monkeypatch):
         installer.install(repo_url(plugin_repo))
 
 
-def test_install_requires_manifest(tmp_path, monkeypatch):
+def test_install_requires_manifest(allow_local_plugin_install, tmp_path, monkeypatch):
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     repo = tmp_path / "no-manifest"
     repo.mkdir()
@@ -125,7 +152,7 @@ def test_install_requires_manifest(tmp_path, monkeypatch):
         PluginInstaller().install(repo.as_uri())
 
 
-def test_remove_plugin(plugin_repo, tmp_path, monkeypatch):
+def test_remove_plugin(plugin_repo, allow_local_plugin_install, tmp_path, monkeypatch):
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     installer = PluginInstaller()
     installer.install(repo_url(plugin_repo))
@@ -160,6 +187,55 @@ def test_auditor_flags_dangerous_imports(tmp_path):
     report = PluginAuditor().audit(tmp_path)
     assert report.passed is False
     assert any("subprocess" in f.message for f in report.findings)
+
+
+def test_auditor_flags_dynamic_import_bypass(tmp_path):
+    """Audit fix JOB-SEC-013: AST scanner catches what substring missed.
+
+    The previous substring scan would have missed ``__import__("subprocess")``
+    because no ``import subprocess`` line appears in the source. The AST scan
+    walks ``Call`` nodes and flags ``__import__`` as a dangerous global call.
+    """
+    (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
+    (tmp_path / "evil.py").write_text(
+        'sp = __import__("subprocess")\n'
+        'sp.run(["ls"])\n',
+        encoding="utf-8",
+    )
+    report = PluginAuditor().audit(tmp_path)
+    assert report.passed is False
+    assert any("__import__" in f.message for f in report.findings)
+
+
+def test_auditor_flags_eval_bypass(tmp_path):
+    """Audit fix JOB-SEC-013: AST scanner catches ``eval()`` and ``exec()``.
+
+    The previous substring scan assembled the tokens from concatenated
+    fragments ("e" + "val(") so the source itself did not contain the
+    string ``eval(``. The AST scan inspects ``Call`` nodes by name and
+    catches both ``eval`` and ``exec`` regardless of source-level obfuscation.
+    """
+    (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
+    (tmp_path / "evil.py").write_text(
+        'result = eval("1+1")\n',
+        encoding="utf-8",
+    )
+    report = PluginAuditor().audit(tmp_path)
+    assert report.passed is False
+    assert any("eval" in f.message for f in report.findings)
+
+
+def test_auditor_flags_from_import_dangerous(tmp_path):
+    """AST scan flags ``from os import system`` via the full dotted path."""
+    (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
+    (tmp_path / "evil.py").write_text(
+        'from os import system\n'
+        'system("ls")\n',
+        encoding="utf-8",
+    )
+    report = PluginAuditor().audit(tmp_path)
+    assert report.passed is False
+    assert any("os.system" in f.message for f in report.findings)
 
 
 def test_cli_plugin_list_empty(tmp_path, monkeypatch):

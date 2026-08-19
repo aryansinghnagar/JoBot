@@ -13,7 +13,7 @@ claims must not exceed profile facts.
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -38,19 +38,19 @@ class TailoredDocumentResult(BaseModel):
     profile_id: str
     job_id: str
     tailored_summary: str
-    highlighted_skills: List[str]
+    highlighted_skills: list[str]
     cover_letter_text: str
     is_truthful: bool
     tailored_resume: str = ""
-    tailored_experience: List[Dict[str, Any]] = []
+    tailored_experience: list[dict[str, Any]] = []
     iteration_count: int = 1
-    rubric_scores: Dict[str, float] = {}
-    truthfulness_notes: List[str] = []
+    rubric_scores: dict[str, float] = {}
+    truthfulness_notes: list[str] = []
 
 
 class RubricScores(BaseModel):
-    scores: Dict[str, float]
-    issues: List[str]
+    scores: dict[str, float]
+    issues: list[str]
     verdict: str
 
     def average(self) -> float:
@@ -60,7 +60,7 @@ class RubricScores(BaseModel):
         return self.verdict == "PASS" or self.average() >= min_rubric
 
 
-def _extract_json(text: str) -> Optional[Dict[str, Any]]:
+def _extract_json(text: str) -> dict[str, Any] | None:
     """Extract the first balanced JSON object from LLM output."""
     start = text.find("{")
     end = text.rfind("}")
@@ -73,10 +73,10 @@ def _extract_json(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def _skill_tokens(text: str, profile: UserProfile, job: JobPosting) -> List[str]:
+def _skill_tokens(text: str, profile: UserProfile, job: JobPosting) -> list[str]:
     """All skill-like tokens present in text (from profile + job skill sources)."""
     universe = {s.lower() for s in profile.skills} | {s.lower() for s in job.parsed_skills}
-    found: List[str] = []
+    found: list[str] = []
     lowered = text.lower()
     for skill in universe:
         if skill and skill.lower() in lowered:
@@ -102,7 +102,7 @@ def _profile_skill_tokens(profile: UserProfile) -> set[str]:
     return tokens
 
 
-def _known_tech_claims(text: str, profile: UserProfile) -> List[str]:
+def _known_tech_claims(text: str, profile: UserProfile) -> list[str]:
     """Skill claims in text detectable via the common-tech lexicon.
 
     A claim is a violation only if the term is not traceable to ANY profile
@@ -131,10 +131,10 @@ def _known_tech_claims(text: str, profile: UserProfile) -> List[str]:
 
 
 def verify_fact_truthfulness_detailed(
-    text: str, profile: UserProfile, job: Optional[JobPosting] = None
-) -> tuple[bool, List[str]]:
+    text: str, profile: UserProfile, job: JobPosting | None = None
+) -> tuple[bool, list[str]]:
     """Deterministic grounding gate for tailored text. Returns (ok, violations)."""
-    violations: List[str] = []
+    violations: list[str] = []
     allowed_tokens = _profile_skill_tokens(profile)
 
     if job:
@@ -184,7 +184,7 @@ class Drafter:
         "reference a real profile employer and title."
     )
 
-    def __init__(self, router: Optional[ModelRouter] = None):
+    def __init__(self, router: ModelRouter | None = None):
         self.router = router or ModelRouter()
 
     def _build_prompt(self, job: JobPosting, profile: UserProfile) -> str:
@@ -220,7 +220,7 @@ class Drafter:
             "Now produce the tailored resume JSON."
         )
 
-    async def draft(self, job: JobPosting, profile: UserProfile) -> Dict[str, Any]:
+    async def draft(self, job: JobPosting, profile: UserProfile) -> dict[str, Any]:
         text = await self.router.generate_text(
             self._build_prompt(job, profile),
             system_prompt=self.SYSTEM_PROMPT,
@@ -237,8 +237,8 @@ class Drafter:
         return parsed
 
     async def revise(
-        self, job: JobPosting, profile: UserProfile, draft: Dict[str, Any], issues: List[str]
-    ) -> Dict[str, Any]:
+        self, job: JobPosting, profile: UserProfile, draft: dict[str, Any], issues: list[str]
+    ) -> dict[str, Any]:
         prompt = (
             f"Previous draft: {json.dumps(draft, ensure_ascii=False)}\n\n"
             "Reviewer issues to fix:\n"
@@ -260,7 +260,7 @@ class Drafter:
             raise RuntimeError("Drafter returned no parseable JSON on revision")
         return parsed
 
-    def _fallback_draft(self, job: JobPosting, profile: UserProfile) -> Dict[str, Any]:
+    def _fallback_draft(self, job: JobPosting, profile: UserProfile) -> dict[str, Any]:
         """Deterministic, profile-facts-only draft used when the LLM is unavailable."""
         profile_skills_lower = {s.lower() for s in profile.skills}
         skills = [s for s in job.parsed_skills if s.lower() in profile_skills_lower]
@@ -287,11 +287,11 @@ class Reviewer:
         "supported by the profile facts must yield a REVISE verdict."
     )
 
-    def __init__(self, router: Optional[ModelRouter] = None):
+    def __init__(self, router: ModelRouter | None = None):
         self.router = router or ModelRouter()
 
     async def review(
-        self, job: JobPosting, profile: UserProfile, draft: Dict[str, Any]
+        self, job: JobPosting, profile: UserProfile, draft: dict[str, Any]
     ) -> RubricScores:
         job_title = sanitize_llm_input(job.title)
         job_company = sanitize_llm_input(job.company)
@@ -332,7 +332,7 @@ class Reviewer:
         return RubricScores(scores=scores, issues=issues, verdict=verdict)
 
 
-def _ground_draft(draft: Dict[str, Any], profile: UserProfile) -> Dict[str, Any]:
+def _ground_draft(draft: dict[str, Any], profile: UserProfile) -> dict[str, Any]:
     """Drop ungrounded rows from LLM output: skills not in profile, phantom employers."""
     profile_skills = {s.lower() for s in profile.skills}
     skills = [s for s in (draft.get("skills") or []) if s.lower() in profile_skills]
@@ -340,7 +340,7 @@ def _ground_draft(draft: Dict[str, Any], profile: UserProfile) -> Dict[str, Any]
     exp_by_key = {
         f"{exp.company.lower()}|{exp.title.lower()}": exp for exp in (profile.experiences or [])
     }
-    experience: List[Dict[str, Any]] = []
+    experience: list[dict[str, Any]] = []
     for item in draft.get("experience") or []:
         company = str(item.get("company") or "").strip()
         title = str(item.get("title") or "").strip()
@@ -362,7 +362,7 @@ class TailorLoop:
 
     def __init__(
         self,
-        router: Optional[ModelRouter] = None,
+        router: ModelRouter | None = None,
         max_iterations: int = DEFAULT_MAX_ITERATIONS,
         min_rubric: float = DEFAULT_MIN_RUBRIC,
     ):
@@ -413,7 +413,7 @@ class TailorLoop:
             truthfulness_notes=notes,
         )
 
-    def _render_markdown(self, job: JobPosting, profile: UserProfile, draft: Dict[str, Any]) -> str:
+    def _render_markdown(self, job: JobPosting, profile: UserProfile, draft: dict[str, Any]) -> str:
         """Render grounded draft as single-column ATS plain text."""
         lines = [
             f"=== {profile.personal_info.first_name.upper()} {profile.personal_info.last_name.upper()} ===",
@@ -446,7 +446,7 @@ class TailorLoop:
 class DocumentTailor:
     """Resume Tailoring & Cover Letter Engine (Layer J) — drafter/reviewer loop."""
 
-    def __init__(self, router: Optional[ModelRouter] = None):
+    def __init__(self, router: ModelRouter | None = None):
         self.router = router or ModelRouter()
         self.loop = TailorLoop(self.router)
 

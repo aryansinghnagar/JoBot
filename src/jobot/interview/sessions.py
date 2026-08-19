@@ -1,9 +1,8 @@
 """Interview session persistence to ~/.jobot/interviews/<session_id>.json."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -27,14 +26,14 @@ class InterviewSession(BaseModel):
     status: str = "active"
     created_at: str
     updated_at: str
-    turns: List[InterviewTurn] = []
-    asked_ids: List[str] = []
+    turns: list[InterviewTurn] = []
+    asked_ids: list[str] = []
 
 
 class SessionStore:
     """Load/save interview sessions as JSON files."""
 
-    def __init__(self, sessions_dir: Optional[Path] = None) -> None:
+    def __init__(self, sessions_dir: Path | None = None) -> None:
         self.sessions_dir = Path(sessions_dir or default_sessions_dir())
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
 
@@ -42,18 +41,18 @@ class SessionStore:
         return self.sessions_dir / f"{session_id}.json"
 
     def save(self, session: InterviewSession) -> Path:
-        session.updated_at = datetime.now(timezone.utc).isoformat()
+        session.updated_at = datetime.now(UTC).isoformat()
         path = self._path(session.session_id)
         path.write_text(session.model_dump_json(indent=2), encoding="utf-8")
         return path
 
-    def load(self, session_id: str) -> Optional[InterviewSession]:
+    def load(self, session_id: str) -> InterviewSession | None:
         path = self._path(session_id)
         if not path.exists():
             return None
         return InterviewSession.model_validate_json(path.read_text(encoding="utf-8"))
 
-    def list(self) -> List[InterviewSession]:
+    def list(self) -> list[InterviewSession]:
         sessions = []
         for path in sorted(self.sessions_dir.glob("*.json")):
             try:
@@ -66,7 +65,7 @@ class SessionStore:
 
 
 def new_session(track: str) -> InterviewSession:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     return InterviewSession(
         session_id=f"int_{uuid.uuid4().hex[:8]}",
         track=track,

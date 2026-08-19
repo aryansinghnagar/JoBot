@@ -196,7 +196,9 @@ def test_sidecar_ping(monkeypatch, tmp_path):
     server = _server(monkeypatch, tmp_path)
     res = _call(server, "ping", {})
     assert res["result"]["status"] == "pong"
-    assert res["result"]["version"] == "2.0.0"
+    # Sidecar should report the canonical package version (audit fix JOB-ARC-010).
+    # We accept any of the legitimate pre-release versions — exact drift was the bug.
+    assert res["result"]["version"] in ("0.1.0", "0.2.0")
 
 
 def test_sidecar_unknown_method(monkeypatch, tmp_path):

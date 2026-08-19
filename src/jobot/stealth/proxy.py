@@ -1,5 +1,5 @@
 import random
-from typing import List, Optional
+
 from pydantic import BaseModel
 
 
@@ -7,8 +7,8 @@ class ProxyConfig(BaseModel):
     proxy_id: str
     server: str
     port: int
-    username: Optional[str] = None
-    password: Optional[str] = None
+    username: str | None = None
+    password: str | None = None
     country: str = "IN"
     is_healthy: bool = True
 
@@ -19,12 +19,12 @@ class ProxyManager:
     """
 
     def __init__(self) -> None:
-        self.proxies: List[ProxyConfig] = []
+        self.proxies: list[ProxyConfig] = []
 
     def add_proxy(self, proxy: ProxyConfig) -> None:
         self.proxies.append(proxy)
 
-    def get_proxy_for_site(self, site_name: str, country: str = "IN") -> Optional[ProxyConfig]:
+    def get_proxy_for_site(self, site_name: str, country: str = "IN") -> ProxyConfig | None:
         healthy = [p for p in self.proxies if p.is_healthy and p.country == country]
         if not healthy:
             healthy = [p for p in self.proxies if p.is_healthy]

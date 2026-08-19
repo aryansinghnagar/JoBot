@@ -3,8 +3,8 @@ import logging
 import os
 import random
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability
@@ -37,9 +37,9 @@ class NaukriAdapter(SiteAdapter):
         self.form_filler = NaukriFormFiller()
         self.submitter = NaukriSubmitter()
         self.verifier = NaukriVerifier()
-        self._session: Optional[BrowserSession] = None
+        self._session: BrowserSession | None = None
 
-    async def _browser_page(self) -> Optional[Any]:
+    async def _browser_page(self) -> Any | None:
         """Return an authenticated browser page when live browser runs are enabled."""
         if os.getenv("JOBOT_RUN_LIVE_BROWSER") != "1":
             logger.warning(
@@ -56,7 +56,7 @@ class NaukriAdapter(SiteAdapter):
         delay = random.uniform(min_sec, max_sec)
         await asyncio.sleep(delay)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         await self._jitter_delay(0.2, 0.8)
         return await self.login_flow.execute_login(username, password)
 
@@ -73,12 +73,12 @@ class NaukriAdapter(SiteAdapter):
             experience_required="",
             description="",
             parsed_skills=[],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         await self._jitter_delay(0.5, 1.5)
         return await self.form_filler.fill_application_form(job, profile, application)
 

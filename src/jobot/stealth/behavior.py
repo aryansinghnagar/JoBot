@@ -1,5 +1,4 @@
 import random
-from typing import List, Tuple
 
 
 class BehavioralMimicry:
@@ -10,8 +9,8 @@ class BehavioralMimicry:
 
     @staticmethod
     def generate_bezier_curve(
-        start: Tuple[int, int], end: Tuple[int, int], control_points_count: int = 2
-    ) -> List[Tuple[int, int]]:
+        start: tuple[int, int], end: tuple[int, int], control_points_count: int = 2
+    ) -> list[tuple[int, int]]:
         """Generate Cubic Bezier curve points with human-like jitter between start and end coordinates."""
         if start == end:
             return [start]
@@ -52,7 +51,7 @@ class BehavioralMimicry:
         return points
 
     @staticmethod
-    def get_keystroke_delays(text: str) -> List[float]:
+    def get_keystroke_delays(text: str) -> list[float]:
         """Generate human-like typing inter-key delays (70ms - 220ms with pause on punctuation)."""
         delays = []
         for char in text:

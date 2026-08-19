@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
+
 from jobot.ai.qa_engine import QAEngine
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
 from jobot.stealth.behavior import BehavioralMimicry
@@ -13,7 +14,7 @@ class NaukriFormFiller:
     Extracts form questions, queries QAEngine with profile grounding, and populates form fields.
     """
 
-    def __init__(self, qa_engine: Optional[QAEngine] = None):
+    def __init__(self, qa_engine: QAEngine | None = None):
         self.qa_engine = qa_engine or QAEngine()
         self.mimicry = BehavioralMimicry()
 
@@ -22,8 +23,8 @@ class NaukriFormFiller:
         job: JobPosting,
         profile: UserProfile,
         application: Application,
-        page: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        page: Any | None = None,
+    ) -> dict[str, Any]:
         """Detect form inputs and populate profile values using QAEngine and BehavioralMimicry."""
         full_name = f"{profile.personal_info.first_name} {profile.personal_info.last_name}".strip()
         email = profile.personal_info.email

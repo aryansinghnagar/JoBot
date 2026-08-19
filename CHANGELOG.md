@@ -13,6 +13,16 @@ Semantic Versioning will be adopted once a 1.0.0 release exists.
 
 ### Added
 
+- **Audit remediation — 2026-08-19.** Reconstructed `MASTER_PLAN_EXPANDED.md`
+  (was referenced 40+ times across governance docs and 8 source modules but
+  absent from the repository — audit finding JOB-OSS-004). The new document
+  contains the decision register (D1–D24), risk register (R1–R17),
+  verification doctrine (L1–L9, G0–G7), and production-readiness workstreams
+  (WS0–WS8) that every previously-dangling citation now resolves to.
+- **Audit remediation — 2026-08-19.** Added `AUDIT_REMEDIATION.md` at the
+  repo root, documenting each fix applied in response to the deep forensic
+  audit. Each entry cross-references the finding ID (JOB-*), the file
+  touched, and the rationale.
 - **WS3 — application correctness (gate G3).** Application protocol state
   machine (`jobot.applications.state_machine`, §3.4 transition table with
   first-class SUBMISSION_UNKNOWN / VERIFICATION_UNKNOWN / outcome states and
@@ -45,6 +55,70 @@ Semantic Versioning will be adopted once a 1.0.0 release exists.
 
 ### Changed
 
+- **Audit remediation — 2026-08-19.** Version authority reconciled: all
+  five manifests (`pyproject.toml`, `package.json`, `gui/package.json`,
+  `gui/src-tauri/tauri.conf.json`, `gui/src-tauri/Cargo.toml`) now declare
+  `0.2.0`, matching `SECURITY.md`, this changelog, and `CONTRIBUTING.md`.
+  `jobot.__version__` and the sidecar `_ping` RPC handler now read the
+  canonical version from `jobot.updater.get_current_version()` instead of a
+  hardcoded string. CI runs `python scripts/sync_versions.py --check` on
+  every supply-chain job to prevent future drift (fixes JOB-ARC-010).
+- **Audit remediation — 2026-08-19.** `continuous-campaign` CLI default
+  flipped from `--auto-submit` to `--supervised` (fixes JOB-SEC-001 /
+  JOB-UX-005 / JOB-ARC-003). The CLI now prints an explicit ToS-risk
+  warning and requires interactive `y/N` confirmation before starting any
+  campaign; autonomous mode requires a second confirmation. The runner's
+  inter-iteration sleep was raised from `0.05s` to a randomized `5–15s`
+  window to respect portal rate-limit courtesy.
+- **Audit remediation — 2026-08-19.** All four HTTP-based LLM providers
+  (`OpenAIProvider`, `AnthropicProvider`, `MistralProvider`,
+  `CohereProvider`) now call `http_post_json_async` (which delegates to
+  `asyncio.to_thread(http_post_json, ...)`) instead of the synchronous
+  `http_post_json`. The event loop is no longer frozen for the full LLM
+  call window — fixes JOB-ARC-005 / JOB-ARC-004. The synchronous helper is
+  retained for non-async call sites.
+- **Audit remediation — 2026-08-19.** Plugin installer no longer accepts
+  the `file://` scheme by default (fixes JOB-SEC-003). Local-path plugin
+  installs are gated behind the `JOBOT_ALLOW_LOCAL_PLUGIN_INSTALL=1` env
+  var, which is intended for the test suite only. Bare local paths and
+  Windows drive-letter paths are refused with a clear error message.
+- **Audit remediation — 2026-08-19.** Plugin import scanner rewritten to
+  use the Python AST instead of substring matching (fixes JOB-SEC-013).
+  The previous substring scan was bypassable via `__import__("subprocess")`,
+  string concatenation, or `getattr(module, "system")(...)`. The new AST
+  walker inspects `Import`, `ImportFrom`, and `Call` nodes for forbidden
+  modules and dynamic code-execution globals (`__import__`, `eval`, `exec`,
+  `compile`).
+- **Audit remediation — 2026-08-19.** Untrusted ATS questions are now
+  wrapped in `<UNTRUSTED_INPUT>...</UNTRUSTED_INPUT>` delimiters before
+  being interpolated into the QA-engine LLM prompt (fixes JOB-ARC-007).
+  A system message instructs the model to treat the delimited content as
+  data, not as instructions. This is defense in depth on top of the
+  existing regex-based `sanitize_llm_input` scrubber.
+- **Audit remediation — 2026-08-19.** Removed `--no-sandbox` from the
+  Patchright/Chromium launch args (fixes JOB-SEC-012). The sandbox is the
+  boundary that limits a malicious page's blast radius; disabling it
+  turns every renderer compromise into a full-process compromise. Docker
+  users should configure the container with `--cap-add=SYS_ADMIN` instead
+  of disabling the sandbox globally. `--disable-dev-shm-usage` is kept
+  (benign Docker workaround).
+- **Audit remediation — 2026-08-19.** Ruff lint rules expanded from
+  `E,F,W` to include `S` (bandit security), `B` (bugbear), `C90`
+  (mccabe complexity), `UP` (pyupgrade), and `I` (isort) (fixes
+  JOB-SEC-006). Per-file ignores are configured for the test suite (which
+  legitimately uses `assert`, hardcoded test secrets, and `/tmp` paths).
+- **Audit remediation — 2026-08-19.** Dependency lower bounds raised to
+  versions that fix known CVEs (fixes JOB-SEC-019): `cryptography>=42.0.4`
+  (was `>=41.0.0`, which admitted CVE-2023-50782 / CVE-2024-26130),
+  `jinja2>=3.1.3` (was `>=3.1.0`, which admitted CVE-2024-22195),
+  `pyyaml>=6.0.2` (was `>=6.0`, which admitted CVE-2024-49770).
+- **Audit remediation — 2026-08-19.** Cover-letter generator now guards
+  against the `[LLM_UNAVAILABLE]` degradation sentinel (fixes
+  JOB-SEC-020). Previously the literal string
+  `[LLM_UNAVAILABLE] Information from profile facts: ...` could flow into
+  the cover-letter PDF and be submitted to the employer. The generator now
+  returns an empty letter and logs a warning when the sentinel is
+  detected.
 - `AGENTS.md` operating doctrine updated to match the expanded plan.
 - **Behavioral (G3 contract):** an adapter exception during submission now
   leaves the application SUBMISSION_UNKNOWN (was FAILED) and the effect

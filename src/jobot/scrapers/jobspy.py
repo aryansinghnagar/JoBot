@@ -10,7 +10,7 @@ import-guarded here with a clear error.
 import asyncio
 import hashlib
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from jobot.models.domain import JobPosting
 from jobot.scrapers.exceptions import JobSpyNotInstalledError
@@ -50,8 +50,8 @@ class JobSpyAdapter:
         self,
         board: str,
         delay_s: float = 1.0,
-        proxies: Optional[List[str]] = None,
-        breaker: Optional[CircuitBreaker] = None,
+        proxies: list[str] | None = None,
+        breaker: CircuitBreaker | None = None,
     ) -> None:
         if board not in JOBS_BOARDS:
             raise ValueError(f"Unknown JobSpy board '{board}'. Supported: {JOBS_BOARDS}")
@@ -78,15 +78,15 @@ class JobSpyAdapter:
         keywords: str,
         location: str,
         limit: int,
-        hours_old: Optional[int],
+        hours_old: int | None,
         country_indeed: str,
         is_remote: bool,
-        job_type: Optional[str],
+        job_type: str | None,
     ) -> Any:
         scrape_jobs = self._load_jobspy()
         if self.delay_s > 0:
             await asyncio.sleep(self.delay_s)
-        kwargs: Dict[str, Any] = {
+        kwargs: dict[str, Any] = {
             "site_name": self.board,
             "search_term": keywords or None,
             "location": location or None,
@@ -111,11 +111,11 @@ class JobSpyAdapter:
         keywords: str = "",
         location: str = "",
         limit: int = 25,
-        hours_old: Optional[int] = 72,
+        hours_old: int | None = 72,
         country_indeed: str = "USA",
         is_remote: bool = False,
-        job_type: Optional[str] = None,
-    ) -> List[JobPosting]:
+        job_type: str | None = None,
+    ) -> list[JobPosting]:
         """Scrape postings from the board through the circuit breaker."""
         frame = await self.breaker.execute_with_retry(
             self._domain(),
@@ -130,7 +130,7 @@ class JobSpyAdapter:
         )
         if frame is None:
             return []
-        postings: List[JobPosting] = []
+        postings: list[JobPosting] = []
         for _, row in frame.iterrows():
             url = str(_cell(row, "job_url") or "")
             title = str(_cell(row, "title") or "").strip()

@@ -2,7 +2,8 @@ import json
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,8 @@ class EvalScenario(BaseModel):
     scenario_id: str
     category: EvalCategory
     title: str
-    input_data: Dict[str, Any]
-    expected_output: Dict[str, Any]
+    input_data: dict[str, Any]
+    expected_output: dict[str, Any]
 
 
 class EvalResult(BaseModel):
@@ -30,7 +31,7 @@ class EvalResult(BaseModel):
     category: EvalCategory
     passed: bool
     score: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class EvalHarness:
@@ -39,7 +40,7 @@ class EvalHarness:
     Evaluates system performance across 6 eval categories without hardcoded assumptions.
     """
 
-    def __init__(self, scenarios_dir: Optional[Path] = None):
+    def __init__(self, scenarios_dir: Path | None = None):
         if scenarios_dir is None:
             scenarios_dir = Path(__file__).resolve().parents[3] / "tests" / "evals"
             if not scenarios_dir.exists():
@@ -49,7 +50,7 @@ class EvalHarness:
             self.scenarios_dir.mkdir(parents=True, exist_ok=True)
         except Exception:
             pass
-        self.scenarios: List[EvalScenario] = []
+        self.scenarios: list[EvalScenario] = []
         self.load_scenarios_from_dir(self.scenarios_dir)
 
     def load_scenario(self, scenario: EvalScenario) -> None:
@@ -60,7 +61,7 @@ class EvalHarness:
             return
         for json_file in directory.glob("*.json"):
             try:
-                with open(json_file, "r", encoding="utf-8") as f:
+                with open(json_file, encoding="utf-8") as f:
                     data = json.load(f)
                     scenario = EvalScenario(
                         scenario_id=data["scenario_id"],
@@ -161,14 +162,14 @@ class EvalHarness:
                 error_message=str(exc),
             )
 
-    def run_eval_suite(self) -> Dict[str, Any]:
+    def run_eval_suite(self) -> dict[str, Any]:
         total = len(self.scenarios)
         if total == 0:
             return {"total": 0, "passed": 0, "pass_rate": 1.0, "category_scores": {}}
 
         passed_count = 0
-        results: List[EvalResult] = []
-        cat_scores: Dict[str, Dict[str, int]] = {}
+        results: list[EvalResult] = []
+        cat_scores: dict[str, dict[str, int]] = {}
 
         for sc in self.scenarios:
             cat = sc.category.value

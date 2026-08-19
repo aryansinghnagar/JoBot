@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Dict
 
 from jobot.stealth.browser import BrowserSession
 
@@ -21,7 +21,7 @@ class BrowserSessionPool:
 
     def __init__(self, max_idle_sessions: int = 4) -> None:
         self.max_idle_sessions = max_idle_sessions
-        self._pool: Dict[str, BrowserSession] = {}
+        self._pool: dict[str, BrowserSession] = {}
         self._lock = asyncio.Lock()
 
     @asynccontextmanager

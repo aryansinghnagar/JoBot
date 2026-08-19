@@ -1,6 +1,7 @@
 import logging
-from typing import Dict, Optional
+
 from pydantic import BaseModel
+
 from jobot.storage.db import DatabaseManager
 
 logger = logging.getLogger(__name__)
@@ -20,13 +21,13 @@ class EvalOptimizer:
     Analyzes historical application submission trajectories and auto-tunes per-portal execution policies.
     """
 
-    def __init__(self, db: Optional[DatabaseManager] = None):
+    def __init__(self, db: DatabaseManager | None = None):
         self.db = db or DatabaseManager()
 
-    def analyze_portal_performance(self) -> Dict[str, PortalMetrics]:
+    def analyze_portal_performance(self) -> dict[str, PortalMetrics]:
         """Compute success rates and auto-tuned delay policies for all portals."""
         apps = self.db.list_applications(limit=1000)
-        portal_data: Dict[str, Dict[str, int]] = {}
+        portal_data: dict[str, dict[str, int]] = {}
 
         for app in apps:
             site = app.site.lower()

@@ -1,9 +1,10 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
-from cryptography.fernet import Fernet
+
 import keyring
+from cryptography.fernet import Fernet
+
 from jobot.models.domain import UserProfile
 
 SERVICE_NAME = "jobot_vault"
@@ -29,7 +30,7 @@ class CredentialVault:
     protection for files under the user's home directory.
     """
 
-    def __init__(self, key_dir: Optional[Path] = None):
+    def __init__(self, key_dir: Path | None = None):
         if key_dir is None:
             key_dir = Path.home() / ".jobot" / "vault"
         key_dir.mkdir(parents=True, exist_ok=True)
@@ -124,7 +125,7 @@ class CredentialVault:
     # -------------------------------------------------------------------
 
     def save_encrypted_profile(
-        self, profile: UserProfile, profile_path: Optional[Path] = None
+        self, profile: UserProfile, profile_path: Path | None = None
     ) -> Path:
         if profile_path is None:
             profile_dir = Path.home() / ".jobot" / "profiles"

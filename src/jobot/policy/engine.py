@@ -1,6 +1,7 @@
 import logging
-from typing import Dict, List, Optional
+
 from pydantic import BaseModel
+
 from jobot.models.domain import Application, JobPosting, TrustLevel, UserProfile
 from jobot.obs.alerts import AlertDispatcher, AlertLevel
 
@@ -16,8 +17,8 @@ class PolicyViolation(BaseModel):
 class PolicyEvaluationResult(BaseModel):
     allowed: bool
     requires_approval: bool
-    violations: List[PolicyViolation]
-    blocking_reason: Optional[str] = None
+    violations: list[PolicyViolation]
+    blocking_reason: str | None = None
 
 
 class PolicyEngine:
@@ -26,9 +27,9 @@ class PolicyEngine:
     Enforces 9 default safety, rate-limiting, privacy, and truthfulness policy rules.
     """
 
-    def __init__(self, alert_dispatcher: Optional[AlertDispatcher] = None) -> None:
+    def __init__(self, alert_dispatcher: AlertDispatcher | None = None) -> None:
         self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
-        self.daily_application_limits: Dict[str, int] = {
+        self.daily_application_limits: dict[str, int] = {
             "naukri": 150,
             "linkedin": 100,
             "indeed": 100,
@@ -48,8 +49,8 @@ class PolicyEngine:
         profile: UserProfile,
         application: Application,
         daily_submitted_count: int,
-    ) -> List[PolicyViolation]:
-        violations: List[PolicyViolation] = []
+    ) -> list[PolicyViolation]:
+        violations: list[PolicyViolation] = []
 
         # Policy 1: Max Daily Applications Cap
         max_allowed = self.daily_application_limits.get(job.site, 20)

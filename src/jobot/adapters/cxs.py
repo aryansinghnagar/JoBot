@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
@@ -37,7 +37,7 @@ class AshbyAdapter(SiteAdapter):
     def __init__(self, site_name: str = "ashby") -> None:
         super().__init__(site_name)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True  # Public API requires no pre-login
 
     async def parse_job_posting(self, url: str) -> JobPosting:
@@ -55,12 +55,12 @@ class AshbyAdapter(SiteAdapter):
             location="Remote / Hybrid",
             description="",
             parsed_skills=[],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
@@ -86,7 +86,7 @@ class WorkableAdapter(SiteAdapter):
     def __init__(self, site_name: str = "workable") -> None:
         super().__init__(site_name)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
@@ -104,12 +104,12 @@ class WorkableAdapter(SiteAdapter):
             location="Flexible",
             description="",
             parsed_skills=[],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
@@ -135,7 +135,7 @@ class RecruiteeAdapter(SiteAdapter):
     def __init__(self, site_name: str = "recruitee") -> None:
         super().__init__(site_name)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
@@ -155,12 +155,12 @@ class RecruiteeAdapter(SiteAdapter):
             location="Hybrid",
             description="",
             parsed_skills=[],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
@@ -186,7 +186,7 @@ class TeamtailorAdapter(SiteAdapter):
     def __init__(self, site_name: str = "teamtailor") -> None:
         super().__init__(site_name)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
@@ -203,12 +203,12 @@ class TeamtailorAdapter(SiteAdapter):
             location="Remote",
             description="",
             parsed_skills=[],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:
@@ -234,7 +234,7 @@ class BambooHRAdapter(SiteAdapter):
     def __init__(self, site_name: str = "bamboohr") -> None:
         super().__init__(site_name)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True
 
     async def parse_job_posting(self, url: str) -> JobPosting:
@@ -254,12 +254,12 @@ class BambooHRAdapter(SiteAdapter):
             location="India / Remote",
             description="",
             parsed_skills=[],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         raise AdapterCapabilityError(self.site_name, "fill_form")
 
     async def submit_application(self, application: Application) -> bool:

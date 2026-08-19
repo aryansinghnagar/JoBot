@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -60,16 +61,16 @@ class PipelinePhase(str, Enum):
 class DoDResult(BaseModel):
     passed: bool
     reason: str = ""
-    evidence_required: Optional[List[str]] = None
+    evidence_required: list[str] | None = None
 
 
 class VerificationResult(BaseModel):
     success: bool
     confidence: float = 1.0
-    confirmation_id: Optional[str] = None
-    evidence_snapshot_path: Optional[str] = None
+    confirmation_id: str | None = None
+    evidence_snapshot_path: str | None = None
     reason: str = ""
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # -------------------------------------------------------------------
@@ -86,9 +87,9 @@ class PersonalInfo(BaseModel):
     location_state: str = ""
     location_country: str = "India"
     postal_code: str = ""
-    linkedin_url: Optional[str] = None
-    github_url: Optional[str] = None
-    portfolio_url: Optional[str] = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
 
 
 class WorkExperience(BaseModel):
@@ -96,10 +97,10 @@ class WorkExperience(BaseModel):
     title: str
     location: str = ""
     start_date: str
-    end_date: Optional[str] = None  # None = Present
+    end_date: str | None = None  # None = Present
     is_current: bool = False
     description: str = ""
-    technologies: List[str] = Field(default_factory=list)
+    technologies: list[str] = Field(default_factory=list)
 
 
 class Education(BaseModel):
@@ -107,14 +108,14 @@ class Education(BaseModel):
     degree: str
     field_of_study: str
     start_year: int
-    end_year: Optional[int] = None
-    gpa_or_percentage: Optional[str] = None
+    end_year: int | None = None
+    gpa_or_percentage: str | None = None
 
 
 class CompensationDetails(BaseModel):
-    current_ctc_inr: Optional[float] = None
-    expected_ctc_inr: Optional[float] = None
-    minimum_annual_base_usd: Optional[float] = None
+    current_ctc_inr: float | None = None
+    expected_ctc_inr: float | None = None
+    minimum_annual_base_usd: float | None = None
     notice_period_days: int = 30
     negotiable_notice_period: bool = False
 
@@ -123,12 +124,12 @@ class UserProfile(BaseModel):
     profile_id: str = "default"
     version: int = 1
     personal_info: PersonalInfo = Field(default_factory=PersonalInfo)
-    experiences: List[WorkExperience] = Field(default_factory=list)
-    education: List[Education] = Field(default_factory=list)
-    skills: List[str] = Field(default_factory=list)
+    experiences: list[WorkExperience] = Field(default_factory=list)
+    education: list[Education] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list)
     compensation: CompensationDetails = Field(default_factory=CompensationDetails)
-    custom_qa_answers: Dict[str, str] = Field(default_factory=dict)
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    custom_qa_answers: dict[str, str] = Field(default_factory=dict)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # -------------------------------------------------------------------
@@ -145,18 +146,18 @@ class JobPosting(BaseModel):
     location: str = ""
     experience_required: str = ""
     description: str = ""
-    raw_html: Optional[str] = None
-    parsed_skills: List[str] = Field(default_factory=list)
-    discovered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    raw_html: str | None = None
+    parsed_skills: list[str] = Field(default_factory=list)
+    discovered_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class EvidenceItem(BaseModel):
     evidence_id: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     step_name: str
-    screenshot_path: Optional[str] = None
-    form_data_snapshot: Dict[str, Any] = Field(default_factory=dict)
-    dom_html_path: Optional[str] = None
+    screenshot_path: str | None = None
+    form_data_snapshot: dict[str, Any] = Field(default_factory=dict)
+    dom_html_path: str | None = None
 
 
 class Application(BaseModel):
@@ -167,22 +168,22 @@ class Application(BaseModel):
     status: ApplicationStatus = ApplicationStatus.INTENT
     idempotency_key: str
     trust_level: TrustLevel = TrustLevel.SUPERVISED
-    job_url: Optional[str] = None
-    form_values: Dict[str, Any] = Field(default_factory=dict)
-    unanswered_questions: List[str] = Field(default_factory=list)
-    evidence: List[EvidenceItem] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    error_message: Optional[str] = None
-    responded_at: Optional[datetime] = None
-    outcome: Optional[str] = None
+    job_url: str | None = None
+    form_values: dict[str, Any] = Field(default_factory=dict)
+    unanswered_questions: list[str] = Field(default_factory=list)
+    evidence: list[EvidenceItem] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    error_message: str | None = None
+    responded_at: datetime | None = None
+    outcome: str | None = None
     # Timestamp semantics split (MASTER_PLAN_EXPANDED.md §3.4): submission,
     # verification, and employer-response are distinct events and must never
     # share a single "updated" timestamp.
-    submitted_at: Optional[datetime] = None
-    submission_verified_at: Optional[datetime] = None
-    first_employer_response_at: Optional[datetime] = None
-    current_outcome: Optional[str] = None
+    submitted_at: datetime | None = None
+    submission_verified_at: datetime | None = None
+    first_employer_response_at: datetime | None = None
+    current_outcome: str | None = None
 
 
 # -------------------------------------------------------------------
@@ -211,11 +212,11 @@ class Task(BaseModel):
     goal_id: str
     title: str
     description: str = ""
-    dependencies: List[str] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
     status: TaskStatus = TaskStatus.PENDING
-    assigned_worker: Optional[str] = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    completed_at: Optional[datetime] = None
+    assigned_worker: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    completed_at: datetime | None = None
 
 
 class Goal(BaseModel):
@@ -223,43 +224,43 @@ class Goal(BaseModel):
     title: str
     description: str = ""
     is_active: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class CandidateFact(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     profile_id: str = "default"
     fact_type: str  # skill | experience | education | credential | achievement
     fact_value: str
     source: str = "resume"  # resume | linkedin | user_asserted | inferred
-    source_path: Optional[str] = None
+    source_path: str | None = None
     confidence: float = 1.0
     verified: bool = False
-    verified_at: Optional[datetime] = None
-    verified_by: Optional[str] = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    superseded_by: Optional[int] = None
+    verified_at: datetime | None = None
+    verified_by: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    superseded_by: int | None = None
 
 
 class AnswerBankRecord(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     profile_id: str = "default"
     question_hash: str
     question_text: str
     answer: str
     source: str = "user"  # profile | memory | llm | user
     used_count: int = 0
-    last_used_at: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_used_at: datetime | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class FormFieldMemoryRecord(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     profile_id: str = "default"
     adapter_id: str
     field_selector: str
-    field_label: Optional[str] = None
-    field_type: Optional[str] = None
+    field_label: str | None = None
+    field_type: str | None = None
     value: str
     confidence: float = 1.0
-    last_used_at: Optional[datetime] = None
+    last_used_at: datetime | None = None

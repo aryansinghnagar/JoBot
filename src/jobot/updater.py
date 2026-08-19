@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 from importlib import metadata
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -19,15 +18,15 @@ def get_current_version() -> str:
     try:
         return metadata.version("jobot")
     except metadata.PackageNotFoundError:
-        return "1.0.0"
+        return "0.2.0"
 
 
 class ReleaseStatus(BaseModel):
-    current_version: str = "1.0.0"
+    current_version: str = "0.2.0"
     is_latest: bool = True
     update_available: bool = False
     rollback_supported: bool = False
-    latest_version: Optional[str] = None
+    latest_version: str | None = None
 
 
 class ReleaseManager:

@@ -2,7 +2,6 @@
 
 import re
 from pathlib import Path
-from typing import List
 
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -65,9 +64,9 @@ class PluginManifest(BaseModel):
     description: str = ""
     author: str = ""
     license: str = ""
-    requires: List[str] = []
-    permissions: List[str] = []
-    entrypoints: List[PluginEntrypoint] = []
+    requires: list[str] = []
+    permissions: list[str] = []
+    entrypoints: list[PluginEntrypoint] = []
 
     @field_validator("name")
     @classmethod
@@ -87,7 +86,7 @@ class PluginManifest(BaseModel):
 
     @field_validator("permissions")
     @classmethod
-    def _permissions_known(cls, values: List[str]) -> List[str]:
+    def _permissions_known(cls, values: list[str]) -> list[str]:
         unknown = set(values) - ALLOWED_PERMISSIONS
         if unknown:
             raise ValueError(
@@ -97,7 +96,7 @@ class PluginManifest(BaseModel):
 
     @field_validator("requires")
     @classmethod
-    def _requires_known(cls, values: List[str]) -> List[str]:
+    def _requires_known(cls, values: list[str]) -> list[str]:
         unknown = set(values) - ALLOWED_REQUIRES
         if unknown:
             raise ValueError(
@@ -105,7 +104,7 @@ class PluginManifest(BaseModel):
             )
         return list(dict.fromkeys(values))
 
-    def entrypoint_names(self) -> List[str]:
+    def entrypoint_names(self) -> list[str]:
         return [e.name for e in self.entrypoints]
 
 

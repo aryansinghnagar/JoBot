@@ -1,6 +1,6 @@
 [package]
 name = "jobot-gui"
-version = "1.0.0"
+version = "0.2.0"
 description = "JoBot Desktop GUI (Tauri 2 shell over the jobot stdio sidecar)"
 authors = ["Aryan"]
 edition = "2021"

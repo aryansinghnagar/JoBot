@@ -9,7 +9,7 @@ reorders its phases (status contract preserved).
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -21,8 +21,8 @@ from jobot.documents.cover import CoverLetterGenerator
 from jobot.documents.pdf_exporter import ResumeExporter
 from jobot.documents.tailor import DocumentTailor, TailoredDocumentResult
 from jobot.llm.router import ModelRouter
-from jobot.storage.db import DatabaseManager
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, UserProfile
+from jobot.storage.db import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +30,11 @@ logger = logging.getLogger(__name__)
 class ApplyResult(BaseModel):
     saga_id: str
     job_id: str
-    app_status: Optional[str] = None
-    application_id: Optional[str] = None
+    app_status: str | None = None
+    application_id: str | None = None
     dry_run: bool
-    artifacts: Dict[str, Any] = {}
-    notes: List[str] = []
+    artifacts: dict[str, Any] = {}
+    notes: list[str] = []
 
 
 class ApplyOrchestrator:
@@ -43,8 +43,8 @@ class ApplyOrchestrator:
     def __init__(
         self,
         db: DatabaseManager,
-        router: Optional[ModelRouter] = None,
-        artifact_dir: Optional[Path] = None,
+        router: ModelRouter | None = None,
+        artifact_dir: Path | None = None,
     ):
         self.db = db
         self.router = router or ModelRouter()
@@ -59,8 +59,8 @@ class ApplyOrchestrator:
 
     # -- artifact helpers ---------------------------------------------------
 
-    def _experience_bullets(self, tailored: TailoredDocumentResult) -> Dict[str, List[str]]:
-        bullets: Dict[str, List[str]] = {}
+    def _experience_bullets(self, tailored: TailoredDocumentResult) -> dict[str, list[str]]:
+        bullets: dict[str, list[str]] = {}
         for item in tailored.tailored_experience:
             key = f"{item.get('company', '')}|{item.get('title', '')}"
             bullets[key] = [str(b) for b in item.get("bullets", [])]
@@ -72,8 +72,8 @@ class ApplyOrchestrator:
         profile: UserProfile,
         tailored: TailoredDocumentResult,
         template: str,
-        engine: Optional[str],
-    ) -> Dict[str, Any]:
+        engine: str | None,
+    ) -> dict[str, Any]:
         job_dir = self.artifact_dir / f"{job.job_id}"
         job_dir.mkdir(parents=True, exist_ok=True)
         pdf_path, ats = self.exporter.export_resume_pdf(
@@ -105,9 +105,9 @@ class ApplyOrchestrator:
         profile: UserProfile,
         auto_approve: bool = False,
         dry_run: bool = False,
-        resume_saga_id: Optional[str] = None,
+        resume_saga_id: str | None = None,
         template: str = "default",
-        engine: Optional[str] = None,
+        engine: str | None = None,
         tone: str = "classic",
         extra_prompt: str = "",
     ) -> ApplyResult:

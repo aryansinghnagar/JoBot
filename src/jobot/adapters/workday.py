@@ -14,8 +14,8 @@ import os
 import re
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, cast
+from datetime import UTC, datetime
+from typing import Any, cast
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability
@@ -75,7 +75,7 @@ GUEST_CONTINUE_SELECTORS = [
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class WorkdayApi:
@@ -85,7 +85,7 @@ class WorkdayApi:
         self.timeout = timeout
 
     @staticmethod
-    def _split_company(company: str) -> Tuple[str, str]:
+    def _split_company(company: str) -> tuple[str, str]:
         """Normalize a company spec to (tenant, site)."""
         company = company.strip().strip("/")
         if not company:
@@ -108,14 +108,14 @@ class WorkdayApi:
         return parts[0], parts[0]
 
     @staticmethod
-    def _tenant_site_from_host(host: str) -> Tuple[str, str]:
+    def _tenant_site_from_host(host: str) -> tuple[str, str]:
         m = WORKDAY_HOST_RE.match(host)
         if not m:
             raise ValueError(f"Not a Workday careers host: {host}")
         return m.group("tenant"), m.group("tenant")
 
     @classmethod
-    def _tenant_site_from_url(cls, url: str) -> Tuple[str, str]:
+    def _tenant_site_from_url(cls, url: str) -> tuple[str, str]:
         parsed = urllib.parse.urlparse(url)
         if not parsed.netloc:
             raise ValueError(f"Not a valid Workday URL: {url}")
@@ -127,7 +127,7 @@ class WorkdayApi:
         return tenant, site
 
     @staticmethod
-    def _job_id_from_url(url: str) -> Optional[str]:
+    def _job_id_from_url(url: str) -> str | None:
         parts = [p for p in url.rstrip("/").split("/") if p]
         if not parts:
             return None
@@ -137,7 +137,7 @@ class WorkdayApi:
     def _cxs_base(tenant: str, site: str) -> str:
         return f"https://{tenant}.wd3.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
 
-    def _post_json(self, url: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
         with safe_urlopen(
             url,
             data=json.dumps(payload).encode("utf-8"),
@@ -146,7 +146,7 @@ class WorkdayApi:
             method="POST",
         ) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            return cast(Dict[str, Any], data)
+            return cast(dict[str, Any], data)
 
     def discover(
         self,
@@ -154,12 +154,12 @@ class WorkdayApi:
         keywords: str = "",
         location: str = "",
         limit: int = 25,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Fetch real job postings for a Workday tenant via the cxs /jobs API."""
         tenant, site = self._split_company(company)
         url = f"{self._cxs_base(tenant, site)}/jobs"
         search_text = keywords or location
-        payload: Dict[str, Any] = {"appliedFacets": {}, "limit": limit, "offset": 0}
+        payload: dict[str, Any] = {"appliedFacets": {}, "limit": limit, "offset": 0}
         if search_text:
             payload["searchText"] = search_text
         try:
@@ -172,7 +172,7 @@ class WorkdayApi:
             return []
         return postings[:limit]
 
-    def job_posting(self, company: str, job_id: str) -> Dict[str, Any]:
+    def job_posting(self, company: str, job_id: str) -> dict[str, Any]:
         """Fetch a single job posting via the cxs jobPosting API. Raises on failure."""
         tenant, site = self._split_company(company)
         url = f"{self._cxs_base(tenant, site)}/jobPosting/{job_id}"
@@ -190,7 +190,7 @@ class WorkdaySubmitter:
         except Exception:  # noqa: BLE001
             return ""
 
-    async def _click_first(self, page: Any, selectors: List[str]) -> bool:
+    async def _click_first(self, page: Any, selectors: list[str]) -> bool:
         for selector in selectors:
             try:
                 locator = page.locator(selector)
@@ -201,11 +201,11 @@ class WorkdaySubmitter:
                 continue
         return False
 
-    async def _find_marker(self, page: Any, markers: List[str]) -> bool:
+    async def _find_marker(self, page: Any, markers: list[str]) -> bool:
         text = await self._page_text(page)
         return any(marker in text for marker in markers)
 
-    async def submit(self, application: Application, page: Optional[Any] = None) -> bool:
+    async def submit(self, application: Application, page: Any | None = None) -> bool:
         if page is None:
             logger.warning("[WORKDAY] No live browser page — refusing to fabricate a submission.")
             return False
@@ -251,8 +251,8 @@ class WorkdayVerifier:
     async def verify(
         self,
         application: Application,
-        page: Optional[Any] = None,
-        job_title: Optional[str] = None,
+        page: Any | None = None,
+        job_title: str | None = None,
     ) -> VerificationResult:
         if page is None:
             return VerificationResult(
@@ -308,12 +308,12 @@ class WorkdayAdapter(SiteAdapter):
         self.api = WorkdayApi()
         self.submitter = WorkdaySubmitter()
         self.verifier = WorkdayVerifier()
-        self._session: Optional[BrowserSession] = None
+        self._session: BrowserSession | None = None
 
     def _live_enabled(self) -> bool:
         return os.getenv("JOBOT_RUN_LIVE_BROWSER") == "1"
 
-    async def _browser_page(self) -> Optional[Any]:
+    async def _browser_page(self) -> Any | None:
         if not self._live_enabled():
             logger.warning(
                 "[WORKDAY] Live browser disabled (JOBOT_RUN_LIVE_BROWSER=1 to enable) — "
@@ -325,14 +325,14 @@ class WorkdayAdapter(SiteAdapter):
             await self._session.start()
         return await self._session.new_page()
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         logger.warning(
             "[WORKDAY] Login is tenant SSO; this adapter does not automate credentials. "
             "Use 'jobot login' with a real browser session if available."
         )
         return False
 
-    def _posting_from_api(self, info: Dict[str, Any], url: str, company: str) -> JobPosting:
+    def _posting_from_api(self, info: dict[str, Any], url: str, company: str) -> JobPosting:
         description = info.get("jobDescription", "") or ""
         description_text = re.sub(r"<[^>]+>", " ", description)
         description_text = html.unescape(" ".join(description_text.split()))
@@ -372,8 +372,8 @@ class WorkdayAdapter(SiteAdapter):
         keywords: str = "",
         location: str = "",
         limit: int = 25,
-        company: Optional[str] = None,
-    ) -> List[JobPosting]:
+        company: str | None = None,
+    ) -> list[JobPosting]:
         if not company:
             logger.warning(
                 "[WORKDAY] discover_jobs requires a company/tenant (e.g. company='toptal'); "
@@ -388,7 +388,7 @@ class WorkdayAdapter(SiteAdapter):
             logger.warning("[WORKDAY DISCOVERY] Failed for %s: %s", company, exc)
             return []
         tenant, site = self.api._split_company(company)
-        postings: List[JobPosting] = []
+        postings: list[JobPosting] = []
         for item in raw:
             external_path = item.get("externalPath") or ""
             if not item.get("title"):
@@ -415,9 +415,9 @@ class WorkdayAdapter(SiteAdapter):
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         info = profile.personal_info
-        filled: Dict[str, Any] = {
+        filled: dict[str, Any] = {
             "first_name": info.first_name,
             "last_name": info.last_name,
             "name": f"{info.first_name} {info.last_name}".strip(),

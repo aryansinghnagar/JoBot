@@ -8,8 +8,8 @@ reported when the API actually returns an application record.
 
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability
@@ -50,12 +50,12 @@ class LeverAdapter(SiteAdapter):
             raise ValueError(f"Cannot extract company/posting from Lever URL: {url}")
         return company, posting_id
 
-    def _get_json(self, url: str) -> Dict[str, Any]:
+    def _get_json(self, url: str) -> dict[str, Any]:
         with safe_urlopen(url, headers={"User-Agent": "JoBot/1.0"}, timeout=5.0) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         return data if isinstance(data, dict) else {}
 
-    def _post_json(self, url: str, payload: Dict[str, Any]) -> tuple[int, Dict[str, Any]]:
+    def _post_json(self, url: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         req_data = json.dumps(payload).encode("utf-8")
         with safe_urlopen(
             url,
@@ -70,7 +70,7 @@ class LeverAdapter(SiteAdapter):
 
     # -- SiteAdapter API ----------------------------------------------------
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         # Lever public postings API requires no authentication for applications.
         return True
 
@@ -102,12 +102,12 @@ class LeverAdapter(SiteAdapter):
             location=location,
             description=str(data.get("descriptionPlain") or data.get("description") or ""),
             parsed_skills=skills,
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         filled_data = {
             "name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}".strip(),
             "email": profile.personal_info.email,

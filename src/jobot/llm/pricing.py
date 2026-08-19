@@ -6,7 +6,6 @@ overrides/extends it (e.g., a model JoBot does not know about).
 
 import logging
 from pathlib import Path
-from typing import Dict
 
 import yaml
 
@@ -21,7 +20,7 @@ class PricingTable:
     """Per-provider per-model cost lookup (approximate USD pricing)."""
 
     def __init__(self) -> None:
-        self.providers: Dict[str, Dict[str, ProviderPricing]] = {}
+        self.providers: dict[str, dict[str, ProviderPricing]] = {}
         self._load_shipped()
         self._load_override()
 

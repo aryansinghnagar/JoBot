@@ -1,11 +1,13 @@
-from datetime import datetime, timezone
 import json
 import logging
 import os
 import sqlite3
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterator, List, Optional
+from typing import Any
+
 from jobot.models.domain import (
     AnswerBankRecord,
     Application,
@@ -31,7 +33,7 @@ class DatabaseManager:
     Configures WAL mode and 0600 file permissions for security.
     """
 
-    def __init__(self, db_path: Optional[Path | str] = None):
+    def __init__(self, db_path: Path | str | None = None):
         if db_path is None:
             home_dir = Path.home() / ".jobot" / "db"
             home_dir.mkdir(parents=True, exist_ok=True)
@@ -160,7 +162,7 @@ class DatabaseManager:
     def save_job_posting(self, job: JobPosting) -> None:
         self.save_job_postings_batch([job])
 
-    def save_job_postings_batch(self, jobs: List[JobPosting]) -> None:
+    def save_job_postings_batch(self, jobs: list[JobPosting]) -> None:
         if not jobs:
             return
         params = [
@@ -187,7 +189,7 @@ class DatabaseManager:
                 params,
             )
 
-    def get_job_posting(self, job_id: str) -> Optional[JobPosting]:
+    def get_job_posting(self, job_id: str) -> JobPosting | None:
         with self._get_connection() as conn:
             row = conn.execute("SELECT * FROM job_postings WHERE job_id = ?", (job_id,)).fetchone()
             if not row:
@@ -204,7 +206,7 @@ class DatabaseManager:
                 discovered_at=row["discovered_at"],
             )
 
-    def list_job_postings(self, limit: int = 500) -> List[JobPosting]:
+    def list_job_postings(self, limit: int = 500) -> list[JobPosting]:
         with self._get_connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM job_postings ORDER BY discovered_at DESC LIMIT ?", (limit,)
@@ -243,7 +245,7 @@ class DatabaseManager:
     }
 
     def _row_to_application(self, row: sqlite3.Row) -> Application:
-        def _dt(value: Optional[str]) -> Optional[datetime]:
+        def _dt(value: str | None) -> datetime | None:
             return datetime.fromisoformat(value) if value else None
 
         keys = row.keys()
@@ -257,8 +259,8 @@ class DatabaseManager:
             trust_level=TrustLevel(row["trust_level"]),
             form_values=json.loads(row["form_values"]) if row["form_values"] else {},
             error_message=row["error_message"],
-            created_at=_dt(row["created_at"]) or datetime.now(timezone.utc),
-            updated_at=_dt(row["updated_at"]) or datetime.now(timezone.utc),
+            created_at=_dt(row["created_at"]) or datetime.now(UTC),
+            updated_at=_dt(row["updated_at"]) or datetime.now(UTC),
             responded_at=_dt(row["responded_at"]) if "responded_at" in keys else None,
             outcome=row["outcome"] if "outcome" in keys else None,
             submitted_at=_dt(row["submitted_at"]) if "submitted_at" in keys else None,
@@ -273,7 +275,7 @@ class DatabaseManager:
             current_outcome=row["current_outcome"] if "current_outcome" in keys else None,
         )
 
-    def get_application_by_idempotency_key(self, idempotency_key: str) -> Optional[Application]:
+    def get_application_by_idempotency_key(self, idempotency_key: str) -> Application | None:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM applications WHERE idempotency_key = ?", (idempotency_key,)
@@ -287,14 +289,14 @@ class DatabaseManager:
         existing = self.get_application(app.application_id)
         responded_at = getattr(app, "responded_at", None)
         outcome = getattr(app, "outcome", None)
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         # Stamp the first response time when crossing into a response status.
         if app.status in self._RESPONSE_STATUSES and responded_at is None:
-            responded_at = app.updated_at if app.updated_at else datetime.now(timezone.utc)
+            responded_at = app.updated_at if app.updated_at else datetime.now(UTC)
             outcome = app.status.value
         if existing and existing.status != app.status and app.status in self._RESPONSE_STATUSES:
             if existing.responded_at is None:
-                responded_at = app.updated_at if app.updated_at else datetime.now(timezone.utc)
+                responded_at = app.updated_at if app.updated_at else datetime.now(UTC)
                 outcome = app.status.value
         with self._get_connection() as conn:
             if existing:
@@ -388,25 +390,25 @@ class DatabaseManager:
         if app.status == status:
             return True
         app.status = status
-        app.updated_at = datetime.now(timezone.utc)
+        app.updated_at = datetime.now(UTC)
         self.save_application(app)
         return True
 
-    def get_application(self, application_id: str) -> Optional[Application]:
+    def get_application(self, application_id: str) -> Application | None:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM applications WHERE application_id = ?", (application_id,)
             ).fetchone()
             return self._row_to_application(row) if row else None
 
-    def list_applications(self, limit: int = 50) -> List[Application]:
+    def list_applications(self, limit: int = 50) -> list[Application]:
         with self._get_connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM applications ORDER BY created_at DESC LIMIT ?", (limit,)
             ).fetchall()
             return [self._row_to_application(row) for row in rows]
 
-    def get_applications_with_jobs(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_applications_with_jobs(self, limit: int = 50) -> list[dict[str, Any]]:
         """Applications joined with their job posting (for dashboards/analytics)."""
         with self._get_connection() as conn:
             rows = conn.execute(
@@ -420,7 +422,7 @@ class DatabaseManager:
                 """,
                 (limit,),
             ).fetchall()
-            results: List[Dict[str, Any]] = []
+            results: list[dict[str, Any]] = []
             for row in rows:
                 app = self._row_to_application(row)
                 results.append(
@@ -442,7 +444,7 @@ class DatabaseManager:
             return results
 
     def get_daily_application_count(self, site: str) -> int:
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today_str = datetime.now(UTC).strftime("%Y-%m-%d")
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT COUNT(*) as count FROM applications WHERE site = ? AND created_at LIKE ?",
@@ -465,7 +467,7 @@ class DatabaseManager:
         import uuid
 
         saga_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         with self._get_connection() as conn:
             conn.execute(
                 """
@@ -481,7 +483,7 @@ class DatabaseManager:
         with self._get_connection() as conn:
             conn.execute(
                 "UPDATE saga_instances SET status = ?, updated_at = ? WHERE saga_id = ?",
-                (status, datetime.now(timezone.utc).isoformat(), saga_id),
+                (status, datetime.now(UTC).isoformat(), saga_id),
             )
 
     def save_saga_step(self, saga_id: str, step_name: str, status: str, detail: str = "") -> None:
@@ -492,24 +494,24 @@ class DatabaseManager:
                 (saga_id, step_name, status, detail, created_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (saga_id, step_name, status, detail, datetime.now(timezone.utc).isoformat()),
+                (saga_id, step_name, status, detail, datetime.now(UTC).isoformat()),
             )
 
-    def get_saga(self, saga_id: str) -> Optional[Dict[str, Any]]:
+    def get_saga(self, saga_id: str) -> dict[str, Any] | None:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM saga_instances WHERE saga_id = ?", (saga_id,)
             ).fetchone()
             return dict(row) if row else None
 
-    def list_saga_steps(self, saga_id: str) -> List[Dict[str, Any]]:
+    def list_saga_steps(self, saga_id: str) -> list[dict[str, Any]]:
         with self._get_connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM saga_steps WHERE saga_id = ? ORDER BY created_at", (saga_id,)
             ).fetchall()
             return [dict(r) for r in rows]
 
-    def list_sagas(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def list_sagas(self, limit: int = 20) -> list[dict[str, Any]]:
         with self._get_connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM saga_instances ORDER BY created_at DESC LIMIT ?", (limit,)
@@ -527,7 +529,7 @@ class DatabaseManager:
         title: str,
         company: str,
         location: str,
-        embedding: List[float],
+        embedding: list[float],
     ) -> None:
         with self._get_connection() as conn:
             conn.execute(
@@ -543,7 +545,7 @@ class DatabaseManager:
                     company,
                     location,
                     json.dumps(embedding),
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
 
@@ -554,9 +556,9 @@ class DatabaseManager:
             ).fetchone()
             return row is not None
 
-    def list_dedup_entries(self) -> List[Dict[str, Any]]:
+    def list_dedup_entries(self) -> list[dict[str, Any]]:
         """Return (dedup_hash, title, company, location, embedding) rows as dicts."""
-        entries: List[Dict[str, Any]] = []
+        entries: list[dict[str, Any]] = []
         with self._get_connection() as conn:
             rows = conn.execute("SELECT * FROM job_dedup_cache").fetchall()
             for row in rows:
@@ -604,11 +606,11 @@ class DatabaseManager:
     def list_candidate_facts(
         self,
         profile_id: str = "default",
-        fact_type: Optional[str] = None,
+        fact_type: str | None = None,
         verified_only: bool = False,
-    ) -> List[CandidateFact]:
+    ) -> list[CandidateFact]:
         query = "SELECT * FROM candidate_facts WHERE profile_id = ? AND superseded_by IS NULL"
-        params: List[Any] = [profile_id]
+        params: list[Any] = [profile_id]
         if fact_type:
             query += " AND fact_type = ?"
             params.append(fact_type)
@@ -633,7 +635,7 @@ class DatabaseManager:
                     verified_by=r["verified_by"],
                     created_at=datetime.fromisoformat(r["created_at"])
                     if r["created_at"]
-                    else datetime.now(timezone.utc),
+                    else datetime.now(UTC),
                     superseded_by=r["superseded_by"],
                 )
                 for r in rows
@@ -643,7 +645,7 @@ class DatabaseManager:
         with self._get_connection() as conn:
             conn.execute(
                 "UPDATE candidate_facts SET verified = 1, verified_at = ?, verified_by = ? WHERE id = ?",
-                (datetime.now(timezone.utc).isoformat(), verified_by, fact_id),
+                (datetime.now(UTC).isoformat(), verified_by, fact_id),
             )
 
     # -------------------------------------------------------------------
@@ -670,9 +672,7 @@ class DatabaseManager:
                 ),
             )
 
-    def get_answer_bank_entry(
-        self, profile_id: str, question_hash: str
-    ) -> Optional[AnswerBankRecord]:
+    def get_answer_bank_entry(self, profile_id: str, question_hash: str) -> AnswerBankRecord | None:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM answer_bank WHERE profile_id = ? AND question_hash = ?",
@@ -693,7 +693,7 @@ class DatabaseManager:
                 else None,
                 created_at=datetime.fromisoformat(row["created_at"])
                 if row["created_at"]
-                else datetime.now(timezone.utc),
+                else datetime.now(UTC),
             )
 
     def record_answer_bank_use(self, profile_id: str, question_hash: str) -> None:
@@ -704,12 +704,12 @@ class DatabaseManager:
                 SET used_count = used_count + 1, last_used_at = ?
                 WHERE profile_id = ? AND question_hash = ?
                 """,
-                (datetime.now(timezone.utc).isoformat(), profile_id, question_hash),
+                (datetime.now(UTC).isoformat(), profile_id, question_hash),
             )
 
     def search_answer_bank(
         self, profile_id: str = "default", query: str = ""
-    ) -> List[AnswerBankRecord]:
+    ) -> list[AnswerBankRecord]:
         with self._get_connection() as conn:
             if query:
                 rows = conn.execute(
@@ -735,7 +735,7 @@ class DatabaseManager:
                     else None,
                     created_at=datetime.fromisoformat(r["created_at"])
                     if r["created_at"]
-                    else datetime.now(timezone.utc),
+                    else datetime.now(UTC),
                 )
                 for r in rows
             ]
@@ -760,13 +760,13 @@ class DatabaseManager:
                     record.field_type,
                     record.value,
                     record.confidence,
-                    (record.last_used_at or datetime.now(timezone.utc)).isoformat(),
+                    (record.last_used_at or datetime.now(UTC)).isoformat(),
                 ),
             )
 
     def get_form_field_memory(
         self, profile_id: str, adapter_id: str, field_selector: str
-    ) -> Optional[FormFieldMemoryRecord]:
+    ) -> FormFieldMemoryRecord | None:
         with self._get_connection() as conn:
             row = conn.execute(
                 "SELECT * FROM form_field_memory WHERE profile_id = ? AND adapter_id = ? AND field_selector = ?",
@@ -788,10 +788,10 @@ class DatabaseManager:
                 else None,
             )
 
-    def backup(self, target_path: Optional[Path] = None) -> Path:
+    def backup(self, target_path: Path | None = None) -> Path:
         """Create an atomic hot backup of SQLite database via sqlite3 backup API (UC-44)."""
         if target_path is None:
-            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             target_path = self.db_path.parent / f"jobot_backup_{ts}.db"
         target_path = Path(target_path)
         target_path.parent.mkdir(parents=True, exist_ok=True)

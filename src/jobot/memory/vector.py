@@ -1,11 +1,11 @@
 import logging
 import math
 import re
-from datetime import datetime, timezone
-from typing import Any, Dict, List
-from pydantic import BaseModel, Field
-
+from datetime import UTC, datetime
 from functools import lru_cache
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def _cached_embedding(text: str, dim: int = 16) -> tuple[float, ...]:
     return tuple(x / norm_len for x in vec)
 
 
-def simple_embedding(text: str, dim: int = 16) -> List[float]:
+def simple_embedding(text: str, dim: int = 16) -> list[float]:
     """Generate a deterministic local pseudo-embedding for text.
 
     Bag-of-character-bigrams over the lowercased, punctuation-normalized text.
@@ -41,9 +41,9 @@ def simple_embedding(text: str, dim: int = 16) -> List[float]:
 
 class VectorPoint(BaseModel):
     id: str
-    vector: List[float]
-    payload: Dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    vector: list[float]
+    payload: dict[str, Any] = Field(default_factory=dict)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class VectorMemory:
@@ -55,9 +55,9 @@ class VectorMemory:
 
     def __init__(self, collection_name: str = "successful_answers") -> None:
         self.collection_name = collection_name
-        self._points: List[VectorPoint] = []
+        self._points: list[VectorPoint] = []
 
-    def _simple_embedding(self, text: str, dim: int = 16) -> List[float]:
+    def _simple_embedding(self, text: str, dim: int = 16) -> list[float]:
         """Generate deterministic local pseudo-embedding vector for text."""
         return simple_embedding(text, dim)
 
@@ -74,7 +74,7 @@ class VectorMemory:
         )
         self._points.append(point)
 
-    def retrieve_similar(self, query_text: str, top_k: int = 3) -> List[Dict[str, Any]]:
+    def retrieve_similar(self, query_text: str, top_k: int = 3) -> list[dict[str, Any]]:
         """Retrieve most similar stored Q&A answers via cosine similarity."""
         if not self._points:
             return []

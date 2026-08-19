@@ -1,9 +1,10 @@
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability
 from jobot.models.domain import (
@@ -32,7 +33,7 @@ class GreenhouseAdapter(SiteAdapter):
     def __init__(self) -> None:
         super().__init__("greenhouse")
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         # Greenhouse Public API requires zero user authentication
         return True
 
@@ -66,12 +67,12 @@ class GreenhouseAdapter(SiteAdapter):
                 location=data.get("location", {}).get("name", "Remote"),
                 description=data.get("content", ""),
                 parsed_skills=[],
-                discovered_at=datetime.now(timezone.utc),
+                discovered_at=datetime.now(UTC),
             )
 
     async def discover_matching_jobs(
         self, board_token: str = "greenhouse", limit: int = 5
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         """Fetch job postings for a specific Greenhouse board token via API."""
         return await self.discover_jobs(company=board_token, limit=limit)
 
@@ -81,11 +82,11 @@ class GreenhouseAdapter(SiteAdapter):
         limit: int = 25,
         keywords: str = "",
         location: str = "",
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         """Fetch real postings for a Greenhouse board; empty on failure (no fabrication)."""
         company = validate_path_segment(company)
         api_url = validate_fetch_url(f"{self.BASE_API_URL}/{company}/jobs?content=true")
-        postings: List[JobPosting] = []
+        postings: list[JobPosting] = []
 
         try:
             with safe_urlopen(api_url, headers={"User-Agent": "JoBot/1.0"}, timeout=5.0) as resp:
@@ -105,7 +106,7 @@ class GreenhouseAdapter(SiteAdapter):
                             location=item.get("location", {}).get("name", ""),
                             description=item.get("content", ""),
                             parsed_skills=[],
-                            discovered_at=datetime.now(timezone.utc),
+                            discovered_at=datetime.now(UTC),
                         )
                     )
         except Exception as e:  # noqa: BLE001
@@ -117,7 +118,7 @@ class GreenhouseAdapter(SiteAdapter):
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         filled_data = {
             "first_name": profile.personal_info.first_name,
             "last_name": profile.personal_info.last_name,

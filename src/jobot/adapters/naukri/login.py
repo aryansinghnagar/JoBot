@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+
 from jobot.stealth.browser import BrowserSession
 
 logger = logging.getLogger(__name__)
@@ -14,9 +14,7 @@ class NaukriLoginFlow:
     def __init__(self, headless: bool = False):
         self.headless = headless
 
-    async def execute_login(
-        self, username: Optional[str] = None, password: Optional[str] = None
-    ) -> bool:
+    async def execute_login(self, username: str | None = None, password: str | None = None) -> bool:
         session = BrowserSession(portal="naukri", headless=self.headless)
         await session.start()
 

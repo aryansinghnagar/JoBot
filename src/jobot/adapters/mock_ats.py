@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
+
 from jobot.adapters.base import SiteAdapter
-from jobot.security.url_guard import safe_urlopen
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -11,6 +11,7 @@ from jobot.models.domain import (
     UserProfile,
     VerificationResult,
 )
+from jobot.security.url_guard import safe_urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class MockATSAdapter(SiteAdapter):
         super().__init__("mock_ats")
         self.base_url = base_url.rstrip("/")
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         return True
 
     async def discover_jobs(
@@ -33,9 +34,9 @@ class MockATSAdapter(SiteAdapter):
         limit: int = 50,
         keywords: str = "",
         location: str = "",
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         """Fetch postings from the local mock ATS job feed."""
-        postings: List[JobPosting] = []
+        postings: list[JobPosting] = []
         try:
             # Mock ATS is local test infrastructure: loopback is by design.
             with safe_urlopen(f"{self.base_url}/jobs", allow_private_hosts=True) as resp:
@@ -57,7 +58,7 @@ class MockATSAdapter(SiteAdapter):
                     location=item.get("location", ""),
                     description=item.get("description", ""),
                     parsed_skills=item.get("parsed_skills") or [],
-                    discovered_at=datetime.now(timezone.utc),
+                    discovered_at=datetime.now(UTC),
                 )
             )
         return postings
@@ -77,7 +78,7 @@ class MockATSAdapter(SiteAdapter):
                     location=data.get("location", "Bangalore, India"),
                     description=data.get("description", ""),
                     parsed_skills=data.get("parsed_skills", []),
-                    discovered_at=datetime.now(timezone.utc),
+                    discovered_at=datetime.now(UTC),
                 )
         except Exception:
             return JobPosting(
@@ -89,12 +90,12 @@ class MockATSAdapter(SiteAdapter):
                 location="Bangalore, India",
                 description="Fallback job description",
                 parsed_skills=["Python"],
-                discovered_at=datetime.now(timezone.utc),
+                discovered_at=datetime.now(UTC),
             )
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         filled_fields = {
             "job_id": job.job_id,
             "name": f"{profile.personal_info.first_name} {profile.personal_info.last_name}".strip(),

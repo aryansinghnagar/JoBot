@@ -1,7 +1,8 @@
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 import logging
-from patchright.async_api import async_playwright, BrowserContext, Locator, Page, Playwright
+from pathlib import Path
+from typing import Any
+
+from patchright.async_api import BrowserContext, Locator, Page, Playwright, async_playwright
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,8 @@ class BrowserSession:
         self,
         portal: str = "default",
         headless: bool = True,
-        proxy_config: Optional[Dict[str, Any]] = None,
-        session_dir: Optional[Path] = None,
+        proxy_config: dict[str, Any] | None = None,
+        session_dir: Path | None = None,
     ):
         self.portal = portal
         self.headless = headless
@@ -26,14 +27,14 @@ class BrowserSession:
             session_dir = Path.home() / ".jobot" / "sessions" / portal
         self.session_dir = session_dir
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.playwright: Optional[Playwright] = None
-        self.context: Optional[BrowserContext] = None
+        self.playwright: Playwright | None = None
+        self.context: BrowserContext | None = None
 
     async def start(self) -> "BrowserSession":
         """Launch Patchright persistent browser context with stealth parameters."""
         self.playwright = await async_playwright().start()
 
-        kwargs: Dict[str, Any] = {
+        kwargs: dict[str, Any] = {
             "user_data_dir": str(self.session_dir),
             "headless": self.headless,
             "viewport": {"width": 1920, "height": 1080},
@@ -42,7 +43,19 @@ class BrowserSession:
             "timezone_id": "Asia/Kolkata",
             "args": [
                 "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
+                # Audit fix JOB-SEC-012: removed ``--no-sandbox``. Disabling
+                # the Chromium sandbox turns every renderer compromise into a
+                # full-process compromise (the sandbox is the boundary that
+                # limits a malicious page's blast radius). The previous
+                # justification for ``--no-sandbox`` was Docker/container
+                # compatibility (the sandbox needs a userns setup that some
+                # minimal containers lack); the correct fix for that case is
+                # to configure the container with ``--cap-add=SYS_ADMIN``
+                # (or, better, ``--security-opt=syscd_always_seccomp``) so
+                # the sandbox keeps working, rather than disabling it
+                # globally. ``--disable-dev-shm-usage`` is kept because it
+                # is a benign workaround for small ``/dev/shm`` in Docker
+                # and does not weaken the security boundary.
                 "--disable-dev-shm-usage",
             ],
             "ignore_default_args": ["--enable-automation"],
@@ -94,13 +107,13 @@ class BrowserSession:
     # Page automation helpers (Phase 3, T3.6 — Easy Apply saga)
     # ------------------------------------------------------------------
 
-    def _locator(self, selector: str, page: Optional[Page]) -> Locator:
+    def _locator(self, selector: str, page: Page | None) -> Locator:
         target = page or (self.pages[0] if self.pages else None)
         if target is None:
             raise RuntimeError("No active page; call navigate() or new_page() first.")
         return target.locator(selector)
 
-    async def navigate(self, url: str, page: Optional[Page] = None) -> Page:
+    async def navigate(self, url: str, page: Page | None = None) -> Page:
         """Open URL in a (new) page and wait for DOM content."""
         target = page or (self.pages[0] if self.pages else None)
         if target is None:
@@ -109,7 +122,7 @@ class BrowserSession:
         return target
 
     async def is_visible(
-        self, selector: str, page: Optional[Page] = None, timeout_ms: int = 3000
+        self, selector: str, page: Page | None = None, timeout_ms: int = 3000
     ) -> bool:
         locator = self._locator(selector, page)
         try:
@@ -119,32 +132,32 @@ class BrowserSession:
             return False
 
     async def wait_for(
-        self, selector: str, page: Optional[Page] = None, timeout_ms: int = 15000
+        self, selector: str, page: Page | None = None, timeout_ms: int = 15000
     ) -> None:
         """Wait until the first matching element is visible."""
         locator = self._locator(selector, page)
         await locator.first.wait_for(state="visible", timeout=timeout_ms)
 
-    async def click(self, selector: str, page: Optional[Page] = None) -> None:
+    async def click(self, selector: str, page: Page | None = None) -> None:
         locator = self._locator(selector, page)
         await locator.first.wait_for(state="visible", timeout=15000)
         await locator.first.click()
 
-    async def fill(self, selector: str, value: str, page: Optional[Page] = None) -> None:
+    async def fill(self, selector: str, value: str, page: Page | None = None) -> None:
         locator = self._locator(selector, page)
         await locator.first.fill(str(value))
 
-    async def type_slow(self, selector: str, value: str, page: Optional[Page] = None) -> None:
+    async def type_slow(self, selector: str, value: str, page: Page | None = None) -> None:
         """Type with human-like keystroke delays (behavioral mimicry)."""
         locator = self._locator(selector, page)
         await locator.first.click()
         await locator.first.press_sequentially(str(value), delay=60)
 
-    async def text_of(self, selector: str, page: Optional[Page] = None) -> str:
+    async def text_of(self, selector: str, page: Page | None = None) -> str:
         locator = self._locator(selector, page)
         return (await locator.first.inner_text()).strip()
 
-    async def screenshot(self, path: Path, page: Optional[Page] = None) -> Path:
+    async def screenshot(self, path: Path, page: Page | None = None) -> Path:
         target = page or (self.pages[0] if self.pages else None)
         if target is None:
             raise RuntimeError("No active page to screenshot")
@@ -153,7 +166,7 @@ class BrowserSession:
         return path
 
     @property
-    def pages(self) -> List[Page]:
+    def pages(self) -> list[Page]:
         if not self.context:
             return []
         return self.context.pages

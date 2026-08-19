@@ -5,7 +5,6 @@ dependency in degraded mode, per the project's degradation doctrine).
 """
 
 import json
-from typing import Dict, Optional
 
 from pydantic import BaseModel
 
@@ -34,7 +33,7 @@ STAR_MARKERS = {
 
 class STARFeedback(BaseModel):
     star_score: float
-    scores: Dict[str, float]
+    scores: dict[str, float]
     feedback: str
     grounded: bool = True
 
@@ -62,8 +61,8 @@ class STARCoach:
 
     def __init__(
         self,
-        router: Optional[ModelRouter] = None,
-        qa: Optional[QAEngine] = None,
+        router: ModelRouter | None = None,
+        qa: QAEngine | None = None,
     ) -> None:
         self.router = router or ModelRouter()
         self.qa = qa or QAEngine(self.router)
@@ -111,9 +110,9 @@ class MockInterviewer:
 
     def __init__(
         self,
-        bank: Optional[QuestionBank] = None,
-        coach: Optional[STARCoach] = None,
-        store: Optional[SessionStore] = None,
+        bank: QuestionBank | None = None,
+        coach: STARCoach | None = None,
+        store: SessionStore | None = None,
     ) -> None:
         self.bank = bank or QuestionBank()
         self.coach = coach or STARCoach()
@@ -125,7 +124,7 @@ class MockInterviewer:
         self.store.save(session)
         return session
 
-    def next_question(self, session: InterviewSession) -> Optional[InterviewQuestion]:
+    def next_question(self, session: InterviewSession) -> InterviewQuestion | None:
         return self.bank.next_question(
             session.track,
             session.asked_ids,

@@ -1,7 +1,8 @@
 import asyncio
 import logging
 import time
-from typing import Any, Callable, Dict, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from jobot.obs.alerts import AlertDispatcher, AlertLevel
 
@@ -27,7 +28,7 @@ class CircuitBreaker:
         recovery_timeout: float = 60.0,
         max_retries: int = 3,
         backoff_factor: float = 2.0,
-        alert_dispatcher: Optional[AlertDispatcher] = None,
+        alert_dispatcher: AlertDispatcher | None = None,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -35,9 +36,9 @@ class CircuitBreaker:
         self.backoff_factor = backoff_factor
         self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
 
-        self._failure_counts: Dict[str, int] = {}
-        self._circuit_state: Dict[str, str] = {}  # "CLOSED", "OPEN", "HALF_OPEN"
-        self._last_state_change: Dict[str, float] = {}
+        self._failure_counts: dict[str, int] = {}
+        self._circuit_state: dict[str, str] = {}  # "CLOSED", "OPEN", "HALF_OPEN"
+        self._last_state_change: dict[str, float] = {}
 
     def get_state(self, domain: str) -> str:
         state = self._circuit_state.get(domain, "CLOSED")
@@ -76,7 +77,7 @@ class CircuitBreaker:
                 f"Circuit breaker is OPEN for domain '{domain}'. Skipping request."
             )
 
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
         for attempt in range(1, self.max_retries + 1):
             try:
                 result = await func(*args, **kwargs)

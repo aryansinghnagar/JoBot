@@ -14,7 +14,7 @@ Tiers (highest precedence first):
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -30,9 +30,9 @@ LEGACY_LLM_PROVIDER_ENV = "JOBOT_DEFAULT_LLM_PROVIDER"
 
 
 class ConfigManager:
-    def __init__(self, config_path: Optional[Path] = None) -> None:
+    def __init__(self, config_path: Path | None = None) -> None:
         self.config_path = config_path or DEFAULT_CONFIG_PATH
-        self._data: Dict[str, Any] = {}
+        self._data: dict[str, Any] = {}
         self._load_file()
 
     def _load_file(self) -> None:
@@ -58,7 +58,7 @@ class ConfigManager:
     def env_name(key: str) -> str:
         return f"JOBOT_{key.upper().replace('.', '_')}"
 
-    def _env_get(self, key: str) -> Optional[str]:
+    def _env_get(self, key: str) -> str | None:
         import os
 
         value = os.getenv(self.env_name(key))
@@ -77,7 +77,7 @@ class ConfigManager:
         return node
 
     def _file_set(self, key: str, value: Any) -> None:
-        node: Dict[str, Any] = self._data
+        node: dict[str, Any] = self._data
         parts = key.split(".")
         for part in parts[:-1]:
             node = node.setdefault(part, {})
@@ -119,8 +119,8 @@ class ConfigManager:
             self._file_unset(key)
             self._save_file()
 
-    def all_keys(self) -> List[str]:
-        keys: List[str] = []
+    def all_keys(self) -> list[str]:
+        keys: list[str] = []
 
         def walk(node: Any, prefix: str) -> None:
             if isinstance(node, dict):
@@ -151,10 +151,10 @@ class ConfigManager:
                 keys.append(f"llm.api_key.{name}")
         return sorted(set(keys))
 
-    def show_masked(self) -> Dict[str, str]:
+    def show_masked(self) -> dict[str, str]:
         from jobot.secrets import mask
 
-        out: Dict[str, str] = {}
+        out: dict[str, str] = {}
         for key in self.all_keys():
             value = self.get(key)
             if value is None:

@@ -7,7 +7,8 @@ Automatically tries CSS, ARIA role, label, and XPath fallbacks when DOM drift oc
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -22,11 +23,11 @@ class SelectorStrategy(BaseModel):
 class FieldSelectorSpec(BaseModel):
     field_name: str  # e.g., "first_name", "email", "resume_upload", "submit_button"
     portal: str  # e.g., "linkedin", "greenhouse", "lever", "naukri", "mock_ats"
-    strategies: List[SelectorStrategy] = Field(default_factory=list)
+    strategies: list[SelectorStrategy] = Field(default_factory=list)
 
 
 # Pre-configured battle-tested selector registries for major ATS & job boards
-DEFAULT_SELECTORS: Dict[str, Dict[str, List[str]]] = {
+DEFAULT_SELECTORS: dict[str, dict[str, list[str]]] = {
     "greenhouse": {
         "first_name": [
             "input#first_name",
@@ -94,7 +95,7 @@ class SelectorRegistry:
     """Registry managing resilient selector resolution and drift logging."""
 
     def __init__(self) -> None:
-        self._registry: Dict[str, Dict[str, List[SelectorStrategy]]] = {}
+        self._registry: dict[str, dict[str, list[SelectorStrategy]]] = {}
         self._load_defaults()
 
     def _load_defaults(self) -> None:
@@ -107,7 +108,7 @@ class SelectorRegistry:
                     for idx, sel in enumerate(selectors)
                 ]
 
-    def register(self, portal: str, field_name: str, selectors: List[str]) -> None:
+    def register(self, portal: str, field_name: str, selectors: list[str]) -> None:
         if portal not in self._registry:
             self._registry[portal] = {}
         self._registry[portal][field_name] = [
@@ -115,7 +116,7 @@ class SelectorRegistry:
             for idx, sel in enumerate(selectors)
         ]
 
-    def get_selectors(self, portal: str, field_name: str) -> List[str]:
+    def get_selectors(self, portal: str, field_name: str) -> list[str]:
         """Return ordered list of selector candidates for portal and field."""
         portal_map = self._registry.get(portal.lower(), {})
         strategies = portal_map.get(field_name, [])
@@ -130,7 +131,7 @@ class SelectorRegistry:
 
     async def resolve_element(
         self, page: Any, portal: str, field_name: str, timeout_ms: int = 2000
-    ) -> tuple[Optional[Any], Optional[str]]:
+    ) -> tuple[Any | None, str | None]:
         """Attempt to find visible element using selector ladder; returns (locator, successful_selector)."""
         candidates = self.get_selectors(portal, field_name)
         for idx, selector in enumerate(candidates):

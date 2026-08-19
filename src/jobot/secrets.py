@@ -6,7 +6,6 @@ never in source, logs, or git. Keys are dotted paths, e.g.
 """
 
 import logging
-from typing import Optional
 
 import keyring
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 SERVICE = "jobot"
 
 
-def get_secret(key: str) -> Optional[str]:
+def get_secret(key: str) -> str | None:
     try:
         return keyring.get_password(SERVICE, key)
     except Exception as exc:  # noqa: BLE001
@@ -38,7 +37,7 @@ def has_secret(key: str) -> bool:
     return get_secret(key) is not None
 
 
-def mask(value: Optional[str]) -> str:
+def mask(value: str | None) -> str:
     """Mask a secret for display: keep first 4 chars, redact the rest."""
     if not value:
         return "<unset>"

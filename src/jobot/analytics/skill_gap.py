@@ -3,7 +3,6 @@
 import asyncio
 import json
 from collections import Counter
-from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -26,14 +25,14 @@ class SkillDemand(BaseModel):
 
 class SkillGapReport(BaseModel):
     total_postings: int
-    profile_skills: List[str]
-    top_demanded: List[SkillDemand]
-    gaps: List[SkillGap]
-    recommendations: List[str]
+    profile_skills: list[str]
+    top_demanded: list[SkillDemand]
+    gaps: list[SkillGap]
+    recommendations: list[str]
     sourced_from: str
 
 
-def _rule_based_recommendations(gaps: List[SkillGap], cap: int = 6) -> List[str]:
+def _rule_based_recommendations(gaps: list[SkillGap], cap: int = 6) -> list[str]:
     out = []
     for gap in gaps[:cap]:
         out.append(
@@ -47,9 +46,9 @@ class SkillGapAnalyzer:
 
     def __init__(
         self,
-        db: Optional[DatabaseManager] = None,
-        extractor: Optional[SkillExtractor] = None,
-        router: Optional[ModelRouter] = None,
+        db: DatabaseManager | None = None,
+        extractor: SkillExtractor | None = None,
+        router: ModelRouter | None = None,
     ) -> None:
         self.db = db or DatabaseManager()
         self.extractor = extractor or SkillExtractor(router=router or ModelRouter())
@@ -91,12 +90,12 @@ class SkillGapAnalyzer:
             + (f" (incl. {parsed_missing} parsed on demand)" if parsed_missing else ""),
         )
 
-    def _recommend(self, profile: UserProfile, gaps: List[SkillGap]) -> List[str]:
+    def _recommend(self, profile: UserProfile, gaps: list[SkillGap]) -> list[str]:
         if not gaps:
             return ["No skill gaps detected against saved postings."]
         return asyncio.run(self._recommend_async(profile, gaps))
 
-    async def _recommend_async(self, profile: UserProfile, gaps: List[SkillGap]) -> List[str]:
+    async def _recommend_async(self, profile: UserProfile, gaps: list[SkillGap]) -> list[str]:
         prompt = (
             "Recommend a focused learning path for a candidate whose profile "
             "lacks these in-demand skills (list is demand-ordered). Return strict JSON "

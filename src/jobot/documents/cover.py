@@ -1,12 +1,14 @@
 """Cover letter generation with 5 tone presets (Phase 3, T3.3)."""
 
-from typing import Dict, List, Optional
+import logging
 
 from jobot.ai.router import ModelRouter
 from jobot.models.domain import JobPosting, UserProfile
 from jobot.security.prompt_guard import sanitize_llm_input
 
-TONE_PRESETS: Dict[str, Dict[str, object]] = {
+logger = logging.getLogger(__name__)
+
+TONE_PRESETS: dict[str, dict[str, object]] = {
     "classic": {
         "label": "Classic professional",
         "system_prompt": (
@@ -55,17 +57,17 @@ TONE_PRESETS: Dict[str, Dict[str, object]] = {
 }
 
 
-def list_tones() -> List[str]:
+def list_tones() -> list[str]:
     return list(TONE_PRESETS)
 
 
 class CoverLetterGenerator:
     """Generates profile-grounded cover letters via ModelRouter."""
 
-    def __init__(self, router: Optional[ModelRouter] = None):
+    def __init__(self, router: ModelRouter | None = None):
         self.router = router or ModelRouter()
 
-    def _preset(self, tone: str) -> Dict[str, object]:
+    def _preset(self, tone: str) -> dict[str, object]:
         if tone not in TONE_PRESETS:
             raise ValueError(f"Unknown tone '{tone}'. Available: {', '.join(list_tones())}")
         return TONE_PRESETS[tone]
@@ -81,7 +83,7 @@ class CoverLetterGenerator:
         self,
         job: JobPosting,
         profile: UserProfile,
-        matching_skills: Optional[List[str]] = None,
+        matching_skills: list[str] | None = None,
         tone: str = "classic",
         extra_prompt: str = "",
     ) -> str:
@@ -127,4 +129,18 @@ class CoverLetterGenerator:
             temperature=0.7,
             max_tokens=int(str(preset["max_length"])) + 100,
         )
+        # Audit fix JOB-SEC-020: do NOT let the [LLM_UNAVAILABLE] sentinel
+        # flow into the cover letter text — return an empty cover letter
+        # instead and let the caller decide whether to skip the attachment.
+        # The previous behavior would have written the literal string
+        # ``[LLM_UNAVAILABLE] Information from profile facts: ...`` into the
+        # cover-letter PDF and submitted it to the employer.
+        from jobot.llm.router import DEGRADATION_TEXT
+
+        if letter.startswith(DEGRADATION_TEXT):
+            logger.warning(
+                "LLM unavailable for cover-letter generation; returning empty "
+                "letter (audit fix JOB-SEC-020)"
+            )
+            return ""
         return self._truncate(letter, int(str(preset["max_length"])))

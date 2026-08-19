@@ -8,13 +8,12 @@ candidate facts and validating every generated claim against this ground truth.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
+
 from pydantic import BaseModel, Field
 
 from jobot.models.domain import CandidateFact, UserProfile
 from jobot.storage.db import DatabaseManager
-
 
 _TOKEN_RE = re.compile(r"\b[A-Za-z0-9+#.-]{2,}\b")
 _SPLIT_STMT_RE = re.compile(r"[.\n;]")
@@ -27,16 +26,16 @@ _PHONE_10_RE = re.compile(r"\b\d{10,}\b")
 class GroundingCheckResult(BaseModel):
     passed: bool
     score: float = 1.0  # 0.0 to 1.0
-    supported_claims: List[str] = Field(default_factory=list)
-    unsupported_claims: List[str] = Field(default_factory=list)
+    supported_claims: list[str] = Field(default_factory=list)
+    unsupported_claims: list[str] = Field(default_factory=list)
     reason: str = ""
-    checked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class CandidateTruthStore:
     """Repository and query interface over candidate_facts in SQLite."""
 
-    def __init__(self, db: Optional[DatabaseManager] = None) -> None:
+    def __init__(self, db: DatabaseManager | None = None) -> None:
         self.db = db or DatabaseManager()
 
     def record_fact(
@@ -45,10 +44,10 @@ class CandidateTruthStore:
         fact_value: str,
         profile_id: str = "default",
         source: str = "resume",
-        source_path: Optional[str] = None,
+        source_path: str | None = None,
         confidence: float = 1.0,
         verified: bool = True,
-        verified_by: Optional[str] = "profile_seed",
+        verified_by: str | None = "profile_seed",
     ) -> CandidateFact:
         fact = CandidateFact(
             profile_id=profile_id,
@@ -58,7 +57,7 @@ class CandidateTruthStore:
             source_path=source_path,
             confidence=confidence,
             verified=verified,
-            verified_at=datetime.now(timezone.utc) if verified else None,
+            verified_at=datetime.now(UTC) if verified else None,
             verified_by=verified_by,
         )
         fact_id = self.db.save_candidate_fact(fact)
@@ -68,16 +67,16 @@ class CandidateTruthStore:
     def get_facts(
         self,
         profile_id: str = "default",
-        fact_type: Optional[str] = None,
+        fact_type: str | None = None,
         verified_only: bool = False,
-    ) -> List[CandidateFact]:
+    ) -> list[CandidateFact]:
         return self.db.list_candidate_facts(
             profile_id=profile_id, fact_type=fact_type, verified_only=verified_only
         )
 
-    def seed_from_profile(self, profile: UserProfile) -> List[CandidateFact]:
+    def seed_from_profile(self, profile: UserProfile) -> list[CandidateFact]:
         """Extract and persist all factual claims from a UserProfile."""
-        facts: List[CandidateFact] = []
+        facts: list[CandidateFact] = []
         p_id = profile.profile_id or "default"
 
         # 1. Personal identity facts
@@ -186,13 +185,13 @@ class CandidateTruthStore:
 class CandidateGroundingVerifier:
     """Verifies that generated documents or form answers contain zero unsupported claims."""
 
-    def __init__(self, store: Optional[CandidateTruthStore] = None) -> None:
+    def __init__(self, store: CandidateTruthStore | None = None) -> None:
         self.store = store or CandidateTruthStore()
 
     def verify_text(
         self,
         text: str,
-        facts: Optional[List[CandidateFact]] = None,
+        facts: list[CandidateFact] | None = None,
         profile_id: str = "default",
         strict: bool = True,
     ) -> GroundingCheckResult:
@@ -226,8 +225,8 @@ class CandidateGroundingVerifier:
 
         # Extract sentences / statements
         statements = [s.strip() for s in _SPLIT_STMT_RE.split(text) if len(s.strip()) > 5]
-        supported: List[str] = []
-        unsupported: List[str] = []
+        supported: list[str] = []
+        unsupported: list[str] = []
 
         # PII / Metric Hallucination Checks:
         # Check for ungrounded emails

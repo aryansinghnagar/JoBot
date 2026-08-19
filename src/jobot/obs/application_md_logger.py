@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
+
 from jobot.models.domain import Application, JobPosting
 
 
@@ -10,7 +10,7 @@ class ApplicationMarkdownLogger:
     Logs all application submissions into `log.md` at project root, sectioned by date.
     """
 
-    def __init__(self, root_dir: Optional[Path] = None):
+    def __init__(self, root_dir: Path | None = None):
         if root_dir is None:
             root_dir = Path.cwd()
         self.log_md_path = root_dir / "log.md"
@@ -22,8 +22,8 @@ class ApplicationMarkdownLogger:
         match_score: float = 1.0,
     ) -> None:
         """Append application submission entry to log.md at project root."""
-        today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        timestamp_time = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+        today_date = datetime.now(UTC).strftime("%Y-%m-%d")
+        timestamp_time = datetime.now(UTC).strftime("%H:%M:%S UTC")
 
         file_exists = self.log_md_path.exists()
         content = ""

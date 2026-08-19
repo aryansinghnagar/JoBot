@@ -8,7 +8,7 @@ from jobot.documents.compiler import (
     escape_latex,
     render_tex,
 )
-from jobot.documents.cover import CoverLetterGenerator, TONE_PRESETS, list_tones
+from jobot.documents.cover import TONE_PRESETS, CoverLetterGenerator, list_tones
 from jobot.documents.engines import (
     FallbackPdfRenderer,
     LuaLaTeXRenderer,
@@ -29,8 +29,8 @@ from jobot.documents.tailor import (
     Drafter,
     Reviewer,
     RubricScores,
-    TailorLoop,
     TailoredDocumentResult,
+    TailorLoop,
     verify_fact_truthfulness_detailed,
 )
 

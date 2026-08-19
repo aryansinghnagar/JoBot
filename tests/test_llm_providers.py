@@ -22,13 +22,26 @@ from jobot.llm.providers import (
 
 @pytest.fixture
 def mock_post(monkeypatch):
+    """Patch the async HTTP helper used by all HTTP-based providers.
+
+    After the JOB-ARC-005 audit fix, providers call ``http_post_json_async``
+    (which internally delegates to ``http_post_json`` via ``asyncio.to_thread``).
+    We patch the async helper directly so the test runs synchronously without
+    spawning a thread executor, and we also patch the sync helper for any
+    callers that still use it.
+    """
     calls: List[Dict[str, Any]] = []
 
-    def fake_post(url, headers, payload, timeout_s=60.0):
+    async def fake_post_async(url, headers, payload, timeout_s=60.0):
         calls.append({"url": url, "headers": headers, "payload": payload})
         return _response_for(url)
 
-    monkeypatch.setattr("jobot.llm.providers.http_post_json", fake_post)
+    def fake_post_sync(url, headers, payload, timeout_s=60.0):
+        calls.append({"url": url, "headers": headers, "payload": payload})
+        return _response_for(url)
+
+    monkeypatch.setattr("jobot.llm.providers.http_post_json_async", fake_post_async)
+    monkeypatch.setattr("jobot.llm.providers.http_post_json", fake_post_sync)
     return calls
 
 
@@ -97,11 +110,11 @@ async def test_cohere_provider_complete(mock_post):
 async def test_openai_compat_provider_base_url(monkeypatch):
     calls: List[Dict[str, Any]] = []
 
-    def fake_post(url, headers, payload, timeout_s=60.0):
+    async def fake_post_async(url, headers, payload, timeout_s=60.0):
         calls.append(url)
         return {"choices": [{"message": {"content": "compat reply"}}], "usage": None}
 
-    monkeypatch.setattr("jobot.llm.providers.http_post_json", fake_post)
+    monkeypatch.setattr("jobot.llm.providers.http_post_json_async", fake_post_async)
     provider = OpenAICompatProvider(base_url="https://openrouter.ai/api/v1")
     resp = await provider.complete(_messages())
     assert resp.text == "compat reply"

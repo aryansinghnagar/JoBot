@@ -8,7 +8,7 @@ left in a stuck half-applied state.
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from jobot.storage.db import DatabaseManager
 
@@ -34,7 +34,7 @@ class SagaStepStatus(str, Enum):
 class ApplySaga:
     """Durable saga instance with step checkpoints and compensating actions."""
 
-    def __init__(self, db: DatabaseManager, saga_id: Optional[str] = None):
+    def __init__(self, db: DatabaseManager, saga_id: str | None = None):
         self.db = db
         self.saga_id = saga_id or ""
 
@@ -92,5 +92,5 @@ class ApplySaga:
         self.db.update_saga_status(self.saga_id, SagaStatus.COMPLETED.value)
         logger.info("Saga %s completed", self.saga_id[:8])
 
-    def steps(self) -> List[Dict[str, Any]]:
+    def steps(self) -> list[dict[str, Any]]:
         return self.db.list_saga_steps(self.saga_id)

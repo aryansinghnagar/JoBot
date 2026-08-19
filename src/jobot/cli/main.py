@@ -1,12 +1,13 @@
 import asyncio
 import csv
-from datetime import datetime
 import json
 import os
-from pathlib import Path
 import shutil
 import sys
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import typer
 from rich.console import Console
 from rich.prompt import Confirm
@@ -18,13 +19,14 @@ from jobot.ai.qa_engine import QAEngine
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.config.manager import ConfigManager
+from jobot.digest.generator import DigestGenerator
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.documents import (
+    TEMPLATE_NAMES,
     AtsScorer,
     CoverLetterGenerator,
     DocumentTailor,
     ResumeExporter,
-    TEMPLATE_NAMES,
     list_tones,
     pdftotext_available,
     tex_engine_available,
@@ -32,6 +34,7 @@ from jobot.documents import (
 from jobot.evals.harness import EvalHarness
 from jobot.gui.sidecar import StdioSidecarServer
 from jobot.models.domain import ApplicationStatus, CompensationDetails, PersonalInfo, UserProfile
+from jobot.notify.email import EmailSender
 from jobot.obs.alerts import AlertDispatcher
 from jobot.obs.manual_test_logger import ManualTestLogger
 from jobot.obs.tracing import TraceLogger
@@ -42,8 +45,6 @@ from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 from jobot.tracker.analytics import TrackerAnalytics
 from jobot.tracker.render import TrackerRenderer
-from jobot.digest.generator import DigestGenerator
-from jobot.notify.email import EmailSender
 
 app = typer.Typer(name="jobot", help="Autonomous Job Application Operating System CLI")
 console = Console()
@@ -56,9 +57,9 @@ def get_adapter(site: str) -> SiteAdapter:
 
 
 def _resolve_job(
-    job_id: Optional[str],
-    url: Optional[str],
-    site: Optional[str],
+    job_id: str | None,
+    url: str | None,
+    site: str | None,
     db: DatabaseManager,
     out_console: Console,
 ) -> Any:
@@ -210,7 +211,7 @@ def db_migrate() -> None:
 
 @db_app.command("backup")
 def db_backup(
-    out: Optional[str] = typer.Option(None, "--out", help="Output path for backup database file"),
+    out: str | None = typer.Option(None, "--out", help="Output path for backup database file"),
 ) -> None:
     """Create a hot backup of the SQLite database (UC-44)."""
     db = DatabaseManager()
@@ -238,7 +239,7 @@ def db_restore(
 
 
 @task_app.command("list")
-def task_list(status: Optional[str] = None) -> None:
+def task_list(status: str | None = None) -> None:
     """List durable tasks, optionally filtered by status."""
     from jobot.execution.engine import DurableTaskEngine, TaskStatus
 
@@ -388,12 +389,59 @@ def continuous_campaign_cmd(
         0.20, "--min-match", help="Minimum match score threshold (default: 0.20 for 20%)"
     ),
     auto_submit: bool = typer.Option(
-        True,
+        False,
         "--auto-submit/--supervised",
-        help="Run in autonomous submit mode or supervised approval mode",
+        help=(
+            "Run in autonomous submit mode (default: supervised). "
+            "Autonomous submit bypasses the human approval gate for each application — "
+            "this contradicts decision D15 in SECURITY.md and may violate the Terms of "
+            "Service of LinkedIn, Naukri, Workday, and Indeed. Use --auto-submit only "
+            "after reading SETUP.md Section 9 (ToS risk) and accepting the risk."
+        ),
     ),
 ) -> None:
-    """Run continuous round-robin campaign across 15 portals maintaining log.md at project root."""
+    """Run continuous round-robin campaign across 15 portals maintaining log.md at project root.
+
+    Audit fix JOB-SEC-001 / JOB-UX-005: the default is now ``--supervised``
+    (auto_submit=False). To enable autonomous submit, pass ``--auto-submit``
+    and accept the interactive confirmation prompt that surfaces the ToS risk.
+    """
+    # Audit fix: explicit confirmation prompt before any campaign that may
+    # submit real applications across external portals. The prompt prints the
+    # daily caps from the policy engine and requires interactive y/N.
+    console.print("\n[bold yellow]⚠  Continuous Campaign — Terms-of-Service Risk[/bold yellow]")
+    console.print(
+        "Automated submissions across LinkedIn, Naukri, Workday, Indeed, and"
+        " similar portals may violate those platforms' Terms of Service and can"
+        " lead to account suspension or legal action under the US Computer Fraud"
+        " and Abuse Act (CFAA). Review SETUP.md Section 9 before proceeding."
+    )
+    mode_label = (
+        "AUTONOMOUS (no human approval gate)"
+        if auto_submit
+        else "SUPERVISED (human approval required)"
+    )
+    console.print(f"\nMode: [bold]{mode_label}[/bold]")
+    console.print(f"Goal: {goal} applications | Min match: {int(min_match * 100)}%")
+
+    if auto_submit:
+        # Extra confirmation for autonomous mode.
+        if not Confirm.ask(
+            "\n[bold red]You are about to enable AUTONOMOUS submit.[/bold red]\n"
+            "This will submit real applications without per-application human approval.\n"
+            "Have you read SETUP.md Section 9 (ToS risk) and accept the risk?",
+            default=False,
+        ):
+            console.print("Aborted. No applications were submitted.")
+            raise typer.Exit(code=1)
+    else:
+        if not Confirm.ask(
+            "\nStart the campaign in SUPERVISED mode? (you will approve each application)",
+            default=False,
+        ):
+            console.print("Aborted. No applications were submitted.")
+            raise typer.Exit(code=1)
+
     runner = ContinuousCampaignRunner()
     asyncio.run(
         runner.run_continuous_campaign(
@@ -492,7 +540,7 @@ def auto_apply_cmd(
                             str(approval_id), _AS.APPROVED, decided_by="cli-human"
                         )
                     asyncio.run(pipeline.submit_and_verify(app_res))
-                    final_status: ApplicationStatus = getattr(app_res, "status")
+                    final_status: ApplicationStatus = app_res.status
                     if final_status in (ApplicationStatus.VERIFIED, ApplicationStatus.SUBMITTED):
                         console.print(
                             f"[bold green][OK] Application SUBMITTED & VERIFIED for {job.company}![/bold green]\n"
@@ -542,7 +590,7 @@ def scrape_cmd(
     ),
     json_out: bool = typer.Option(False, "--json", help="Emit results as JSON to stdout"),
     no_dedup: bool = typer.Option(False, "--no-dedup", help="Disable the two-tier dedup"),
-    hours_old: Optional[int] = typer.Option(
+    hours_old: int | None = typer.Option(
         72, "--hours-old", help="Only postings newer than N hours"
     ),
     country: str = typer.Option(
@@ -581,7 +629,7 @@ def scrape_cmd(
     config = ConfigManager()
     db = DatabaseManager()
     dedup = DedupService(db=db) if not no_dedup else None
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     failures = 0
 
     def progress(msg: str) -> None:
@@ -753,18 +801,18 @@ def run_cmd(
 
 @app.command("apply")
 def apply_cmd(
-    job_id: Optional[str] = typer.Argument(
+    job_id: str | None = typer.Argument(
         None,
         help="Saved job posting id (see 'jobot scrape --save'); or use --url",
     ),
-    url: Optional[str] = typer.Option(None, "--url", help="Job posting URL to apply to"),
-    site: Optional[str] = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
+    url: str | None = typer.Option(None, "--url", help="Job posting URL to apply to"),
+    site: str | None = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
         help="Tailor + generate resume PDF + cover letter + ATS score, WITHOUT submitting",
     ),
-    resume_saga: Optional[str] = typer.Option(None, "--resume", help="Resume a saga by id"),
+    resume_saga: str | None = typer.Option(None, "--resume", help="Resume a saga by id"),
     approve: bool = typer.Option(False, "--approve", help="Auto-approve submission (autonomous)"),
     template: str = typer.Option(
         "default", "--template", help=f"Resume template: {', '.join(TEMPLATE_NAMES)}"
@@ -773,7 +821,7 @@ def apply_cmd(
         "classic", "--tone", help=f"Cover letter tone: {', '.join(list_tones())}"
     ),
     extra_prompt: str = typer.Option("", "--extra-prompt", help="Extra cover letter instructions"),
-    engine: Optional[str] = typer.Option(None, "--engine", help="PDF engine: latex, fallback"),
+    engine: str | None = typer.Option(None, "--engine", help="PDF engine: latex, fallback"),
 ) -> None:
     """Tailor documents and submit an application via the saga orchestrator."""
     vault = CredentialVault()
@@ -857,9 +905,9 @@ def apply_cmd(
 
 @app.command("coverletter")
 def coverletter_cmd(
-    job_id: Optional[str] = typer.Argument(None, help="Saved job posting id; or use --url"),
-    url: Optional[str] = typer.Option(None, "--url", help="Job posting URL"),
-    site: Optional[str] = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
+    job_id: str | None = typer.Argument(None, help="Saved job posting id; or use --url"),
+    url: str | None = typer.Option(None, "--url", help="Job posting URL"),
+    site: str | None = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
     tone: str = typer.Option("classic", "--tone", help=f"Tone: {', '.join(list_tones())}"),
     extra_prompt: str = typer.Option("", "--extra-prompt", help="Extra instructions"),
     save: bool = typer.Option(False, "--save", help="Save letter to ~/.jobot/resumes/"),
@@ -927,7 +975,7 @@ def report_issue_cmd(
     issue_type: str = typer.Option(
         "USER_REPORT", "--type", help="Type: USER_REPORT, VULNERABILITY, DOM_DRIFT, ERROR"
     ),
-    site: Optional[str] = typer.Option(None, "--site", help="Target site (e.g. linkedin, naukri)"),
+    site: str | None = typer.Option(None, "--site", help="Target site (e.g. linkedin, naukri)"),
     details: str = typer.Option("", "--details", help="Additional details or repro notes"),
 ) -> None:
     """Log an issue, bug, or security vulnerability detected during manual testing."""
@@ -1013,13 +1061,13 @@ def resume_cmd(
         "runner",
         help="Action: 'runner' (resume paused loops), 'tailor', 'ats-check', 'templates'",
     ),
-    job_id: Optional[str] = typer.Option(None, "--job-id", help="Saved job posting id (tailor)"),
-    url: Optional[str] = typer.Option(None, "--url", help="Job posting URL (tailor)"),
-    site: Optional[str] = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
+    job_id: str | None = typer.Option(None, "--job-id", help="Saved job posting id (tailor)"),
+    url: str | None = typer.Option(None, "--url", help="Job posting URL (tailor)"),
+    site: str | None = typer.Option(None, "--site", help="Site for --url (inferred if omitted)"),
     template: str = typer.Option("default", "--template", help="Resume template name"),
-    engine: Optional[str] = typer.Option(None, "--engine", help="PDF engine: latex, fallback"),
-    pdf_file: Optional[str] = typer.Option(None, "--file", help="PDF file to ATS-check"),
-    output: Optional[str] = typer.Option(None, "--output", help="Output directory for artifacts"),
+    engine: str | None = typer.Option(None, "--engine", help="PDF engine: latex, fallback"),
+    pdf_file: str | None = typer.Option(None, "--file", help="PDF file to ATS-check"),
+    output: str | None = typer.Option(None, "--output", help="Output directory for artifacts"),
 ) -> None:
     """Resume paused loops, or produce/check tailored resume documents."""
     if action == "runner":
@@ -1118,7 +1166,7 @@ def resume_cmd(
 @app.command("export")
 def export_cmd(
     format_type: str = typer.Option("csv", "--format", help="Export format: csv or json"),
-    output: Optional[str] = typer.Option(None, "--output", help="Output file path"),
+    output: str | None = typer.Option(None, "--output", help="Output file path"),
 ) -> None:
     """Export application history to CSV or JSON."""
     db = DatabaseManager()
@@ -1176,9 +1224,9 @@ def export_cmd(
 @app.command("schedule")
 def schedule_cmd(
     action: str = typer.Argument("list", help="Action: 'list', 'add', 'remove'"),
-    cron: Optional[str] = typer.Option(None, "--cron", help="Cron expression (e.g. '0 9 * * 1-5')"),
-    command: Optional[str] = typer.Option(None, "--command", help="Command to execute"),
-    schedule_id: Optional[str] = typer.Option(None, "--id", help="Schedule ID to remove"),
+    cron: str | None = typer.Option(None, "--cron", help="Cron expression (e.g. '0 9 * * 1-5')"),
+    command: str | None = typer.Option(None, "--command", help="Command to execute"),
+    schedule_id: str | None = typer.Option(None, "--id", help="Schedule ID to remove"),
 ) -> None:
     """Manage cron-like automated application schedules."""
     sm = SchedulerManager()
@@ -1221,7 +1269,7 @@ def tracker_cmd(
     action: str = typer.Argument(
         "list", help="Action: 'list', 'show', 'dashboard', 'dashboard-html'"
     ),
-    target: Optional[str] = typer.Argument(
+    target: str | None = typer.Argument(
         None, help="Application id ('show') or html path ('dashboard-html')"
     ),
 ) -> None:
@@ -1266,7 +1314,7 @@ def digest_cmd(
         True, "--dry-run/--send", help="Render + print only; do not email"
     ),
     period_days: int = typer.Option(7, "--period-days", help="Lookback window in days"),
-    output: Optional[str] = typer.Option(None, "--output", help="Write HTML digest to this path"),
+    output: str | None = typer.Option(None, "--output", help="Write HTML digest to this path"),
 ) -> None:
     """Generate (and optionally email) the weekly activity digest."""
     db = DatabaseManager()
@@ -1359,8 +1407,8 @@ def interview_cmd(
         "list", help="Action: 'start', 'list', 'answer', 'review', 'complete'"
     ),
     track: str = typer.Argument("behavioral", help="Track: behavioral | system_design | technical"),
-    session_id: Optional[str] = typer.Option(None, "--session", help="Session ID"),
-    answer: Optional[str] = typer.Option(None, "--answer", help="Answer text for 'answer' action"),
+    session_id: str | None = typer.Option(None, "--session", help="Session ID"),
+    answer: str | None = typer.Option(None, "--answer", help="Answer text for 'answer' action"),
 ) -> None:
     """Mock interview sessions with STAR-method coaching."""
     from jobot.interview.coach import MockInterviewer
@@ -1539,7 +1587,7 @@ def outreach_cmd(
     name: str = typer.Option("", "--name", help="Contact first name"),
     company: str = typer.Option("", "--company", help="Contact company"),
     role: str = typer.Option("", "--role", help="Target role at company"),
-    output: Optional[str] = typer.Option(None, "--output", help="Write drafted DM to this path"),
+    output: str | None = typer.Option(None, "--output", help="Write drafted DM to this path"),
 ) -> None:
     """Cold outreach: list presets, draft DMs, send (with daily cap)."""
     from jobot.outreach.dm import Contact, DMGenerator, OutreachGate
@@ -1628,7 +1676,7 @@ def outreach_cmd(
 @app.command("plugin")
 def plugin_cmd(
     action: str = typer.Argument("list", help="Action: 'install', 'list', 'audit', 'remove'"),
-    target: Optional[str] = typer.Argument(
+    target: str | None = typer.Argument(
         None, help="Git URL (install) or plugin name (audit/remove)"
     ),
 ) -> None:
@@ -1713,7 +1761,7 @@ def plugin_cmd(
 @app.command("traces")
 def traces_cmd(
     action: str = typer.Argument("list", help="Action: 'list', 'show'"),
-    run_id: Optional[str] = typer.Argument(None, help="Run ID for 'show' action"),
+    run_id: str | None = typer.Argument(None, help="Run ID for 'show' action"),
 ) -> None:
     """List or inspect OpenTelemetry-compatible trace spans."""
     tl = TraceLogger()
@@ -1756,7 +1804,7 @@ def traces_cmd(
 @app.command("alerts")
 def alerts_cmd(
     show_all: bool = typer.Option(False, "--all", help="Show all alerts including acknowledged"),
-    ack_id: Optional[str] = typer.Option(None, "--ack", help="Acknowledge alert ID"),
+    ack_id: str | None = typer.Option(None, "--ack", help="Acknowledge alert ID"),
 ) -> None:
     """List operational alerts or acknowledge an alert by ID."""
     dispatcher = AlertDispatcher()
@@ -1823,13 +1871,9 @@ def evals_cmd(
 
 @app.command("login")
 def login_cmd(
-    portal: Optional[str] = typer.Argument(
-        None, help="Target portal: naukri, linkedin, indeed, etc."
-    ),
+    portal: str | None = typer.Argument(None, help="Target portal: naukri, linkedin, indeed, etc."),
     status: bool = typer.Option(False, "--status", help="Show active portal login sessions"),
-    logout: Optional[str] = typer.Option(
-        None, "--logout", help="Clear session for specified portal"
-    ),
+    logout: str | None = typer.Option(None, "--logout", help="Clear session for specified portal"),
 ) -> None:
     """Manage interactive portal login sessions and cookie persistence."""
     sessions_base = Path.home() / ".jobot" / "sessions"

@@ -9,7 +9,9 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Dict, List, Optional, cast
+from collections.abc import AsyncIterator, Callable
+from typing import TYPE_CHECKING, Any, Optional, cast
+
 from pydantic import BaseModel, Field
 
 from jobot.security.url_guard import safe_urlopen
@@ -28,7 +30,7 @@ class Message(BaseModel):
 class ToolSpec(BaseModel):
     name: str
     description: str = ""
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class LLMResponse(BaseModel):
@@ -49,11 +51,18 @@ class ProviderPricing(BaseModel):
 
 def http_post_json(
     url: str,
-    headers: Dict[str, str],
-    payload: Dict[str, Any],
+    headers: dict[str, str],
+    payload: dict[str, Any],
     timeout_s: float = 60.0,
-) -> Dict[str, Any]:
-    """POST JSON to a REST endpoint and return the parsed response body."""
+) -> dict[str, Any]:
+    """POST JSON to a REST endpoint and return the parsed response body.
+
+    This is the synchronous helper that backs ``LLMProvider.complete``.
+    Synchronous because it wraps ``urllib.request.urlopen`` (stdlib, blocking).
+    Callers inside ``async`` coroutines should prefer ``http_post_json_async``
+    so the event loop is not frozen for the duration of the LLM call
+    (audit fix JOB-ARC-005 / JOB-ARC-004).
+    """
     with safe_urlopen(
         url,
         data=json.dumps(payload).encode("utf-8"),
@@ -61,28 +70,45 @@ def http_post_json(
         timeout=timeout_s,
         method="POST",
     ) as resp:
-        return cast(Dict[str, Any], json.loads(resp.read().decode("utf-8")))
+        return cast(dict[str, Any], json.loads(resp.read().decode("utf-8")))
+
+
+async def http_post_json_async(
+    url: str,
+    headers: dict[str, str],
+    payload: dict[str, Any],
+    timeout_s: float = 60.0,
+) -> dict[str, Any]:
+    """Async wrapper around ``http_post_json``.
+
+    Runs the blocking ``urllib`` POST on the default thread executor so the
+    asyncio event loop stays free. This is the version that LLM providers
+    should call from inside ``async def complete(...)`` — calling
+    ``http_post_json`` directly freezes the loop for the full request window
+    (audit fix JOB-ARC-005 / JOB-ARC-004).
+    """
+    return await asyncio.to_thread(http_post_json, url, headers, payload, timeout_s)
 
 
 def http_get_json(
     url: str,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     timeout_s: float = 5.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """GET a JSON endpoint (used for cheap health probes)."""
     with safe_urlopen(url, headers=headers or {}, timeout=timeout_s) as resp:
-        return cast(Dict[str, Any], json.loads(resp.read().decode("utf-8")))
+        return cast(dict[str, Any], json.loads(resp.read().decode("utf-8")))
 
 
 async def http_post_sse_async(
     url: str,
-    headers: Dict[str, str],
-    payload: Dict[str, Any],
+    headers: dict[str, str],
+    payload: dict[str, Any],
     timeout_s: float = 60.0,
 ) -> AsyncIterator[str]:
     """POST JSON with stream=True and asynchronously yield raw text lines."""
     loop = asyncio.get_running_loop()
-    q: asyncio.Queue[Optional[Any]] = asyncio.Queue()
+    q: asyncio.Queue[Any | None] = asyncio.Queue()
 
     def _reader() -> None:
         try:
@@ -127,49 +153,49 @@ class LLMProvider(ABC):
 
     name: str
     default_model: str
-    pricing: Dict[str, ProviderPricing]
+    pricing: dict[str, ProviderPricing]
 
     def __init__(self, pricing_table: Optional["PricingTable"] = None) -> None:
-        self.pricing: Dict[str, ProviderPricing] = {}
-        self.key_lookup: Optional[Callable[[], Optional[str]]] = None
+        self.pricing: dict[str, ProviderPricing] = {}
+        self.key_lookup: Callable[[], str | None] | None = None
         if pricing_table is not None:
             self.pricing = pricing_table.providers.get(self.name, {})
 
     @abstractmethod
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse: ...
 
     @abstractmethod
     def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]: ...
 
     @abstractmethod
     def estimate_cost(
-        self, input_tokens: int, output_tokens: int, model: Optional[str] = None
+        self, input_tokens: int, output_tokens: int, model: str | None = None
     ) -> float: ...
 
     @abstractmethod
     async def health_check(self) -> bool: ...
 
-    def _resolve_model(self, model: Optional[str]) -> str:
+    def _resolve_model(self, model: str | None) -> str:
         return model or self.default_model
 
-    def _resolve_pricing(self, model: Optional[str]) -> ProviderPricing:
+    def _resolve_pricing(self, model: str | None) -> ProviderPricing:
         key = self._resolve_model(model)
         if key in self.pricing:
             return self.pricing[key]

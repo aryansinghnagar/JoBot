@@ -1,6 +1,5 @@
 """Deterministic LinkedIn people-search URL generation (no scraping)."""
 
-from typing import Optional
 from urllib.parse import quote_plus
 
 
@@ -15,9 +14,9 @@ class LinkedInPeopleSearchURLBuilder:
     def build(
         self,
         keywords: str,
-        location: Optional[str] = None,
-        current_company: Optional[str] = None,
-        title: Optional[str] = None,
+        location: str | None = None,
+        current_company: str | None = None,
+        title: str | None = None,
     ) -> str:
         params = {"keywords": keywords, "origin": "GLOBAL_SEARCH_HEADER"}
         if location:

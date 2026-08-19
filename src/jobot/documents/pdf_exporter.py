@@ -1,7 +1,6 @@
 import html
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from jobot.documents.ats import AtsScore, AtsScorer
 from jobot.documents.compiler import compile_resume_data
@@ -100,7 +99,7 @@ class ResumeExporter:
 </html>"""
         return html_doc
 
-    def export_resume_files(self, profile: UserProfile, output_dir: Optional[Path] = None) -> Path:
+    def export_resume_files(self, profile: UserProfile, output_dir: Path | None = None) -> Path:
         """Export text and HTML resume files to disk."""
         if output_dir is None:
             output_dir = Path.home() / ".jobot" / "resumes"
@@ -119,12 +118,12 @@ class ResumeExporter:
         self,
         profile: UserProfile,
         template: str = "default",
-        engine: Optional[str] = None,
-        output_dir: Optional[Path] = None,
-        summary: Optional[str] = None,
-        skills: Optional[List[str]] = None,
-        experience_bullets: Optional[Dict[str, List[str]]] = None,
-        scorer: Optional[AtsScorer] = None,
+        engine: str | None = None,
+        output_dir: Path | None = None,
+        summary: str | None = None,
+        skills: list[str] | None = None,
+        experience_bullets: dict[str, list[str]] | None = None,
+        scorer: AtsScorer | None = None,
     ) -> tuple[Path, AtsScore]:
         """Render profile (optionally tailored) to PDF and score ATS parseability.
 

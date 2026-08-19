@@ -1,18 +1,18 @@
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.ai.skill_extractor import SkillExtractor
 from jobot.config.manager import ConfigManager
+from jobot.discovery.matching_ladder import MatchingLadder, MatchingLadderResult
 from jobot.models.domain import JobPosting, UserProfile
 from jobot.scrapers.ats import FAMILY_ADAPTERS
 from jobot.scrapers.careers import CareerPageScanner
 from jobot.scrapers.dedup import DedupService
 from jobot.scrapers.jobspy import JOBS_BOARDS, JobSpyAdapter
 from jobot.storage.db import DatabaseManager
-from jobot.discovery.matching_ladder import MatchingLadder, MatchingLadderResult
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,8 @@ UNSCRAPABLE_BOARDS = (
 class JobMatchResult(BaseModel):
     posting: JobPosting
     match_score: float  # 0.0 to 1.0
-    matching_skills: List[str]
-    missing_skills: List[str]
+    matching_skills: list[str]
+    missing_skills: list[str]
     recommendation: str  # "HIGH_FIT", "MEDIUM_FIT", "LOW_FIT"
 
 
@@ -50,11 +50,11 @@ class JobDiscoveryEngine:
 
     def __init__(
         self,
-        active_portals: Optional[List[str]] = None,
-        skill_extractor: Optional[SkillExtractor] = None,
-        db: Optional[DatabaseManager] = None,
-        dedup: Optional[DedupService] = None,
-        config: Optional[ConfigManager] = None,
+        active_portals: list[str] | None = None,
+        skill_extractor: SkillExtractor | None = None,
+        db: DatabaseManager | None = None,
+        dedup: DedupService | None = None,
+        config: ConfigManager | None = None,
     ) -> None:
         if active_portals is None:
             active_portals = [
@@ -83,7 +83,7 @@ class JobDiscoveryEngine:
         self.config = config or ConfigManager()
         self.matching_ladder = MatchingLadder(skill_extractor=self.skill_extractor)
 
-    def _scraper_for(self, portal: str, companies: List[str]) -> Any:
+    def _scraper_for(self, portal: str, companies: list[str]) -> Any:
         if portal in JOBS_BOARDS:
             delay = float(self.config.get("scraper.jobspy.delay_s", 1.0))
             proxies_raw = self.config.get("scraper.jobspy.proxy_list", "")
@@ -109,7 +109,7 @@ class JobDiscoveryEngine:
         logger.warning("Discovery: no scraper for portal '%s'; skipping", portal)
         return None
 
-    def scraper_for(self, portal: str, companies: List[str]) -> Any:
+    def scraper_for(self, portal: str, companies: list[str]) -> Any:
         """Public scraper resolution for a portal (used by the GUI sidecar)."""
         return self._scraper_for(portal, companies)
 
@@ -153,12 +153,12 @@ class JobDiscoveryEngine:
         target_title: str = "Python Developer",
         limit_per_portal: int = 2,
         min_match_threshold: float = 0.20,
-        companies: Optional[List[str]] = None,
+        companies: list[str] | None = None,
         location: str = "",
-    ) -> List[JobMatchResult]:
+    ) -> list[JobMatchResult]:
         """Search real feeds for postings matching the candidate profile (dedup applied)."""
         companies = companies or []
-        matched_jobs: List[JobMatchResult] = []
+        matched_jobs: list[JobMatchResult] = []
 
         for portal in self.active_portals:
             try:

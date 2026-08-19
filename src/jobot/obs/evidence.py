@@ -9,9 +9,10 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -20,20 +21,20 @@ logger = logging.getLogger(__name__)
 class EvidenceManifest(BaseModel):
     application_id: str
     site: str
-    pre_submit_dom_hash: Optional[str] = None
-    pre_submit_screenshot: Optional[str] = None
-    post_submit_dom_hash: Optional[str] = None
-    post_submit_screenshot: Optional[str] = None
-    confirmation_id: Optional[str] = None
-    api_request_payload_hash: Optional[str] = None
-    api_response_status: Optional[int] = None
-    timestamp_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    pre_submit_dom_hash: str | None = None
+    pre_submit_screenshot: str | None = None
+    post_submit_dom_hash: str | None = None
+    post_submit_screenshot: str | None = None
+    confirmation_id: str | None = None
+    api_request_payload_hash: str | None = None
+    api_response_status: int | None = None
+    timestamp_utc: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class BrowserEvidenceCollector:
     """Manages pre/post submit evidence artifacts for auditability."""
 
-    def __init__(self, base_dir: Optional[Path] = None) -> None:
+    def __init__(self, base_dir: Path | None = None) -> None:
         if base_dir is None:
             base_dir = Path.home() / ".jobot" / "evidence"
         self.base_dir = Path(base_dir)
@@ -48,9 +49,9 @@ class BrowserEvidenceCollector:
         self,
         application_id: str,
         site: str,
-        confirmation_id: Optional[str] = None,
-        request_payload: Optional[bytes] = None,
-        response_status: Optional[int] = None,
+        confirmation_id: str | None = None,
+        request_payload: bytes | None = None,
+        response_status: int | None = None,
     ) -> EvidenceManifest:
         """Record non-repudiation manifest for direct HTTP API submissions."""
         app_dir = self.get_app_dir(application_id)
@@ -72,7 +73,7 @@ class BrowserEvidenceCollector:
         manifest_file.write_text(json.dumps(manifest.model_dump(), indent=2), encoding="utf-8")
         return manifest
 
-    async def capture_pre_submit(self, page: Any, application_id: str, site: str) -> Dict[str, str]:
+    async def capture_pre_submit(self, page: Any, application_id: str, site: str) -> dict[str, str]:
         """Capture pre-submit screenshot and DOM snapshot."""
         app_dir = self.get_app_dir(application_id)
         screenshot_path = app_dir / "pre_submit.png"
@@ -106,8 +107,8 @@ class BrowserEvidenceCollector:
         page: Any,
         application_id: str,
         site: str,
-        confirmation_id: Optional[str] = None,
-        pre_evidence: Optional[Dict[str, str]] = None,
+        confirmation_id: str | None = None,
+        pre_evidence: dict[str, str] | None = None,
     ) -> EvidenceManifest:
         """Capture post-submit screenshot and DOM snapshot, save manifest."""
         app_dir = self.get_app_dir(application_id)

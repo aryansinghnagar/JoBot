@@ -11,7 +11,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -31,7 +31,7 @@ class AtsScore(BaseModel):
     score: float
     passed: bool
     threshold: float
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 def extract_pdf_text_pdftotext(path: Path) -> str:
@@ -89,7 +89,7 @@ class AtsScorer:
         return multi, total
 
     def score_text(self, text: str) -> AtsScore:
-        details: Dict[str, Any] = {}
+        details: dict[str, Any] = {}
         total_chars = max(len(text), 1)
         non_ws = len(text) - len(re.sub(r"\s", "", text))
         density = non_ws / total_chars

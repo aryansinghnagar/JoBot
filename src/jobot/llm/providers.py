@@ -11,7 +11,8 @@ import asyncio
 import json
 import logging
 import os
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Type, Union
+from collections.abc import AsyncIterator, Callable
+from typing import Any, Union
 
 from jobot.llm.base import (
     LLMProvider,
@@ -21,7 +22,8 @@ from jobot.llm.base import (
     ToolSpec,
     estimate_tokens,
     http_get_json,
-    http_post_json,
+    http_post_json,  # re-exported for test fixtures that patch this name
+    http_post_json_async,
     http_post_sse_async,
 )
 from jobot.llm.pricing import PricingTable
@@ -32,16 +34,16 @@ logger = logging.getLogger(__name__)
 class HTTPChatProvider(LLMProvider):
     """Shared behavior for REST chat-completion providers."""
 
-    def __init__(self, pricing_table: Optional[PricingTable] = None) -> None:
+    def __init__(self, pricing_table: PricingTable | None = None) -> None:
         super().__init__(pricing_table or PricingTable())
 
     def estimate_cost(
-        self, input_tokens: int, output_tokens: int, model: Optional[str] = None
+        self, input_tokens: int, output_tokens: int, model: str | None = None
     ) -> float:
         p = self._resolve_pricing(model)
         return round((input_tokens * p.input_per_1k + output_tokens * p.output_per_1k) / 1000.0, 6)
 
-    def _api_key(self) -> Optional[str]:
+    def _api_key(self) -> str | None:
         env_key = os.getenv(f"{self.name.upper()}_API_KEY")
         if env_key:
             return env_key
@@ -60,11 +62,11 @@ class OpenAIProvider(HTTPChatProvider):
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         m = self._resolve_model(model)
@@ -76,7 +78,9 @@ class OpenAIProvider(HTTPChatProvider):
         }
         if tools:
             payload["tools"] = [{"type": "function", "function": t.model_dump()} for t in tools]
-        resp = http_post_json(
+        # Audit fix JOB-ARC-005: use the async wrapper so the event loop is not
+        # frozen for the full LLM call window (was synchronous ``http_post_json``).
+        resp = await http_post_json_async(
             self.api_url,
             {
                 "Authorization": f"Bearer {self._api_key() or ''}",
@@ -102,16 +106,16 @@ class OpenAIProvider(HTTPChatProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
         m = self._resolve_model(model)
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": m,
             "messages": [msg.model_dump() for msg in messages],
             "temperature": temperature,
@@ -148,7 +152,7 @@ class OpenAICompatProvider(OpenAIProvider):
         self,
         base_url: str,
         default_model: str = "default",
-        pricing_table: Optional[PricingTable] = None,
+        pricing_table: PricingTable | None = None,
     ) -> None:
         super().__init__(pricing_table or PricingTable())
         self.api_url = f"{base_url.rstrip('/')}/chat/completions"
@@ -157,7 +161,7 @@ class OpenAICompatProvider(OpenAIProvider):
         if default_model != "default":
             self.pricing[default_model] = ProviderPricing()
 
-    def _api_key(self) -> Optional[str]:
+    def _api_key(self) -> str | None:
         if self.key_lookup is not None:
             return self.key_lookup()
         return os.getenv("OPENAI_COMPAT_API_KEY")
@@ -182,15 +186,15 @@ class AnthropicProvider(HTTPChatProvider):
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         m = self._resolve_model(model)
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": m,
             "max_tokens": max_tokens,
             "temperature": temperature,
@@ -199,7 +203,8 @@ class AnthropicProvider(HTTPChatProvider):
         system = " ".join(msg.content for msg in messages if msg.role == "system")
         if system:
             payload["system"] = system
-        resp = http_post_json(
+        # Audit fix JOB-ARC-005: async wrapper so the event loop is not frozen.
+        resp = await http_post_json_async(
             self.api_url,
             {
                 "x-api-key": self._api_key() or "",
@@ -226,16 +231,16 @@ class AnthropicProvider(HTTPChatProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
         m = self._resolve_model(model)
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": m,
             "max_tokens": max_tokens,
             "temperature": temperature,
@@ -274,11 +279,11 @@ class MistralProvider(HTTPChatProvider):
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         m = self._resolve_model(model)
@@ -288,7 +293,8 @@ class MistralProvider(HTTPChatProvider):
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        resp = http_post_json(
+        # Audit fix JOB-ARC-005: async wrapper so the event loop is not frozen.
+        resp = await http_post_json_async(
             self.api_url,
             {
                 "Authorization": f"Bearer {self._api_key() or ''}",
@@ -314,11 +320,11 @@ class MistralProvider(HTTPChatProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
@@ -358,17 +364,17 @@ class CohereProvider(HTTPChatProvider):
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         m = self._resolve_model(model)
         system = " ".join(msg.content for msg in messages if msg.role == "system")
         chat_messages = [msg.model_dump() for msg in messages if msg.role != "system"]
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": m,
             "messages": chat_messages,
             "temperature": temperature,
@@ -376,7 +382,8 @@ class CohereProvider(HTTPChatProvider):
         }
         if system:
             payload["system_prompt"] = system
-        resp = http_post_json(
+        # Audit fix JOB-ARC-005: async wrapper so the event loop is not frozen.
+        resp = await http_post_json_async(
             self.api_url,
             {
                 "Authorization": f"Bearer {self._api_key() or ''}",
@@ -399,18 +406,18 @@ class CohereProvider(HTTPChatProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
         m = self._resolve_model(model)
         system = " ".join(msg.content for msg in messages if msg.role == "system")
         chat_messages = [msg.model_dump() for msg in messages if msg.role != "system"]
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": m,
             "messages": chat_messages,
             "temperature": temperature,
@@ -445,10 +452,10 @@ class GeminiProvider(LLMProvider):
     name = "gemini"
     default_model = "gemini-2.5-flash"
 
-    def __init__(self, pricing_table: Optional[PricingTable] = None) -> None:
+    def __init__(self, pricing_table: PricingTable | None = None) -> None:
         super().__init__(pricing_table or PricingTable())
 
-    def _api_key(self) -> Optional[str]:
+    def _api_key(self) -> str | None:
         env_key = os.getenv("GEMINI_API_KEY")
         if env_key:
             return env_key
@@ -457,18 +464,18 @@ class GeminiProvider(LLMProvider):
         return None
 
     def estimate_cost(
-        self, input_tokens: int, output_tokens: int, model: Optional[str] = None
+        self, input_tokens: int, output_tokens: int, model: str | None = None
     ) -> float:
         p = self._resolve_pricing(model)
         return round((input_tokens * p.input_per_1k + output_tokens * p.output_per_1k) / 1000.0, 6)
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         from google import genai  # already a core dependency
@@ -502,11 +509,11 @@ class GeminiProvider(LLMProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
@@ -539,7 +546,7 @@ class VertexProvider(GeminiProvider):
 
     name = "vertex"
 
-    def _api_key(self) -> Optional[str]:
+    def _api_key(self) -> str | None:
         env_key = os.getenv("GEMINI_API_KEY")
         if env_key:
             return env_key
@@ -552,11 +559,11 @@ class VertexProvider(GeminiProvider):
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         from google import genai  # already a core dependency
@@ -587,11 +594,11 @@ class VertexProvider(GeminiProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
@@ -626,11 +633,11 @@ class BedrockProvider(LLMProvider):
     name = "bedrock"
     default_model = "anthropic.claude-3-5-haiku-20241022-v1:0"
 
-    def __init__(self, pricing_table: Optional[PricingTable] = None) -> None:
+    def __init__(self, pricing_table: PricingTable | None = None) -> None:
         super().__init__(pricing_table or PricingTable())
 
     def estimate_cost(
-        self, input_tokens: int, output_tokens: int, model: Optional[str] = None
+        self, input_tokens: int, output_tokens: int, model: str | None = None
     ) -> float:
         p = self._resolve_pricing(model)
         return round((input_tokens * p.input_per_1k + output_tokens * p.output_per_1k) / 1000.0, 6)
@@ -640,11 +647,11 @@ class BedrockProvider(LLMProvider):
 
     def _converse(
         self,
-        messages: List[Message],
+        messages: list[Message],
         model: str,
         temperature: float,
         max_tokens: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         import boto3  # optional extra; lazy import keeps core install light
 
         client = boto3.client("bedrock-runtime", region_name=self._region())
@@ -677,11 +684,11 @@ class BedrockProvider(LLMProvider):
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         m = self._resolve_model(model)
@@ -701,11 +708,11 @@ class BedrockProvider(LLMProvider):
 
     async def stream(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[ToolSpec]] = None,
+        tools: list[ToolSpec] | None = None,
         timeout_s: float = 60.0,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
@@ -713,7 +720,7 @@ class BedrockProvider(LLMProvider):
 
         m = self._resolve_model(model)
         loop = asyncio.get_running_loop()
-        q: asyncio.Queue[Optional[Any]] = asyncio.Queue()
+        q: asyncio.Queue[Any | None] = asyncio.Queue()
 
         def _stream_sync() -> None:
             try:
@@ -789,8 +796,8 @@ def _vllm() -> OpenAICompatProvider:
 
 
 # plan.md Chapter 6 PROVIDER_REGISTRY: six classes, twelve concrete instances.
-ProviderFactory = Union[Type[LLMProvider], Callable[[], LLMProvider]]
-PROVIDER_REGISTRY: Dict[str, ProviderFactory] = {
+ProviderFactory = Union[type[LLMProvider], Callable[[], LLMProvider]]
+PROVIDER_REGISTRY: dict[str, ProviderFactory] = {
     "gemini": GeminiProvider,
     "openai": OpenAIProvider,
     "anthropic": AnthropicProvider,

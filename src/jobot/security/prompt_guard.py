@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import List, Tuple
 
-INJECTION_PATTERNS: List[Tuple[str, str]] = [
+INJECTION_PATTERNS: list[tuple[str, str]] = [
     (
         r"ignore\s+(all\s+)?(previous|prior|above|the\s+above)?\s*instructions?",
         "[REDACTED_INJECTION_OVERRIDE]",
@@ -71,12 +70,12 @@ def contains_prompt_injection(text: str) -> bool:
     return False
 
 
-def find_prompt_injections(text: str) -> List[str]:
+def find_prompt_injections(text: str) -> list[str]:
     """Return all detected injection match strings from text."""
     if not text:
         return []
     norm_text = _normalize_text(text)
-    matches: List[str] = []
+    matches: list[str] = []
     for pattern, _ in INJECTION_PATTERNS:
         found = re.findall(pattern, norm_text, flags=re.IGNORECASE)
         if found:

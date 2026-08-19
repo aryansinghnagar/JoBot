@@ -30,22 +30,23 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from dataclasses import dataclass, field
+from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import Any, Generator, Optional, cast
+from typing import Any, cast
 
 from jobot.models.domain import TaskStatus
 from jobot.storage.db import DatabaseManager
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _iso(dt: datetime) -> str:
-    return dt.astimezone(timezone.utc).isoformat()
+    return dt.astimezone(UTC).isoformat()
 
 
 class EffectStatus(str, Enum):
@@ -111,7 +112,7 @@ class DurableTask:
     skill_tags: list[str] = field(default_factory=list)
     status: TaskStatus = TaskStatus.PENDING
     depends_on: list[str] = field(default_factory=list)
-    owner: Optional[str] = None
+    owner: str | None = None
     priority: int = 5
     risk_level: int = 0
     attempts: int = 0
@@ -132,10 +133,10 @@ class EffectRecord:
     idempotency_key: str
     request_hash: str
     status: EffectStatus
-    application_id: Optional[str] = None
-    external_reference: Optional[str] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    application_id: str | None = None
+    external_reference: str | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
 
 
 @dataclass
@@ -146,12 +147,12 @@ class ApprovalRecord:
     risk_level: int
     requested_by: str
     status: ApprovalStatus
-    application_id: Optional[str] = None
-    requested_at: Optional[str] = None
-    decided_at: Optional[str] = None
-    decided_by: Optional[str] = None
-    decision_reason: Optional[str] = None
-    expires_at: Optional[str] = None
+    application_id: str | None = None
+    requested_at: str | None = None
+    decided_at: str | None = None
+    decided_by: str | None = None
+    decision_reason: str | None = None
+    expires_at: str | None = None
 
 
 class DurableTaskEngine:
@@ -193,14 +194,14 @@ class DurableTaskEngine:
         goal_id: str = "default",
         project_id: str = "default",
         *,
-        depends_on: Optional[list[str]] = None,
-        skill_tags: Optional[list[str]] = None,
+        depends_on: list[str] | None = None,
+        skill_tags: list[str] | None = None,
         priority: int = 5,
         risk_level: int = 0,
         max_attempts: int = 3,
         verification_plan: str = "",
         definition_of_done: str = "",
-        task_id: Optional[str] = None,
+        task_id: str | None = None,
     ) -> DurableTask:
         task_id = task_id or f"task_{uuid.uuid4().hex[:12]}"
         now = _iso(_now())
@@ -234,14 +235,14 @@ class DurableTaskEngine:
         self.promote_ready()
         return self.get_task(task_id)  # type: ignore[return-value]
 
-    def get_task(self, task_id: str) -> Optional[DurableTask]:
+    def get_task(self, task_id: str) -> DurableTask | None:
         with self._conn() as conn:
             row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
         if row is None:
             return None
         return self._row_to_task(row)
 
-    def list_tasks(self, status: Optional[TaskStatus] = None) -> list[DurableTask]:
+    def list_tasks(self, status: TaskStatus | None = None) -> list[DurableTask]:
         with self._conn() as conn:
             if status is None:
                 rows = conn.execute("SELECT * FROM tasks ORDER BY priority, created_at").fetchall()
@@ -279,7 +280,7 @@ class DurableTaskEngine:
         conn: sqlite3.Connection,
         task_id: str,
         new_status: TaskStatus,
-        guarded_by: Optional[TaskStatus] = None,
+        guarded_by: TaskStatus | None = None,
     ) -> bool:
         """Guarded status update; returns False if the guard failed."""
         if guarded_by is None:
@@ -300,7 +301,7 @@ class DurableTaskEngine:
         new_status: TaskStatus,
         *,
         actor: str = "system",
-        payload: Optional[dict[str, Any]] = None,
+        payload: dict[str, Any] | None = None,
     ) -> DurableTask:
         current = self.get_task(task_id)
         if current is None:
@@ -358,7 +359,7 @@ class DurableTaskEngine:
 
     def claim_next(
         self, worker_id: str, lease_seconds: float = DEFAULT_LEASE_SECONDS
-    ) -> Optional[DurableTask]:
+    ) -> DurableTask | None:
         """Atomically lease the highest-priority READY task to a worker.
 
         The guarded UPDATE under BEGIN IMMEDIATE guarantees exactly one
@@ -421,7 +422,7 @@ class DurableTaskEngine:
             conn.commit()
             return bool(cur.rowcount == 1)
 
-    def reclaim_expired(self, now: Optional[datetime] = None) -> list[str]:
+    def reclaim_expired(self, now: datetime | None = None) -> list[str]:
         """Return expired-lease tasks to READY (or QUARANTINE at max attempts).
 
         Attempts are counted from task_attempts rows (one per claim); a task
@@ -486,11 +487,11 @@ class DurableTaskEngine:
         self,
         task_id: str,
         event_type: str,
-        payload: Optional[dict[str, Any]] = None,
+        payload: dict[str, Any] | None = None,
         *,
         actor: str = "system",
-        correlation_id: Optional[str] = None,
-        causation_id: Optional[str] = None,
+        correlation_id: str | None = None,
+        causation_id: str | None = None,
     ) -> None:
         with self._conn() as conn:
             conn.execute(
@@ -512,7 +513,7 @@ class DurableTaskEngine:
         self,
         task_id: str,
         event_type: str,
-        payload: Optional[dict[str, Any]] = None,
+        payload: dict[str, Any] | None = None,
         **kw: Any,
     ) -> None:
         """Public event-ledger append (UC-02)."""
@@ -547,7 +548,7 @@ class DurableTaskEngine:
         effect_type: str,
         idempotency_key: str,
         request_hash: str,
-        application_id: Optional[str] = None,
+        application_id: str | None = None,
     ) -> EffectRecord:
         """Reserve an external effect; duplicates raise DuplicateEffect.
 
@@ -592,7 +593,7 @@ class DurableTaskEngine:
         assert rec is not None
         return rec
 
-    def get_effect(self, idempotency_key: str) -> Optional[EffectRecord]:
+    def get_effect(self, idempotency_key: str) -> EffectRecord | None:
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT * FROM external_effects WHERE idempotency_key = ?",
@@ -621,9 +622,9 @@ class DurableTaskEngine:
         idempotency_key: str,
         status: EffectStatus,
         *,
-        external_reference: Optional[str] = None,
-        task_id_for_events: Optional[str] = None,
-    ) -> Optional[EffectRecord]:
+        external_reference: str | None = None,
+        task_id_for_events: str | None = None,
+    ) -> EffectRecord | None:
         """Effect-state update (e.g. PENDING/UNKNOWN -> COMMITTED/FAILED)."""
         with self._conn() as conn:
             cur = conn.execute(
@@ -653,7 +654,7 @@ class DurableTaskEngine:
         action_type: str,
         risk_level: int,
         requested_by: str = "system",
-        application_id: Optional[str] = None,
+        application_id: str | None = None,
         ttl_seconds: float = DEFAULT_APPROVAL_TTL_SECONDS,
     ) -> ApprovalRecord:
         approval_id = f"appr_{uuid.uuid4().hex[:12]}"
@@ -684,7 +685,7 @@ class DurableTaskEngine:
         assert rec is not None
         return rec
 
-    def get_approval(self, approval_id: str) -> Optional[ApprovalRecord]:
+    def get_approval(self, approval_id: str) -> ApprovalRecord | None:
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT * FROM approval_requests WHERE id = ?", (approval_id,)
@@ -754,7 +755,7 @@ class DurableTaskEngine:
         )
         return rec
 
-    def expire_approvals(self, now: Optional[datetime] = None) -> int:
+    def expire_approvals(self, now: datetime | None = None) -> int:
         now = now or _now()
         with self._conn() as conn:
             cur = conn.execute(
@@ -779,7 +780,7 @@ class DurableTaskEngine:
             conn.commit()
         self._append_event(task_id, "checkpoint_saved", {"phase": phase})
 
-    def latest_checkpoint(self, task_id: str) -> Optional[dict[str, Any]]:
+    def latest_checkpoint(self, task_id: str) -> dict[str, Any] | None:
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT phase, state_payload FROM checkpoints WHERE task_id = ? "

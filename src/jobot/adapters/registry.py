@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, cast
 from urllib.parse import urlsplit
 
 from jobot.adapters.base import SiteAdapter
@@ -33,7 +33,7 @@ from jobot.adapters.workday import WorkdayAdapter
 # hostname IS the suffix or is a subdomain of it (exact/suffix match on the
 # netloc, never substring matching against the raw URL — see CodeQL
 # py/incomplete-url-substring-sanitization).
-_SITE_HOST_SUFFIXES: Dict[str, tuple[str, ...]] = {
+_SITE_HOST_SUFFIXES: dict[str, tuple[str, ...]] = {
     "lever": ("lever.co",),
     "greenhouse": ("greenhouse.io",),
     "ashby": ("ashbyhq.com",),
@@ -95,7 +95,7 @@ class AdapterRegistry:
     Maps site name to corresponding SiteAdapter implementation across discovery, runner, and CLI.
     """
 
-    _registry: Dict[str, Any] = {
+    _registry: dict[str, Any] = {
         "naukri": NaukriAdapter,
         "linkedin": LinkedInAdapter,
         "indeed": IndeedAdapter,
@@ -132,9 +132,9 @@ class AdapterRegistry:
         return list(cls._registry.keys())
 
     @classmethod
-    def list_supported_sites_with_capabilities(cls) -> List[Tuple[str, AdapterCapability]]:
+    def list_supported_sites_with_capabilities(cls) -> list[tuple[str, AdapterCapability]]:
         """Return each site name with its declared capability flags."""
-        result: List[Tuple[str, AdapterCapability]] = []
+        result: list[tuple[str, AdapterCapability]] = []
         for site_name, adapter_cls in cls._registry.items():
             caps = getattr(adapter_cls, "capabilities", AdapterCapability.FULL_API)
             result.append((site_name, caps))

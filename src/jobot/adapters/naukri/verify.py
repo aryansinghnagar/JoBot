@@ -1,5 +1,5 @@
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
 from jobot.models.domain import Application, VerificationResult
 
@@ -40,7 +40,7 @@ class NaukriVerifier:
                 continue
         return False
 
-    async def _application_rows(self, page: Any) -> Optional[List[str]]:
+    async def _application_rows(self, page: Any) -> list[str] | None:
         """Collect row texts from the dashboard; None if the list can't be read."""
         for selector in ROW_SELECTORS:
             try:
@@ -56,8 +56,8 @@ class NaukriVerifier:
     async def verify(
         self,
         application: Application,
-        page: Optional[Any] = None,
-        job_title: Optional[str] = None,
+        page: Any | None = None,
+        job_title: str | None = None,
     ) -> VerificationResult:
         if page is None:
             return VerificationResult(

@@ -1,6 +1,7 @@
 import logging
-from typing import List
+
 from pydantic import BaseModel
+
 from jobot.models.domain import UserProfile
 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ class SecurityAuditReport(BaseModel):
     is_secure: bool
     secrets_found_in_code_or_logs: bool = False
     unencrypted_pii_detected: bool = False
-    recommendations: List[str] = []
+    recommendations: list[str] = []
 
 
 class SecurityAuditor:

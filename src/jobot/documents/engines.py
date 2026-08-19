@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -132,7 +132,7 @@ class FallbackPdfRenderer(PdfRenderer):
             topMargin=0.6 * inch,
             bottomMargin=0.6 * inch,
         )
-        story: List[Any] = []
+        story: list[Any] = []
 
         def esc(text: str) -> str:
             return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -174,7 +174,7 @@ class FallbackPdfRenderer(PdfRenderer):
         return out_path
 
 
-def get_renderer(prefer: Optional[str] = None) -> PdfRenderer:
+def get_renderer(prefer: str | None = None) -> PdfRenderer:
     """Resolve renderer: 'latex' | 'fallback' | None (auto: latex, else fallback)."""
     if prefer == "latex":
         if tex_engine_available():

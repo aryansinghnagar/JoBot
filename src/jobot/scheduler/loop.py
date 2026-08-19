@@ -8,7 +8,7 @@ with the discovery engine, PolicyEngine daily caps, and the digest generator.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.digest.generator import DigestGenerator
@@ -48,7 +48,7 @@ class LoopResult:
     failed: int = 0
     blocked: int = 0
     digest_sent: bool = False
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 class LoopExecutor:
@@ -56,12 +56,12 @@ class LoopExecutor:
 
     def __init__(
         self,
-        db: Optional[DatabaseManager] = None,
-        orchestrator: Optional[ApplyOrchestrator] = None,
-        policy: Optional[PolicyEngine] = None,
-        discovery: Optional[Any] = None,
-        digest: Optional[DigestGenerator] = None,
-        email: Optional[EmailSender] = None,
+        db: DatabaseManager | None = None,
+        orchestrator: ApplyOrchestrator | None = None,
+        policy: PolicyEngine | None = None,
+        discovery: Any | None = None,
+        digest: DigestGenerator | None = None,
+        email: EmailSender | None = None,
     ) -> None:
         self.db = db or DatabaseManager()
         self.orchestrator = orchestrator or ApplyOrchestrator(self.db)
@@ -74,7 +74,7 @@ class LoopExecutor:
 
     async def _scan(
         self, profile: UserProfile, target_title: str, limit_per_portal: int, min_match: float
-    ) -> List[Any]:
+    ) -> list[Any]:
         matches = await self.discovery.discover_matching_jobs(
             profile,
             target_title=target_title,
@@ -92,10 +92,10 @@ class LoopExecutor:
         return self.db.get_daily_application_count(site)
 
     async def _apply_loop(
-        self, profile: UserProfile, matches: List[Any], max_apply: int, auto_approve: bool
-    ) -> Tuple[LoopResult, List[str]]:
+        self, profile: UserProfile, matches: list[Any], max_apply: int, auto_approve: bool
+    ) -> tuple[LoopResult, list[str]]:
         res = LoopResult(mode="apply")
-        notes: List[str] = []
+        notes: list[str] = []
         for m in matches[:max_apply]:
             job: JobPosting = m.posting
             daily = self._daily_submitted(job.site)
@@ -164,9 +164,9 @@ class LoopExecutor:
             raise ValueError(f"unknown loop mode '{mode}'; one of {MODES}")
 
         res = LoopResult(mode=mode)
-        notes: List[str] = []
+        notes: list[str] = []
 
-        matches: List[Any] = []
+        matches: list[Any] = []
         if mode in ("scan-only", "apply-only", "full-loop"):
             matches = await self._scan(profile, target_title, limit_per_portal, min_match)
             res.discovered = len(matches)

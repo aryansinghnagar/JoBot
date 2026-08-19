@@ -4,8 +4,9 @@
 
 import asyncio
 import sys
+from datetime import UTC
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -25,8 +26,8 @@ class DoctorCheck(BaseModel):
 
 
 class DoctorReport(BaseModel):
-    checks: List[DoctorCheck]
-    providers: List[Dict[str, Any]]
+    checks: list[DoctorCheck]
+    providers: list[dict[str, Any]]
     all_ok: bool
 
 
@@ -36,7 +37,7 @@ def _profile_exists() -> bool:
 
 def run_doctor_checks() -> DoctorReport:
     """Run all doctor checks and return a structured report (never raises)."""
-    checks: List[DoctorCheck] = []
+    checks: list[DoctorCheck] = []
 
     py_ok = sys.version_info >= (3, 11)
     checks.append(DoctorCheck(label="Python >= 3.11", ok=py_ok, detail=sys.version.split()[0]))
@@ -98,7 +99,7 @@ def run_doctor_checks() -> DoctorReport:
     )
 
     router = ModelRouter(daily_budget_usd=load_llm_settings().daily_cost_cap_usd)
-    provider_rows: List[Dict[str, Any]] = []
+    provider_rows: list[dict[str, Any]] = []
     for name in PROVIDER_REGISTRY:
         configured = name in router.list_configured_providers()
         reachable = asyncio.run(router.health_check(name)) if configured else False
@@ -127,12 +128,13 @@ def export_diagnostic_bundle(output_path: Path | None = None) -> Path:
     import json
     import platform
     import zipfile
-    from datetime import datetime, timezone
-    from jobot.stealth.site_health import SiteHealthMonitor
+    from datetime import datetime
+
     from jobot.adapters import AdapterRegistry
+    from jobot.stealth.site_health import SiteHealthMonitor
 
     if output_path is None:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         export_dir = Path.home() / ".jobot" / "exports"
         export_dir.mkdir(parents=True, exist_ok=True)
         output_path = export_dir / f"jobot_diagnostics_{timestamp}.zip"
@@ -160,7 +162,7 @@ def export_diagnostic_bundle(output_path: Path | None = None) -> Path:
         "release": platform.release(),
         "machine": platform.machine(),
         "python_version": sys.version.split()[0],
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
     }
 
     with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:

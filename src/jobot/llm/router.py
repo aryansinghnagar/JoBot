@@ -9,10 +9,11 @@ Task overrides and persisted daily spend are additive.
 import json
 import logging
 import os
+from collections.abc import AsyncIterator, Callable
 from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -64,9 +65,9 @@ class ModelRouter:
     def __init__(
         self,
         primary_provider: ModelProvider = ModelProvider.GEMINI,
-        pricing_table: Optional[PricingTable] = None,
-        spend_path: Optional[Path] = None,
-        daily_budget_usd: Optional[float] = None,
+        pricing_table: PricingTable | None = None,
+        spend_path: Path | None = None,
+        daily_budget_usd: float | None = None,
     ) -> None:
         self._load_dotenv()
         self.pricing = pricing_table or PricingTable()
@@ -75,9 +76,9 @@ class ModelRouter:
             daily_budget_usd if daily_budget_usd is not None else DEFAULT_DAILY_BUDGET_USD
         )
         self.primary_provider = primary_provider
-        self.metrics_history: List[ModelCallMetrics] = []
-        self._providers: Dict[str, LLMProvider] = {}
-        self._spend: Dict[str, float] = self._load_spend()
+        self.metrics_history: list[ModelCallMetrics] = []
+        self._providers: dict[str, LLMProvider] = {}
+        self._spend: dict[str, float] = self._load_spend()
 
     # -- dotenv + keyring ---------------------------------------------------
 
@@ -106,7 +107,7 @@ class ModelRouter:
             except Exception as exc:  # noqa: BLE001
                 logger.debug("Failed to read .env at %s: %s", env_path, exc)
 
-    def _api_key_for(self, provider_name: str) -> Optional[str]:
+    def _api_key_for(self, provider_name: str) -> str | None:
         env_name = f"{provider_name.upper()}_API_KEY"
         key = os.getenv(env_name)
         if key:
@@ -115,7 +116,7 @@ class ModelRouter:
 
     # -- spend persistence --------------------------------------------------
 
-    def _load_spend(self) -> Dict[str, float]:
+    def _load_spend(self) -> dict[str, float]:
         if not self.spend_path.exists():
             return {}
         try:
@@ -148,7 +149,7 @@ class ModelRouter:
 
     # -- provider access ----------------------------------------------------
 
-    def get_provider(self, provider_name: str) -> Optional[LLMProvider]:
+    def get_provider(self, provider_name: str) -> LLMProvider | None:
         name = provider_name.lower()
         if name in self._providers:
             return self._providers[name]
@@ -165,7 +166,7 @@ class ModelRouter:
         self._providers[name] = instance
         return instance
 
-    def _key_lookup_for(self, name: str) -> Callable[[], Optional[str]]:
+    def _key_lookup_for(self, name: str) -> Callable[[], str | None]:
         return lambda: self._api_key_for(name)
 
     # -- cost awareness -----------------------------------------------------
@@ -180,7 +181,7 @@ class ModelRouter:
 
     # -- task overrides -----------------------------------------------------
 
-    def _resolve_task_override(self, task: Optional[str]) -> Optional[Dict[str, Any]]:
+    def _resolve_task_override(self, task: str | None) -> dict[str, Any] | None:
         if not task:
             return None
         from jobot.config.profile import load_llm_settings  # local import avoids cycle
@@ -188,7 +189,7 @@ class ModelRouter:
         override = load_llm_settings().task_overrides.get(task)
         return override.model_dump() if override else None
 
-    def _resolve_chain(self, fallback_chain: Optional[List[Any]], task: Optional[str]) -> List[str]:
+    def _resolve_chain(self, fallback_chain: list[Any] | None, task: str | None) -> list[str]:
         override = self._resolve_task_override(task)
         chain = [
             str(p.value if isinstance(p, ModelProvider) else p) for p in (fallback_chain or [])
@@ -204,10 +205,10 @@ class ModelRouter:
 
     async def complete(
         self,
-        messages: List[Message],
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        task: Optional[str] = None,
+        messages: list[Message],
+        provider: str | None = None,
+        model: str | None = None,
+        task: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         timeout_s: float = 60.0,
@@ -245,10 +246,10 @@ class ModelRouter:
 
     async def stream(
         self,
-        messages: List[Message],
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        task: Optional[str] = None,
+        messages: list[Message],
+        provider: str | None = None,
+        model: str | None = None,
+        task: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         timeout_s: float = 60.0,
@@ -276,14 +277,14 @@ class ModelRouter:
     async def generate_text_stream(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
-        fallback_chain: Optional[List[Any]] = None,
-        task: Optional[str] = None,
+        system_prompt: str | None = None,
+        fallback_chain: list[Any] | None = None,
+        task: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
         """Generate text stream with fallback chain; yields degradation text on total failure."""
-        messages: List[Message] = []
+        messages: list[Message] = []
         if system_prompt:
             messages.append(Message(role="system", content=system_prompt))
         messages.append(Message(role="user", content=prompt))
@@ -310,14 +311,14 @@ class ModelRouter:
     async def generate_text(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
-        fallback_chain: Optional[List[Any]] = None,
-        task: Optional[str] = None,
+        system_prompt: str | None = None,
+        fallback_chain: list[Any] | None = None,
+        task: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
         """Generate text with fallback chain; frozen-compat signature."""
-        messages: List[Message] = []
+        messages: list[Message] = []
         if system_prompt:
             messages.append(Message(role="system", content=system_prompt))
         messages.append(Message(role="user", content=prompt))
@@ -337,7 +338,7 @@ class ModelRouter:
         logger.error("All LLM providers failed for prompt %r", prompt[:60])
         return DEGRADATION_TEXT
 
-    async def health_check(self, provider_name: Optional[str] = None) -> bool:
+    async def health_check(self, provider_name: str | None = None) -> bool:
         """Configuration + light reachability probe for `jobot doctor`."""
         targets = [provider_name] if provider_name else [self.primary_provider.value]
         for name in targets:
@@ -348,5 +349,5 @@ class ModelRouter:
                 return True
         return False
 
-    def list_configured_providers(self) -> List[str]:
+    def list_configured_providers(self) -> list[str]:
         return [name for name in PROVIDER_REGISTRY if self._api_key_for(name)]

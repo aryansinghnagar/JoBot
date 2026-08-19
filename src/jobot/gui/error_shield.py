@@ -4,7 +4,7 @@ Translates technical Python exceptions and adapter errors into plain-English,
 actionable guidance for non-technical users while preserving structured diagnostics.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class HumanizedError:
@@ -15,7 +15,7 @@ class HumanizedError:
         user_message: str,
         action_hint: str,
         category: str = "general",
-        technical_details: Optional[str] = None,
+        technical_details: str | None = None,
         code: int = -32000,
     ):
         self.user_message = user_message
@@ -24,7 +24,7 @@ class HumanizedError:
         self.technical_details = technical_details
         self.code = code
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "code": self.code,
             "message": self.user_message,

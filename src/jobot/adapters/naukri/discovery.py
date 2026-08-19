@@ -1,7 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
 
 from jobot.ai.skill_extractor import SkillExtractor
 from jobot.models.domain import JobPosting, UserProfile
@@ -20,7 +19,7 @@ class NaukriDiscoveryEngine:
     def __init__(self) -> None:
         self.skill_extractor = SkillExtractor()
 
-    def construct_search_url(self, target_title: str, location: Optional[str] = None) -> str:
+    def construct_search_url(self, target_title: str, location: str | None = None) -> str:
         """Construct sanitized Naukri search URL."""
         slug = target_title.lower().replace("/", "-").replace(" ", "-")
         slug = "".join([c for c in slug if c.isalnum() or c == "-"])
@@ -31,9 +30,9 @@ class NaukriDiscoveryEngine:
 
     def parse_search_results_html(
         self, html: str, target_title: str = "Developer"
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         """Parse raw Naukri search results DOM HTML to extract JobPostings."""
-        postings: List[JobPosting] = []
+        postings: list[JobPosting] = []
         if any(
             token in html
             for token in [
@@ -59,14 +58,14 @@ class NaukriDiscoveryEngine:
                     experience_required="3-5 years",
                     description=desc,
                     parsed_skills=skills,
-                    discovered_at=datetime.now(timezone.utc),
+                    discovered_at=datetime.now(UTC),
                 )
             )
         return postings
 
     async def discover_jobs(
         self, profile: UserProfile, target_title: str = "Senior Backend Engineer", limit: int = 5
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         """Discover matching jobs for target role on Naukri."""
         search_url = self.construct_search_url(target_title)
         logger.info(f"[NAUKRI DISCOVERY] Searching {search_url} (limit={limit})")

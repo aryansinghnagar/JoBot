@@ -6,8 +6,8 @@ Tracks availability, success rates, latency, and degradation states per portal.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from datetime import UTC, datetime
+
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ class SiteHealthStatus(BaseModel):
     failure_count: int = 0
     consecutive_failures: int = 0
     total_latency_ms: float = 0.0
-    last_success_at: Optional[str] = None
-    last_failure_at: Optional[str] = None
-    last_error: Optional[str] = None
+    last_success_at: str | None = None
+    last_failure_at: str | None = None
+    last_error: str | None = None
 
     @property
     def total_requests(self) -> int:
@@ -46,7 +46,7 @@ class SiteHealthMonitor:
 
     def __init__(self, failure_trip_threshold: int = 5) -> None:
         self.trip_threshold = failure_trip_threshold
-        self._stats: Dict[str, SiteHealthStatus] = {}
+        self._stats: dict[str, SiteHealthStatus] = {}
 
     def get_status(self, site: str) -> SiteHealthStatus:
         s = site.lower().strip()
@@ -59,7 +59,7 @@ class SiteHealthMonitor:
         st.success_count += 1
         st.consecutive_failures = 0
         st.total_latency_ms += latency_ms
-        st.last_success_at = datetime.now(timezone.utc).isoformat()
+        st.last_success_at = datetime.now(UTC).isoformat()
         if st.status == "TRIPPED" or st.status == "DEGRADED":
             st.status = "HEALTHY"
 
@@ -67,7 +67,7 @@ class SiteHealthMonitor:
         st = self.get_status(site)
         st.failure_count += 1
         st.consecutive_failures += 1
-        st.last_failure_at = datetime.now(timezone.utc).isoformat()
+        st.last_failure_at = datetime.now(UTC).isoformat()
         st.last_error = error_msg[:300]
 
         if st.consecutive_failures >= self.trip_threshold:
@@ -75,7 +75,7 @@ class SiteHealthMonitor:
         elif st.consecutive_failures >= 2:
             st.status = "DEGRADED"
 
-    def list_all_statuses(self) -> List[SiteHealthStatus]:
+    def list_all_statuses(self) -> list[SiteHealthStatus]:
         return list(self._stats.values())
 
 

@@ -24,8 +24,7 @@ entry points. Terminal states are frozen.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from jobot.models.domain import Application, ApplicationStatus
 
@@ -145,7 +144,7 @@ def can_transition(current: ApplicationStatus, new: ApplicationStatus) -> bool:
 def transition_application(
     app: Application,
     new_status: ApplicationStatus,
-    reason: Optional[str] = None,
+    reason: str | None = None,
 ) -> Application:
     """Validated status change with split-timestamp stamping.
 
@@ -154,7 +153,7 @@ def transition_application(
     and returns it. A no-change request (current == new) is an idempotent
     no-op — adapters may already have set the target status directly.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if new_status is ApplicationStatus.SUBMITTED:
         app.submitted_at = app.submitted_at or now
     if new_status is ApplicationStatus.VERIFIED:

@@ -1,10 +1,9 @@
 import statistics
-from datetime import datetime, timezone
-from typing import Any, Dict, List
+from datetime import UTC, datetime
+from typing import Any
 
 from jobot.models.domain import ApplicationStatus
 from jobot.storage.db import DatabaseManager
-
 
 TERMINAL_STATUSES = {
     ApplicationStatus.SUBMITTED,
@@ -18,7 +17,7 @@ TERMINAL_STATUSES = {
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class TrackerAnalytics:
@@ -27,14 +26,14 @@ class TrackerAnalytics:
     def __init__(self, db: DatabaseManager) -> None:
         self.db = db
 
-    def status_counts(self, limit: int = 1000) -> Dict[str, int]:
+    def status_counts(self, limit: int = 1000) -> dict[str, int]:
         rows = self.db.get_applications_with_jobs(limit=limit)
-        counts: Dict[str, int] = {}
+        counts: dict[str, int] = {}
         for r in rows:
             counts[r["status"]] = counts.get(r["status"], 0) + 1
         return counts
 
-    def funnel(self, limit: int = 1000) -> Dict[str, int]:
+    def funnel(self, limit: int = 1000) -> dict[str, int]:
         counts = self.status_counts(limit=limit)
         total = sum(counts.values())
         in_pipeline = sum(
@@ -52,9 +51,9 @@ class TrackerAnalytics:
             "failed": counts.get("failed", 0),
         }
 
-    def by_board(self, limit: int = 1000) -> List[Dict[str, Any]]:
+    def by_board(self, limit: int = 1000) -> list[dict[str, Any]]:
         rows = self.db.get_applications_with_jobs(limit=limit)
-        boards: Dict[str, Dict[str, Any]] = {}
+        boards: dict[str, dict[str, Any]] = {}
         for r in rows:
             site = r["site"]
             entry = boards.setdefault(
@@ -73,10 +72,10 @@ class TrackerAnalytics:
             return 0.0
         return verified / responded
 
-    def rejection_latency_days(self, limit: int = 1000) -> Dict[str, Any]:
+    def rejection_latency_days(self, limit: int = 1000) -> dict[str, Any]:
         """Average days from created_at to responded_at for responded apps."""
         rows = self.db.get_applications_with_jobs(limit=limit)
-        latencies: List[float] = []
+        latencies: list[float] = []
         for r in rows:
             if not r["responded_at"]:
                 continue
@@ -96,10 +95,10 @@ class TrackerAnalytics:
             "median_days": round(statistics.median(latencies), 2),
         }
 
-    def recent(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def recent(self, limit: int = 20) -> list[dict[str, Any]]:
         return self.db.get_applications_with_jobs(limit=limit)
 
-    def summary(self) -> Dict[str, Any]:
+    def summary(self) -> dict[str, Any]:
         return {
             "funnel": self.funnel(),
             "by_board": self.by_board(),

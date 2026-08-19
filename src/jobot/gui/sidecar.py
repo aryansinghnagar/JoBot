@@ -9,9 +9,10 @@ stays in sync. Secrets are never returned (config values are masked).
 import asyncio
 import json
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -22,11 +23,11 @@ from jobot.digest.generator import DigestGenerator
 from jobot.discovery.engine import JobDiscoveryEngine
 from jobot.gui.error_shield import humanize_exception
 from jobot.models.domain import CompensationDetails, JobPosting, PersonalInfo, UserProfile
+from jobot.obs.tracing import TraceLogger
 from jobot.scheduler import SchedulerManager
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 from jobot.tracker.analytics import TrackerAnalytics
-from jobot.obs.tracing import TraceLogger
 
 RUNNER_STATE_PATH = Path.home() / ".jobot" / "runner_state.json"
 
@@ -34,7 +35,7 @@ RUNNER_STATE_PATH = Path.home() / ".jobot" / "runner_state.json"
 class JsonRpcRequest(BaseModel):
     jsonrpc: str = "2.0"
     method: str
-    params: Dict[str, Any] = {}
+    params: dict[str, Any] = {}
     id: Any
 
 
@@ -50,16 +51,16 @@ class StdioSidecarServer:
 
     def __init__(
         self,
-        db: Optional[DatabaseManager] = None,
-        vault: Optional[CredentialVault] = None,
-        analytics: Optional[TrackerAnalytics] = None,
-        scheduler: Optional[SchedulerManager] = None,
-        digest: Optional[DigestGenerator] = None,
-        engine: Optional[JobDiscoveryEngine] = None,
-        orchestrator: Optional[ApplyOrchestrator] = None,
-        config: Optional[ConfigManager] = None,
-        trace_logger: Optional[TraceLogger] = None,
-        profile_loader: Optional[Callable[[], UserProfile]] = None,
+        db: DatabaseManager | None = None,
+        vault: CredentialVault | None = None,
+        analytics: TrackerAnalytics | None = None,
+        scheduler: SchedulerManager | None = None,
+        digest: DigestGenerator | None = None,
+        engine: JobDiscoveryEngine | None = None,
+        orchestrator: ApplyOrchestrator | None = None,
+        config: ConfigManager | None = None,
+        trace_logger: TraceLogger | None = None,
+        profile_loader: Callable[[], UserProfile] | None = None,
     ) -> None:
         self._db = db
         self._vault = vault
@@ -71,7 +72,7 @@ class StdioSidecarServer:
         self._config = config
         self._trace_logger = trace_logger
         self._profile_loader = profile_loader
-        self._handlers: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
+        self._handlers: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
             "ping": self._ping,
             "status": self._status,
             "profile_info": self._profile_info,
@@ -166,7 +167,7 @@ class StdioSidecarServer:
 
     # -- JSON-RPC plumbing ---------------------------------------------------
 
-    def process_request(self, request_dict: Dict[str, Any]) -> Dict[str, Any]:
+    def process_request(self, request_dict: dict[str, Any]) -> dict[str, Any]:
         req_id = request_dict.get("id")
         method = request_dict.get("method")
         params = request_dict.get("params") or {}
@@ -215,10 +216,13 @@ class StdioSidecarServer:
 
     # -- RPC handlers ---------------------------------------------------------
 
-    def _ping(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        return {"status": "pong", "version": "2.0.0"}
+    def _ping(self, params: dict[str, Any]) -> dict[str, Any]:
+        # Use the canonical package version (audit fix JOB-ARC-010).
+        from jobot.updater import get_current_version
 
-    def _status(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {"status": "pong", "version": get_current_version()}
+
+    def _status(self, params: dict[str, Any]) -> dict[str, Any]:
         db = self._get_db()
         apps = db.list_applications(limit=10)
         return {
@@ -226,16 +230,16 @@ class StdioSidecarServer:
             "recent": [a.model_dump() for a in apps[:5]],
         }
 
-    def _profile_info(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _profile_info(self, params: dict[str, Any]) -> dict[str, Any]:
         try:
             return self._get_profile().model_dump()
         except FileNotFoundError as exc:
             raise ValueError(str(exc))
 
-    def _list_sites(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _list_sites(self, params: dict[str, Any]) -> dict[str, Any]:
         return {"sites": AdapterRegistry.list_supported_sites()}
 
-    def _discover_jobs(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _discover_jobs(self, params: dict[str, Any]) -> dict[str, Any]:
         portal = str(params.get("portal", "linkedin"))
         keywords = str(params.get("keywords", ""))
         location = str(params.get("location", ""))
@@ -266,7 +270,7 @@ class StdioSidecarServer:
             ]
         }
 
-    def _resolve_job(self, params: Dict[str, Any]) -> JobPosting:
+    def _resolve_job(self, params: dict[str, Any]) -> JobPosting:
         db = self._get_db()
         job_id = params.get("job_id")
         url = params.get("url")
@@ -281,7 +285,7 @@ class StdioSidecarServer:
             return asyncio.run(adapter.parse_job_posting(str(url)))
         raise ValueError("Provide 'job_id' or 'url'")
 
-    def _apply(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply(self, params: dict[str, Any]) -> dict[str, Any]:
         job = self._resolve_job(params)
         profile = self._get_profile()
         dry_run = bool(params.get("dry_run", True))
@@ -303,7 +307,7 @@ class StdioSidecarServer:
         )
         return result.model_dump()
 
-    def _approve(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _approve(self, params: dict[str, Any]) -> dict[str, Any]:
         db = self._get_db()
         application_id = params.get("application_id")
         if not application_id:
@@ -325,12 +329,12 @@ class StdioSidecarServer:
         result = asyncio.run(orchestrator.submit_approved(app))
         return result.model_dump()
 
-    def _applications(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _applications(self, params: dict[str, Any]) -> dict[str, Any]:
         db = self._get_db()
         limit = int(params.get("limit", 50))
         return {"applications": db.get_applications_with_jobs(limit=limit)}
 
-    def _tracker_stats(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _tracker_stats(self, params: dict[str, Any]) -> dict[str, Any]:
         db = self._get_db()
         analytics = self._get_analytics(db)
         limit = int(params.get("limit", 1000))
@@ -340,9 +344,9 @@ class StdioSidecarServer:
             "recent": db.get_applications_with_jobs(limit=10),
         }
 
-    def _campaign_status(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _campaign_status(self, params: dict[str, Any]) -> dict[str, Any]:
         db = self._get_db()
-        state: Dict[str, Any] = {}
+        state: dict[str, Any] = {}
         if RUNNER_STATE_PATH.exists():
             try:
                 state = json.loads(RUNNER_STATE_PATH.read_text(encoding="utf-8"))
@@ -355,22 +359,22 @@ class StdioSidecarServer:
             "recent": db.get_applications_with_jobs(limit=5),
         }
 
-    def _write_runner_state(self, status: str) -> Dict[str, Any]:
+    def _write_runner_state(self, status: str) -> dict[str, Any]:
         RUNNER_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
         state = {"status": status, "updated_at": datetime.now().isoformat()}
         RUNNER_STATE_PATH.write_text(json.dumps(state), encoding="utf-8")
         return state
 
-    def _pause(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _pause(self, params: dict[str, Any]) -> dict[str, Any]:
         return self._write_runner_state("PAUSED")
 
-    def _resume(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _resume(self, params: dict[str, Any]) -> dict[str, Any]:
         return self._write_runner_state("RUNNING")
 
-    def _schedule_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _schedule_list(self, params: dict[str, Any]) -> dict[str, Any]:
         return {"schedules": self._get_scheduler().list_schedules()}
 
-    def _schedule_add(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _schedule_add(self, params: dict[str, Any]) -> dict[str, Any]:
         cron = params.get("cron")
         command = params.get("command")
         if not cron or not command:
@@ -394,20 +398,20 @@ class StdioSidecarServer:
             raise ValueError(f"Disallowed schedule command '{cmd_str}'")
         return self._get_scheduler().add_schedule(str(cron), cmd_str)
 
-    def _schedule_remove(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _schedule_remove(self, params: dict[str, Any]) -> dict[str, Any]:
         schedule_id = params.get("schedule_id")
         if not schedule_id:
             raise ValueError("Provide 'schedule_id'")
         removed = self._get_scheduler().remove_schedule(str(schedule_id))
         return {"removed": removed}
 
-    def _digest_preview(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _digest_preview(self, params: dict[str, Any]) -> dict[str, Any]:
         db = self._get_db()
         period_days = int(params.get("period_days", 7))
         digest = self._get_digest(db).generate(period_days=period_days)
         return {"subject": digest.subject, "text": digest.text[:4000]}
 
-    def _doctor(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _doctor(self, params: dict[str, Any]) -> dict[str, Any]:
         from jobot.doctor import run_doctor_checks
 
         report = run_doctor_checks()
@@ -417,16 +421,16 @@ class StdioSidecarServer:
             "all_ok": report.all_ok,
         }
 
-    def _export_diagnostics(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _export_diagnostics(self, params: dict[str, Any]) -> dict[str, Any]:
         from jobot.doctor import export_diagnostic_bundle
 
         path = export_diagnostic_bundle()
         return {"status": "exported", "path": str(path)}
 
-    def _config_show(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _config_show(self, params: dict[str, Any]) -> dict[str, Any]:
         return {"config": self._get_config().show_masked()}
 
-    def _config_get(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _config_get(self, params: dict[str, Any]) -> dict[str, Any]:
         key = params.get("key")
         if not key:
             raise ValueError("Provide 'key'")
@@ -440,7 +444,7 @@ class StdioSidecarServer:
             return {"key": str_key, "value": mask(str(value)), "is_secret": True}
         return {"key": str_key, "value": value, "is_secret": False}
 
-    def _config_set(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _config_set(self, params: dict[str, Any]) -> dict[str, Any]:
         key = params.get("key")
         value = params.get("value")
         if key is None or value is None:
@@ -448,17 +452,17 @@ class StdioSidecarServer:
         self._get_config().set(str(key), str(value))
         return {"set": str(key), "secret": ConfigManager.is_secret(str(key))}
 
-    def _config_unset(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _config_unset(self, params: dict[str, Any]) -> dict[str, Any]:
         key = params.get("key")
         if not key:
             raise ValueError("Provide 'key'")
         self._get_config().unset(str(key))
         return {"unset": str(key)}
 
-    def _traces(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _traces(self, params: dict[str, Any]) -> dict[str, Any]:
         logger = self._get_trace_logger()
         trace_files = logger.list_traces()
-        runs: List[Dict[str, Any]] = []
+        runs: list[dict[str, Any]] = []
         for path in reversed(trace_files[-10:]):
             run_id = path.stem
             spans = logger.get_trace_spans(run_id)
@@ -466,7 +470,7 @@ class StdioSidecarServer:
                 runs.append({"run_id": run_id, "span_count": len(spans), "spans": spans[:50]})
         return {"runs": runs}
 
-    def _approvals_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _approvals_list(self, params: dict[str, Any]) -> dict[str, Any]:
         from jobot.execution.engine import ApprovalStatus as _AS
         from jobot.execution.engine import DurableTaskEngine as _DTE
 
@@ -495,7 +499,7 @@ class StdioSidecarServer:
             ]
         }
 
-    def _approvals_decide(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _approvals_decide(self, params: dict[str, Any]) -> dict[str, Any]:
         from jobot.execution.engine import ApprovalStatus as _AS
         from jobot.execution.engine import DurableTaskEngine as _DTE
 
@@ -518,7 +522,7 @@ class StdioSidecarServer:
             "decided_by": rec.decided_by,
         }
 
-    def _evidence_manifest(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _evidence_manifest(self, params: dict[str, Any]) -> dict[str, Any]:
         app_id = params.get("application_id")
         if not app_id:
             raise ValueError("Provide 'application_id'")
@@ -531,7 +535,7 @@ class StdioSidecarServer:
         except Exception as exc:  # noqa: BLE001
             return {"found": False, "error": str(exc)}
 
-    def _site_health(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _site_health(self, params: dict[str, Any]) -> dict[str, Any]:
         from jobot.stealth.site_health import SiteHealthMonitor
 
         monitor = SiteHealthMonitor()
@@ -552,7 +556,7 @@ class StdioSidecarServer:
             ]
         }
 
-    def _candidate_facts(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _candidate_facts(self, params: dict[str, Any]) -> dict[str, Any]:
         profile_id = params.get("profile_id", "default")
         db = self._get_db()
         facts = db.list_candidate_facts(profile_id=str(profile_id))
@@ -561,7 +565,7 @@ class StdioSidecarServer:
             "facts": [f.model_dump() for f in facts],
         }
 
-    def _record_candidate_fact(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _record_candidate_fact(self, params: dict[str, Any]) -> dict[str, Any]:
         fact_type = str(params.get("fact_type", "")).strip()
         fact_value = str(params.get("fact_value", "")).strip()
         profile_id = str(params.get("profile_id", "default")).strip() or "default"
@@ -585,7 +589,7 @@ class StdioSidecarServer:
             "fact": fact.model_dump(),
         }
 
-    def _import_resume(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _import_resume(self, params: dict[str, Any]) -> dict[str, Any]:
         file_path_str = params.get("file_path")
         profile_id = params.get("profile_id", "default")
         if not file_path_str:
@@ -605,7 +609,7 @@ class StdioSidecarServer:
             "facts_seeded": count,
         }
 
-    def _profile_save(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _profile_save(self, params: dict[str, Any]) -> dict[str, Any]:
         """Create or update encrypted UserProfile and seed CandidateTruthStore."""
         first_name = str(params.get("first_name", "")).strip()
         last_name = str(params.get("last_name", "")).strip()
@@ -677,7 +681,7 @@ class StdioSidecarServer:
             "facts_seeded": len(facts),
         }
 
-    def _setup_browser(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _setup_browser(self, params: dict[str, Any]) -> dict[str, Any]:
         """Download and verify Patchright Chromium browser engine binaries."""
         import subprocess
 
@@ -701,7 +705,7 @@ class StdioSidecarServer:
                 "message": f"Browser setup encountered an issue: {exc}",
             }
 
-    def _open_path(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _open_path(self, params: dict[str, Any]) -> dict[str, Any]:
         """Open a local artifact file or directory in the OS default application."""
         import os
         import subprocess
@@ -715,7 +719,7 @@ class StdioSidecarServer:
 
         try:
             if sys.platform == "win32" and hasattr(os, "startfile"):
-                getattr(os, "startfile")(str(target))
+                os.startfile(str(target))
             elif sys.platform == "darwin":
                 subprocess.run(["open", str(target)], check=False)
             else:

@@ -1,6 +1,6 @@
 import json
 import re
-from typing import List, Optional
+
 from jobot.ai.router import ModelRouter
 
 
@@ -74,10 +74,10 @@ class SkillExtractor:
         re.IGNORECASE,
     )
 
-    def __init__(self, router: Optional[ModelRouter] = None):
+    def __init__(self, router: ModelRouter | None = None):
         self.router = router or ModelRouter()
 
-    async def extract_skills(self, description: str) -> List[str]:
+    async def extract_skills(self, description: str) -> list[str]:
         """Extract and normalize technical skills from job description text."""
         if not description or len(description.strip()) < 10:
             return []
@@ -105,13 +105,13 @@ class SkillExtractor:
         # Fallback: Keyword pattern matching
         return self._rule_based_extraction(description)
 
-    def extract_skills_sync(self, description: str) -> List[str]:
+    def extract_skills_sync(self, description: str) -> list[str]:
         """Synchronous skill extraction using keyword pattern matching."""
         if not description or len(description.strip()) < 10:
             return []
         return self._rule_based_extraction(description)
 
-    def _normalize_skills(self, skills: List[str]) -> List[str]:
+    def _normalize_skills(self, skills: list[str]) -> list[str]:
         """Normalize skills: strip whitespace, remove empty, deduplicate preserving order."""
         seen = set()
         normalized = []
@@ -122,7 +122,7 @@ class SkillExtractor:
                 normalized.append(clean)
         return normalized
 
-    def _rule_based_extraction(self, description: str) -> List[str]:
+    def _rule_based_extraction(self, description: str) -> list[str]:
         """Fast single-pass pre-compiled keyword extraction."""
         if not description:
             return []

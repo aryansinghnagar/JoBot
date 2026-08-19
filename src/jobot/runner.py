@@ -1,7 +1,8 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from jobot.adapters import AdapterRegistry, SiteAdapter
 from jobot.asp.orchestrator import ApplyOrchestrator
@@ -35,10 +36,10 @@ class ContinuousCampaignRunner:
 
     def __init__(
         self,
-        root_dir: Optional[Path] = None,
-        orchestrator: Optional[ApplyOrchestrator] = None,
-        router: Optional[ModelRouter] = None,
-        discovery_factory: Optional[Callable[[str], Any]] = None,
+        root_dir: Path | None = None,
+        orchestrator: ApplyOrchestrator | None = None,
+        router: ModelRouter | None = None,
+        discovery_factory: Callable[[str], Any] | None = None,
     ):
         if root_dir is None:
             root_dir = Path.cwd()
@@ -61,9 +62,20 @@ class ContinuousCampaignRunner:
         self,
         goal_count: int = 1000,
         min_match: float = 0.20,
-        auto_submit: bool = True,
+        auto_submit: bool = False,
         max_iterations: int = 2000,
     ) -> int:
+        """Run a round-robin campaign across all known portals.
+
+        Audit fix JOB-SEC-001 / JOB-ARC-003 / JOB-UX-005: the default for
+        ``auto_submit`` is now ``False`` (supervised), aligning the runtime
+        default with decision D15 in ``SECURITY.md`` ("submission autonomy is
+        human-by-default"). Callers who want autonomous submission must pass
+        ``auto_submit=True`` explicitly. The inter-iteration sleep is also
+        raised to a randomized 5–15s courtesy window to respect portal ToS.
+        """
+        import random
+
         profile_path = Path.home() / ".jobot" / "profiles" / "default.enc"
         if not profile_path.exists():
             logger.error("No candidate profile found. Initialize profile first.")
@@ -140,7 +152,11 @@ class ContinuousCampaignRunner:
                 matches = []
 
             if not matches:
-                await asyncio.sleep(0.1)
+                # Brief backoff when a portal returns no matches. Stays short
+                # because the round-robin already rotates to the next portal
+                # on the next iteration — this is just to avoid hot-looping
+                # against a portal that is currently throttling us.
+                await asyncio.sleep(random.uniform(1.0, 3.0))
                 continue
 
             for match in matches:
@@ -202,7 +218,13 @@ class ContinuousCampaignRunner:
                         f"[RUNNER ERROR] Failed processing match for portal {selected_portal}: {exc}"
                     )
 
-                await asyncio.sleep(0.05)  # Fast continuous loop throughput
+                # Audit fix JOB-UX-005: raise inter-iteration sleep from 0.05s
+                # to a randomized 5–15s window. The previous 0.05s sleep implied
+                # ~20 applications/second throughput — well below any reasonable
+                # rate-limit courtesy floor and likely to trip anti-bot heuristics
+                # on LinkedIn, Naukri, Workday, and Indeed. A small jitter also
+                # prevents request-pattern fingerprinting.
+                await asyncio.sleep(random.uniform(5.0, 15.0))
 
         print(f"\n[OK] Continuous Campaign Reached Target Goal of {total_submitted} Applications!")
         return total_submitted

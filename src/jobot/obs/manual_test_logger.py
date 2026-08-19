@@ -3,9 +3,9 @@ import os
 import platform
 import sys
 import traceback
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 class ManualTestIssue(BaseModel):
     issue_id: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     issue_type: str  # "ERROR", "VULNERABILITY", "DOM_DRIFT", "POLICY_VIOLATION", "USER_REPORT"
     summary: str
     details: str
-    site: Optional[str] = None
-    stack_trace: Optional[str] = None
-    system_info: Dict[str, str] = Field(default_factory=dict)
-    reproduction_steps: List[str] = Field(default_factory=list)
+    site: str | None = None
+    stack_trace: str | None = None
+    system_info: dict[str, str] = Field(default_factory=dict)
+    reproduction_steps: list[str] = Field(default_factory=list)
 
 
 class ManualTestLogger:
@@ -29,7 +29,7 @@ class ManualTestLogger:
     Captures runtime errors, vulnerabilities, and manual tester feedback during exploratory testing.
     """
 
-    def __init__(self, log_dir: Optional[Path] = None):
+    def __init__(self, log_dir: Path | None = None):
         if log_dir is None:
             log_dir = Path.home() / ".jobot" / "manual_test_logs"
         self.log_dir = log_dir
@@ -38,7 +38,7 @@ class ManualTestLogger:
         self.jsonl_file = self.log_dir / "issues.jsonl"
         self.markdown_report = self.log_dir / "manual_test_report.md"
 
-    def _get_system_info(self) -> Dict[str, str]:
+    def _get_system_info(self) -> dict[str, str]:
         return {
             "os": platform.system(),
             "os_release": platform.release(),
@@ -51,9 +51,9 @@ class ManualTestLogger:
         summary: str,
         issue_type: str = "ERROR",
         details: str = "",
-        site: Optional[str] = None,
-        exc: Optional[BaseException] = None,
-        reproduction_steps: Optional[List[str]] = None,
+        site: str | None = None,
+        exc: BaseException | None = None,
+        reproduction_steps: list[str] | None = None,
     ) -> ManualTestIssue:
         """Record an issue, exception, or security vulnerability detected during manual testing."""
         tb_str = None
@@ -61,7 +61,7 @@ class ManualTestLogger:
             tb_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
         issue = ManualTestIssue(
-            issue_id=f"TEST-BUG-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{os.urandom(2).hex()}",
+            issue_id=f"TEST-BUG-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}-{os.urandom(2).hex()}",
             issue_type=issue_type,
             summary=summary,
             details=details,
@@ -96,13 +96,13 @@ class ManualTestLogger:
                 f"| `{issue.issue_id}` | **{issue.issue_type}** | {issue.site or 'General'} | {issue.summary} | {issue.timestamp.strftime('%Y-%m-%d %H:%M:%S')} |\n"
             )
 
-    def list_issues(self) -> List[ManualTestIssue]:
+    def list_issues(self) -> list[ManualTestIssue]:
         """List all recorded manual test issues."""
         if not self.jsonl_file.exists():
             return []
 
         issues = []
-        with open(self.jsonl_file, "r", encoding="utf-8") as f:
+        with open(self.jsonl_file, encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     try:

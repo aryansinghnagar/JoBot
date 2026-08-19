@@ -11,7 +11,8 @@ import asyncio
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Pattern, cast
+from re import Pattern
+from typing import Any, cast
 
 import yaml
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 CAREER_SITES_YAML = Path(__file__).parent / "career_sites.yaml"
 
-MARKER_PATTERNS: Dict[str, Pattern[str]] = {
+MARKER_PATTERNS: dict[str, Pattern[str]] = {
     "greenhouse": re.compile(r"boards\.greenhouse\.io"),
     "lever": re.compile(r"jobs\.lever\.co"),
     "ashby": re.compile(r"jobs\.ashbyhq\.com"),
@@ -31,7 +32,7 @@ MARKER_PATTERNS: Dict[str, Pattern[str]] = {
     "smartrecruiters": re.compile(r"smartrecruiters\.com"),
 }
 
-SLUG_PATTERNS: Dict[str, Pattern[str]] = {
+SLUG_PATTERNS: dict[str, Pattern[str]] = {
     "greenhouse": re.compile(r"boards\.greenhouse\.io/([A-Za-z0-9\-]+)"),
     "lever": re.compile(r"jobs\.lever\.co/([A-Za-z0-9\-]+)"),
     "ashby": re.compile(r"jobs\.ashbyhq\.com/([A-Za-z0-9\-]+)"),
@@ -40,7 +41,7 @@ SLUG_PATTERNS: Dict[str, Pattern[str]] = {
 }
 
 
-def _fetch_html(url: str, timeout_s: float = 10.0) -> Optional[str]:
+def _fetch_html(url: str, timeout_s: float = 10.0) -> str | None:
     try:
         with safe_urlopen(
             url,
@@ -58,16 +59,16 @@ class CareerPageScanner:
 
     def __init__(
         self,
-        config_path: Optional[Path] = None,
+        config_path: Path | None = None,
         timeout_s: float = 10.0,
-        companies: Optional[List[str]] = None,
+        companies: list[str] | None = None,
     ) -> None:
         self.config_path = config_path or CAREER_SITES_YAML
         self.timeout_s = timeout_s
         self.companies_override = companies or []
-        self._config: Dict[str, Any] = self._load_config()
+        self._config: dict[str, Any] = self._load_config()
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         try:
             raw = yaml.safe_load(self.config_path.read_text(encoding="utf-8")) or {}
         except Exception as exc:  # noqa: BLE001
@@ -75,21 +76,21 @@ class CareerPageScanner:
             raw = {}
         if not isinstance(raw, dict):
             return {}
-        return cast(Dict[str, Any], raw)
+        return cast(dict[str, Any], raw)
 
     @property
-    def companies(self) -> List[str]:
+    def companies(self) -> list[str]:
         if self.companies_override:
             return self.companies_override
         return [str(c) for c in self._config.get("companies", [])]
 
-    def fingerprint(self, html_text: str) -> Optional[str]:
+    def fingerprint(self, html_text: str) -> str | None:
         for family, pattern in MARKER_PATTERNS.items():
             if pattern.search(html_text):
                 return family
         return None
 
-    def _extract_slug(self, html_text: str, family: str) -> Optional[str]:
+    def _extract_slug(self, html_text: str, family: str) -> str | None:
         pattern = SLUG_PATTERNS.get(family)
         if pattern:
             match = pattern.search(html_text)
@@ -97,7 +98,7 @@ class CareerPageScanner:
                 return match.group(1)
         return None
 
-    def _family_adapter(self, family: str, company: str) -> Optional[AtsFamilyAdapter]:
+    def _family_adapter(self, family: str, company: str) -> AtsFamilyAdapter | None:
         if family == "greenhouse":
             from jobot.adapters.greenhouse import GreenhouseAdapter
 
@@ -114,7 +115,7 @@ class CareerPageScanner:
             return None
         return cast(AtsFamilyAdapter, adapter_cls(company=company))
 
-    async def scan_company(self, company: str, limit: int = 25) -> List[JobPosting]:
+    async def scan_company(self, company: str, limit: int = 25) -> list[JobPosting]:
         """Fetch <company>.com/careers, fingerprint, and scrape via the ATS API."""
         company = company.strip().lower()
         if not company:
@@ -134,8 +135,8 @@ class CareerPageScanner:
             return []
         return await adapter.discover_jobs(company=slug, limit=limit)
 
-    async def scan(self, companies: List[str], limit: int = 25) -> List[JobPosting]:
-        postings: List[JobPosting] = []
+    async def scan(self, companies: list[str], limit: int = 25) -> list[JobPosting]:
+        postings: list[JobPosting] = []
         for company in companies:
             postings.extend(await self.scan_company(company, limit=limit))
         return postings
@@ -145,8 +146,8 @@ class CareerPageScanner:
         keywords: str = "",
         location: str = "",
         limit: int = 25,
-        company: Optional[str] = None,
-    ) -> List[JobPosting]:
+        company: str | None = None,
+    ) -> list[JobPosting]:
         """Uniform scraper interface: scan the configured/override company list."""
         targets = [company] if company else self.companies
         if not targets:

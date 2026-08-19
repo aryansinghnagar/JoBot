@@ -9,8 +9,9 @@ honestly when live browser runs are disabled (JOBOT_RUN_LIVE_BROWSER=1).
 
 import logging
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.capabilities import AdapterCapability
@@ -39,17 +40,17 @@ class LinkedInAdapter(SiteAdapter):
 
     def __init__(
         self,
-        vault: Optional[CredentialVault] = None,
-        saga_factory: Optional[Callable[[BrowserSession], EasyApplySaga]] = None,
-        profile_loader: Optional[Callable[[], UserProfile]] = None,
-        browser_provider: Optional[Callable[[], Any]] = None,
+        vault: CredentialVault | None = None,
+        saga_factory: Callable[[BrowserSession], EasyApplySaga] | None = None,
+        profile_loader: Callable[[], UserProfile] | None = None,
+        browser_provider: Callable[[], Any] | None = None,
     ) -> None:
         super().__init__("linkedin")
         self._vault = vault or CredentialVault()
         self._saga_factory = saga_factory or (lambda browser: EasyApplySaga(browser))
         self._profile_loader = profile_loader or self._load_profile
         self._browser_provider = browser_provider or self._start_browser
-        self._session: Optional[BrowserSession] = None
+        self._session: BrowserSession | None = None
 
     def _live_enabled(self) -> bool:
         return os.getenv("JOBOT_RUN_LIVE_BROWSER") == "1"
@@ -74,7 +75,7 @@ class LinkedInAdapter(SiteAdapter):
             )
         return self._vault.load_encrypted_profile(profile_path)
 
-    async def login(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    async def login(self, username: str | None = None, password: str | None = None) -> bool:
         if not self._live_enabled():
             raise NotImplementedError(
                 "LinkedIn login requires JOBOT_RUN_LIVE_BROWSER=1 and a "
@@ -91,14 +92,14 @@ class LinkedInAdapter(SiteAdapter):
 
     async def fill_form(
         self, job: JobPosting, profile: UserProfile, application: Application
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if not self._live_enabled():
             raise NotImplementedError(
                 "LinkedIn Easy Apply form filling requires a live browser session "
                 "(JOBOT_RUN_LIVE_BROWSER=1)."
             )
         info = profile.personal_info
-        form: Dict[str, Any] = {
+        form: dict[str, Any] = {
             "email": info.email,
             "name": f"{info.first_name} {info.last_name}".strip(),
         }

@@ -11,7 +11,7 @@ fabricated success.
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ from jobot.stealth.browser import BrowserSession
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SELECTORS: Dict[str, List[str]] = {
+DEFAULT_SELECTORS: dict[str, list[str]] = {
     "easy_apply_button": [
         "button.jobs-apply-button",
         "button[aria-label*='Easy Apply' i]",
@@ -68,9 +68,9 @@ class EasyApplyResult(BaseModel):
     success: bool
     status: str
     job_url: str
-    evidence_shots: List[str] = []
+    evidence_shots: list[str] = []
     reason: str = ""
-    unanswered_fields: List[str] = []
+    unanswered_fields: list[str] = []
 
 
 class EasyApplySaga:
@@ -79,9 +79,9 @@ class EasyApplySaga:
     def __init__(
         self,
         browser: BrowserSession,
-        qa_engine: Optional[QAEngine] = None,
-        selectors: Optional[Dict[str, List[str]]] = None,
-        evidence_dir: Optional[Path] = None,
+        qa_engine: QAEngine | None = None,
+        selectors: dict[str, list[str]] | None = None,
+        evidence_dir: Path | None = None,
     ):
         self.browser = browser
         self.qa_engine = qa_engine or QAEngine()
@@ -91,15 +91,15 @@ class EasyApplySaga:
         self.evidence_dir = evidence_dir
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
 
-    async def _first_visible(self, selectors: List[str], page: Any) -> Optional[str]:
+    async def _first_visible(self, selectors: list[str], page: Any) -> str | None:
         for selector in selectors:
             if await self.browser.is_visible(selector, page=page):
                 return selector
         return None
 
-    async def _collect_fields(self, page: Any) -> List[Dict[str, Any]]:
+    async def _collect_fields(self, page: Any) -> list[dict[str, Any]]:
         """Collect visible interactive fields on the current modal step."""
-        fields: List[Dict[str, Any]] = []
+        fields: list[dict[str, Any]] = []
         for kind, selector in (
             ("text", "text_input"),
             ("textarea", "textarea"),
@@ -130,7 +130,7 @@ class EasyApplySaga:
         return fields
 
     async def _answer_field(
-        self, field: Dict[str, Any], profile: UserProfile, answers: Dict[str, str]
+        self, field: dict[str, Any], profile: UserProfile, answers: dict[str, str]
     ) -> bool:
         label = str(field["label"]).lower()
         for key, value in answers.items():
@@ -153,13 +153,13 @@ class EasyApplySaga:
         self,
         job_url: str,
         profile: UserProfile,
-        answers: Optional[Dict[str, str]] = None,
-        resume_path: Optional[Path] = None,
+        answers: dict[str, str] | None = None,
+        resume_path: Path | None = None,
     ) -> EasyApplyResult:
         """Execute the Easy Apply saga; returns explicit success/failure + evidence."""
         answers = answers or {}
-        evidence: List[str] = []
-        unanswered: List[str] = []
+        evidence: list[str] = []
+        unanswered: list[str] = []
 
         page = await self.browser.navigate(job_url)
         shot = await self.browser.screenshot(self.evidence_dir / "01_opened.png", page=page)

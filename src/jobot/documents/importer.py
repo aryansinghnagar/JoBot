@@ -10,7 +10,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from jobot.ai.candidate_truth import CandidateTruthStore
 from jobot.ai.router import ModelRouter
@@ -38,9 +38,9 @@ class ResumeImporter:
 
     def __init__(
         self,
-        router: Optional[ModelRouter] = None,
-        db: Optional[DatabaseManager] = None,
-        config: Optional[ConfigManager] = None,
+        router: ModelRouter | None = None,
+        db: DatabaseManager | None = None,
+        config: ConfigManager | None = None,
     ) -> None:
         self.router = router or ModelRouter()
         self.db = db or DatabaseManager()
@@ -136,7 +136,7 @@ class ResumeImporter:
         return self._heuristic_parse(text, profile_id)
 
     def _build_profile_from_data(
-        self, data: Dict[str, Any], profile_id: str, raw_text: str
+        self, data: dict[str, Any], profile_id: str, raw_text: str
     ) -> UserProfile:
         pi_data = data.get("personal_info", {})
         personal_info = PersonalInfo(

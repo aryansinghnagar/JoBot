@@ -9,13 +9,13 @@ class SchedulerManager:
     Persists recurring campaign schedules to ~/.jobot/schedules.json.
     """
 
-    def __init__(self, schedule_file: Optional[Path] = None):
+    def __init__(self, schedule_file: Path | None = None):
         if schedule_file is None:
             schedule_file = Path.home() / ".jobot" / "schedules.json"
         self.schedule_file = schedule_file
         self.schedule_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def list_schedules(self) -> List[Dict[str, Any]]:
+    def list_schedules(self) -> list[dict[str, Any]]:
         """Load persisted schedule entries."""
         if not self.schedule_file.exists():
             return []
@@ -27,7 +27,7 @@ class SchedulerManager:
         except Exception:
             return []
 
-    def add_schedule(self, cron_expr: str, command: str) -> Dict[str, Any]:
+    def add_schedule(self, cron_expr: str, command: str) -> dict[str, Any]:
         """Add a recurring cron schedule entry."""
         schedules = self.list_schedules()
         sched_id = f"sch_{len(schedules) + 1:03d}"

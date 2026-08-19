@@ -2,9 +2,8 @@
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 import yaml
 from pydantic import BaseModel
@@ -34,8 +33,8 @@ class Contact(BaseModel):
     first_name: str
     company: str
     role: str = ""
-    location: Optional[str] = None
-    title: Optional[str] = None
+    location: str | None = None
+    title: str | None = None
 
 
 class DMResult(BaseModel):
@@ -48,7 +47,7 @@ class DMResult(BaseModel):
 class OutreachGate:
     """Enforces the daily DM cap from OutreachConfig."""
 
-    def __init__(self, state_path: Optional[Path] = None, daily_cap: int = 5) -> None:
+    def __init__(self, state_path: Path | None = None, daily_cap: int = 5) -> None:
         self.state_path = Path(
             state_path or (Path.home() / ".jobot" / "data" / "outreach_state.json")
         )
@@ -56,9 +55,9 @@ class OutreachGate:
         self.daily_cap = daily_cap
 
     def _today(self) -> str:
-        return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        return datetime.now(UTC).strftime("%Y-%m-%d")
 
-    def _load(self) -> Dict[str, int]:
+    def _load(self) -> dict[str, int]:
         if not self.state_path.exists():
             return {}
         try:
@@ -87,14 +86,14 @@ class DMGenerator:
 
     def __init__(
         self,
-        router: Optional[ModelRouter] = None,
-        presets_path: Optional[Path] = None,
+        router: ModelRouter | None = None,
+        presets_path: Path | None = None,
     ) -> None:
         self.router = router or ModelRouter()
         self.presets_path = Path(presets_path or PRESETS_PATH)
-        self._presets: Dict[str, OutreachPreset] = {}
+        self._presets: dict[str, OutreachPreset] = {}
 
-    def presets(self) -> Dict[str, OutreachPreset]:
+    def presets(self) -> dict[str, OutreachPreset]:
         if not self._presets:
             raw = yaml.safe_load(self.presets_path.read_text(encoding="utf-8")) or {}
             self._presets = {k: OutreachPreset(**v) for k, v in raw.get("presets", {}).items()}
@@ -167,9 +166,9 @@ class DMGenerator:
         self,
         dm: DMResult,
         contact: Contact,
-        gate: Optional[OutreachGate] = None,
-        email: Optional[EmailSender] = None,
-    ) -> Tuple[bool, str]:
+        gate: OutreachGate | None = None,
+        email: EmailSender | None = None,
+    ) -> tuple[bool, str]:
         gate = gate or OutreachGate(daily_cap=load_profile_config().outreach.daily_dm_cap)
         if not gate.can_send():
             return False, f"daily DM cap reached ({gate.sent_today()}/{gate.daily_cap})"

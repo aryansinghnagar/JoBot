@@ -1,7 +1,8 @@
 import logging
 from enum import Enum
-from typing import Optional
+
 from pydantic import BaseModel
+
 from jobot.ai.router import ModelRouter
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,8 @@ class CaptchaType(str, Enum):
 class CaptchaResult(BaseModel):
     captcha_type: CaptchaType
     solved: bool
-    token: Optional[str] = None
-    text_solution: Optional[str] = None
+    token: str | None = None
+    text_solution: str | None = None
     confidence: float = 0.0
     cost_usd: float = 0.0
 
@@ -29,7 +30,7 @@ class CaptchaSolver:
     CAPTCHA Solver combining AI Vision with Fallback Strategies (Layer 8).
     """
 
-    def __init__(self, router: Optional[ModelRouter] = None):
+    def __init__(self, router: ModelRouter | None = None):
         self.router = router or ModelRouter()
 
     async def solve_image_captcha(

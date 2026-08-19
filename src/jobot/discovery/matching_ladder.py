@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 from jobot.ai.router import ModelRouter
@@ -27,15 +27,15 @@ logger = logging.getLogger(__name__)
 class MatchingLadderResult(BaseModel):
     posting: JobPosting
     passed_hard_filters: bool
-    hard_filter_reasons: List[str] = Field(default_factory=list)
+    hard_filter_reasons: list[str] = Field(default_factory=list)
     skill_score: float = 0.0  # Stage 2
     semantic_score: float = 0.0  # Stage 3
-    llm_score: Optional[float] = None  # Stage 4
+    llm_score: float | None = None  # Stage 4
     composite_score: float = 0.0  # Overall weighted score
-    matching_skills: List[str] = Field(default_factory=list)
-    missing_skills: List[str] = Field(default_factory=list)
-    strengths: List[str] = Field(default_factory=list)
-    growth_areas: List[str] = Field(default_factory=list)
+    matching_skills: list[str] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+    strengths: list[str] = Field(default_factory=list)
+    growth_areas: list[str] = Field(default_factory=list)
     recommendation: str = "LOW_FIT"  # HIGH_FIT | MEDIUM_FIT | LOW_FIT | FILTERED_OUT
     explanation: str = ""
 
@@ -45,12 +45,12 @@ class MatchingLadder:
 
     def __init__(
         self,
-        router: Optional[ModelRouter] = None,
-        skill_extractor: Optional[SkillExtractor] = None,
+        router: ModelRouter | None = None,
+        skill_extractor: SkillExtractor | None = None,
     ) -> None:
         self.router = router or ModelRouter()
         self.skill_extractor = skill_extractor or SkillExtractor()
-        self._candidate_vec_cache: dict[str, List[float]] = {}
+        self._candidate_vec_cache: dict[str, list[float]] = {}
         self._candidate_skills_cache: dict[str, set[str]] = {}
         self._candidate_years_cache: dict[str, int] = {}
 
@@ -75,7 +75,7 @@ class MatchingLadder:
             self._candidate_skills_cache[p_key] = {s.lower() for s in profile.skills}
         return self._candidate_skills_cache[p_key]
 
-    def _get_candidate_vec(self, profile: UserProfile) -> List[float]:
+    def _get_candidate_vec(self, profile: UserProfile) -> list[float]:
         p_key = f"{profile.profile_id}:{profile.version}"
         if p_key not in self._candidate_vec_cache:
             candidate_corpus = " ".join(
@@ -98,8 +98,8 @@ class MatchingLadder:
         profile: UserProfile,
         target_location: str = "",
         allow_remote: bool = True,
-    ) -> tuple[bool, List[str]]:
-        reasons: List[str] = []
+    ) -> tuple[bool, list[str]]:
+        reasons: list[str] = []
 
         # 1. Location match (if target specified and not remote)
         job_loc = (posting.location or "").lower()
@@ -138,7 +138,7 @@ class MatchingLadder:
 
     def evaluate_skill_overlap(
         self, posting: JobPosting, profile: UserProfile
-    ) -> tuple[float, List[str], List[str]]:
+    ) -> tuple[float, list[str], list[str]]:
         extracted = (
             self.skill_extractor.extract_skills_sync(posting.description)
             if posting.description
@@ -179,9 +179,9 @@ class MatchingLadder:
         self,
         posting: JobPosting,
         profile: UserProfile,
-        matching_skills: List[str],
-        missing_skills: List[str],
-    ) -> tuple[float, List[str], List[str], str]:
+        matching_skills: list[str],
+        missing_skills: list[str],
+    ) -> tuple[float, list[str], list[str], str]:
         prompt = (
             f"Analyze candidate fit for the target job role.\n\n"
             f"Candidate: {profile.personal_info.first_name} {profile.personal_info.last_name}\n"
@@ -222,8 +222,8 @@ class MatchingLadder:
         return self._fallback_llm_fit(matching_skills, missing_skills)
 
     def _fallback_llm_fit(
-        self, matching_skills: List[str], missing_skills: List[str]
-    ) -> tuple[float, List[str], List[str], str]:
+        self, matching_skills: list[str], missing_skills: list[str]
+    ) -> tuple[float, list[str], list[str], str]:
         score = len(matching_skills) / max(1, len(matching_skills) + len(missing_skills))
         strengths = [f"Proficient in {s}" for s in matching_skills[:3]]
         growth_areas = [f"Familiarity with {s} desired" for s in missing_skills[:3]]
@@ -262,9 +262,9 @@ class MatchingLadder:
         semantic_score = self.evaluate_semantic_proximity(posting, profile)
 
         # Stage 4: LLM Fit (Optional / Fast-path)
-        llm_score: Optional[float] = None
-        strengths: List[str] = []
-        growth_areas: List[str] = []
+        llm_score: float | None = None
+        strengths: list[str] = []
+        growth_areas: list[str] = []
         explanation = ""
 
         if include_llm_stage:

@@ -2,10 +2,11 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class AlertMessage(BaseModel):
     level: AlertLevel
     title: str
     message: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     acknowledged: bool = False
 
 
@@ -33,7 +34,7 @@ class AlertDispatcher:
     Dispatches operational milestone notifications and high-severity incident alerts to ~/.jobot/alerts.jsonl.
     """
 
-    def __init__(self, alert_file: Optional[Path] = None) -> None:
+    def __init__(self, alert_file: Path | None = None) -> None:
         if alert_file is None:
             alert_file = Path.home() / ".jobot" / "alerts.jsonl"
         alert_file = Path(alert_file)
@@ -43,7 +44,7 @@ class AlertDispatcher:
             raise ValueError(f"path traversal is not allowed in alert_file: {alert_file}")
         self.alert_file = alert_file
         self.alert_file.parent.mkdir(parents=True, exist_ok=True)
-        self.alert_history: List[AlertMessage] = []
+        self.alert_history: list[AlertMessage] = []
 
     def dispatch_alert(
         self, title: str, message: str, level: AlertLevel = AlertLevel.INFO
@@ -74,11 +75,11 @@ class AlertDispatcher:
 
         return alert
 
-    def list_alerts(self, unack_only: bool = False) -> List[Dict[str, Any]]:
+    def list_alerts(self, unack_only: bool = False) -> list[dict[str, Any]]:
         if not self.alert_file.exists():
             return []
         alerts = []
-        with open(self.alert_file, "r", encoding="utf-8") as f:
+        with open(self.alert_file, encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     item = json.loads(line)

@@ -8,7 +8,6 @@ bullets attach only to real profile experience rows.
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from jinja2 import Environment, PackageLoader
 
@@ -42,13 +41,13 @@ class ResumeEntry:
     title: str
     subtitle: str = ""
     period: str = ""
-    bullets: List[str] = field(default_factory=list)
+    bullets: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ResumeSection:
     heading: str
-    entries: List[ResumeEntry] = field(default_factory=list)
+    entries: list[ResumeEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -57,8 +56,8 @@ class ResumeData:
     contact: str
     linkedin: str = ""
     summary: str = ""
-    skills: List[str] = field(default_factory=list)
-    sections: List[ResumeSection] = field(default_factory=list)
+    skills: list[str] = field(default_factory=list)
+    sections: list[ResumeSection] = field(default_factory=list)
 
     def to_plain_text(self) -> str:
         """Render resume as single-column ATS plain text."""
@@ -88,9 +87,9 @@ class ResumeData:
 
 def compile_resume_data(
     profile: UserProfile,
-    summary: Optional[str] = None,
-    skills: Optional[List[str]] = None,
-    experience_bullets: Optional[Dict[str, List[str]]] = None,
+    summary: str | None = None,
+    skills: list[str] | None = None,
+    experience_bullets: dict[str, list[str]] | None = None,
 ) -> ResumeData:
     """Compile profile facts into ResumeData.
 
@@ -106,9 +105,9 @@ def compile_resume_data(
             contact_parts.append(location)
     contact = " | ".join(x for x in contact_parts if x)
 
-    sections: List[ResumeSection] = []
+    sections: list[ResumeSection] = []
     if profile.experiences:
-        exp_entries: List[ResumeEntry] = []
+        exp_entries: list[ResumeEntry] = []
         for exp in profile.experiences:
             period = f"{exp.start_date} - {exp.end_date or 'Present'}"
             key = f"{exp.company}|{exp.title}"

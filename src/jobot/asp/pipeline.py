@@ -1,7 +1,7 @@
 import hashlib
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from jobot.adapters.base import SiteAdapter
 from jobot.ai.qa_engine import QAEngine
@@ -9,7 +9,7 @@ from jobot.applications.state_machine import transition_application
 from jobot.execution.engine import (
     ApprovalStatus as DurableApprovalStatus,
 )
-from jobot.execution.engine import DurableTaskEngine, DuplicateEffect, EffectStatus
+from jobot.execution.engine import DuplicateEffect, DurableTaskEngine, EffectStatus
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -59,13 +59,13 @@ class ApplicationSubmissionPipeline:
         self,
         adapter: SiteAdapter,
         db_manager: DatabaseManager,
-        artifact_dir: Optional[Path] = None,
-        qa_engine: Optional[QAEngine] = None,
-        policy_engine: Optional[PolicyEngine] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
-        trace_logger: Optional[TraceLogger] = None,
-        alert_dispatcher: Optional[AlertDispatcher] = None,
-        extra_form_data: Optional[Dict[str, Any]] = None,
+        artifact_dir: Path | None = None,
+        qa_engine: QAEngine | None = None,
+        policy_engine: PolicyEngine | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
+        trace_logger: TraceLogger | None = None,
+        alert_dispatcher: AlertDispatcher | None = None,
+        extra_form_data: dict[str, Any] | None = None,
     ):
         self.adapter = adapter
         self.db = db_manager
@@ -79,7 +79,7 @@ class ApplicationSubmissionPipeline:
         self.trace_logger = trace_logger or TraceLogger()
         self.alert_dispatcher = alert_dispatcher or AlertDispatcher()
         self._extra_form_data = extra_form_data or {}
-        self._engine_instance: Optional[DurableTaskEngine] = None
+        self._engine_instance: DurableTaskEngine | None = None
 
     def _engine(self) -> DurableTaskEngine:
         """Durable engine for effects/approvals (lazily shared per pipeline)."""
@@ -271,7 +271,7 @@ class ApplicationSubmissionPipeline:
     ) -> DoDResult:
         """DoD: Q&A Engine answers profile-grounded questions; pauses on sensitive fields."""
         form_questions = (app.form_values or {}).get("_extracted_questions", [])
-        qa_answers: Dict[str, Any] = {}
+        qa_answers: dict[str, Any] = {}
         for q in form_questions:
             res = await self.qa_engine.answer_question(q, profile)
             qa_answers[q] = res.answer

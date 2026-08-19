@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from jobot.models.domain import Application, ApplicationStatus
 from jobot.stealth.behavior import BehavioralMimicry
@@ -39,7 +39,7 @@ class NaukriSubmitter:
     no confirmation -> False.
     """
 
-    def __init__(self, mimicry: Optional[BehavioralMimicry] = None) -> None:
+    def __init__(self, mimicry: BehavioralMimicry | None = None) -> None:
         self.mimicry = mimicry or BehavioralMimicry()
 
     async def _is_login_wall(self, page: Any) -> bool:
@@ -52,7 +52,7 @@ class NaukriSubmitter:
                 continue
         return False
 
-    async def _first_apply_locator(self, page: Any) -> Optional[Any]:
+    async def _first_apply_locator(self, page: Any) -> Any | None:
         for selector in APPLY_SELECTORS:
             try:
                 locator = page.locator(selector)
@@ -86,7 +86,7 @@ class NaukriSubmitter:
         except Exception:  # noqa: BLE001
             return ""
 
-    async def submit(self, application: Application, page: Optional[Any] = None) -> bool:
+    async def submit(self, application: Application, page: Any | None = None) -> bool:
         if page is None:
             logger.warning(
                 "[NAUKRI SUBMIT] No browser page provided — refusing to fabricate a submission."

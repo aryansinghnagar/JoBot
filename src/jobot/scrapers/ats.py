@@ -11,7 +11,7 @@ import html
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from jobot.models.domain import JobPosting
 from jobot.security.url_guard import safe_urlopen
@@ -39,7 +39,7 @@ class AtsFamilyAdapter:
     family: str = ""
     api_url: str = ""
 
-    def __init__(self, company: Optional[str] = None, timeout_s: float = 10.0) -> None:
+    def __init__(self, company: str | None = None, timeout_s: float = 10.0) -> None:
         self.company = company or ""
         self.timeout_s = timeout_s
 
@@ -48,11 +48,11 @@ class AtsFamilyAdapter:
 
     async def discover_jobs(
         self,
-        company: Optional[str] = None,
+        company: str | None = None,
         limit: int = 25,
         keywords: str = "",
         location: str = "",
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         company = (company or self.company).strip()
         if not company:
             logger.warning("[ATS:%s] No company provided, skipping", self.family)
@@ -65,7 +65,7 @@ class AtsFamilyAdapter:
             return []
         return self._map(company, payload, limit)
 
-    def _map(self, company: str, payload: Any, limit: int) -> List[JobPosting]:
+    def _map(self, company: str, payload: Any, limit: int) -> list[JobPosting]:
         raise NotImplementedError
 
     @staticmethod
@@ -101,8 +101,8 @@ class LeverAdapter(AtsFamilyAdapter):
     family = "lever"
     api_url = "https://api.lever.co/v0/postings/{company}?mode=json&limit={limit}"
 
-    def _map(self, company: str, payload: Any, limit: int) -> List[JobPosting]:
-        postings: List[JobPosting] = []
+    def _map(self, company: str, payload: Any, limit: int) -> list[JobPosting]:
+        postings: list[JobPosting] = []
         if not isinstance(payload, list):
             return postings
         for item in payload[:limit]:
@@ -132,8 +132,8 @@ class AshbyAdapter(AtsFamilyAdapter):
     family = "ashby"
     api_url = "https://api.ashbyhq.com/posting-api/job-board/{company}?includeCompensation=true"
 
-    def _map(self, company: str, payload: Any, limit: int) -> List[JobPosting]:
-        postings: List[JobPosting] = []
+    def _map(self, company: str, payload: Any, limit: int) -> list[JobPosting]:
+        postings: list[JobPosting] = []
         jobs = payload.get("jobs") if isinstance(payload, dict) else None
         if not jobs:
             return postings
@@ -165,8 +165,8 @@ class SmartRecruitersAdapter(AtsFamilyAdapter):
     family = "smartrecruiters"
     api_url = "https://api.smartrecruiters.com/v1/companies/{company}/postings?limit={limit}"
 
-    def _map(self, company: str, payload: Any, limit: int) -> List[JobPosting]:
-        postings: List[JobPosting] = []
+    def _map(self, company: str, payload: Any, limit: int) -> list[JobPosting]:
+        postings: list[JobPosting] = []
         content = payload.get("content") if isinstance(payload, dict) else None
         if not content:
             return postings
@@ -194,7 +194,7 @@ class SmartRecruitersAdapter(AtsFamilyAdapter):
         return postings
 
 
-FAMILY_ADAPTERS: Dict[str, type] = {
+FAMILY_ADAPTERS: dict[str, type] = {
     "lever": LeverAdapter,
     "ashby": AshbyAdapter,
     "smartrecruiters": SmartRecruitersAdapter,

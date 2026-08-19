@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -25,8 +25,8 @@ class DigestGenerator:
 
     def __init__(
         self,
-        db: Optional[DatabaseManager] = None,
-        analytics: Optional[TrackerAnalytics] = None,
+        db: DatabaseManager | None = None,
+        analytics: TrackerAnalytics | None = None,
         period_days: int = 7,
     ) -> None:
         self.db = db or DatabaseManager()
@@ -38,8 +38,8 @@ class DigestGenerator:
             autoescape=select_autoescape(["html", "j2"]),
         )
 
-    def _period_recent(self, now: Optional[datetime] = None) -> List[Dict[str, Any]]:
-        now = now or datetime.now(timezone.utc)
+    def _period_recent(self, now: datetime | None = None) -> list[dict[str, Any]]:
+        now = now or datetime.now(UTC)
         cutoff = now - timedelta(days=self.period_days)
         rows = self.analytics.recent(limit=1000)
         out = []
@@ -52,10 +52,10 @@ class DigestGenerator:
                 out.append(r)
         return out
 
-    def generate(self, period_days: Optional[int] = None, now: Optional[datetime] = None) -> Digest:
+    def generate(self, period_days: int | None = None, now: datetime | None = None) -> Digest:
         if period_days is not None:
             self.period_days = period_days
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
         recent = self._period_recent(now=now)
         by_board = self.analytics.by_board()
         funnel = self.analytics.funnel()
@@ -77,7 +77,7 @@ class DigestGenerator:
         subject = f"JoBot weekly digest — {len(recent)} apps ({summary['period_days']} days)"
         return Digest(subject=subject, html=html, text=text)
 
-    def render_file(self, out_path: Path, period_days: Optional[int] = None) -> Path:
+    def render_file(self, out_path: Path, period_days: int | None = None) -> Path:
         digest = self.generate(period_days=period_days)
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)

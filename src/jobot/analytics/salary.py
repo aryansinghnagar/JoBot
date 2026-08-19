@@ -5,8 +5,9 @@ import logging
 import os
 import re
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import yaml
 from pydantic import BaseModel
@@ -43,10 +44,10 @@ class SalaryBenchmarker:
 
     def __init__(
         self,
-        data_path: Optional[Path] = None,
-        cache_path: Optional[Path] = None,
-        http_getter: Optional[Callable[[str], Tuple[int, str]]] = None,
-        breaker: Optional[CircuitBreaker] = None,
+        data_path: Path | None = None,
+        cache_path: Path | None = None,
+        http_getter: Callable[[str], tuple[int, str]] | None = None,
+        breaker: CircuitBreaker | None = None,
         cache_ttl_seconds: int = 24 * 3600,
     ) -> None:
         self.data_path = Path(data_path or (DATA_DIR / "salaries.yaml"))
@@ -57,14 +58,14 @@ class SalaryBenchmarker:
         self.breaker = breaker or CircuitBreaker(failure_threshold=3, recovery_timeout=300)
         self.breaker_domain = "salary_live"
         self.cache_ttl_seconds = cache_ttl_seconds
-        self._yaml: Optional[Dict[str, Any]] = None
+        self._yaml: dict[str, Any] | None = None
 
-    def _load_yaml(self) -> Dict[str, Any]:
+    def _load_yaml(self) -> dict[str, Any]:
         if self._yaml is None:
             self._yaml = yaml.safe_load(self.data_path.read_text(encoding="utf-8")) or {}
         return self._yaml
 
-    def yaml_lookup(self, role: str, region: str, currency: str) -> Optional[SalaryBand]:
+    def yaml_lookup(self, role: str, region: str, currency: str) -> SalaryBand | None:
         entry = self._load_yaml().get("roles", {}).get(role, {}).get(region)
         if not entry:
             return None
@@ -78,25 +79,25 @@ class SalaryBenchmarker:
             source="local benchmark data (approximate)",
         )
 
-    def list_roles(self) -> List[str]:
+    def list_roles(self) -> list[str]:
         return list(self._load_yaml().get("roles", {}).keys())
 
-    def _cache_get(self, key: str) -> Optional[Dict[str, Any]]:
+    def _cache_get(self, key: str) -> dict[str, Any] | None:
         if not self.cache_path.exists():
             return None
         try:
             data = json.loads(self.cache_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             return None
-        item: Optional[Dict[str, Any]] = data.get(key)
+        item: dict[str, Any] | None = data.get(key)
         if not item:
             return None
         if time.time() - item.get("ts", 0) > self.cache_ttl_seconds:
             return None
         return item
 
-    def _cache_set(self, key: str, payload: Dict[str, Any]) -> None:
-        data: Dict[str, Any] = {}
+    def _cache_set(self, key: str, payload: dict[str, Any]) -> None:
+        data: dict[str, Any] = {}
         if self.cache_path.exists():
             try:
                 data = json.loads(self.cache_path.read_text(encoding="utf-8"))
@@ -105,7 +106,7 @@ class SalaryBenchmarker:
         data[key] = {"ts": time.time(), "payload": payload}
         self.cache_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
-    def _fetch_live(self, role: str, region: str) -> Optional[SalaryBand]:
+    def _fetch_live(self, role: str, region: str) -> SalaryBand | None:
         """Best-effort levels.fyi page fetch + amount extraction. Never fabricates."""
         slug = role.replace("_", "-").lower()
         url = f"https://www.levels.fyi/companies/{slug}/salaries"
@@ -138,7 +139,7 @@ class SalaryBenchmarker:
             return None
 
     @staticmethod
-    def _default_getter(url: str) -> Tuple[int, str]:
+    def _default_getter(url: str) -> tuple[int, str]:
         with safe_urlopen(url, timeout=15.0) as resp:
             return resp.status, resp.read().decode("utf-8", errors="replace")
 
@@ -147,7 +148,7 @@ class SalaryBenchmarker:
         role: str,
         region: str = "India",
         currency: str = "INR",
-    ) -> Optional[SalaryBand]:
+    ) -> SalaryBand | None:
         yaml_band = self.yaml_lookup(role, region, currency)
         if not yaml_band:
             return None

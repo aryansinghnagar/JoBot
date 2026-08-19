@@ -18,13 +18,14 @@ from __future__ import annotations
 import hashlib
 import inspect
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Callable
+from datetime import UTC, datetime
+from typing import Any
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _apply_001(conn: sqlite3.Connection) -> None:

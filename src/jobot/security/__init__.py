@@ -1,4 +1,4 @@
-from jobot.security.audit import SecurityAuditReport, SecurityAuditor
+from jobot.security.audit import SecurityAuditor, SecurityAuditReport
 from jobot.security.prompt_guard import (
     contains_prompt_injection,
     find_prompt_injections,

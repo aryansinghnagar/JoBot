@@ -1,5 +1,4 @@
 import re
-from typing import Dict, Tuple
 
 
 class PIIMasker:
@@ -15,9 +14,9 @@ class PIIMasker:
         "pan": r"\b[A-Z]{5}\d{4}[A-Z]\b",
     }
 
-    def mask(self, text: str) -> Tuple[str, Dict[str, str]]:
+    def mask(self, text: str) -> tuple[str, dict[str, str]]:
         """Replace PII with tokens. Returns masked text and token mapping."""
-        mapping: Dict[str, str] = {}
+        mapping: dict[str, str] = {}
         masked_text = text
 
         for pii_type, pattern in self.PATTERNS.items():
@@ -29,7 +28,7 @@ class PIIMasker:
 
         return masked_text, mapping
 
-    def unmask(self, masked_text: str, mapping: Dict[str, str]) -> str:
+    def unmask(self, masked_text: str, mapping: dict[str, str]) -> str:
         """Restore original PII values from tokens."""
         unmasked = masked_text
         for token, original in mapping.items():

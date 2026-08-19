@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Optional, cast
+from typing import cast
+
 from jobot.security.url_guard import safe_urlopen
 from jobot.stealth.circuit_breaker import CircuitBreaker
 
@@ -21,7 +22,7 @@ class StealthHTTPClient:
     def __init__(
         self,
         impersonate: str = "chrome120",
-        circuit_breaker: Optional[CircuitBreaker] = None,
+        circuit_breaker: CircuitBreaker | None = None,
         allow_private_hosts: bool = False,
     ) -> None:
         self.impersonate = impersonate
@@ -34,7 +35,7 @@ class StealthHTTPClient:
         }
 
     async def get(
-        self, url: str, headers: Optional[Dict[str, str]] = None, timeout: float = 10.0
+        self, url: str, headers: dict[str, str] | None = None, timeout: float = 10.0
     ) -> str:
         """Execute stealth GET request with header impersonation."""
         req_headers = dict(self.default_headers)
@@ -54,7 +55,7 @@ class StealthHTTPClient:
         self,
         url: str,
         data: bytes,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         timeout: float = 10.0,
     ) -> str:
         """Execute stealth POST request."""
