@@ -1,16 +1,17 @@
 """Gate-G3 tests: application correctness under injected failure (WS3).
 
-Proves the G3 criteria (MASTER_PLAN_EXPANDED.md §9.2):
+Proves the G3 criteria (MASTER_PLAN_EXPANDED.md §6.2 — G3 gate):
 - no duplicate submissions under ANY injected failure mode at submit time
 - approvals are durable entities that survive restarts and gate submission
 - ambiguous submissions reconcile (verify-only), never re-execute
 - timestamp semantics survive the split (submitted / verified / response)
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 import pytest
+
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.applications.reconcile import ReconciliationService
 from jobot.applications.state_machine import (
@@ -18,7 +19,7 @@ from jobot.applications.state_machine import (
     can_transition,
     transition_application,
 )
-from jobot.asp.pipeline import ApprovalRequiredError, ApplicationSubmissionPipeline
+from jobot.asp.pipeline import ApplicationSubmissionPipeline, ApprovalRequiredError
 from jobot.execution.engine import ApprovalStatus, DurableTaskEngine, EffectStatus
 from jobot.models.domain import (
     Application,
@@ -62,7 +63,7 @@ class RecordingAdapter(MockATSAdapter):
             location="Remote",
             description="Resilient application protocol test.",
             parsed_skills=["Python"],
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     async def submit_application(self, application: Application) -> bool:
@@ -350,7 +351,7 @@ def test_timestamp_split_roundtrip(tmp_path):
         company="TSCorp",
         location="Remote",
         description="timestamp split roundtrip",
-        discovered_at=datetime.now(timezone.utc),
+        discovered_at=datetime.now(UTC),
     )
     db.save_job_posting(posting)
     app = Application(

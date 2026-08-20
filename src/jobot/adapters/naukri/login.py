@@ -32,7 +32,9 @@ class NaukriLoginFlow:
                     logger.info("[NAUKRI LOGIN] Active session restored successfully.")
                     return True
             except Exception:
-                pass
+                logger.debug(
+                    "[NAUKRI LOGIN] No active session element found; proceeding.", exc_info=True
+                )
 
             # Fill username & password if present and provided
             if username and password:
@@ -72,7 +74,7 @@ class NaukriLoginFlow:
                     if verify_btn:
                         await verify_btn.click()
             except Exception:
-                pass
+                logger.debug("[NAUKRI LOGIN] No OTP prompt detected; continuing.", exc_info=True)
 
             logger.info("[NAUKRI LOGIN] Login complete. Session persisted.")
             return True

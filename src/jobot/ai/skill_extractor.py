@@ -99,7 +99,7 @@ class SkillExtractor:
                 parsed = json.loads(json_str)
                 if isinstance(parsed, list):
                     return self._normalize_skills([str(s) for s in parsed])
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 — LLM/JSON parse failure falls through to keyword extraction below
             pass
 
         # Fallback: Keyword pattern matching

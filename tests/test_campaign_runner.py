@@ -1,6 +1,9 @@
 """Phase 5 T4.1: campaign runner wired to ApplyOrchestrator + LLM cost gate."""
 
+import asyncio
+
 import pytest
+
 from jobot.asp.orchestrator import ApplyResult
 from jobot.discovery.engine import JobMatchResult
 from jobot.models.domain import (
@@ -9,6 +12,23 @@ from jobot.models.domain import (
     UserProfile,
 )
 from jobot.runner import ContinuousCampaignRunner
+
+
+@pytest.fixture(autouse=True)
+def _no_asyncio_sleep(monkeypatch):
+    """Audit fix JOB-V2-REG-005: stub ``asyncio.sleep`` to a no-op so the
+    campaign-runner tests do not incur the 5–15s inter-iteration courtesy
+    sleep that the production runner enforces (see ``runner.py``).
+
+    Without this fixture the 5 tests in this module take ~30–90s wall-clock
+    time for no signal value; the production behavior is unchanged because
+    the monkeypatch only applies inside the test process.
+    """
+
+    async def _noop_sleep(_delay: float) -> None:
+        return None
+
+    monkeypatch.setattr(asyncio, "sleep", _noop_sleep)
 
 
 def make_profile() -> UserProfile:

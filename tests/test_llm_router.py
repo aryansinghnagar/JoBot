@@ -226,3 +226,51 @@ async def test_router_generate_text_stream_all_fail_yields_degradation(monkeypat
         )
     ]
     assert "".join(chunks) == DEGRADATION_TEXT
+
+
+# ---------------------------------------------------------------------------
+# Phase B3 (JOB-ARC-002): KeyboardInterrupt must propagate through
+# ``generate_text``. The fallback-chain ``except`` block was previously a bare
+# ``except Exception``, which would have swallowed any ``Exception`` subclass
+# — including ``KeyboardInterrupt`` if it had been a subclass of ``Exception``
+# (it is not; it derives from ``BaseException``). This test asserts the
+# contract is preserved: a provider raising ``KeyboardInterrupt`` aborts the
+# fallback chain instead of returning the degradation text.
+# ---------------------------------------------------------------------------
+
+
+class _KeyboardInterruptProvider(StubProvider):
+    async def complete(self, *args: Any, **kwargs: Any) -> LLMResponse:
+        raise KeyboardInterrupt("user pressed Ctrl+C")
+
+
+@pytest.mark.asyncio
+async def test_generate_text_propagates_keyboard_interrupt(monkeypatch, tmp_path):
+    router = _router(monkeypatch, tmp_path)
+
+    def factory(self: ModelRouter, name: str):
+        return _KeyboardInterruptProvider(name)
+
+    monkeypatch.setattr(ModelRouter, "get_provider", factory)
+    with pytest.raises(KeyboardInterrupt):
+        await router.generate_text("hello", fallback_chain=["gemini", "openai"])
+
+
+@pytest.mark.asyncio
+async def test_generate_text_stream_propagates_keyboard_interrupt(monkeypatch, tmp_path):
+    router = _router(monkeypatch, tmp_path)
+
+    class _StreamKbdProvider(StubProvider):
+        async def stream(self, *args: Any, **kwargs: Any):
+            raise KeyboardInterrupt("user pressed Ctrl+C")
+            yield ""  # pragma: no cover — unreachable, makes this an async gen
+
+    def factory(self: ModelRouter, name: str):
+        return _StreamKbdProvider(name)
+
+    monkeypatch.setattr(ModelRouter, "get_provider", factory)
+    with pytest.raises(KeyboardInterrupt):
+        async for _ in router.generate_text_stream(
+            "hello", fallback_chain=["gemini", "openai"]
+        ):
+            pass

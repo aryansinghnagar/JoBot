@@ -14,9 +14,8 @@ project's conventions. The canonical architecture and roadmap live in
 
 Prerequisites:
 
-- Python **3.11+** (CI tests 3.11 and 3.12 on Linux, Windows, and macOS)
-- Node.js **18+** (for vitest/prettier gates; a Rust toolchain is only needed
-  for the local Tauri desktop build — see `SETUP.md` Section 7)
+- Python **3.11+** (CI tests 3.11, 3.12, and 3.13 on Linux, Windows, and macOS)
+- Node.js **20+** (matches `package.json` `engines.node >= 20.19`; needed for vitest/prettier gates; a Rust toolchain is only needed for the local Tauri desktop build — see `SETUP.md` Section 7)
 
 ```bash
 # 1. Clone
@@ -47,7 +46,7 @@ runs the same gates on three operating systems.
 | Check | Command | Notes |
 | --- | --- | --- |
 | Python tests | `python -m pytest -q` | Full suite; live-scrape tests are opt-in (see below) |
-| Python lint | `ruff check src/` | CI pins the invocation to `--select E,F --ignore E501,F401` |
+| Python lint | `ruff check src/` | CI runs ruff with the expanded rule set in `pyproject.toml` (`E,F,W,S,B,C90,UP,I`) — see the `[tool.ruff.lint]` block for the current ignore list |
 | Python formatting | `ruff format --check src/` | Enforced; run `ruff format src/` to fix |
 | Static types | `mypy src/` | Strict config in `pyproject.toml`; CI adds `--ignore-missing-imports` |
 | JS tests | `npm test` | `vitest run` over `tests/npm` and `gui/tests` |
@@ -81,7 +80,7 @@ verification passes and the evidence is in the pull request:
 - **Provide evidence in the PR:** exact commands run and their summarized
   results. The pull request template asks for this explicitly.
 - The full verification doctrine (levels L1-L9, phase gates G0-G7) is
-  specified in `MASTER_PLAN_EXPANDED.md` Section 9.
+  specified in `MASTER_PLAN_EXPANDED.md` Section 6.
 
 ## Branch and Pull Request Conventions
 
@@ -124,7 +123,7 @@ spans both license zones, say so in the PR.
 
 - **Maintainer / release role:** @aryansinghnagar (sole maintainer; owns
   tagging, CI, and repository settings).
-- **No stable release has shipped.** `pyproject.toml` remains at `0.1.0`;
+- **No stable release has shipped.** `pyproject.toml` is at `0.2.0`;
   the `release-1.0-alpha`, `release-1.0`, and `release-2.0` git tags are
   internal development milestones, not published distributions. Version
   bumps and changelog curation are maintainer-driven — see `CHANGELOG.md`.

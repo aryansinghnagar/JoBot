@@ -156,6 +156,37 @@ class PluginAuditor:
         "locals",
     }
 
+    # Audit fix JOB-V2-NEW-001: ``getattr(obj, "system")`` is a classic
+    # AST-walker bypass — the call site does not contain the substring
+    # "system" as a standalone token, and the AST ``Call`` node's ``func`` is
+    # ``Name(id="getattr")``, not the attribute name being resolved. We
+    # inspect the second positional argument when it is a string literal and
+    # flag any of the dangerous attribute names below. This catches:
+    #
+    #   - ``getattr(os, "system")("rm -rf /")``
+    #   - ``getattr(__builtins__, "eval")("...")``
+    #   - ``getattr(subprocess, "popen")(...)``
+    #
+    # while leaving innocuous ``getattr(obj, "name")`` calls alone. The list
+    # is conservative — it targets the well-known code-execution primitives.
+    DANGEROUS_GETATTR_NAMES: set[str] = {
+        "system",
+        "popen",
+        "exec",
+        "eval",
+        "__import__",
+        "fork",
+        "spawn",
+        "spawnl",
+        "spawnle",
+        "spawnlp",
+        "spawnlpe",
+        "spawnv",
+        "spawnve",
+        "spawnvp",
+        "spawnvpe",
+    }
+
     # Modules that are absolutely forbidden in plugin entrypoints.
     FORBIDDEN_INTERNAL_MODULES: set[str] = {
         "jobot.storage.vault",
@@ -218,6 +249,31 @@ class PluginAuditor:
                                 f"{rel}:{node.lineno}: calls {func_name}() — "
                                 f"dynamic code execution is forbidden in plugins "
                                 f"(audit fix JOB-SEC-013)"
+                            ),
+                        )
+                    )
+                # Audit fix JOB-V2-NEW-001: ``getattr(obj, "system")`` bypass.
+                # The ``Call`` node's ``func`` is ``Name(id="getattr")`` (not
+                # the dangerous attribute name itself), and the dangerous
+                # attribute name is the *second* positional argument as a
+                # string literal. Inspect it and flag matches against the
+                # well-known code-execution primitives.
+                if (
+                    isinstance(func, ast.Name)
+                    and func.id == "getattr"
+                    and len(node.args) >= 2
+                    and isinstance(node.args[1], ast.Constant)
+                    and isinstance(node.args[1].value, str)
+                    and node.args[1].value in self.DANGEROUS_GETATTR_NAMES
+                ):
+                    findings.append(
+                        AuditFinding(
+                            severity="error",
+                            message=(
+                                f"{rel}:{node.lineno}: getattr() resolves dangerous "
+                                f"attribute '{node.args[1].value}' — dynamic code "
+                                f"execution is forbidden in plugins "
+                                f"(audit fix JOB-V2-NEW-001)"
                             ),
                         )
                     )

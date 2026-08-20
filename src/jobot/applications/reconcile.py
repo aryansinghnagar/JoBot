@@ -3,7 +3,7 @@
 Trigger: an application in SUBMITTED, SUBMISSION_UNKNOWN, or
 VERIFICATION_UNKNOWN.
 
-Protocol (MASTER_PLAN_EXPANDED.md §12.5):
+Protocol (MASTER_PLAN_EXPANDED.md §5 D20 — reconcile-never-replay):
     1. FETCH   — adapter verify_submission only (NEVER submit_application)
     2. CLASSIFY— confirmed / unconfirmed / ambiguous
     3. EVIDENCE— capture verification proof

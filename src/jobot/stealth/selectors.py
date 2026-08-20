@@ -146,7 +146,7 @@ class SelectorRegistry:
                             selector,
                         )
                     return locator.first, selector
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S112 — selector ladder: each candidate is tried in turn, failures are expected and not actionable
                 continue
         return None, None
 

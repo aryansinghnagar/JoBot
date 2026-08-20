@@ -48,7 +48,7 @@ class EvalHarness:
         self.scenarios_dir = scenarios_dir
         try:
             self.scenarios_dir.mkdir(parents=True, exist_ok=True)
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 — best-effort directory creation; load_scenarios_from_dir tolerates missing dir below
             pass
         self.scenarios: list[EvalScenario] = []
         self.load_scenarios_from_dir(self.scenarios_dir)

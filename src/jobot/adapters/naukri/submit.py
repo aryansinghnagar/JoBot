@@ -49,6 +49,7 @@ class NaukriSubmitter:
                 if await locator.count() > 0:
                     return True
             except Exception:  # noqa: BLE001
+                logger.debug("login-wall probe failed for selector %s", selector, exc_info=True)
                 continue
         return False
 
@@ -59,6 +60,7 @@ class NaukriSubmitter:
                 if await locator.count() > 0:
                     return locator
             except Exception:  # noqa: BLE001
+                logger.debug("apply-locator probe failed for selector %s", selector, exc_info=True)
                 continue
         return None
 
@@ -69,13 +71,14 @@ class NaukriSubmitter:
                 if await locator.count() > 0:
                     return True
             except Exception:  # noqa: BLE001
+                logger.debug("confirmation probe failed for fragment %r", fragment, exc_info=True)
                 continue
         try:
             applied = page.locator("button:has-text('Applied')")
             if await applied.count() > 0:
                 return True
         except Exception:  # noqa: BLE001
-            pass
+            logger.debug("'Applied' button probe failed", exc_info=True)
         return False
 
     async def _page_text(self, page: Any) -> str:

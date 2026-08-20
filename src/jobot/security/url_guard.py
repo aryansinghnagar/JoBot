@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import ipaddress
 import socket
+import ssl
 import urllib.request
 from typing import Any
 from urllib.parse import urlsplit
@@ -129,6 +130,17 @@ class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+# Audit fix JOB-SEC-016: enforce TLS 1.2+ on every outbound HTTPS fetch.
+# Python's default ``ssl.create_default_context()`` already prefers TLS 1.2+
+# but it does not *forbid* older protocols — a server that negotiates SSLv3 or
+# TLS 1.0/1.1 would still be accepted. We construct a context with
+# ``minimum_version = ssl.TLSVersion.TLSv1_2`` so any downgrade attempt is
+# rejected at the TLS handshake. The context is module-level so it is created
+# once per process and reused across fetches.
+_TLS_CONTEXT: ssl.SSLContext = ssl.create_default_context()
+_TLS_CONTEXT.minimum_version = ssl.TLSVersion.TLSv1_2
+
+
 def safe_urlopen(
     url: str,
     *,
@@ -142,12 +154,24 @@ def safe_urlopen(
 
     Validation (scheme, host boundary, resolved-IP boundary) happens
     immediately before the request is built, and redirects are re-validated
-    per hop. Returns the response context manager from ``urlopen``.
+    per hop. Outbound HTTPS calls use a module-level ``SSLContext`` pinned to
+    ``minimum_version = TLSv1_2`` (audit fix JOB-SEC-016) so protocol
+    downgrade attacks (POODLE / BEAST / CRIME-class) are rejected at the
+    TLS handshake rather than silently accepted by Python's defaults.
+    Returns the response context manager from ``urlopen``.
     """
     url = validate_fetch_url(url, allow_private_hosts=allow_private_hosts)
-    req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
+    # S310 (suspicious url open) fires here because we instantiate
+    # ``urllib.request.Request`` directly. The URL has already been validated
+    # by ``validate_fetch_url`` above (scheme allowlist + host boundary +
+    # resolved-IP boundary + no embedded credentials); redirects are
+    # re-validated per hop by ``_ValidatingRedirectHandler``. This is the
+    # single sanctioned chokepoint for outbound fetches; do NOT bypass it
+    # with raw ``urllib.request.urlopen``.
+    req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)  # noqa: S310
     opener = urllib.request.build_opener(
-        _ValidatingRedirectHandler(allow_private_hosts=allow_private_hosts)
+        _ValidatingRedirectHandler(allow_private_hosts=allow_private_hosts),
+        urllib.request.HTTPSHandler(context=_TLS_CONTEXT),
     )
     return opener.open(req, timeout=timeout)
 

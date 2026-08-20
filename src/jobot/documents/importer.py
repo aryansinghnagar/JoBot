@@ -49,7 +49,13 @@ class ResumeImporter:
         self.skill_extractor = SkillExtractor()
 
     def extract_text_from_file(self, file_path: Path) -> str:
-        """Extract text from PDF, Word (.docx), or plain text files."""
+        """Extract text from PDF, Word (.docx), or plain text files.
+
+        Sync wrapper around the async extractor — kept for callers that
+        are not running inside an event loop (e.g. the CLI's ``--save-only``
+        path). Async callers should prefer ``extract_text_from_file_async``
+        (Phase P4) so the file I/O does not block the event loop.
+        """
         p = Path(file_path)
         if not p.exists():
             raise FileNotFoundError(f"Resume file not found: {p}")
@@ -60,6 +66,44 @@ class ResumeImporter:
         elif ext == ".docx":
             return self._extract_docx_text(p)
         return p.read_text(encoding="utf-8", errors="ignore")
+
+    async def extract_text_from_file_async(self, file_path: Path) -> str:
+        """Async extractor (Phase P4): uses ``aiofiles`` for plain-text reads
+        and runs the CPU-bound PDF parsing in a thread pool so the event
+        loop stays free during a long resume import. Used by
+        ``import_and_seed``; the sync ``extract_text_from_file`` is kept
+        for non-async callers.
+        """
+        import asyncio
+
+        p = Path(file_path)
+        if not p.exists():
+            raise FileNotFoundError(f"Resume file not found: {p}")
+
+        ext = p.suffix.lower()
+        if ext == ".pdf":
+            # ``extract_pdf_text`` runs pdfminer.six, which is CPU-bound
+            # (parses PDF page by page). Run it on the default thread
+            # executor so the event loop is not frozen for the full parse
+            # window — important for the GUI sidecar, which would otherwise
+            # stall RPC requests while a large PDF parses.
+            return await asyncio.to_thread(extract_pdf_text, p)
+        elif ext == ".docx":
+            # .docx parsing is short and zipfile-based; thread pool is
+            # overkill but still preferable to blocking the loop.
+            return await asyncio.to_thread(self._extract_docx_text, p)
+        # Plain text: use aiofiles for non-blocking read. The standard
+        # library ``Path.read_text`` would freeze the loop for the full
+        # file read window (typically <1ms for a resume, but for a
+        # network-mounted home directory that can be 50ms+).
+        try:
+            import aiofiles
+        except ImportError:  # pragma: no cover — aiofiles is a dev dep
+            # Fall back to sync read in a thread so the loop is still not
+            # frozen (slightly slower than aiofiles but correct).
+            return await asyncio.to_thread(p.read_text, encoding="utf-8", errors="ignore")
+        async with aiofiles.open(p, mode="r", encoding="utf-8", errors="ignore") as f:
+            return await f.read()
 
     def _extract_docx_text(self, path: Path) -> str:
         """Extract text from a Microsoft Word .docx file using standard library zip and xml."""
@@ -223,8 +267,13 @@ class ResumeImporter:
     async def import_and_seed(
         self, file_path: Path, profile_id: str = "default"
     ) -> tuple[UserProfile, int]:
-        """Ingest resume file, construct UserProfile, and seed CandidateTruthStore."""
-        text = self.extract_text_from_file(file_path)
+        """Ingest resume file, construct UserProfile, and seed CandidateTruthStore.
+
+        Phase P4: file reads now go through ``extract_text_from_file_async``
+        so the event loop is not frozen for the duration of the read (or
+        the PDF parse, which runs on the default thread executor).
+        """
+        text = await self.extract_text_from_file_async(file_path)
         profile = await self.parse_resume_text(text, profile_id=profile_id)
         facts = self.truth_store.seed_from_profile(profile)
         return profile, len(facts)

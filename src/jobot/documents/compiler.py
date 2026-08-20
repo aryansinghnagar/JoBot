@@ -9,7 +9,7 @@ bullets attach only to real profile experience rows.
 import re
 from dataclasses import dataclass, field
 
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 from jobot.models.domain import UserProfile
 
@@ -26,8 +26,16 @@ def escape_latex(text: str) -> str:
 
 
 def _jinja_env() -> Environment:
+    # Audit fix JOB-V2-REG-001 (S701): use ``select_autoescape`` so the
+    # environment opts into HTML/XHTML autoescape only for ``.html`` / ``.htm``
+    # templates. The templates shipped in this package are all ``.tex.j2``
+    # (LaTeX) and use a custom ``latex`` filter (registered below) for escaping;
+    # jinja2's HTML autoescape would corrupt them. ``select_autoescape`` returns
+    # ``False`` for non-HTML extensions, satisfying ruff S701 without breaking
+    # the LaTeX render path.
     env = Environment(
         loader=PackageLoader("jobot.documents", "templates"),
+        autoescape=select_autoescape(["html", "htm"]),
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,

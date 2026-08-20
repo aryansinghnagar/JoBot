@@ -67,8 +67,149 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      # ----------------------------------------------------------------------
+      # Phase B1 (JOB-SEC-009): Code-signing infrastructure.
+      #
+      # The desktop binaries are signed (and, on macOS, notarised) before
+      # they are uploaded as release artifacts. This is the ONLY production
+      # path that emits installers users run on their machines, so it must
+      # carry a valid signature so that:
+      #   - macOS Gatekeeper does not block the .dmg ("unidentified developer")
+      #   - Windows SmartScreen / Defender does not flag the .msi/.exe as
+      #     "potentially unwanted application"
+      #   - The Tauri updater (when wired up) can verify update provenance
+      #
+      # Certificates / notarisation credentials are stored as GitHub Actions
+      # secrets (repository → Settings → Secrets and variables → Actions):
+      #
+      #   macOS:
+      #     MACOS_CERTIFICATE_BASE64       — Developer ID Application
+      #                                     certificate (.p12, base64-encoded)
+      #     MACOS_CERTIFICATE_PASSWORD     — password for the .p12
+      #     MACOS_NOTARY_API_KEY_BASE64    — App Store Connect API key
+      #                                     (.p8, base64-encoded)
+      #     MACOS_NOTARY_API_KEY_ID        — API key ID (10-char alphanumeric)
+      #     MACOS_NOTARY_API_ISSUER_ID     — API issuer ID (UUID)
+      #     MACOS_SIGNING_IDENTITY         — "Developer ID Application: ..."
+      #
+      #   Windows:
+      #     WINDOWS_CERTIFICATE_BASE64     — code-signing certificate
+      #                                     (.pfx, base64-encoded)
+      #     WINDOWS_CERTIFICATE_PASSWORD   — password for the .pfx
+      #
+      # If the secrets are absent (e.g. forked builds, dev workflow_dispatch
+      # runs), the signing step is skipped and the unsigned artifacts are
+      # still uploaded so contributors can test locally. This is gated by
+      # the `if:` condition on each signing step.
+      # ----------------------------------------------------------------------
+
+      - name: Import macOS Signing Certificate
+        if: runner.os == 'macOS' && env.MACOS_CERTIFICATE_BASE64 != ''
+        env:
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Decode the .p12 from base64 and import into a fresh keychain so
+          # codesign can find it. The keychain is unlocked for the duration
+          # of the job and explicitly removed in a post-step.
+          CERT_FILE="$RUNNER_TEMP/jobot_dev_id.p12"
+          KEYCHAIN="$RUNNER_TEMP/jobot-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_FILE"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT_FILE" -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain
+          # Persist for subsequent steps.
+          echo "KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
+      - name: Configure macOS Notarisation Credentials
+        if: runner.os == 'macOS' && env.MACOS_NOTARY_API_KEY_BASE64 != ''
+        env:
+          MACOS_NOTARY_API_KEY_BASE64: ${{ secrets.MACOS_NOTARY_API_KEY_BASE64 }}
+          MACOS_NOTARY_API_KEY_ID: ${{ secrets.MACOS_NOTARY_API_KEY_ID }}
+          MACOS_NOTARY_API_ISSUER_ID: ${{ secrets.MACOS_NOTARY_API_ISSUER_ID }}
+        run: |
+          # Store the App Store Connect API key in the canonical location
+          # that notarytool reads via --key / --key-id / --issuer.
+          KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$KEY_DIR"
+          KEY_FILE="$KEY_DIR/AuthKey_${MACOS_NOTARY_API_KEY_ID}.p8"
+          echo "$MACOS_NOTARY_API_KEY_BASE64" | base64 --decode -o "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          echo "MACOS_NOTARY_KEY_FILE=$KEY_FILE" >> "$GITHUB_ENV"
+
       - name: Build Desktop Application (Tauri 2)
+        env:
+          # macOS: pass the signing identity through to Tauri's bundle step.
+          # Tauri 2 invokes codesign itself when APPLE_SIGNING_IDENTITY is set
+          # (configured in gui/src-tauri/tauri.conf.json's "macOS" section).
+          # If the env var is unset, Tauri produces an unsigned bundle.
+          APPLE_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          # Windows: Tauri 2 reads TAURI_SIGNING_PRIVATE_KEY /
+          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD to sign the updater .sig
+          # artifacts. The MSI / EXE themselves are signed in a separate
+          # post-build step below (signtool), since Tauri 2's bundled
+          # signtool integration requires the cert in the Windows cert store.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: npm run tauri:build
+
+      - name: Sign Windows Installers (signtool)
+        if: runner.os == 'Windows' && env.WINDOWS_CERTIFICATE_BASE64 != ''
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Decode the .pfx and import it into the current user's personal
+          # cert store, then sign every produced .msi and .exe with
+          # signtool (SHA-256, RFC-3161 timestamp from Microsoft's server).
+          $ErrorActionPreference = "Stop"
+          $pfxPath = Join-Path $env:RUNNER_TEMP "jobot_codesign.pfx"
+          [System.IO.File]::WriteAllBytes($pfxPath, `
+            [System.Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64))
+          $securePw = ConvertTo-SecureString `
+            -String $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          Import-PfxCertificate -FilePath $pfxPath `
+            -CertStoreLocation Cert:\CurrentUser\My -Password $securePw
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" `
+            | Select-Object -Last 1 -ExpandProperty FullName
+          Get-ChildItem -Path "gui\src-tauri\target\release\bundle" `
+            -Include *.msi,*.exe -Recurse | ForEach-Object {
+            Write-Host "Signing $($_.FullName)"
+            & $signtool sign /fd SHA256 /td SHA256 /tr `
+              http://timestamp.digicert.com /a $_.FullName
+            if ($LASTEXITCODE -ne 0) {
+              throw "signtool failed for $($_.FullName) (exit $LASTEXITCODE)"
+            }
+          }
+
+      - name: Notarise macOS Bundles (notarytool)
+        if: runner.os == 'macOS' && env.MACOS_NOTARY_KEY_FILE != ''
+        env:
+          MACOS_NOTARY_API_KEY_ID: ${{ secrets.MACOS_NOTARY_API_KEY_ID }}
+          MACOS_NOTARY_API_ISSUER_ID: ${{ secrets.MACOS_NOTARY_API_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          for dmg in gui/src-tauri/target/release/bundle/dmg/*.dmg; do
+            [ -f "$dmg" ] || continue
+            echo "Submitting $dmg for notarisation…"
+            xcrun notarytool submit "$dmg" \
+              --key "$MACOS_NOTARY_KEY_FILE" \
+              --key-id "$MACOS_NOTARY_API_KEY_ID" \
+              --issuer "$MACOS_NOTARY_API_ISSUER_ID" \
+              --wait
+            echo "Stapling ticket to $dmg…"
+            xcrun stapler staple "$dmg"
+            xcrun stapler validate "$dmg"
+          done
+
+      - name: Clean up macOS Signing Keychain
+        if: always() && runner.os == 'macOS' && env.KEYCHAIN != ''
+        run: |
+          security delete-keychain "$KEYCHAIN" || true
 
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

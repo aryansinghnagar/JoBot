@@ -60,7 +60,7 @@ class ContinuousCampaignRunner:
 
     async def run_continuous_campaign(
         self,
-        goal_count: int = 1000,
+        goal_count: int = 25,
         min_match: float = 0.20,
         auto_submit: bool = False,
         max_iterations: int = 2000,
@@ -73,6 +73,13 @@ class ContinuousCampaignRunner:
         human-by-default"). Callers who want autonomous submission must pass
         ``auto_submit=True`` explicitly. The inter-iteration sleep is also
         raised to a randomized 5–15s courtesy window to respect portal ToS.
+
+        Audit fix JOB-V2-NEW-010: the default ``goal_count`` is reduced from
+        1000 to 25. The previous 1000-application default implied a ~5-hour
+        autonomous run at ~15s/application and was inappropriate as a
+        discoverable default for first-time users. A 25-application goal is
+        large enough to exercise a full round-robin pass across the 15
+        supported portals while remaining reviewable in a single sitting.
         """
         import random
 

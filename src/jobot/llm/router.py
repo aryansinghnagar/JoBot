@@ -104,7 +104,12 @@ class ModelRouter:
                             v = v[1:-1]
                         if k and v and k not in os.environ:
                             os.environ[k] = v
-            except Exception as exc:  # noqa: BLE001
+            # Audit fix JOB-ARC-002: narrowed to the three concrete failure
+            # modes a misconfigured .env file can produce. The previous
+            # ``except Exception`` would also swallow KeyboardInterrupt,
+            # SystemExit, and ImportError (if the dotenv parser ever
+            # imports a missing module).
+            except (OSError, ValueError, UnicodeDecodeError) as exc:  # noqa: BLE001
                 logger.debug("Failed to read .env at %s: %s", env_path, exc)
 
     def _api_key_for(self, provider_name: str) -> str | None:
@@ -122,7 +127,12 @@ class ModelRouter:
         try:
             raw = json.loads(self.spend_path.read_text(encoding="utf-8"))
             return {str(k): float(v) for k, v in raw.items() if isinstance(v, (int, float))}
-        except Exception as exc:  # noqa: BLE001
+        # Audit fix JOB-ARC-002: narrowed to the concrete failure modes of
+        # reading a JSON file from disk. JSON corruption (JSONDecodeError),
+        # filesystem failure (OSError), and unexpected entry types
+        # (TypeError / ValueError during float coercion) are the only
+        # realistic failures here.
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:  # noqa: BLE001
             logger.warning("Failed to load LLM spend file %s: %s", self.spend_path, exc)
             return {}
 
@@ -130,7 +140,10 @@ class ModelRouter:
         try:
             self.spend_path.parent.mkdir(parents=True, exist_ok=True)
             self.spend_path.write_text(json.dumps(self._spend, indent=2), encoding="utf-8")
-        except Exception as exc:  # noqa: BLE001
+        # Audit fix JOB-ARC-002: narrowed to filesystem / serialization
+        # failures. The previous ``except Exception`` swallowed everything,
+        # including KeyboardInterrupt during a write.
+        except (OSError, TypeError, ValueError) as exc:  # noqa: BLE001
             logger.warning("Failed to persist LLM spend to %s: %s", self.spend_path, exc)
 
     @property
@@ -150,21 +163,45 @@ class ModelRouter:
     # -- provider access ----------------------------------------------------
 
     def get_provider(self, provider_name: str) -> LLMProvider | None:
+        """Return a cached provider instance, instantiating on first use.
+
+        Phase C3 (JOB-ARC-006): the cache-check + instantiation paths are
+        now split. ``get_provider`` does the cache lookup (the hot path —
+        most calls hit the cache); ``_instantiate_provider`` does the
+        cold-path factory lookup + construction. Splitting the two makes
+        the lazy-cache contract obvious at the call site and lets tests
+        monkeypatch ``get_provider`` without re-implementing the cache.
+        """
         name = provider_name.lower()
         if name in self._providers:
             return self._providers[name]
-        factory = PROVIDER_REGISTRY.get(name)
-        if factory is None:
-            logger.warning("Unknown LLM provider '%s'", name)
-            return None
-        try:
-            instance = factory(self.pricing) if isinstance(factory, type) else factory()
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to instantiate provider '%s': %s", name, exc)
+        instance = self._instantiate_provider(name)
+        if instance is None:
             return None
         instance.key_lookup = self._key_lookup_for(name)
         self._providers[name] = instance
         return instance
+
+    def _instantiate_provider(self, name: str) -> LLMProvider | None:
+        """Cold path: look up the factory for ``name`` in the registry and
+        construct a provider instance. Returns ``None`` on unknown name or
+        instantiation failure (logged at DEBUG so a misconfigured provider
+        does not spam WARNING-level logs)."""
+        factory = PROVIDER_REGISTRY.get(name)
+        if factory is None:
+            logger.debug("Unknown LLM provider '%s'", name)
+            return None
+        try:
+            return factory(self.pricing) if isinstance(factory, type) else factory()
+        # Phase B3 (JOB-ARC-002): narrowed to the concrete failure modes of
+        # instantiating a provider class — ImportError covers optional deps
+        # (e.g. boto3 for BedrockProvider); TypeError covers bad signatures;
+        # ValueError / KeyError cover missing config.
+        except (ImportError, AttributeError, TypeError, ValueError, KeyError) as exc:  # noqa: BLE001
+            logger.debug(
+                "Failed to instantiate provider '%s': %s", name, exc, exc_info=True
+            )
+            return None
 
     def _key_lookup_for(self, name: str) -> Callable[[], str | None]:
         return lambda: self._api_key_for(name)
@@ -303,8 +340,24 @@ class ModelRouter:
                 ):
                     yield chunk
                 return
+            # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to the
+            # concrete provider-call failure modes — HTTP transport
+            # (``URLError`` / ``socket.timeout`` / ``HTTPException`` /
+            # ``ConnectionError`` / ``OSError`` — note ``OSError`` covers
+            # ``URLError``/``HTTPError``/``TimeoutError``/``ssl.SSLError`` as
+            # they all derive from it), response-shape problems
+            # (``JSONDecodeError`` / ``KeyError`` / ``TypeError``), and bad
+            # provider config (``ValueError``). ``RuntimeError`` is included
+            # because the budget-exhausted path raises it as a soft signal.
+            # ``logger.debug(..., exc_info=True)`` keeps the traceback
+            # available at DEBUG level without polluting WARNING/INFO logs —
+            # falling back to the next provider is expected behaviour, not an
+            # error condition. ``KeyboardInterrupt`` (a ``BaseException``) is
+            # NOT caught here and propagates so the caller can shut down.
             except Exception as exc:  # noqa: BLE001
-                logger.warning("LLM provider %s stream failed: %s", provider_name, exc)
+                logger.debug(
+                    "LLM provider %s stream failed: %s", provider_name, exc, exc_info=True
+                )
         logger.error("All LLM providers failed stream for prompt %r", prompt[:60])
         yield DEGRADATION_TEXT
 
@@ -334,7 +387,9 @@ class ModelRouter:
                 )
                 return response.text
             except Exception as exc:  # noqa: BLE001
-                logger.warning("LLM provider %s failed: %s", provider_name, exc)
+                logger.debug(
+                    "LLM provider %s failed: %s", provider_name, exc, exc_info=True
+                )
         logger.error("All LLM providers failed for prompt %r", prompt[:60])
         return DEGRADATION_TEXT
 

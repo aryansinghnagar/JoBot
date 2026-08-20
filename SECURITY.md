@@ -7,15 +7,17 @@ the project.
 
 ## Supported Versions
 
-JoBot has **not shipped a stable release**. The package version in
-`pyproject.toml` is `0.2.0` and everything on the main branch is pre-release
-development. Security fixes land on main only; there are no backport branches.
+JoBot is on the `0.2.x` pre-release line. Security fixes land on `main`
+first and are backported to the Active line. There are no backport
+branches for older lines (anything before `0.2.x` is unsupported).
 
-| Version | Supported |
-| ------- | --------- |
-| `main` branch | Yes |
-| Development milestone tags (`release-1.0-alpha`, `release-1.0`, `release-2.0`) | Best effort — these are internal development milestones, not distributed releases; upgrade to `main` instead |
-| Any PyPI/npm release claiming a stable version | No such release exists at the time of writing; treat one as unofficial |
+| Version | Status    | Notes                                                                 |
+| ------- | --------- | --------------------------------------------------------------------- |
+| `0.2.x` | Active    | Current development line. Fixes land on `main` and ship in the next `0.2.y` patch release. |
+| `main` branch | Trunk-of-truth | All fixes are committed here first; tagged releases are cut from `main`. |
+| `0.1.x` | Unsupported | Pre-history; no fixes. Upgrade to `0.2.x` immediately.               |
+| Development milestone tags (`release-1.0-alpha`, `release-1.0`, `release-2.0`) | Best effort | Internal development milestones, not distributed releases; upgrade to `main` instead. |
+| Any PyPI/npm release claiming a stable version | No such release exists at the time of writing; treat one as unofficial. | — |
 
 ## Reporting a Vulnerability
 
@@ -66,7 +68,7 @@ explicitly accepted and documented rather than fixed:
   builds primarily). The Python core, CLI, and sidecar do not link glib
   through this path.
 - **Decision:** accepted as a documented residual — decision **D3** in
-  `MASTER_PLAN_EXPANDED.md` Section 8 (decided 2026-08-16).
+  `MASTER_PLAN_EXPANDED.md` Section 5 (decided 2026-08-16).
 - **Revisit trigger:** migration to Tauri >= 3 / gtk4 (D3 escalation), plus
   cargo Dependabot/audit monitoring (R17 mitigation).
 - **User guidance:** users who do not build or run the Tauri desktop shell
@@ -83,7 +85,7 @@ explicitly accepted and documented rather than fixed:
   `src/jobot/adapters/naukri/adapter.py`, `src/jobot/adapters/workday.py`).
 - Defeating platform anti-bot controls (CAPTCHA solving at scale, bot
   detection evasion, bulk high-volume apply) is an explicit **non-goal** of
-  this project (`MASTER_PLAN_EXPANDED.md` Section 2.5, Non-goals v1). The
+  this project (`MASTER_PLAN_EXPANDED.md` Section 2.4, Non-goals v1). The
   project takes a conservative Terms-of-Service stance toward LinkedIn and
   job boards; risky-feature ideas require `JOBOT_ENABLE_RISKY=1` plus
   per-feature flags (decision D12) and hard caps remain even when enabled

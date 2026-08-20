@@ -197,7 +197,7 @@ class WorkdaySubmitter:
                 if await locator.count() > 0:
                     await locator.first.click()
                     return True
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S112 — best-effort click across a selector ladder; failure of one selector is not actionable for callers
                 continue
         return False
 

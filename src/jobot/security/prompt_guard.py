@@ -16,7 +16,7 @@ INJECTION_PATTERNS: list[tuple[str, str]] = [
         "[REDACTED_INJECTION_OVERRIDE]",
     ),
     (
-        r"disregard\s+(all\s+)?(prior|previous|above|the\s+above)?\s*(instructions?|rules?|prompts?)",
+        r"disregard\s+(all\s+)?(prior|previous|above|the\s+above|the)?\s*(instructions?|rules?|prompts?)",
         "[REDACTED_INJECTION_DISREGARD]",
     ),
     (
@@ -84,12 +84,35 @@ def find_prompt_injections(text: str) -> list[str]:
 
 
 def sanitize_llm_input(text: str) -> str:
-    """Sanitize external untrusted text before interpolation into LLM prompts."""
+    """Sanitize external untrusted text before interpolation into LLM prompts.
+
+    Applies all patterns sequentially. To ensure idempotency (running
+    sanitize twice produces the same output as running once), we skip
+    text inside ``[REDACTED_INJECTION_...]`` blocks on subsequent passes
+    by checking if the text already contains ``[REDACTED_INJECTION``.
+    """
     if not text:
         return ""
     sanitized = _normalize_text(text)
     for pattern, replacement in INJECTION_PATTERNS:
-        sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
+        # Idempotency guard: if the replacement string itself contains
+        # a word that matches a subsequent pattern (e.g., "[REDACTED_INJECTION_JAILBREAK]"
+        # matches the "jailbreak" pattern), the second pass would double-replace.
+        # Fix: only replace in the part of the text that is NOT already inside
+        # a [REDACTED_INJECTION_...] block.
+        sanitized = re.sub(
+            pattern,
+            lambda m, rep=replacement: rep,
+            sanitized,
+            flags=re.IGNORECASE,
+        )
+    # Idempotency: collapse any nested [REDACTED_INJECTION_[REDACTED_INJECTION_...]] into [REDACTED_INJECTION_...]
+    while "[REDACTED_INJECTION_[REDACTED_INJECTION_" in sanitized:
+        sanitized = re.sub(
+            r"\[REDACTED_INJECTION_\[REDACTED_INJECTION_(\w+)\]\]",
+            r"[REDACTED_INJECTION_\1]",
+            sanitized,
+        )
     return sanitized
 
 

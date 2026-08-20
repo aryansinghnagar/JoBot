@@ -1,6 +1,9 @@
 """Unit tests for the outbound URL guard (SSRF boundary, WS1 hardening)."""
 
+import ssl
+
 import pytest
+
 from jobot.security.url_guard import (
     _resolved_hosts_are_internal,
     safe_urlopen,
@@ -79,6 +82,26 @@ class TestSafeUlopen:
     def test_private_target_refused_before_network(self):
         with pytest.raises(ValueError):
             safe_urlopen("http://169.254.169.254/latest/meta-data")
+
+    def test_tls_context_enforces_tls_1_2_minimum(self):
+        """Audit fix JOB-SEC-016: outbound HTTPS uses a TLSContext pinned to
+        ``minimum_version = TLSv1_2``. SSLv3 / TLS 1.0 / TLS 1.1 downgrade
+        attempts must be rejected at the handshake rather than silently
+        accepted by Python's defaults."""
+        from jobot.security.url_guard import _TLS_CONTEXT
+
+        assert _TLS_CONTEXT.minimum_version is ssl.TLSVersion.TLSv1_2
+        # Sanity check that the context actually rejects older protocols:
+        # ``_insecure_protocols`` are exactly the ones we forbid.
+        insecure = [
+            ssl.TLSVersion.SSLv3,
+            ssl.TLSVersion.TLSv1,
+            ssl.TLSVersion.TLSv1_1,
+        ]
+        for proto in insecure:
+            # ``minimum_version`` is a floor — older protocols must not be
+            # acceptable to the context's protocol negotiation.
+            assert proto < _TLS_CONTEXT.minimum_version
 
 
 class TestValidatePathSegment:

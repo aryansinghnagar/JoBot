@@ -1,22 +1,42 @@
 version: 2
 updates:
-  # Daily security and version updates for pip (Python) ecosystem
+  # Audit fix JOB-OSS-006: Dependabot schedule reduced from daily to weekly
+  # across all three ecosystems. The previous daily schedule could open up to
+  # 30 PRs/day (3 ecosystems × 10 open-PR limit), which is unreviewable for a
+  # single maintainer. Weekly cadence still surfaces security advisories
+  # promptly (Depabot opens critical-update PRs regardless of schedule for
+  # ``severity: critical`` advisories) while keeping the review queue sane.
+  # Revisit to ``daily`` once the project has 2+ active maintainers.
+
+  # Weekly security and version updates for pip (Python) ecosystem
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
 
-  # Daily security and version updates for npm (Node.js) ecosystem
+  # Weekly security and version updates for npm (Node.js) ecosystem
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "javascript"
 
-  # Daily updates for GitHub Actions workflows
+  # Weekly updates for GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"

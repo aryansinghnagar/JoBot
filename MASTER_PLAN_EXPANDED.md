@@ -161,7 +161,33 @@ durable task engine reserves an idempotency key in the SQLite ledger
 before any external side-effect (Phase 7), and the saga's compensating
 action on Phase 9 failure is to mark SUBMISSION_UNKNOWN and trigger
 reconciliation — never to retry the submission. This is decision G3
-(see Section 8).
+(see Section 6.2).
+
+### 3.4 Application State Machine Transitions
+
+The ASP phases above map onto a finite state machine implemented in
+`src/jobot/applications/state_machine.py` and persisted in the
+`applications.status` column of the SQLite control plane. The legal
+transitions are:
+
+| From | To | Trigger |
+| --- | --- | --- |
+| `INTENT` | `INTENT_RESERVED` | idempotency-key reservation succeeds (Phase 7) |
+| `INTENT_RESERVED` | `SUBMITTING` | human approval (if supervised) or autonomous gate (Phase 8) |
+| `SUBMITTING` | `SUBMITTED` | adapter returns success (Phase 9) |
+| `SUBMITTING` | `SUBMISSION_UNKNOWN` | adapter returns ambiguous / network failure (Phase 9) |
+| `SUBMITTED` | `VERIFIED` | adapter `verify_submission` confirms visibility (Phase 11) |
+| `SUBMITTED` | `VERIFICATION_UNKNOWN` | `verify_submission` returns ambiguous (Phase 11) |
+| `VERIFICATION_UNKNOWN` / `SUBMISSION_UNKNOWN` | `QUARANTINED` | reconciliation exhausts `MAX_RECONCILE_ATTEMPTS` (see D20) |
+| `SUBMITTED` | `REJECTED` | adapter reports post-submit rejection (employer-side) |
+| `SUBMITTED` | `DUPLICATE_SKIPPED` | reconcile detects an earlier application with the same dedup hash |
+
+Timestamps are split across `submitted_at`, `submission_verified_at`,
+`first_employer_response_at`, and `current_outcome` columns (see
+`src/jobot/storage/migrations.py::_apply_002`) so each transition can be
+audited independently. The state machine refuses illegal transitions
+(`transition_application` raises `ValueError`) — no code path can move
+an application from `VERIFIED` back to `SUBMITTED`, for example.
 
 ---
 
@@ -299,7 +325,7 @@ mitigation.
 | R8 | LLM API key exfiltration via prompt injection | Medium | `llm/providers.py` | Keys passed as headers, never in prompt bodies (D17) |
 | R9 | Tauri shell escape from GUI | Medium | `gui/src-tauri/capabilities/default.json` | CSP + only `^sidecar$` argument pattern (D14) |
 | R10 | Binary supply chain (unsigned Tauri installers) | Medium | `.github/workflows/release-desktop.yml` | Documented residual; future: code signing + notarization |
-| R11 | `[LLM_UNAVAILABLE]` degradation text flowing into generated content | Medium | `llm/router.py` | Sentinel check in `documents/tailor.py` (post-audit fix) |
+| R11 | `[LLM_UNAVAILABLE]` degradation text flowing into generated content | Medium | `llm/router.py` | Sentinel check in `documents/cover.py` (post-audit fix) |
 | R12 | Floating `>=` dependency bounds admit vulnerable versions | Medium | `pyproject.toml` | Pin bumps in WS1 W3 (post-audit fix: lower bounds raised) |
 | R13 | Substring-based plugin import scanner (AST-bypassable) | Low | `plugins/auditor.py` | Post-audit fix: AST-based scan in addition to substring |
 | R14 | Substring-based `tests/test_imports.py` security gate | Low | `tests/test_imports.py` | Post-audit fix: AST-based import analyzer |
@@ -337,15 +363,21 @@ resolve to a section above:
 | Citing file | Cited as | Resolves to |
 | --- | --- | --- |
 | `SECURITY.md` | "Section 2.2" | §2.2 Tracked-but-unresolved advisories |
-| `SECURITY.md` | "Section 2.5 (Non-goals v1)" | §2.4 Non-goals (v1) |
-| `SECURITY.md` | "Section 8 (decided 2026-08-16) — D3" | §5 Decision register, D3 |
+| `SECURITY.md` | "Section 2.4 (Non-goals v1)" | §2.4 Non-goals (v1) |
+| `SECURITY.md` | "Section 5 (decided 2026-08-16) — D3" | §5 Decision register, D3 |
 | `SECURITY.md` | "R17 mitigation" | §7 Risk register, R17 |
-| `CONTRIBUTING.md` | "Section 8" | §5 Decision register |
+| `CONTRIBUTING.md` | "Section 6 (verification doctrine)" | §6 Verification Doctrine |
 | `CHANGELOG.md` | "Expanded master plan (`MASTER_PLAN_EXPANDED.md`)" | This document |
 | `src/jobot/execution/engine.py` | "MASTER_PLAN_EXPANDED.md" | This document (D19 idempotency) |
 | `src/jobot/storage/migrations.py` | "MASTER_PLAN_EXPANDED.md" | This document (D9 SQLite WAL) |
 | `src/jobot/applications/reconcile.py` | "MASTER_PLAN_EXPANDED.md" | This document (D20 reconcile-never-replay) |
-| `src/jobot/applications/state_machine.py` | "MASTER_PLAN_EXPANDED.md" | This document (§3 ASP phase table) |
+| `src/jobot/applications/state_machine.py` | "MASTER_PLAN_EXPANDED.md §3.4" | §3.4 Application State Machine Transitions |
+| `src/jobot/applications/reconcile.py` | "MASTER_PLAN_EXPANDED.md §5 D20" | §5 Decision register, D20 (reconcile-never-replay) |
+| `src/jobot/execution/engine.py` | "MASTER_PLAN_EXPANDED.md §3.4" | §3.4 Application State Machine Transitions |
+| `src/jobot/models/domain.py` | "MASTER_PLAN_EXPANDED.md §3.4" | §3.4 Application State Machine Transitions |
+| `src/jobot/storage/migrations.py::_apply_002` | "MASTER_PLAN_EXPANDED.md §3.4" | §3.4 Application State Machine Transitions |
+| `src/jobot/storage/migrations.py::_apply_003` | "MASTER_PLAN_EXPANDED.md §8 WS5" | §8 WS5 (vault hardening + candidate-truth tables) |
+| `tests/test_g3_app_correctness.py` | "MASTER_PLAN_EXPANDED.md §6.2 (G3 gate)" | §6.2 Definition-of-done gates, G3 |
 | `src/jobot/adapters/registry.py` | "MASTER_PLAN_EXPANDED.md" | This document (§4.2 Site adapter registry) |
 | `tests/test_g3_app_correctness.py` | "MASTER_PLAN_EXPANDED.md" | This document (G3 gate) |
 
@@ -356,3 +388,4 @@ resolve to a section above:
 | Date | Change |
 | --- | --- |
 | 2026-08-19 | Reconstructed in response to audit finding JOB-OSS-004. This file was referenced 40+ times across governance docs and source modules but was absent from the repository. All cited D-numbers, R-numbers, G-numbers, L-numbers, and W-numbers now resolve to real sections above. |
+| 2026-08-19 | Audit fix JOB-V2-REG-002 / JOB-V2-REG-003: corrected dangling section references — SECURITY.md "Section 8 → D3" → "Section 5 → D3"; "Section 2.5 (Non-goals v1)" → "Section 2.4"; "see Section 8" for G3 → "see Section 6.2"; CONTRIBUTING.md "Section 9" → "Section 6"; fixed R11 mitigation file (`documents/tailor.py` → `documents/cover.py`); added §3.4 Application State Machine Transitions subsection (cited by `state_machine.py`, `engine.py`, `domain.py`, `migrations.py::_apply_002`, `test_g3_app_correctness.py`); fixed source citations (`reconcile.py` §12.5 → §5 D20; `migrations.py::_apply_003` §13.2 → §8 WS5; `test_g3_app_correctness.py` §9.2 → §6.2); expanded the cross-references table to enumerate the §3.4, §5 D20, §8 WS5, and §6.2 citations. |

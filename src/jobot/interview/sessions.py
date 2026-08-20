@@ -59,7 +59,7 @@ class SessionStore:
                 sessions.append(
                     InterviewSession.model_validate_json(path.read_text(encoding="utf-8"))
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S112 — skip malformed session files; not actionable beyond skipping
                 continue
         return sessions
 

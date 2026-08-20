@@ -36,7 +36,8 @@ class NaukriVerifier:
                 locator = page.locator(selector)
                 if await locator.count() > 0:
                     return True
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S112 — best-effort probe; selector failure is not actionable for callers, debug-logged below
+                logger.debug("login-wall probe failed for selector %s", selector, exc_info=True)
                 continue
         return False
 
@@ -49,7 +50,10 @@ class NaukriVerifier:
                 cleaned = [t.strip() for t in texts if t and t.strip()]
                 if cleaned:
                     return cleaned
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S112 — best-effort probe across multiple selectors; the next selector is tried on failure
+                logger.debug(
+                    "application-row probe failed for selector %s", selector, exc_info=True
+                )
                 continue
         return None
 

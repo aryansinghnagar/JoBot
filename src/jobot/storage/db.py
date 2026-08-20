@@ -53,10 +53,41 @@ class DatabaseManager:
         conn.execute("PRAGMA cache_size=-64000;")
         conn.execute("PRAGMA temp_store=MEMORY;")
         conn.execute("PRAGMA mmap_size=268435456;")
+        # Phase P2: WAL checkpoint tuning. Default is 1000 pages (~4MB).
+        # Lower to 1000 pages but also schedule a periodic PASSIVE checkpoint
+        # so writers do not stall on a sudden -wal growth. Readers stay
+        # non-blocking because PASSIVE does not block them. The explicit
+        # ``wal_checkpoint(TRUNCATE)`` runs on close (see finally) to
+        # truncate the -wal file at session end so the next session starts
+        # with an empty WAL (better read concurrency on cold start).
+        conn.execute("PRAGMA wal_autocheckpoint=1000;")
         try:
             yield conn
+            # Audit fix JOB-ARC-008: commit only when the ``with`` block
+            # completed without raising. If ``yield conn`` re-raises the
+            # caller's exception, ``conn.commit()`` is skipped (good — no
+            # partial work is committed). The explicit ``except`` below calls
+            # ``conn.rollback()`` to release the open transaction before
+            # ``conn.close()`` runs in ``finally``. SQLite's implicit
+            # rollback-on-close already mitigates the data-integrity risk,
+            # but the explicit rollback makes the intent visible and avoids
+            # relying on driver behavior that may change between versions.
             conn.commit()
+        except BaseException:
+            conn.rollback()
+            raise
         finally:
+            # Phase P2: passive WAL checkpoint on close so the next session
+            # starts with a trimmed -wal file. TRUNCATE would block readers
+            # so we use PASSIVE (best-effort, never blocks). The
+            # ``wal_autocheckpoint=1000`` pragma above handles the steady
+            # state; this is a belt-and-suspenders cleanup.
+            try:
+                conn.execute("PRAGMA wal_checkpoint(PASSIVE);")
+            except sqlite3.DatabaseError:
+                # Connection may already be in a broken state — closing is
+                # the priority. Don't let checkpoint errors mask the real one.
+                pass
             conn.close()
 
     def _init_db(self) -> None:
@@ -109,6 +140,20 @@ class DatabaseManager:
             CREATE INDEX IF NOT EXISTS idx_applications_job_id ON applications(job_id);
             CREATE INDEX IF NOT EXISTS idx_applications_profile_id ON applications(profile_id);
             CREATE INDEX IF NOT EXISTS idx_applications_created_at ON applications(created_at);
+            -- Phase P2: composite indexes for the most common query patterns.
+            -- ``get_daily_application_count`` filters by site + created_at LIKE 'YYYY-MM-DD%';
+            -- the (site, created_at) index lets SQLite seek directly to today's rows
+            -- for a given site instead of scanning every application row for that site.
+            CREATE INDEX IF NOT EXISTS idx_applications_site_created_at
+                ON applications(site, created_at);
+            -- ``get_applications_with_jobs`` joins applications to job_postings by job_id
+            -- and orders by created_at DESC. The (created_at, job_id) covering index lets
+            -- SQLite satisfy the ORDER BY + join without an extra sort pass.
+            CREATE INDEX IF NOT EXISTS idx_applications_created_at_job_id
+                ON applications(created_at DESC, job_id);
+            -- ``list_applications`` (with status filter) is the tracker dashboard's hot path.
+            CREATE INDEX IF NOT EXISTS idx_applications_status_created_at
+                ON applications(status, created_at DESC);
 
             CREATE TABLE IF NOT EXISTS job_dedup_cache (
                 dedup_hash TEXT PRIMARY KEY,

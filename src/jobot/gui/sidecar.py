@@ -8,9 +8,11 @@ stays in sync. Secrets are never returned (config values are masked).
 
 import asyncio
 import json
+import logging
 import sys
 from collections.abc import Callable
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,8 @@ from jobot.scheduler import SchedulerManager
 from jobot.storage.db import DatabaseManager
 from jobot.storage.vault import CredentialVault
 from jobot.tracker.analytics import TrackerAnalytics
+
+logger = logging.getLogger(__name__)
 
 RUNNER_STATE_PATH = Path.home() / ".jobot" / "runner_state.json"
 
@@ -62,15 +66,21 @@ class StdioSidecarServer:
         trace_logger: TraceLogger | None = None,
         profile_loader: Callable[[], UserProfile] | None = None,
     ) -> None:
-        self._db = db
-        self._vault = vault
-        self._analytics = analytics
-        self._scheduler = scheduler
-        self._digest = digest
-        self._engine = engine
-        self._orchestrator = orchestrator
-        self._config = config
-        self._trace_logger = trace_logger
+        # Phase C3 (JOB-ARC-006): injected dependencies are stored under
+        # ``_<name>_injected`` so the corresponding ``@cached_property``
+        # descriptors can fall back to lazy construction only when no
+        # explicit instance was provided. This removes the per-call
+        # ``if self._x is None: self._x = X()`` boilerplate and makes
+        # the lazy-init contract visible at the descriptor site.
+        self._db_injected = db
+        self._vault_injected = vault
+        self._analytics_injected = analytics
+        self._scheduler_injected = scheduler
+        self._digest_injected = digest
+        self._engine_injected = engine
+        self._orchestrator_injected = orchestrator
+        self._config_injected = config
+        self._trace_logger_injected = trace_logger
         self._profile_loader = profile_loader
         self._handlers: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
             "ping": self._ping,
@@ -109,50 +119,99 @@ class StdioSidecarServer:
         }
 
     # -- dependency resolution ----------------------------------------------
+    # Phase C3 (JOB-ARC-006): each lazy singleton is a ``@cached_property``.
+    # If the constructor received an explicit instance, that instance is
+    # returned and cached; otherwise the default constructor runs on first
+    # access and the result is cached in ``instance.__dict__``. The legacy
+    # ``_get_<name>()`` methods are kept as thin wrappers so existing call
+    # sites continue to work — only the implementation changed.
+
+    @cached_property
+    def _db(self) -> DatabaseManager:
+        if self._db_injected is not None:
+            return self._db_injected
+        return DatabaseManager()
+
+    @cached_property
+    def _vault(self) -> CredentialVault:
+        if self._vault_injected is not None:
+            return self._vault_injected
+        return CredentialVault()
+
+    @cached_property
+    def _analytics(self) -> TrackerAnalytics:
+        # TrackerAnalytics requires a DatabaseManager — pass the lazily-cached
+        # ``self._db`` so both singletons stay consistent.
+        if self._analytics_injected is not None:
+            return self._analytics_injected
+        return TrackerAnalytics(self._db)
+
+    @cached_property
+    def _scheduler(self) -> SchedulerManager:
+        if self._scheduler_injected is not None:
+            return self._scheduler_injected
+        return SchedulerManager()
+
+    @cached_property
+    def _digest(self) -> DigestGenerator:
+        if self._digest_injected is not None:
+            return self._digest_injected
+        return DigestGenerator(db=self._db)
+
+    @cached_property
+    def _engine(self) -> JobDiscoveryEngine:
+        if self._engine_injected is not None:
+            return self._engine_injected
+        return JobDiscoveryEngine()
+
+    @cached_property
+    def _orchestrator(self) -> ApplyOrchestrator:
+        if self._orchestrator_injected is not None:
+            return self._orchestrator_injected
+        return ApplyOrchestrator(self._db)
+
+    @cached_property
+    def _config(self) -> ConfigManager:
+        if self._config_injected is not None:
+            return self._config_injected
+        return ConfigManager()
+
+    @cached_property
+    def _trace_logger(self) -> TraceLogger:
+        if self._trace_logger_injected is not None:
+            return self._trace_logger_injected
+        return TraceLogger()
 
     def _get_db(self) -> DatabaseManager:
-        if self._db is None:
-            self._db = DatabaseManager()
         return self._db
 
     def _get_vault(self) -> CredentialVault:
-        if self._vault is None:
-            self._vault = CredentialVault()
         return self._vault
 
     def _get_analytics(self, db: DatabaseManager) -> TrackerAnalytics:
-        if self._analytics is None:
-            self._analytics = TrackerAnalytics(db)
+        # ``db`` is ignored — the cached analytics singleton uses ``self._db``.
+        # The parameter is kept for backward compatibility with call sites
+        # that pass the db explicitly.
         return self._analytics
 
     def _get_scheduler(self) -> SchedulerManager:
-        if self._scheduler is None:
-            self._scheduler = SchedulerManager()
         return self._scheduler
 
     def _get_digest(self, db: DatabaseManager) -> DigestGenerator:
-        if self._digest is None:
-            self._digest = DigestGenerator(db=db)
+        # ``db`` is ignored — see ``_get_analytics``.
         return self._digest
 
     def _get_engine(self) -> JobDiscoveryEngine:
-        if self._engine is None:
-            self._engine = JobDiscoveryEngine()
         return self._engine
 
     def _get_orchestrator(self, db: DatabaseManager) -> ApplyOrchestrator:
-        if self._orchestrator is None:
-            self._orchestrator = ApplyOrchestrator(db)
+        # ``db`` is ignored — see ``_get_analytics``.
         return self._orchestrator
 
     def _get_config(self) -> ConfigManager:
-        if self._config is None:
-            self._config = ConfigManager()
         return self._config
 
     def _get_trace_logger(self) -> TraceLogger:
-        if self._trace_logger is None:
-            self._trace_logger = TraceLogger()
         return self._trace_logger
 
     def _get_profile(self) -> UserProfile:
@@ -207,7 +266,14 @@ class StdioSidecarServer:
                     res = self.process_request(req)
                     sys.stdout.write(json.dumps(res) + "\n")
                     sys.stdout.flush()
-                except Exception as e:  # noqa: BLE001
+                # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to
+                # the JSON / encoding failures that the read+parse step can
+                # realistically raise. ``process_request`` already swallows
+                # handler-level ``Exception`` instances and converts them to
+                # JSON-RPC error responses, so anything that escapes that
+                # boundary (e.g. ``KeyboardInterrupt``) MUST propagate to the
+                # caller so the sidecar process can shut down cleanly.
+                except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:  # noqa: BLE001
                     err_res = JsonRpcResponse(
                         id=None, error={"code": -32700, "message": f"Parse error: {e}"}
                     ).model_dump()
@@ -350,7 +416,13 @@ class StdioSidecarServer:
         if RUNNER_STATE_PATH.exists():
             try:
                 state = json.loads(RUNNER_STATE_PATH.read_text(encoding="utf-8"))
-            except Exception:  # noqa: BLE001
+            # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to the
+            # concrete failure modes of reading a JSON state file from disk
+            # (``OSError`` for filesystem / permission issues,
+            # ``json.JSONDecodeError`` for corruption). Unexpected exceptions
+            # propagate so they are not silently swallowed into "UNKNOWN".
+            except (OSError, json.JSONDecodeError) as exc:  # noqa: BLE001
+                logger.debug("runner_state.json unreadable: %s", exc, exc_info=True)
                 state = {"status": "UNKNOWN"}
         schedules = self._get_scheduler().list_schedules()
         return {
@@ -532,7 +604,10 @@ class StdioSidecarServer:
         try:
             data = json.loads(manifest_file.read_text(encoding="utf-8"))
             return {"found": True, "manifest": data}
-        except Exception as exc:  # noqa: BLE001
+        # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to the
+        # concrete failure modes of reading a JSON manifest from disk.
+        except (OSError, json.JSONDecodeError) as exc:  # noqa: BLE001
+            logger.debug("evidence manifest unreadable: %s", exc, exc_info=True)
             return {"found": False, "error": str(exc)}
 
     def _site_health(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -699,7 +774,14 @@ class StdioSidecarServer:
                 if res.returncode == 0
                 else (res.stderr or res.stdout),
             }
-        except Exception as exc:  # noqa: BLE001
+        # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to the
+        # concrete failure modes of running a subprocess — process errors
+        # (``subprocess.SubprocessError`` / ``TimeoutExpired``), missing
+        # executable (``FileNotFoundError``), and transport errors
+        # (``OSError``). Unexpected exceptions propagate so the RPC layer
+        # can surface them through the humanizer.
+        except (subprocess.SubprocessError, FileNotFoundError, OSError) as exc:  # noqa: BLE001
+            logger.debug("browser setup subprocess failed: %s", exc, exc_info=True)
             return {
                 "status": "error",
                 "message": f"Browser setup encountered an issue: {exc}",
@@ -725,5 +807,10 @@ class StdioSidecarServer:
             else:
                 subprocess.run(["xdg-open", str(target)], check=False)
             return {"status": "opened", "path": str(target)}
-        except Exception as exc:  # noqa: BLE001
+        # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to the
+        # concrete failure modes of OS file/directory opening (subprocess
+        # errors and OS-level file failures). Unexpected exceptions
+        # propagate so the RPC layer can surface them.
+        except (subprocess.SubprocessError, FileNotFoundError, OSError) as exc:  # noqa: BLE001
+            logger.debug("open path failed: %s", exc, exc_info=True)
             return {"status": "error", "message": f"Failed to open path: {exc}"}

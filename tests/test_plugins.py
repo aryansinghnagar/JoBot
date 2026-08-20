@@ -11,12 +11,12 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from jobot.plugins.auditor import PluginAuditor
-from jobot.plugins.installer import PluginInstaller
-from jobot.plugins.manifest import load_manifest
 from typer.testing import CliRunner
 
 from jobot.cli.main import app
+from jobot.plugins.auditor import PluginAuditor
+from jobot.plugins.installer import PluginInstaller
+from jobot.plugins.manifest import load_manifest
 
 GOOD_MANIFEST = """\
 name: hello-bot
@@ -198,8 +198,7 @@ def test_auditor_flags_dynamic_import_bypass(tmp_path):
     """
     (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
     (tmp_path / "evil.py").write_text(
-        'sp = __import__("subprocess")\n'
-        'sp.run(["ls"])\n',
+        'sp = __import__("subprocess")\nsp.run(["ls"])\n',
         encoding="utf-8",
     )
     report = PluginAuditor().audit(tmp_path)
@@ -229,13 +228,70 @@ def test_auditor_flags_from_import_dangerous(tmp_path):
     """AST scan flags ``from os import system`` via the full dotted path."""
     (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
     (tmp_path / "evil.py").write_text(
-        'from os import system\n'
-        'system("ls")\n',
+        'from os import system\nsystem("ls")\n',
         encoding="utf-8",
     )
     report = PluginAuditor().audit(tmp_path)
     assert report.passed is False
     assert any("os.system" in f.message for f in report.findings)
+
+
+def test_auditor_flags_getattr_bypass_system(tmp_path):
+    """Audit fix JOB-V2-NEW-001: AST scanner catches ``getattr(os, "system")``.
+
+    The previous AST walker inspected ``Call`` nodes only by the ``func``
+    name (``eval``, ``exec``, ``__import__``). ``getattr(os, "system")``
+    bypassed it because ``func`` is ``Name(id="getattr")`` — the dangerous
+    attribute name lives in the *second* positional argument as a string
+    literal. The fix inspects that argument against a denylist of
+    well-known code-execution primitives.
+    """
+    (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
+    (tmp_path / "evil.py").write_text(
+        'import os\ngetattr(os, "system")("rm -rf /tmp/jobot-test")\n',
+        encoding="utf-8",
+    )
+    report = PluginAuditor().audit(tmp_path)
+    assert report.passed is False
+    assert any("getattr" in f.message and "system" in f.message for f in report.findings)
+
+
+def test_auditor_flags_getattr_bypass_eval(tmp_path):
+    """Audit fix JOB-V2-NEW-001: AST scanner catches ``getattr(builtins, "eval")``.
+
+    Covers the ``eval`` / ``exec`` / ``__import__`` attribute names resolved
+    through ``getattr`` on a different receiver than the obvious ``os`` module.
+    """
+    (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
+    (tmp_path / "evil.py").write_text(
+        'b = __builtins__\ngetattr(b, "eval")("__import__(\\"subprocess\\").run([\\"ls\\"])")\n',
+        encoding="utf-8",
+    )
+    report = PluginAuditor().audit(tmp_path)
+    assert report.passed is False
+    assert any("getattr" in f.message and "eval" in f.message for f in report.findings)
+
+
+def test_auditor_does_not_flag_benign_getattr(tmp_path):
+    """Audit fix JOB-V2-NEW-001: benign ``getattr(obj, "name")`` is NOT flagged.
+
+    The walker targets only the well-known code-execution attribute names
+    (system, popen, exec, eval, __import__, fork, spawn*). Ordinary attribute
+    lookups (e.g. ``getattr(obj, "name", "default")``) must pass through
+    without false positives, or the audit becomes noisy and maintainers will
+    start ignoring findings.
+    """
+    (tmp_path / "jobot-manifest.yaml").write_text(GOOD_MANIFEST, encoding="utf-8")
+    (tmp_path / "benign.py").write_text(
+        "class Hello:\n"
+        '    name = "world"\n'
+        "def run():\n"
+        '    return getattr(Hello(), "name", "unknown")\n',
+        encoding="utf-8",
+    )
+    report = PluginAuditor().audit(tmp_path)
+    assert report.passed is True
+    assert not any("getattr" in f.message for f in report.findings)
 
 
 def test_cli_plugin_list_empty(tmp_path, monkeypatch):

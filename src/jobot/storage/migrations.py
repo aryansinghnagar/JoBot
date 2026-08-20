@@ -275,6 +275,17 @@ def _apply_002(conn: sqlite3.Connection) -> None:
     )
 
 
+# Audit fix JOB-V2-REG-002: the docstring below cites
+# ``MASTER_PLAN_EXPANDED.md §13.2``, but §13 does not exist in the document.
+# The corrected citation is §8 (WS5 — vault hardening + candidate-truth
+# tables) and §5 (D18 grounding verifier). The citation lives in this comment
+# rather than being edited into the function docstring so the migration
+# checksum (computed from the function source via ``inspect.getsource``) is
+# unchanged and existing installs that have already recorded migration 3 do
+# not fail with ``MigrationError``. The dangling ``§13.2`` reference inside
+# the docstring is intentionally retained for the same reason; the docs-lint
+# script (``scripts/check_master_plan_citations.py``) skips this file
+# explicitly. See ``MASTER_PLAN_EXPANDED.md`` §8 / §5 for the actual content.
 def _apply_003(conn: sqlite3.Connection) -> None:
     """WS5 memory + candidate-truth tables (MASTER_PLAN_EXPANDED.md §13.2).
 

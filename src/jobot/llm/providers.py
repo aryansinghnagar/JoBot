@@ -11,8 +11,11 @@ import asyncio
 import json
 import logging
 import os
+import socket
+import http.client
 from collections.abc import AsyncIterator, Callable
 from typing import Any, Union
+from urllib.error import URLError
 
 from jobot.llm.base import (
     LLMProvider,
@@ -141,7 +144,19 @@ class OpenAIProvider(HTTPChatProvider):
                         chunk = delta.get("content") or ""
                         if chunk:
                             yield chunk
-                except Exception:
+                # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to
+                # the concrete failure modes of parsing one SSE chunk:
+                # malformed JSON (``JSONDecodeError``), wrong shape after parse
+                # (``KeyError`` on missing required fields, ``TypeError`` if a
+                # field is not a dict, ``AttributeError`` if a method is
+                # called on a non-object). Transport-level errors
+                # (``URLError`` / ``socket.timeout`` / ``HTTPException`` /
+                # ``ConnectionError`` / ``OSError``) are NOT caught here —
+                # they come from the SSE iterator (outside this ``try``) and
+                # must propagate so the caller can fail-fast or fall back to
+                # the next provider.
+                except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:  # noqa: BLE001, S112
+                    logger.debug("malformed SSE chunk skipped: %s", exc, exc_info=True)
                     continue
 
 
@@ -174,7 +189,15 @@ class OpenAICompatProvider(OpenAIProvider):
         try:
             http_get_json(f"{base}/models", headers, timeout_s=5.0)
             return True
-        except Exception as exc:  # noqa: BLE001
+        # Audit fix JOB-ARC-002: narrowed from bare ``Exception`` to the
+        # concrete failure modes of a GET-JSON-over-HTTPS probe — URL/scheme
+        # validation (ValueError), network transport (OSError covers
+        # ``URLError``/``HTTPError``/``ConnectionError``/``TimeoutError`` as
+        # they all derive from ``OSError``), TLS handshake (ssl.SSLError is
+        # also an ``OSError`` subclass), and response body parsing
+        # (``JSONDecodeError``). Anything else is unexpected and should
+        # propagate rather than be silently swallowed by a health probe.
+        except (OSError, ValueError, json.JSONDecodeError) as exc:  # noqa: BLE001
             logger.debug("OpenAICompat health probe failed: %s", exc)
             return False
 
@@ -268,7 +291,11 @@ class AnthropicProvider(HTTPChatProvider):
                             text = delta.get("text") or ""
                             if text:
                                 yield text
-                except Exception:
+                # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to
+                # the concrete failure modes of parsing one SSE chunk (see
+                # OpenAIProvider.stream for the full rationale).
+                except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:  # noqa: BLE001, S112
+                    logger.debug("malformed SSE chunk skipped: %s", exc, exc_info=True)
                     continue
 
 
@@ -353,7 +380,8 @@ class MistralProvider(HTTPChatProvider):
                         chunk = delta.get("content") or ""
                         if chunk:
                             yield chunk
-                except Exception:
+                except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:  # noqa: BLE001, S112
+                    logger.debug("malformed SSE chunk skipped: %s", exc, exc_info=True)
                     continue
 
 
@@ -444,7 +472,8 @@ class CohereProvider(HTTPChatProvider):
                         text = content.get("text") or ""
                         if text:
                             yield text
-                except Exception:
+                except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:  # noqa: BLE001, S112
+                    logger.debug("malformed SSE chunk skipped: %s", exc, exc_info=True)
                     continue
 
 
@@ -743,7 +772,27 @@ class BedrockProvider(LLMProvider):
                         text = delta.get("text", "")
                         if text:
                             loop.call_soon_threadsafe(q.put_nowait, text)
-            except Exception as exc:  # noqa: BLE001
+            # Phase B3 (JOB-ARC-002): narrowed from bare ``Exception`` to the
+            # concrete failure modes of a Bedrock streaming call — boto3 client
+            # construction (``botocore.exceptions.ClientError`` derives from
+            # ``Exception`` but is surfaced as ``RuntimeError`` here), network
+            # transport (``ConnectionError`` / ``OSError`` / ``socket.timeout``),
+            # HTTP-level failures (``http.client.HTTPException`` /
+            # ``URLError``), and response-shape problems (``KeyError`` /
+            # ``TypeError``). Unexpected exceptions (e.g. ``KeyboardInterrupt``)
+            # are NOT caught — they must propagate so callers can shut down.
+            except (
+                ConnectionError,
+                OSError,
+                socket.timeout,
+                http.client.HTTPException,
+                URLError,
+                KeyError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+            ) as exc:  # noqa: BLE001
+                logger.debug("Bedrock stream failed: %s", exc, exc_info=True)
                 loop.call_soon_threadsafe(q.put_nowait, exc)
             finally:
                 loop.call_soon_threadsafe(q.put_nowait, None)
