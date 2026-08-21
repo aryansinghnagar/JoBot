@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from jobot.llm.base import LLMProvider, LLMResponse, Message
 from jobot.llm.pricing import PricingTable
 from jobot.llm.providers import PROVIDER_REGISTRY
+from jobot.llm.semantic_cache import SemanticCache
 from jobot.secrets import get_secret
 
 logger = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ class ModelRouter:
         pricing_table: PricingTable | None = None,
         spend_path: Path | None = None,
         daily_budget_usd: float | None = None,
+        cache: SemanticCache | None = None,
     ) -> None:
         self._load_dotenv()
         self.pricing = pricing_table or PricingTable()
@@ -76,6 +78,7 @@ class ModelRouter:
             daily_budget_usd if daily_budget_usd is not None else DEFAULT_DAILY_BUDGET_USD
         )
         self.primary_provider = primary_provider
+        self.cache = cache if cache is not None else SemanticCache()
         self.metrics_history: list[ModelCallMetrics] = []
         self._providers: dict[str, LLMProvider] = {}
         self._spend: dict[str, float] = self._load_spend()
@@ -247,13 +250,32 @@ class ModelRouter:
         temperature: float = 0.7,
         max_tokens: int = 2048,
         timeout_s: float = 60.0,
+        use_cache: bool = True,
     ) -> LLMResponse:
-        """Strategy-level call to a single provider (respects budget + keyring)."""
+        """Strategy-level call to a single provider (respects budget + keyring + cache)."""
         override = self._resolve_task_override(task)
         provider_name = provider or self.primary_provider.value
         if override and override.get("provider"):
             provider_name = str(override["provider"])
         model = model or (override or {}).get("model")
+
+        # Check semantic / exact completion cache
+        msg_dicts = [{"role": m.role, "content": m.content} for m in messages]
+        if use_cache and self.cache is not None:
+            cached_resp = self.cache.get(msg_dicts, model or "default")
+            if cached_resp is not None:
+                self.metrics_history.append(
+                    ModelCallMetrics(
+                        provider=cached_resp.provider,
+                        model=cached_resp.model,
+                        prompt_tokens=cached_resp.input_tokens,
+                        completion_tokens=cached_resp.output_tokens,
+                        estimated_cost_usd=0.0,
+                        latency_ms=cached_resp.latency_ms,
+                    )
+                )
+                return cached_resp
+
         inst = self.get_provider(provider_name)
         if inst is None:
             raise ValueError(f"Provider '{provider_name}' is not available")
@@ -266,6 +288,9 @@ class ModelRouter:
             max_tokens=max_tokens,
             timeout_s=timeout_s,
         )
+        if use_cache and self.cache is not None:
+            self.cache.set(msg_dicts, model or "default", response)
+
         self.metrics_history.append(
             ModelCallMetrics(
                 provider=response.provider,
@@ -365,6 +390,7 @@ class ModelRouter:
         task: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
+        use_cache: bool = True,
     ) -> str:
         """Generate text with fallback chain; frozen-compat signature."""
         messages: list[Message] = []
@@ -380,6 +406,7 @@ class ModelRouter:
                     task=task,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    use_cache=use_cache,
                 )
                 return response.text
             except Exception as exc:  # noqa: BLE001

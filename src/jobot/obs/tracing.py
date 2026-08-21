@@ -8,6 +8,19 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from jobot.failure.catalog import FailureMode
+from jobot.security.pii_masker import PIIMasker
+
+
+def _scrub_pii(data: Any, masker: PIIMasker) -> Any:
+    """Recursively scrub PII patterns from strings, dicts, and lists."""
+    if isinstance(data, str):
+        masked, _ = masker.mask(data)
+        return masked
+    if isinstance(data, dict):
+        return {k: _scrub_pii(v, masker) for k, v in data.items()}
+    if isinstance(data, list):
+        return [_scrub_pii(item, masker) for item in data]
+    return data
 
 
 class IncidentSeverity(str, Enum):
@@ -40,7 +53,7 @@ class TraceSpan(BaseModel):
 class TraceLogger:
     """
     OpenTelemetry-compatible Trace & Incident Logger (Layer L).
-    Persists trace spans to ~/.jobot/traces/<run_id>.jsonl.
+    Persists trace spans to ~/.jobot/traces/<run_id>.jsonl with PII scrubbing.
     """
 
     def __init__(self, trace_dir: Path | None = None, run_id: str | None = None) -> None:
@@ -53,12 +66,14 @@ class TraceLogger:
         )
         self.spans: list[TraceSpan] = []
         self.incidents: list[Incident] = []
+        self.pii_masker = PIIMasker()
 
     def start_span(self, name: str, attributes: dict[str, Any] | None = None) -> TraceSpan:
+        cleaned_attrs = _scrub_pii(attributes or {}, self.pii_masker)
         span = TraceSpan(
             span_id=str(uuid.uuid4()),
             name=name,
-            attributes=attributes or {},
+            attributes=cleaned_attrs if isinstance(cleaned_attrs, dict) else {},
         )
         self.spans.append(span)
         return span
@@ -68,6 +83,7 @@ class TraceLogger:
         span.attributes["status"] = status
         duration_ms = int((span.end_time - span.start_time).total_seconds() * 1000)
         span.attributes["duration_ms"] = duration_ms
+        sanitized_attrs = _scrub_pii(span.attributes, self.pii_masker)
 
         trace_file = self.trace_dir / f"{self.run_id}.jsonl"
         with open(trace_file, "a", encoding="utf-8") as f:
@@ -80,7 +96,7 @@ class TraceLogger:
                         "start_time": span.start_time.isoformat(),
                         "end_time": span.end_time.isoformat(),
                         "duration_ms": duration_ms,
-                        "attributes": span.attributes,
+                        "attributes": sanitized_attrs,
                     }
                 )
                 + "\n"
@@ -94,13 +110,15 @@ class TraceLogger:
         severity: IncidentSeverity = IncidentSeverity.MEDIUM,
         recommended_action: str = "",
     ) -> Incident:
+        clean_desc, _ = self.pii_masker.mask(description)
+        clean_action, _ = self.pii_masker.mask(recommended_action)
         inc = Incident(
             incident_id=f"INC-{uuid.uuid4().hex[:6].upper()}",
             site=site,
             severity=severity,
             failure_mode=failure_mode,
-            description=description,
-            recommended_action=recommended_action,
+            description=clean_desc,
+            recommended_action=clean_action,
         )
         self.incidents.append(inc)
         return inc

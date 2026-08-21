@@ -107,14 +107,22 @@ class ResumeImporter:
             return str(content)
 
     def _extract_docx_text(self, path: Path) -> str:
-        """Extract text from a Microsoft Word .docx file using standard library zip and xml."""
-        import xml.etree.ElementTree as ET
+        """Extract text from a Microsoft Word .docx file with XXE protections."""
         import zipfile
 
         try:
+            try:
+                import importlib
+
+                ET = importlib.import_module("defusedxml.ElementTree")
+            except ImportError:
+                import xml.etree.ElementTree as ET
+
             with zipfile.ZipFile(path) as z:
                 xml_content = z.read("word/document.xml")
-                tree = ET.fromstring(xml_content)
+                # Parse XML content without entity resolution
+                parser = ET.XMLParser()
+                tree = ET.fromstring(xml_content, parser=parser)
                 namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
                 nodes = tree.findall(".//w:t", namespaces)
                 texts = [n.text for n in nodes if n.text]
