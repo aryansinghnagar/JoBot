@@ -33,11 +33,11 @@ MARKER_PATTERNS: dict[str, Pattern[str]] = {
 }
 
 SLUG_PATTERNS: dict[str, Pattern[str]] = {
-    "greenhouse": re.compile(r"boards\.greenhouse\.io/([A-Za-z0-9\-]+)"),
-    "lever": re.compile(r"jobs\.lever\.co/([A-Za-z0-9\-]+)"),
-    "ashby": re.compile(r"jobs\.ashbyhq\.com/([A-Za-z0-9\-]+)"),
-    "workable": re.compile(r"apply\.workable\.com/([A-Za-z0-9\-]+)"),
-    "smartrecruiters": re.compile(r"smartrecruiters\.com/([A-Za-z0-9\-]+)"),
+    "greenhouse": re.compile(r"boards\.greenhouse\.io/([A-Za-z0-9\-_.]+)"),
+    "lever": re.compile(r"jobs\.lever\.co/([A-Za-z0-9\-_.]+)"),
+    "ashby": re.compile(r"jobs\.ashbyhq\.com/([A-Za-z0-9\-_.]+)"),
+    "workable": re.compile(r"apply\.workable\.com/([A-Za-z0-9\-_.]+)"),
+    "smartrecruiters": re.compile(r"smartrecruiters\.com/([A-Za-z0-9\-_.]+)"),
 }
 
 

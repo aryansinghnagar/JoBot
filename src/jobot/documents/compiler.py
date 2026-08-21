@@ -15,14 +15,26 @@ from jobot.models.domain import UserProfile
 
 TEMPLATE_NAMES = ("default", "modern", "classic")
 
-_LATEX_SPECIALS = re.compile(r"([\\{}$&#^_%~])")
+_LATEX_MAP = {
+    "\\": r"\textbackslash{}",
+    "~": r"\textasciitilde{}",
+    "^": r"\textasciicircum{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+}
+_LATEX_RE = re.compile(r"([\\~^&%$#_{}])")
 
 
 def escape_latex(text: str) -> str:
     """Escape LaTeX special characters for safe template interpolation."""
     if not text:
         return ""
-    return _LATEX_SPECIALS.sub(r"\\\1", text)
+    return _LATEX_RE.sub(lambda m: _LATEX_MAP[m.group(0)], text)
 
 
 def _jinja_env() -> Environment:

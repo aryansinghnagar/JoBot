@@ -74,7 +74,13 @@ class LuaLaTeXRenderer(PdfRenderer):
             tex_file = workdir / "resume.tex"
             tex_file.write_text(tex_source, encoding="utf-8")
             result = subprocess.run(
-                [engine, "-interaction=nonstopmode", "-halt-on-error", "resume.tex"],
+                [
+                    engine,
+                    "-interaction=nonstopmode",
+                    "-halt-on-error",
+                    "-no-shell-escape",
+                    "resume.tex",
+                ],
                 cwd=workdir,
                 capture_output=True,
                 text=True,
