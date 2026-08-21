@@ -8,10 +8,10 @@ Part of Phase 1 P0 safety remediation.
 """
 
 import pytest
+
 from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.adapters.registry import AdapterRegistry
 from jobot.models.domain import Application
-
 
 # Adapters that have real submission capability (API or browser).
 # These are the ONLY adapters that should NOT raise on submit_application().

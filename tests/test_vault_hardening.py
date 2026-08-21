@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 from cryptography.fernet import Fernet
+
 from jobot.models.domain import PersonalInfo, UserProfile
 from jobot.storage.vault import CredentialVault
 

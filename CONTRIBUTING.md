@@ -1,7 +1,7 @@
 # Contributing to JoBot
 
 JoBot is an autonomous job-application agent: a Python 3.11+ core (Typer CLI,
-Pydantic v2, SQLite WAL, Patchright browser) with a Tauri 2 / React 18
+Pydantic v2, SQLite WAL, Patchright browser) with a Tauri 2 / React 19
 desktop GUI in `gui/` that talks to the core over a JSON-RPC sidecar
 (`jobot sidecar` in `src/jobot/gui/sidecar.py`).
 

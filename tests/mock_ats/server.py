@@ -1,7 +1,9 @@
-from datetime import datetime, timezone
 import hashlib
 import uuid
+from datetime import UTC, datetime, timezone
+
 from flask import Flask, jsonify, request
+
 from tests.mock_ats.data import SAMPLE_JOBS
 
 app = Flask(__name__)
@@ -60,7 +62,7 @@ def apply():
     if idempotency_key in applications:
         return jsonify({"error": "Duplicate application"}), 409
 
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
     applications[idempotency_key] = {
         "submission_id": submission_id,
         "idempotency_key": idempotency_key,

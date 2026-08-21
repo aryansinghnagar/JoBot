@@ -11,13 +11,14 @@ Proves, against a real SQLite file (fresh DatabaseManager per "process"):
 - approval requests survive restarts and decisions are guarded
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+
 from jobot.execution.engine import (
     ApprovalStatus,
-    DurableTaskEngine,
     DuplicateEffect,
+    DurableTaskEngine,
     EffectStatus,
     EngineError,
     IllegalTransition,
@@ -32,7 +33,7 @@ def db(tmp_path):
 
 
 def _later(seconds: float) -> datetime:
-    return datetime.now(timezone.utc) + timedelta(seconds=seconds)
+    return datetime.now(UTC) + timedelta(seconds=seconds)
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +277,7 @@ def _complete_from_checkpoint(db, idempotency_key: str) -> None:
     committed effect."""
     engine = DurableTaskEngine(db)
     # force lease expiry instead of sleeping
-    engine.reclaim_expired(now=datetime.now(timezone.utc) + timedelta(seconds=120))
+    engine.reclaim_expired(now=datetime.now(UTC) + timedelta(seconds=120))
     task = engine.claim_next("replacement-worker", lease_seconds=60)
     assert task is not None
     engine.transition(task.id, TaskStatus.RUNNING)
@@ -360,8 +361,7 @@ def test_two_concurrent_workers_single_submission(db):
     key = "submit:race:default"
 
     e.claim_next("w1", lease_seconds=300)
-    e.claim_next  # w2 gets nothing while w1 holds the lease
-    e.reserve_effect("w1-task", "SUBMIT", key, request_hash="r") if False else None
+    assert e.claim_next("w2", lease_seconds=300) is None  # w2 gets nothing while w1 holds the lease
 
     t = e.list_tasks()[0]
     winner = e.reserve_effect(t.id, "SUBMIT", key, request_hash="r")

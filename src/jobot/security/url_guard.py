@@ -119,15 +119,25 @@ def validate_fetch_url(url: str, *, allow_private_hosts: bool = False) -> str:
     return url
 
 
-class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
-    """Re-validate every redirect hop against the same URL boundary."""
+class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Re-validate every redirect hop against the SSRF URL boundary.
 
-    def __init__(self, allow_private_hosts: bool = False) -> None:
+    Subclasses urllib's standard redirect handler so any 301, 302, 303, 307,
+    or 308 redirect must pass ``validate_fetch_url`` before the subsequent hop
+    is requested.
+    """
+
+    def __init__(self, allow_private_hosts: bool = False, max_redirects: int = 5) -> None:
         self.allow_private_hosts = allow_private_hosts
+        self.max_redirects = max_redirects
 
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+    def redirect_request(self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str) -> Any:
         validate_fetch_url(newurl, allow_private_hosts=self.allow_private_hosts)
         return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+# Alias for backward compatibility
+_ValidatingRedirectHandler = SafeRedirectHandler
 
 
 # Audit fix JOB-SEC-016: enforce TLS 1.2+ on every outbound HTTPS fetch.
@@ -139,6 +149,59 @@ class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
 # once per process and reused across fetches.
 _TLS_CONTEXT: ssl.SSLContext = ssl.create_default_context()
 _TLS_CONTEXT.minimum_version = ssl.TLSVersion.TLSv1_2
+
+
+def validate_redirect_url(
+    target_url: str,
+    *,
+    allow_private_hosts: bool = False,
+) -> str:
+    """Validate a redirect target URL extracted from a Location header or response.
+
+    Raises ValueError if the target violates the SSRF boundary (private/loopback host).
+    """
+    return validate_fetch_url(target_url, allow_private_hosts=allow_private_hosts)
+
+
+def create_safe_httpx_client(
+    *,
+    allow_private_hosts: bool = False,
+    timeout: float = 60.0,
+    max_connections: int = 100,
+    max_keepalive_connections: int = 20,
+    keepalive_expiry: float = 30.0,
+) -> Any:
+    """Factory creating an ``httpx.AsyncClient`` guarded against SSRF and TLS downgrade.
+
+    Configured with:
+    - Per-hop redirect inspection hook enforcing ``validate_fetch_url``;
+    - Strict TLS 1.2+ minimum context;
+    - Bounded connection pooling and keep-alive limits.
+    """
+    try:
+        import httpx
+    except ImportError:
+        raise RuntimeError("httpx is not installed — install with `pip install httpx>=0.27.0`")
+
+    async def _check_redirect(response: httpx.Response) -> None:
+        if response.is_redirect or response.status_code in (301, 302, 303, 307, 308):
+            location = response.headers.get("Location")
+            if location:
+                # Resolve relative redirects against the request URL
+                target = str(response.url.join(location))
+                validate_fetch_url(target, allow_private_hosts=allow_private_hosts)
+
+    return httpx.AsyncClient(
+        verify=_TLS_CONTEXT,
+        limits=httpx.Limits(
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+            keepalive_expiry=keepalive_expiry,
+        ),
+        timeout=httpx.Timeout(timeout, connect=10.0),
+        follow_redirects=True,
+        event_hooks={"response": [_check_redirect]},
+    )
 
 
 def safe_urlopen(
@@ -154,23 +217,15 @@ def safe_urlopen(
 
     Validation (scheme, host boundary, resolved-IP boundary) happens
     immediately before the request is built, and redirects are re-validated
-    per hop. Outbound HTTPS calls use a module-level ``SSLContext`` pinned to
-    ``minimum_version = TLSv1_2`` (audit fix JOB-SEC-016) so protocol
-    downgrade attacks (POODLE / BEAST / CRIME-class) are rejected at the
-    TLS handshake rather than silently accepted by Python's defaults.
+    per hop by ``SafeRedirectHandler``. Outbound HTTPS calls use a module-level
+    ``SSLContext`` pinned to ``minimum_version = TLSv1_2`` (audit fix JOB-SEC-016)
+    so protocol downgrade attacks are rejected at the TLS handshake.
     Returns the response context manager from ``urlopen``.
     """
     url = validate_fetch_url(url, allow_private_hosts=allow_private_hosts)
-    # S310 (suspicious url open) fires here because we instantiate
-    # ``urllib.request.Request`` directly. The URL has already been validated
-    # by ``validate_fetch_url`` above (scheme allowlist + host boundary +
-    # resolved-IP boundary + no embedded credentials); redirects are
-    # re-validated per hop by ``_ValidatingRedirectHandler``. This is the
-    # single sanctioned chokepoint for outbound fetches; do NOT bypass it
-    # with raw ``urllib.request.urlopen``.
     req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)  # noqa: S310
     opener = urllib.request.build_opener(
-        _ValidatingRedirectHandler(allow_private_hosts=allow_private_hosts),
+        SafeRedirectHandler(allow_private_hosts=allow_private_hosts),
         urllib.request.HTTPSHandler(context=_TLS_CONTEXT),
     )
     return opener.open(req, timeout=timeout)
@@ -192,7 +247,11 @@ def validate_path_segment(segment: str) -> str:
 
 
 __all__ = [
+    "SafeRedirectHandler",
+    "_TLS_CONTEXT",
+    "create_safe_httpx_client",
     "safe_urlopen",
     "validate_fetch_url",
     "validate_path_segment",
+    "validate_redirect_url",
 ]

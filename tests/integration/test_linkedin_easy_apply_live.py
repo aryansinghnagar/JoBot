@@ -7,9 +7,10 @@ import os
 import threading
 
 import pytest
+
+from jobot.models.domain import PersonalInfo, UserProfile
 from jobot.stealth.browser import BrowserSession
 from jobot.stealth.linkedin_easy_apply import EasyApplySaga
-from jobot.models.domain import PersonalInfo, UserProfile
 
 RUN_LIVE = os.getenv("JOBOT_RUN_LIVE_BROWSER") == "1"
 pytestmark = pytest.mark.skipif(

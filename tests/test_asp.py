@@ -1,10 +1,13 @@
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import pytest
+
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.asp.pipeline import ApplicationSubmissionPipeline
 from jobot.models.domain import ApplicationStatus, PersonalInfo, UserProfile
 from jobot.storage.db import DatabaseManager
+
 # Uses live_live_mock_ats_server session fixture from conftest.py
 
 

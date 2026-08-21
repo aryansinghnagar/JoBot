@@ -1,7 +1,9 @@
 """Crash recovery, durable saga checkpoints, and idempotency tests."""
 
 import json
+
 import pytest
+
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.asp.saga import ApplySaga, SagaStatus
 from jobot.models.domain import JobPosting, PersonalInfo, UserProfile

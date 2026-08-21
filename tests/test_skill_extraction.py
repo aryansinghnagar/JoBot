@@ -1,4 +1,5 @@
 import pytest
+
 from jobot.ai.skill_extractor import SkillExtractor
 
 

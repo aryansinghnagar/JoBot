@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+
 from jobot.cli.main import app
 
 

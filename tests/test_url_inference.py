@@ -8,6 +8,7 @@ default adapter (decision D1).
 """
 
 import pytest
+
 from jobot.adapters.registry import AdapterRegistry, infer_site
 from jobot.adapters.workday import WorkdayApi
 

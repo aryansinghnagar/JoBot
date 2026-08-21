@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
 

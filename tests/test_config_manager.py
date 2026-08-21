@@ -16,9 +16,9 @@ from jobot.secrets import get_secret
 
 class FakeKeyring:
     def __init__(self) -> None:
-        self._store: Dict[tuple, str] = {}
+        self._store: dict[tuple, str] = {}
 
-    def get_password(self, service: str, key: str) -> Optional[str]:
+    def get_password(self, service: str, key: str) -> str | None:
         return self._store.get((service, key))
 
     def set_password(self, service: str, key: str, value: str) -> None:

@@ -25,11 +25,11 @@ from __future__ import annotations
 import string
 
 import pytest
-from hypothesis import HealthCheck, given, settings, strategies as st
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from jobot.security.prompt_guard import INJECTION_PATTERNS, sanitize_llm_input
 from jobot.security.url_guard import validate_fetch_url
-
 
 # ---------------------------------------------------------------------------
 # Phase C5: validate_fetch_url SSRF invariants.

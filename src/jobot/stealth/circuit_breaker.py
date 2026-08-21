@@ -161,7 +161,7 @@ class CircuitBreaker:
             self._warmed_up.add(domain)
             logger.debug("circuit-breaker warmup OK for %s:%d", domain, port)
             return True
-        except (OSError, ssl.SSLError, socket.timeout) as exc:
+        except (OSError, ssl.SSLError, TimeoutError) as exc:
             logger.debug("circuit-breaker warmup failed for %s:%d: %s", domain, port, exc)
             self.record_failure(domain)
             return False
@@ -209,7 +209,7 @@ class CircuitBreaker:
             result = request_fn(url, *args, **kwargs)
             self.record_success(effective_domain)
             return result
-        except (OSError, ConnectionError, socket.timeout, ssl.SSLError):
+        except (OSError, ConnectionError, TimeoutError, ssl.SSLError):
             self.record_failure(effective_domain)
             raise
 

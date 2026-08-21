@@ -2,7 +2,7 @@
 
 import pytest
 
-from jobot.discovery.engine import JobDiscoveryEngine, UNSCRAPABLE_BOARDS
+from jobot.discovery.engine import UNSCRAPABLE_BOARDS, JobDiscoveryEngine
 from jobot.models.domain import JobPosting, PersonalInfo, UserProfile
 
 

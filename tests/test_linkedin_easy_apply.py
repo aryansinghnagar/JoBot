@@ -8,8 +8,9 @@ path, missing Easy Apply button, and unknown modal state.
 from pathlib import Path
 
 import pytest
-from jobot.stealth.linkedin_easy_apply import EasyApplySaga
+
 from jobot.models.domain import PersonalInfo, UserProfile
+from jobot.stealth.linkedin_easy_apply import EasyApplySaga
 
 
 class FakeLocator:

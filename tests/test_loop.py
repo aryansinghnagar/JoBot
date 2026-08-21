@@ -1,6 +1,7 @@
 """Phase 4 WS2: LoopExecutor — 4-mode scheduler loop (scan/apply/digest/full)."""
 
 import pytest
+
 from jobot.asp.orchestrator import ApplyResult
 from jobot.discovery.engine import JobMatchResult
 from jobot.models.domain import (
@@ -12,7 +13,7 @@ from jobot.models.domain import (
     WorkExperience,
 )
 from jobot.policy.engine import PolicyEvaluationResult
-from jobot.scheduler.loop import LoopExecutor, MODES
+from jobot.scheduler.loop import MODES, LoopExecutor
 from jobot.storage.db import DatabaseManager
 
 

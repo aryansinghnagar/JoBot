@@ -1,6 +1,7 @@
 """Unit tests for DatabaseManager backup and restore (UC-44)."""
 
 from pathlib import Path
+
 from typer.testing import CliRunner
 
 from jobot.cli.main import app

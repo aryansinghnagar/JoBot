@@ -1,5 +1,6 @@
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 from jobot.models.domain import (
     Application,
     ApplicationStatus,

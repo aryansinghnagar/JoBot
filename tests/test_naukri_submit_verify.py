@@ -26,7 +26,7 @@ class FakeLocator:
     def __init__(
         self,
         count: int = 0,
-        texts: Optional[List[str]] = None,
+        texts: list[str] | None = None,
         fail_click: bool = False,
     ) -> None:
         self._count = count
@@ -37,10 +37,10 @@ class FakeLocator:
     async def count(self) -> int:
         return self._count
 
-    async def all_text_contents(self) -> List[str]:
+    async def all_text_contents(self) -> list[str]:
         return list(self._texts)
 
-    async def click(self, timeout: Optional[int] = None) -> None:
+    async def click(self, timeout: int | None = None) -> None:
         if self.fail_click:
             raise RuntimeError("click failed")
 
@@ -52,17 +52,17 @@ class FakePage:
         apply_button: bool = False,
         confirmed: bool = False,
         login_wall: bool = False,
-        rows: Optional[List[str]] = None,
+        rows: list[str] | None = None,
     ) -> None:
         self.body_text = body_text
         self.apply_button = apply_button
         self.confirmed = confirmed
         self.login_wall = login_wall
         self.rows = rows
-        self.gotos: List[str] = []
+        self.gotos: list[str] = []
         self.clicked_apply = False
 
-    async def goto(self, url: str, wait_until: Optional[str] = None) -> None:
+    async def goto(self, url: str, wait_until: str | None = None) -> None:
         self.gotos.append(url)
 
     def locator(self, selector: str) -> FakeLocator:

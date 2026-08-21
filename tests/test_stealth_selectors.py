@@ -1,7 +1,8 @@
 """Unit tests for SelectorRegistry and BrowserSessionPool (UC-09 & UC-10)."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from jobot.stealth.selectors import SelectorRegistry
 from jobot.stealth.session_manager import BrowserSessionPool

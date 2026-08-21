@@ -78,7 +78,9 @@ class ConfigManager:
                 # config file. ``OSError`` covers filesystem / permission
                 # issues, ``yaml.YAMLError`` covers YAML syntax errors, and
                 # ``UnicodeDecodeError`` covers non-UTF-8 file content.
-                logger.debug("Failed to load config file %s: %s", self.config_path, exc, exc_info=True)
+                logger.debug(
+                    "Failed to load config file %s: %s", self.config_path, exc, exc_info=True
+                )
         # Phase P2: invalidate the cache on every file (re)load — the
         # in-memory ``_data`` snapshot is now authoritative.
         with self._cache_lock:
@@ -116,9 +118,12 @@ class ConfigManager:
 
         manager = self
 
-        class _ConfigReloadHandler(FileSystemEventHandler):
+        class _ConfigReloadHandler(FileSystemEventHandler):  # type: ignore[misc]
             def on_modified(self, event: Any) -> None:
-                if not event.is_directory and Path(event.src_path).resolve() == manager.config_path.resolve():
+                if (
+                    not event.is_directory
+                    and Path(event.src_path).resolve() == manager.config_path.resolve()
+                ):
                     logger.debug("config.yaml modified externally — reloading")
                     manager._load_file()
 
@@ -139,16 +144,16 @@ class ConfigManager:
             try:
                 self._observer.stop()
                 self._observer.join(timeout=2.0)
-            except Exception:  # noqa: BLE001 — best-effort cleanup
-                pass
+            except Exception as exc:  # noqa: BLE001 — best-effort cleanup
+                logger.debug("stop_watcher cleanup error: %s", exc)
             self._observer = None
 
     def __del__(self) -> None:
         # Best-effort cleanup — never raise from __del__.
         try:
             self.stop_watcher()
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("__del__ watcher cleanup error: %s", exc)
 
     # -- key addressing -----------------------------------------------------
 

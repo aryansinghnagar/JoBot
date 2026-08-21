@@ -1,6 +1,7 @@
 """Unit and integration tests for prompt injection defense guard."""
 
 import pytest
+
 from jobot.ai.qa_engine import QAEngine
 from jobot.documents.tailor import Drafter
 from jobot.models.domain import JobPosting, PersonalInfo, UserProfile

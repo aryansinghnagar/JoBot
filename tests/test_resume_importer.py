@@ -1,7 +1,8 @@
 """Unit tests for ResumeImporter and CLI command (UC-25)."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 from typer.testing import CliRunner
 
 from jobot.cli.main import app

@@ -1,8 +1,9 @@
 """Unit tests for BrowserEvidenceCollector (UC-11)."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from jobot.obs.evidence import BrowserEvidenceCollector
 

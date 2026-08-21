@@ -1,6 +1,8 @@
 import threading
 import time
+
 import pytest
+
 from tests.mock_ats.server import app as flask_app
 
 

@@ -1,4 +1,5 @@
 import pytest
+
 from jobot.documents.tailor import DocumentTailor
 from jobot.models.domain import JobPosting, PersonalInfo, UserProfile
 from jobot.security.audit import SecurityAuditor

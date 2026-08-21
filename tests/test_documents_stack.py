@@ -1,6 +1,7 @@
 """Phase 3 T3.1: document stack — compiler, templates, PDF renderers, ATS scorer."""
 
 import pytest
+
 from jobot.documents import (
     AtsScorer,
     ResumeExporter,

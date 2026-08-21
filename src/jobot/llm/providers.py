@@ -8,11 +8,11 @@ lazy-imported and run off the event loop).
 """
 
 import asyncio
+import http.client
 import json
 import logging
 import os
 import socket
-import http.client
 from collections.abc import AsyncIterator, Callable
 from typing import Any, Union
 from urllib.error import URLError
@@ -784,7 +784,7 @@ class BedrockProvider(LLMProvider):
             except (
                 ConnectionError,
                 OSError,
-                socket.timeout,
+                TimeoutError,
                 http.client.HTTPException,
                 URLError,
                 KeyError,

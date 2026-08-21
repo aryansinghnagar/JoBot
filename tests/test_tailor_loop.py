@@ -3,6 +3,7 @@
 import json
 
 import pytest
+
 from jobot.documents import CoverLetterGenerator, DocumentTailor, list_tones
 from jobot.documents.tailor import verify_fact_truthfulness_detailed
 from jobot.llm.router import DEGRADATION_TEXT

@@ -1,7 +1,8 @@
 """Tests for Candidate Truth System, Grounding Verifier, Answer Bank, and Form Field Memory (UC-21 & UC-26)."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from jobot.ai.candidate_truth import (
     CandidateGroundingVerifier,

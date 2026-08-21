@@ -7,6 +7,7 @@ import os
 import threading
 
 import pytest
+
 from jobot.adapters.naukri import verify as verify_module
 from jobot.adapters.naukri.submit import NaukriSubmitter
 from jobot.adapters.naukri.verify import NaukriVerifier

@@ -4,15 +4,14 @@ Runs high-throughput mock application cycles to verify zero concurrency deadlock
 strict rate-limiting adherence, and memory stability.
 """
 
-import pytest
+import json
 from pathlib import Path
+
+import pytest
 
 from jobot.asp.orchestrator import ApplyOrchestrator
 from jobot.models.domain import JobPosting, PersonalInfo, UserProfile
 from jobot.storage.db import DatabaseManager
-
-
-import json
 
 
 class FastMockRouter:

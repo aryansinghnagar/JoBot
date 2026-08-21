@@ -191,23 +191,23 @@ err_console = Console(stderr=True)
 # attribute access — names used inside function bodies need to be in globals().
 # These imports are fast (<10ms total) and keep --help fast because they
 # don't pull in the heavy adapter/scraper/LLM modules.
-from jobot.storage.db import DatabaseManager  # noqa: E402
-from jobot.storage.vault import CredentialVault  # noqa: E402
-from jobot.config.manager import ConfigManager  # noqa: E402
-from jobot.llm.router import ModelRouter  # noqa: E402
-from jobot.tracker.analytics import TrackerAnalytics  # noqa: E402
-from jobot.tracker.render import TrackerRenderer  # noqa: E402
-from jobot.digest.generator import DigestGenerator  # noqa: E402
 from jobot.adapters import AdapterRegistry, SiteAdapter, infer_site  # noqa: E402
+from jobot.config.manager import ConfigManager  # noqa: E402
+from jobot.digest.generator import DigestGenerator  # noqa: E402
+from jobot.llm.router import ModelRouter  # noqa: E402
 from jobot.models.domain import (  # noqa: E402
     Application,
     ApplicationStatus,
     CompensationDetails,
-    PersonalInfo,
-    UserProfile,
-    TrustLevel,
     JobPosting,
+    PersonalInfo,
+    TrustLevel,
+    UserProfile,
 )
+from jobot.storage.db import DatabaseManager  # noqa: E402
+from jobot.storage.vault import CredentialVault  # noqa: E402
+from jobot.tracker.analytics import TrackerAnalytics  # noqa: E402
+from jobot.tracker.render import TrackerRenderer  # noqa: E402
 
 
 def get_adapter(site: str) -> SiteAdapter:  # noqa: F821 — SiteAdapter resolved via __getattr__
@@ -218,7 +218,7 @@ def _resolve_job(
     job_id: str | None,
     url: str | None,
     site: str | None,
-    db: "DatabaseManager",  # noqa: F821 — DatabaseManager resolved via __getattr__
+    db: DatabaseManager,
     out_console: Console,
 ) -> Any:
     """Resolve a JobPosting from a saved job id or a URL (live parse)."""
@@ -260,13 +260,15 @@ def _resolve_job(
 # Phase P7: defer construction to first use via a cached_property-style
 # accessor so ``jobot --help`` does not pay the ManualTestLogger import
 # cost (it transitively imports obs.alerts + obs.tracing).
-_test_logger_instance: "ManualTestLogger | None" = None  # noqa: F821
+_test_logger_instance: Any = None
 
 
 def _get_test_logger() -> Any:
     global _test_logger_instance
     if _test_logger_instance is None:
-        _test_logger_instance = ManualTestLogger()  # noqa: F821
+        from jobot.obs.manual_test_logger import ManualTestLogger
+
+        _test_logger_instance = ManualTestLogger()
     return _test_logger_instance
 
 
@@ -2130,6 +2132,8 @@ def login_cmd(
     console.print(f"[bold cyan]Opening browser login for portal '{portal_clean}'...[/bold cyan]")
 
     if portal_clean == "naukri":
+        from jobot.adapters.naukri.login import NaukriLoginFlow
+
         flow = NaukriLoginFlow(headless=False)
         success = asyncio.run(flow.execute_login())
         if success:

@@ -1,6 +1,9 @@
 """Phase 4 WS5: Outreach — presets, URL builder, DM gen, daily cap, CLI."""
 
 import pytest
+from typer.testing import CliRunner
+
+from jobot.cli.main import app
 from jobot.llm.router import DEGRADATION_TEXT
 from jobot.models.domain import (
     CompensationDetails,
@@ -11,9 +14,6 @@ from jobot.models.domain import (
 )
 from jobot.outreach.dm import Contact, DMGenerator, OutreachGate
 from jobot.outreach.links import LinkedInPeopleSearchURLBuilder
-from typer.testing import CliRunner
-
-from jobot.cli.main import app
 
 
 def make_profile() -> UserProfile:

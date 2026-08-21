@@ -198,9 +198,7 @@ class ModelRouter:
         # (e.g. boto3 for BedrockProvider); TypeError covers bad signatures;
         # ValueError / KeyError cover missing config.
         except (ImportError, AttributeError, TypeError, ValueError, KeyError) as exc:  # noqa: BLE001
-            logger.debug(
-                "Failed to instantiate provider '%s': %s", name, exc, exc_info=True
-            )
+            logger.debug("Failed to instantiate provider '%s': %s", name, exc, exc_info=True)
             return None
 
     def _key_lookup_for(self, name: str) -> Callable[[], str | None]:
@@ -355,9 +353,7 @@ class ModelRouter:
             # error condition. ``KeyboardInterrupt`` (a ``BaseException``) is
             # NOT caught here and propagates so the caller can shut down.
             except Exception as exc:  # noqa: BLE001
-                logger.debug(
-                    "LLM provider %s stream failed: %s", provider_name, exc, exc_info=True
-                )
+                logger.debug("LLM provider %s stream failed: %s", provider_name, exc, exc_info=True)
         logger.error("All LLM providers failed stream for prompt %r", prompt[:60])
         yield DEGRADATION_TEXT
 
@@ -387,9 +383,7 @@ class ModelRouter:
                 )
                 return response.text
             except Exception as exc:  # noqa: BLE001
-                logger.debug(
-                    "LLM provider %s failed: %s", provider_name, exc, exc_info=True
-                )
+                logger.debug("LLM provider %s failed: %s", provider_name, exc, exc_info=True)
         logger.error("All LLM providers failed for prompt %r", prompt[:60])
         return DEGRADATION_TEXT
 

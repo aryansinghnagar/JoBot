@@ -77,7 +77,7 @@ class PluginInstaller:
     TEST_ALLOWED_SCHEMES = frozenset({"http", "https", "ssh", "git", "file"})
 
     @property
-    def ALLOWED_SCHEMES(self) -> frozenset:
+    def ALLOWED_SCHEMES(self) -> frozenset[str]:
         import os as _os
 
         if _os.getenv("JOBOT_ALLOW_LOCAL_PLUGIN_INSTALL") == "1":

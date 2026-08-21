@@ -16,8 +16,8 @@ Covers:
 import pytest
 from cryptography.fernet import InvalidToken
 
-from jobot.adapters.cxs import AshbyAdapter
 from jobot.adapters.capabilities import AdapterCapabilityError
+from jobot.adapters.cxs import AshbyAdapter
 from jobot.adapters.linkedin import LinkedInAdapter
 from jobot.ai.candidate_truth import CandidateGroundingVerifier, CandidateTruthStore
 from jobot.applications.state_machine import IllegalApplicationTransition, transition_application
@@ -32,7 +32,6 @@ from jobot.security.prompt_guard import contains_prompt_injection, sanitize_llm_
 from jobot.security.url_guard import validate_fetch_url
 from jobot.storage.db import DatabaseManager, DuplicateApplicationError
 from jobot.storage.vault import CredentialVault
-
 
 # ===========================================================================
 # 1. PROMPT INJECTION FALSIFICATION

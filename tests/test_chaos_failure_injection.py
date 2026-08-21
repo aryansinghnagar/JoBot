@@ -4,8 +4,9 @@ Simulates abrupt network failures, simulated crashes, and malformed LLM response
 to verify that JoBot's durable execution and effect ledger maintain strict safety.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from jobot.applications.reconcile import ReconciliationService
 from jobot.asp.orchestrator import ApplyOrchestrator

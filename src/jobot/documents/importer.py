@@ -102,8 +102,9 @@ class ResumeImporter:
             # Fall back to sync read in a thread so the loop is still not
             # frozen (slightly slower than aiofiles but correct).
             return await asyncio.to_thread(p.read_text, encoding="utf-8", errors="ignore")
-        async with aiofiles.open(p, mode="r", encoding="utf-8", errors="ignore") as f:
-            return await f.read()
+        async with aiofiles.open(p, encoding="utf-8", errors="ignore") as f:
+            content = await f.read()
+            return str(content)
 
     def _extract_docx_text(self, path: Path) -> str:
         """Extract text from a Microsoft Word .docx file using standard library zip and xml."""

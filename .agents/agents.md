@@ -10,8 +10,8 @@ This repository (`jobot`) is a local-first, privacy-preserving autonomous job ap
 
 - **Zero Hallucinated Facts**: Candidate profile facts (`profile.yaml` / encrypted vault) are canonical. Never hallucinate facts, applicant data, or test credentials.
 - **Dual-Stack Formatting & Linting**:
-  - **Python (`pip`)**: Code must pass `ruff check`, `black --check`, and strict `mypy` type checking. All functions must contain explicit Python 3.11+ type annotations.
-  - **JS/TS (`npm`)**: Code must pass Prettier/Biome formatting checks and TypeScript strict compiler checks without implicit `any`.
+  - **Python (`pip`)**: Code must pass `ruff check`, `ruff format --check`, and strict `mypy` type checking. All functions must contain explicit Python 3.11+ type annotations.
+  - **JS/TS (`npm`)**: Code must pass Prettier formatting checks and Vitest unit tests.
 - **Clean Architecture & Decoupling**: Keep domain logic isolated from adapter layer UI bindings. Maintain single responsibility and avoid circular module imports.
 
 ---
@@ -28,7 +28,7 @@ This repository (`jobot`) is a local-first, privacy-preserving autonomous job ap
 
 - **Closed-Loop Verification**: Never declare work finished without executing automated test suites.
 - **Python**: Run `pytest -v` with coverage check (`pytest --cov=jobot`).
-- **JavaScript/TypeScript**: Run `npm run test` (Vitest/Jest) ensuring all tests pass cleanly.
+- **JavaScript/TypeScript**: Run `npm test` (Vitest) ensuring all tests pass cleanly.
 - **Regression Prohibition**: Never delete failing tests or lower coverage thresholds to pass CI. Fix underlying broken contracts.
 
 ---
@@ -36,4 +36,4 @@ This repository (`jobot`) is a local-first, privacy-preserving autonomous job ap
 ## 4. Deterministic Security & Secrets Hygiene
 
 - Zero API keys, tokens, or plain-text credentials in source code, logs, or git commits.
-- Secure secrets via OS keyring or `age` encryption.
+- Secure secrets via Fernet symmetric encryption (`~/.jobot/vault.enc`) and OS native keyring.

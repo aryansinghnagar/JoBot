@@ -1,7 +1,7 @@
 from jobot.failure.catalog import FailureMode
-from jobot.stealth.circuit_breaker import CircuitBreaker
 from jobot.memory.vector import VectorMemory
 from jobot.obs.tracing import IncidentSeverity, TraceLogger
+from jobot.stealth.circuit_breaker import CircuitBreaker
 
 
 def test_circuit_breaker_transitions():

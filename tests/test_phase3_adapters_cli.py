@@ -4,6 +4,7 @@ import base64
 import json
 
 import pytest
+
 from jobot.adapters.greenhouse import GreenhouseAdapter
 from jobot.adapters.linkedin import LinkedInAdapter
 from jobot.models.domain import Application, JobPosting, PersonalInfo, UserProfile

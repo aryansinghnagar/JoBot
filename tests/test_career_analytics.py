@@ -1,8 +1,11 @@
 """Phase 4 WS4: CareerAnalytics — skill-gap + salary benchmarking."""
 
 import pytest
+from typer.testing import CliRunner
+
 from jobot.analytics.salary import SalaryBenchmarker
 from jobot.analytics.skill_gap import SkillGapAnalyzer
+from jobot.cli.main import app
 from jobot.llm.router import DEGRADATION_TEXT
 from jobot.models.domain import (
     CompensationDetails,
@@ -13,9 +16,6 @@ from jobot.models.domain import (
     WorkExperience,
 )
 from jobot.storage.db import DatabaseManager
-from typer.testing import CliRunner
-
-from jobot.cli.main import app
 
 
 def make_profile() -> UserProfile:

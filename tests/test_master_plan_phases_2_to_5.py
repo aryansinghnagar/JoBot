@@ -1,8 +1,9 @@
 import pytest
-from jobot.security.pii_masker import PIIMasker
+
 from jobot.memory.vector import VectorMemory
-from jobot.stealth.http_client import StealthHTTPClient
 from jobot.models.domain import Application, ApplicationStatus
+from jobot.security.pii_masker import PIIMasker
+from jobot.stealth.http_client import StealthHTTPClient
 
 
 def test_pii_masker_email_and_phone():

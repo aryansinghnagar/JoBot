@@ -6,15 +6,15 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from jobot.llm.base import LLMResponse, Message
-from jobot.llm.router import DEGRADATION_TEXT, DEFAULT_FALLBACK_CHAIN, ModelRouter
+from jobot.llm.router import DEFAULT_FALLBACK_CHAIN, DEGRADATION_TEXT, ModelRouter
 from jobot.secrets import set_secret
 
 
 class FakeKeyring:
     def __init__(self) -> None:
-        self._store: Dict[tuple, str] = {}
+        self._store: dict[tuple, str] = {}
 
-    def get_password(self, service: str, key: str) -> Optional[str]:
+    def get_password(self, service: str, key: str) -> str | None:
         return self._store.get((service, key))
 
     def set_password(self, service: str, key: str, value: str) -> None:
@@ -68,11 +68,11 @@ class StubProvider:
 
     async def complete(
         self,
-        messages: List[Message],
-        model: Optional[str] = None,
+        messages: list[Message],
+        model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        tools: Optional[List[Any]] = None,
+        tools: list[Any] | None = None,
         timeout_s: float = 60.0,
     ) -> LLMResponse:
         if self.fail:
@@ -87,7 +87,7 @@ class StubProvider:
         )
 
 
-def _install_stub_providers(monkeypatch, failing: List[str]) -> None:
+def _install_stub_providers(monkeypatch, failing: list[str]) -> None:
     def factory(self: ModelRouter, name: str):
         return StubProvider(name, fail=name in failing)
 
@@ -187,7 +187,7 @@ async def test_health_check_configured_provider(clean_env, fake_keyring, monkeyp
 
 
 class StubStreamProvider(StubProvider):
-    async def stream(self, messages: List[Message], **kwargs: Any):
+    async def stream(self, messages: list[Message], **kwargs: Any):
         if self.fail:
             raise RuntimeError(f"{self.name} stream down")
         for chunk in [f"{self.name} ", "chunk"]:

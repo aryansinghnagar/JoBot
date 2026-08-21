@@ -223,30 +223,70 @@ Campaign mode runs continuous discovery, matching, and submission loops within u
 
 ```bash
 # Run continuous campaign loop
-jobot continuous-campaign --target-title "Senior Backend Engineer" --locations "Remote,Bengaluru"
+jobot continuous-campaign --portals greenhouse,lever,workday --max-daily-apps 25
+
+# Pause and resume active campaign
+jobot pause
+jobot resume
 
 # Configure scheduled cron automation
 jobot schedule list
-jobot schedule add --cron "0 9 * * 1-5" --command "jobot continuous-campaign"
+jobot schedule add --cron "0 9 * * 1-5" --command "continuous-campaign"
 ```
 
 ---
 
-## 10. Site Health & Circuit Breakers
+## 10. Career Intelligence & Outreach Tools
 
-JoBot continuously tracks the availability, latency, and error rates of each job portal. If a portal experiences repeated failures or Cloudflare blocks, its circuit breaker trips to `TRIPPED`, temporarily pausing submissions to that portal while allowing other portals to continue.
+JoBot includes powerful analytical and communication tools to accelerate your search:
+
+### AI Interview Preparation Coach
+```bash
+# Practice technical system design interview
+jobot interview --topic "system_design" --difficulty "senior"
+
+# Practice behavioral STAR method interview
+jobot interview --topic "behavioral" --mock
+```
+
+### Skill Gap Analysis & Compensation Benchmarking
+```bash
+# Identify missing keywords and skills against a target requisition
+jobot skill-gap --job-id <JOB_ID>
+
+# Benchmark market salary bands
+jobot salary --title "Staff Backend Engineer" --location "San Francisco, CA"
+```
+
+### Recruiter Outreach Generator & Daily Digest
+```bash
+# Generate personalized LinkedIn InMail outreach draft
+jobot outreach --company "Stripe" --role "Staff Infrastructure Engineer" --channel "linkedin"
+
+# Generate and email daily job search digest
+jobot digest --generate
+```
+
+---
+
+## 11. Site Health & Circuit Breakers
+
+JoBot continuously tracks the availability, latency, and error rates of each job portal. If a portal experiences repeated failures or Cloudflare blocks, its circuit breaker trips to `OPEN`, temporarily pausing submissions to that portal while allowing other portals to continue.
 
 ```bash
 # View live site health and circuit breaker states
-jobot site-health
+jobot site-health --all
 
 # Check adapter registry and capability flags
 jobot list-sites
+
+# Inspect operational alerts
+jobot alerts --all
 ```
 
 ---
 
-## 11. Desktop GUI Cockpit Walkthrough
+## 12. Desktop GUI Cockpit Walkthrough
 
 JoBot includes a modern, high-speed native desktop cockpit powered by Tauri 2 and React 19.
 
@@ -294,7 +334,7 @@ npm run tauri dev
 
 ---
 
-## 12. Disaster Recovery, Backups & Maintenance
+## 13. Disaster Recovery, Backups & Maintenance
 
 ### Database Management & Health Checks
 ```bash
@@ -302,5 +342,5 @@ npm run tauri dev
 jobot doctor
 
 # Reset database schema and migrations if needed
-jobot reset-db --confirm
+jobot reset-db --force
 ```

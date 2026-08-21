@@ -359,7 +359,6 @@ def test_sidecar_digest_preview(monkeypatch, tmp_path):
 
 def test_sidecar_doctor(monkeypatch, tmp_path):
     import jobot.doctor as doctor_mod
-
     from jobot.doctor import DoctorCheck, DoctorReport
 
     fake_report = DoctorReport(

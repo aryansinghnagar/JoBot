@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from typing import Any
 
 INJECTION_PATTERNS: list[tuple[str, str]] = [
     (
@@ -93,7 +94,11 @@ def sanitize_llm_input(text: str) -> str:
     """
     if not text:
         return ""
-    sanitized = _normalize_text(text)
+
+    def _make_replacer(rep: str) -> Any:
+        return lambda _m: rep
+
+    sanitized: str = _normalize_text(text)
     for pattern, replacement in INJECTION_PATTERNS:
         # Idempotency guard: if the replacement string itself contains
         # a word that matches a subsequent pattern (e.g., "[REDACTED_INJECTION_JAILBREAK]"
@@ -102,7 +107,7 @@ def sanitize_llm_input(text: str) -> str:
         # a [REDACTED_INJECTION_...] block.
         sanitized = re.sub(
             pattern,
-            lambda m, rep=replacement: rep,
+            _make_replacer(str(replacement)),
             sanitized,
             flags=re.IGNORECASE,
         )

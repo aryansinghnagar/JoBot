@@ -1,6 +1,9 @@
 """Phase 4 WS3: InterviewPrep — mock sessions, STAR coach, CLI."""
 
 import pytest
+from typer.testing import CliRunner
+
+from jobot.cli.main import app
 from jobot.interview.banks import QuestionBank
 from jobot.interview.coach import MockInterviewer, STARCoach, _rule_based_score
 from jobot.interview.sessions import SessionStore
@@ -12,9 +15,6 @@ from jobot.models.domain import (
     UserProfile,
     WorkExperience,
 )
-from typer.testing import CliRunner
-
-from jobot.cli.main import app
 
 
 def make_profile() -> UserProfile:

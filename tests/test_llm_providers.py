@@ -30,7 +30,7 @@ def mock_post(monkeypatch):
     spawning a thread executor, and we also patch the sync helper for any
     callers that still use it.
     """
-    calls: List[Dict[str, Any]] = []
+    calls: list[dict[str, Any]] = []
 
     async def fake_post_async(url, headers, payload, timeout_s=60.0):
         calls.append({"url": url, "headers": headers, "payload": payload})
@@ -45,7 +45,7 @@ def mock_post(monkeypatch):
     return calls
 
 
-def _response_for(url: str) -> Dict[str, Any]:
+def _response_for(url: str) -> dict[str, Any]:
     if "anthropic" in url:
         return {
             "content": [{"type": "text", "text": "anthropic reply"}],
@@ -64,7 +64,7 @@ def _response_for(url: str) -> Dict[str, Any]:
     }
 
 
-def _messages() -> List[Message]:
+def _messages() -> list[Message]:
     return [Message(role="system", content="You are helpful."), Message(role="user", content="Hi")]
 
 
@@ -108,7 +108,7 @@ async def test_cohere_provider_complete(mock_post):
 
 @pytest.mark.asyncio
 async def test_openai_compat_provider_base_url(monkeypatch):
-    calls: List[Dict[str, Any]] = []
+    calls: list[dict[str, Any]] = []
 
     async def fake_post_async(url, headers, payload, timeout_s=60.0):
         calls.append(url)
@@ -201,7 +201,7 @@ class _FakeBedrockClient:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
 
-    def converse(self, **kwargs: Any) -> Dict[str, Any]:
+    def converse(self, **kwargs: Any) -> dict[str, Any]:
         return {
             "output": {"message": {"content": [{"text": "bedrock reply"}]}},
             "usage": {"inputTokens": 20, "outputTokens": 6},
@@ -343,13 +343,13 @@ async def test_gemini_provider_stream(monkeypatch):
 
 
 class _FakeBedrockStreamClient:
-    def converse(self, **kwargs: Any) -> Dict[str, Any]:
+    def converse(self, **kwargs: Any) -> dict[str, Any]:
         return {
             "output": {"message": {"content": [{"text": "bedrock reply"}]}},
             "usage": {"inputTokens": 20, "outputTokens": 6},
         }
 
-    def converse_stream(self, **kwargs: Any) -> Dict[str, Any]:
+    def converse_stream(self, **kwargs: Any) -> dict[str, Any]:
         return {
             "stream": [
                 {"contentBlockDelta": {"delta": {"text": "bedrock "}}},

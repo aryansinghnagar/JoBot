@@ -6,6 +6,7 @@ verify_submission() must raise AdapterCapabilityError.
 """
 
 import pytest
+
 from jobot.adapters.capabilities import AdapterCapability, AdapterCapabilityError
 from jobot.adapters.cxs import (
     AshbyAdapter,

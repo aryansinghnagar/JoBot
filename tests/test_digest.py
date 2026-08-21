@@ -1,8 +1,11 @@
 """Phase 4 WS2: Weekly digest + shared email sender."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+from typer.testing import CliRunner
+
+from jobot.cli.main import app
 from jobot.digest.generator import DigestGenerator
 from jobot.models.domain import (
     Application,
@@ -12,9 +15,6 @@ from jobot.models.domain import (
 )
 from jobot.notify.email import EmailSender
 from jobot.storage.db import DatabaseManager
-
-from typer.testing import CliRunner
-from jobot.cli.main import app
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def seeded_db(tmp_path):
             parsed_skills=["Python"],
         )
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for i, st in enumerate(
         [ApplicationStatus.SUBMITTED, ApplicationStatus.VERIFIED, ApplicationStatus.REJECTED],
         start=1,

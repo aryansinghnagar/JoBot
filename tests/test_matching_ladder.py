@@ -1,8 +1,9 @@
 """Unit tests for the 4-Stage Matching Ladder (UC-23)."""
 
 import pytest
-from jobot.discovery.matching_ladder import MatchingLadder, MatchingLadderResult
+
 from jobot.discovery.engine import JobDiscoveryEngine
+from jobot.discovery.matching_ladder import MatchingLadder, MatchingLadderResult
 from jobot.models.domain import (
     CompensationDetails,
     Education,

@@ -7,11 +7,11 @@ from pathlib import Path
 from tempfile import mkdtemp
 
 import pytest
+from test_linkedin_easy_apply import FakeBrowserSession
+
 from jobot.adapters.linkedin import LinkedInAdapter
 from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
 from jobot.stealth.linkedin_easy_apply import EasyApplyResult, EasyApplySaga
-
-from test_linkedin_easy_apply import FakeBrowserSession
 
 JOB_URL = "https://www.linkedin.com/jobs/view/42"
 

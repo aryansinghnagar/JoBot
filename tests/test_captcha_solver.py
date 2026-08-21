@@ -1,4 +1,5 @@
 import pytest
+
 from jobot.stealth.captcha import CaptchaResult, CaptchaSolver, CaptchaType
 
 

@@ -3,6 +3,7 @@
 import sqlite3
 
 import pytest
+
 from jobot.storage.db import DatabaseManager
 from jobot.storage.migrations import (
     MIGRATIONS,

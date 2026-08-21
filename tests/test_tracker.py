@@ -1,8 +1,11 @@
 """Phase 4 WS1: Application Tracking System — analytics + rendering."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+from typer.testing import CliRunner
+
+from jobot.cli.main import app
 from jobot.models.domain import (
     Application,
     ApplicationStatus,
@@ -13,14 +16,11 @@ from jobot.storage.db import DatabaseManager
 from jobot.tracker.analytics import TrackerAnalytics
 from jobot.tracker.render import TrackerRenderer
 
-from typer.testing import CliRunner
-from jobot.cli.main import app
-
 
 @pytest.fixture
 def seeded_db(tmp_path):
     db = DatabaseManager(db_path=tmp_path / "test.db")
-    base = datetime.now(timezone.utc)
+    base = datetime.now(UTC)
     for job_id, site, title, company in [
         ("J1", "mock_ats", "Senior Backend Engineer", "Mock Corp"),
         ("J2", "greenhouse", "Data Engineer", "GH Co"),
@@ -135,7 +135,7 @@ def test_terminal_status_stamps_responded_at(tmp_path):
             idempotency_key="k_new",
             status=ApplicationStatus.VERIFIED,
             trust_level=TrustLevel.SUPERVISED,
-            updated_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(UTC),
         )
     )
     loaded = db.get_application("A_NEW")

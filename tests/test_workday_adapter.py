@@ -8,6 +8,7 @@ Patchright submitter/verifier logic against a fake browser.
 import json
 
 import pytest
+
 from jobot.adapters.workday import WorkdayAdapter, WorkdaySubmitter, WorkdayVerifier
 from jobot.models.domain import Application, ApplicationStatus, PersonalInfo, UserProfile
 

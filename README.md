@@ -171,13 +171,16 @@ For a walkthrough of workflows and CLI commands, see **[`USER_GUIDE.md`](USER_GU
 ## 📚 Documentation Index
 
 - **[`SETUP.md`](SETUP.md)** — Step-by-step setup, API keys, OS keyring vault, Tauri desktop build, and troubleshooting.
-- **[`USER_GUIDE.md`](USER_GUIDE.md)** — End-to-end user manual covering profile seeding, job scraping, tailored resumes, approvals, and campaigns.
-- **[`ATTRIBUTION.md`](ATTRIBUTION.md)** — Open-source citations, architectural inspirations, and third-party license notices.
-- **[`SECURITY.md`](SECURITY.md)** — Security policies, prompt guard defenses, SSRF protections, and vault encryption specs.
+- **[`USER_GUIDE.md`](USER_GUIDE.md)** — End-to-end user manual covering candidate truth profiles, scraping, document tailoring, approvals, and campaigns.
+- **[`docs/user/cli-reference.md`](docs/user/cli-reference.md)** — Complete reference for all 36 CLI commands, arguments, and flags.
 - **[`docs/dev/architecture.md`](docs/dev/architecture.md)** — In-depth architectural design, schemas, and state transitions.
 - **[`docs/asp.md`](docs/asp.md)** — 12-Phase Application Submission Pipeline formal specification.
 - **[`docs/contracts.md`](docs/contracts.md)** — Subsystem contract interfaces and freeze invariants.
-- **[`docs/user/cli-reference.md`](docs/user/cli-reference.md)** — Complete reference for all CLI commands, arguments, and flags.
+- **[`docs/runbooks/`](docs/runbooks/)** — Operational portal runbooks ([Greenhouse & Lever](docs/runbooks/greenhouse_lever.md), [LinkedIn Easy Apply](docs/runbooks/linkedin_easy_apply.md), [Naukri](docs/runbooks/naukri_apply.md), [Workday](docs/runbooks/workday_apply.md)).
+- **[`SECURITY.md`](SECURITY.md)** — Security policies, prompt guard defenses, SSRF protections, and vault encryption specs.
+- **[`MASTER_PLAN_EXPANDED.md`](MASTER_PLAN_EXPANDED.md)** — Canonical master plan, decision register, and risk register.
+- **[`AUDIT_REMEDIATION.md`](AUDIT_REMEDIATION.md)** — Forensic audit remediation log and verification trace.
+- **[`ATTRIBUTION.md`](ATTRIBUTION.md)** — Open-source citations, architectural inspirations, and third-party license notices.
 
 ---
 

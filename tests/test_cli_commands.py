@@ -1,11 +1,12 @@
 import json
+
 from typer.testing import CliRunner
 
 from jobot.cli.main import app
 from jobot.models.domain import Application, ApplicationStatus, JobPosting, TrustLevel
-from jobot.storage.db import DatabaseManager
 from jobot.obs.alerts import AlertDispatcher, AlertLevel
 from jobot.obs.tracing import TraceLogger
+from jobot.storage.db import DatabaseManager
 
 runner = CliRunner()
 
@@ -201,7 +202,7 @@ def test_cli_skill_gap_and_salary_commands(tmp_path, monkeypatch):
     assert "missing" in res_missing.stdout.lower()
 
     # When profile exists
-    from jobot.models.domain import UserProfile, PersonalInfo
+    from jobot.models.domain import PersonalInfo, UserProfile
     from jobot.storage.vault import CredentialVault
 
     vault = CredentialVault()

@@ -41,28 +41,26 @@ logger = logging.getLogger(__name__)
 try:
     import httpx  # Phase C2/P1: pooled async HTTP client
 
-    _HTTPX_CLIENT: Optional["httpx.AsyncClient"] = None
-    _HTTPX_POOL_LIMITS = httpx.Limits(
-        max_connections=100,  # across all hosts
-        max_keepalive_connections=20,  # idle keep-alive sockets held open
-        keepalive_expiry=30.0,  # seconds before idle keep-alive sockets close
-    )
+    from jobot.security.url_guard import create_safe_httpx_client
 
-    def _get_httpx_client() -> "httpx.AsyncClient":
+    _HTTPX_CLIENT: httpx.AsyncClient | None = None
+
+    def _get_httpx_client() -> httpx.AsyncClient:
         """Return the module-level AsyncClient, creating it on first call.
 
         The client is configured with:
         * our ``_TLS_CONTEXT`` (forces TLS 1.2+, audit fix JOB-SEC-016);
+        * SSRF per-hop redirect re-validation;
         * a generous connection pool (100 max conns, 20 keep-alive);
         * a 60s default timeout — callers can override per-request.
         """
         global _HTTPX_CLIENT
         if _HTTPX_CLIENT is None or _HTTPX_CLIENT.is_closed:
-            _HTTPX_CLIENT = httpx.AsyncClient(
-                verify=_TLS_CONTEXT,  # type: ignore[arg-type]
-                limits=_HTTPX_POOL_LIMITS,
-                timeout=httpx.Timeout(60.0, connect=10.0),
-                follow_redirects=True,
+            _HTTPX_CLIENT = create_safe_httpx_client(
+                timeout=60.0,
+                max_connections=100,
+                max_keepalive_connections=20,
+                keepalive_expiry=30.0,
             )
         return _HTTPX_CLIENT
 
@@ -79,12 +77,10 @@ except ImportError:  # pragma: no cover — httpx is a hard dependency as of 0.2
     _HTTPX_AVAILABLE = False
     _HTTPX_CLIENT = None
 
-    def _get_httpx_client() -> Any:  # type: ignore[no-redef]
-        raise RuntimeError(
-            "httpx is not installed — install with `pip install httpx>=0.27.0`"
-        )
+    def _get_httpx_client() -> Any:  # type: ignore[misc]
+        raise RuntimeError("httpx is not installed — install with `pip install httpx>=0.27.0`")
 
-    async def _close_httpx_client() -> None:  # type: ignore[no-redef]
+    async def _close_httpx_client() -> None:
         pass
 
 

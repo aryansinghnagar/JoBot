@@ -1,4 +1,5 @@
 import pytest
+
 from jobot.adapters.base import SiteAdapter
 from jobot.adapters.mock_ats import MockATSAdapter
 from jobot.adapters.registry import AdapterRegistry
