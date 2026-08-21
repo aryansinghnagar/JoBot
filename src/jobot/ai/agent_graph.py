@@ -36,7 +36,9 @@ async def supervisor_node(state: AgentState) -> AgentState:
     """Supervises graph execution, routing to drafter, evaluator, or termination."""
     state["step_count"] += 1
     if state["step_count"] > state["max_steps"]:
-        logger.warning("Multi-agent graph reached maximum step count (%d). Finalizing.", state["max_steps"])
+        logger.warning(
+            "Multi-agent graph reached maximum step count (%d). Finalizing.", state["max_steps"]
+        )
         state["next_node"] = "end"
         return state
 

@@ -86,7 +86,9 @@ class TestValidateFetchUrlProperties:
     @given(
         path=st.text(alphabet=string.ascii_letters + string.digits + "/-_", min_size=1, max_size=64)
     )
-    @settings(max_examples=50, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=50, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     def test_public_host_path_invariant(self, path: str) -> None:
         """For any path composed of safe URL characters, a public-host
         https URL is always accepted — the SSRF guard must not reject
@@ -100,7 +102,9 @@ class TestValidateFetchUrlProperties:
         host=st.sampled_from(_PRIVATE_HOSTS),
         port=st.integers(min_value=1, max_value=65535),
     )
-    @settings(max_examples=50, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=50, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     def test_private_host_with_any_port_refused(self, host: str, port: int) -> None:
         """A private host with any port number must be refused — the
         SSRF guard checks the host boundary, not the port."""
@@ -108,9 +112,13 @@ class TestValidateFetchUrlProperties:
             validate_fetch_url(f"https://{host}:{port}/")
 
     @given(
-        scheme=st.sampled_from(["ftp", "file", "data", "gopher", "javascript", "vbscript", "ws", "wss"]),
+        scheme=st.sampled_from(
+            ["ftp", "file", "data", "gopher", "javascript", "vbscript", "ws", "wss"]
+        ),
     )
-    @settings(max_examples=20, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=20, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     def test_non_http_schemes_refused(self, scheme: str) -> None:
         """Any non-http(s) scheme must be refused — these are the
         exfiltration channels (file://, ftp://, data:, javascript:)."""
@@ -121,7 +129,9 @@ class TestValidateFetchUrlProperties:
         user=st.text(alphabet=string.ascii_letters + string.digits, min_size=1, max_size=8),
         pw=st.text(alphabet=string.ascii_letters + string.digits, min_size=1, max_size=8),
     )
-    @settings(max_examples=50, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=50, deadline=1000, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     def test_userinfo_credentials_refused(self, user: str, pw: str) -> None:
         """URLs with embedded credentials (``user:pass@host``) are always
         refused — credentials belong in headers, not the URL."""
@@ -209,9 +219,7 @@ class TestSanitizeLlmInputProperties:
         deadline=1000,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invariant_redacted_in_any_context(
-        self, prefix: str, phrase: str, suffix: str
-    ) -> None:
+    def test_invariant_redacted_in_any_context(self, prefix: str, phrase: str, suffix: str) -> None:
         """For any combination of prefix + known-injection-phrase + suffix,
         the sanitized output must not contain the injection phrase verbatim."""
         text = f"{prefix} {phrase} {suffix}"
@@ -221,7 +229,11 @@ class TestSanitizeLlmInputProperties:
         # ``re.IGNORECASE`` flag should also catch upper/lower variants.
         assert phrase.lower() not in sanitized.lower()
 
-    @given(text=st.text(alphabet=string.ascii_letters + string.digits + " .,!?", min_size=0, max_size=200))
+    @given(
+        text=st.text(
+            alphabet=string.ascii_letters + string.digits + " .,!?", min_size=0, max_size=200
+        )
+    )
     @settings(
         max_examples=100,
         deadline=1000,

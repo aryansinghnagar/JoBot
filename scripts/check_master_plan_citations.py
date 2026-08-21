@@ -104,12 +104,7 @@ def iter_scan_files() -> list[Path]:
     # (see ``SKIP_FILES`` docstring).
     skip_abs = {(REPO_ROOT / rel).resolve() for rel in SKIP_FILES}
     out = sorted(
-        {
-            p
-            for p in out
-            if p.resolve() != MASTER_PLAN.resolve()
-            and p.resolve() not in skip_abs
-        }
+        {p for p in out if p.resolve() != MASTER_PLAN.resolve() and p.resolve() not in skip_abs}
     )
     return out
 
@@ -131,9 +126,7 @@ def collect_citations(files: list[Path]) -> list[tuple[Path, int, str, str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--quiet", action="store_true", help="only print failures, not the summary"
-    )
+    parser.add_argument("--quiet", action="store_true", help="only print failures, not the summary")
     args = parser.parse_args()
 
     sections = parse_master_plan_sections(MASTER_PLAN)

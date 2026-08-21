@@ -270,7 +270,5 @@ async def test_generate_text_stream_propagates_keyboard_interrupt(monkeypatch, t
 
     monkeypatch.setattr(ModelRouter, "get_provider", factory)
     with pytest.raises(KeyboardInterrupt):
-        async for _ in router.generate_text_stream(
-            "hello", fallback_chain=["gemini", "openai"]
-        ):
+        async for _ in router.generate_text_stream("hello", fallback_chain=["gemini", "openai"]):
             pass

@@ -13,12 +13,10 @@ data; every outbound HTTP surface must go through this module. Protections:
   resolution failure falls through to the literal checks so offline
   hermetic tests are unaffected
 
-Residual (documented): redirect hops are followed by urllib's default
-handler without per-hop revalidation. The realistic redirect-SSRF vector
-requires the *initial* host to be attacker-controlled, which the boundary
-checks above refuse for every product fetch path (only validated public
-board/API hosts are fetched). Revisit if a fetch path accepting
-arbitrary user URLs gains redirect-following behavior.
+- per-hop redirect re-validation: every redirect hop (301, 302, 303, 307, 308)
+  is intercepted and re-validated against the SSRF boundary via ``SafeRedirectHandler``
+  (urllib) and ``create_safe_httpx_client`` (httpx).
+- TLS 1.2+ minimum protocol version enforced across all outbound TLS contexts.
 """
 
 from __future__ import annotations
@@ -131,7 +129,9 @@ class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
         self.allow_private_hosts = allow_private_hosts
         self.max_redirects = max_redirects
 
-    def redirect_request(self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str) -> Any:
+    def redirect_request(
+        self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str
+    ) -> Any:
         validate_fetch_url(newurl, allow_private_hosts=self.allow_private_hosts)
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
