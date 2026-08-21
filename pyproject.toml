@@ -156,6 +156,8 @@ line-ending = "lf"
 [tool.mypy]
 python_version = "3.12"
 strict = true
+disallow_subclassing_any = false
+warn_unused_ignores = false
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -118,7 +118,7 @@ class ConfigManager:
 
         manager = self
 
-        class _ConfigReloadHandler(FileSystemEventHandler):  # type: ignore[misc]
+        class _ConfigReloadHandler(FileSystemEventHandler):
             def on_modified(self, event: Any) -> None:
                 if (
                     not event.is_directory
